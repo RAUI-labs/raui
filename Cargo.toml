@@ -7,7 +7,7 @@ description = "Renderer Agnostic User Interface"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/PsichiX/raui"
-keywords = ["renderer", "agnostic", "user", "interface", "ui", "gamedev"]
+keywords = ["renderer", "agnostic", "ui", "interface", "ui"]
 categories = ["gui", "rendering::graphics-api"]
 exclude = [
   ".github/**",
