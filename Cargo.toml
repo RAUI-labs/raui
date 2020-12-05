@@ -1,0 +1,66 @@
+[package]
+name = "raui"
+version = "0.5.0"
+authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
+edition = "2018"
+description = "Renderer Agnostic User Interface"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/PsichiX/raui"
+keywords = ["renderer", "agnostic", "user", "interface", "ui", "gamedev"]
+categories = ["gui", "rendering::graphics-api"]
+exclude = [
+  ".github/**",
+]
+
+[features]
+binary = ["raui-binary-renderer"]
+html = ["raui-html-renderer"]
+json = ["raui-json-renderer"]
+ron = ["raui-ron-renderer"]
+yaml = ["raui-yaml-renderer"]
+all = [
+  "binary",
+  "html",
+  "json",
+  "ron",
+  "yaml",
+]
+
+[dependencies]
+raui-core = { path = "./raui-core", version = "0.5" }
+
+[dependencies.raui-binary-renderer]
+path = "./raui-binary-renderer"
+version = "0.5"
+optional = true
+
+[dependencies.raui-html-renderer]
+path = "./raui-html-renderer"
+version = "0.5"
+optional = true
+
+[dependencies.raui-json-renderer]
+path = "./raui-json-renderer"
+version = "0.5"
+optional = true
+
+[dependencies.raui-ron-renderer]
+path = "./raui-ron-renderer"
+version = "0.5"
+optional = true
+
+[dependencies.raui-yaml-renderer]
+path = "./raui-yaml-renderer"
+version = "0.5"
+optional = true
+
+[workspace]
+members = [
+  "raui-core",
+  "raui-binary-renderer",
+  "raui-html-renderer",
+  "raui-json-renderer",
+  "raui-ron-renderer",
+  "raui-yaml-renderer",
+]
