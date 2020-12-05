@@ -4,9 +4,9 @@
 ## Table of contents
 1. [About](#about)
 1. [Architecture](#architecture)
-  1. [Application](#application)
-  1. [Widget](#widget)
-  1. [Component Function](#component-function)
+    1. [Application](#application)
+    1. [Widget](#widget)
+    1. [Component Function](#component-function)
 1. [Installation](#installation)
 1. [TODO](#todo)
 
