@@ -38,7 +38,7 @@ if let Ok(output) = application.render(&mut renderer) {
 ```
 
 ### Widget
-Widgets are divided into two categories:
+Widgets are divided into three categories:
 - **Widget Node** - used as source UI trees (variant that can be either a component, unit or none)
   ```rust
   widget! {
