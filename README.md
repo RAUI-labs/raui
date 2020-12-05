@@ -200,3 +200,5 @@ raui = { version = "0.5", features = ["all"] }
 RAUI is still in early development phase, so prepare for these changes until v1.0:
 - Reduce unnecessary allocations in processing pipeline.
 - Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
+- Create renderer for at least one popular Rust graphics engine.
+- Make C API bindings.
