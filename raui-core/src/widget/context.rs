@@ -3,7 +3,7 @@ use crate::{
     props::Props,
     signals::SignalSender,
     state::State,
-    widget::{node::WidgetNode, WidgetId, WidgetPhase, WidgetUnmounter},
+    widget::{node::WidgetNode, WidgetId, WidgetLifeCycle},
 };
 use std::collections::HashMap;
 
@@ -12,10 +12,9 @@ pub struct WidgetContext<'a> {
     pub key: &'a str,
     pub props: &'a Props,
     pub state: State<'a>,
-    pub phase: WidgetPhase,
     pub messenger: Messenger,
     pub signals: SignalSender,
-    pub unmounter: &'a mut WidgetUnmounter,
+    pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,
 }
@@ -27,6 +26,14 @@ impl<'a> WidgetContext<'a> {
 
     pub fn take_listed_slots(&mut self) -> Vec<WidgetNode> {
         std::mem::replace(&mut self.listed_slots, vec![])
+    }
+
+    pub fn use_hook<F>(&mut self, mut f: F) -> &mut Self
+    where
+        F: FnMut(&mut Self),
+    {
+        (f)(self);
+        self
     }
 }
 

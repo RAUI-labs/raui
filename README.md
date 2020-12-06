@@ -7,6 +7,7 @@
     1. [Application](#application)
     1. [Widget](#widget)
     1. [Component Function](#component-function)
+    1. [Hooks](#hooks)
 1. [Installation](#installation)
 1. [TODO](#todo)
 
@@ -112,7 +113,8 @@ widget_component! {
 ```
 This may bring up a question: _**"If i use only functions and no objects to tell how to visualize UI, how do i keep some data between each render run?"**_.
 For that you use _states_. State is a data that is stored between each processing call as long as given widget is alive (that means: as long as widget id stays the same between two processing calls, to make sure your widget stays the same, you use keys - if no key is assigned, system will generate one for your widget but that will make it possible to die at any time if for example number of widget children changes in your common parent, your widget will change its id when key wasn't assigned).
-Some additional notes: While you use _properties_ to send information down the tree and _states_ to store widget data between processing cals, you can communicate with another widgets and host application using messages and signals! More than that, you can assign a closure that will be called when your widget gets unmounted from the tree.
+Some additional notes: While you use _properties_ to send information down the tree and _states_ to store widget data between processing cals, you can communicate with another widgets and host application using messages and signals!
+More than that, you can use hooks to listen for widget life cycle and perform actions there.
 ```rust
 #[derive(Debug, Default, Copy, Clone)]
 struct ButtonState {
@@ -125,15 +127,18 @@ enum ButtonAction {
     Released,
 }
 
-widget_component! {
-    // here we tell what data we want to unpack from
-    // WidgetContext object passed to this function.
-    button(key, props, unmounter, phase, state, messenger) {
-        let label = props.read_cloned_or_default::<String>();
-
-        if phase == WidgetPhase::Mount {
+widget_hook! {
+    use_button(key, life_cycle) {
+        let key_ = key.to_owned();
+        life_cycle.mount(move |_, state, _, _| {
             drop(state.write(ButtonState { pressed: false }));
-        }
+        });
+    }
+}
+
+widget_component! {
+    button(key, props, state, messenger, signals) [use_button] {
+        let label = props.read_cloned_or_default::<String>();
 
         while let Some(msg) = messenger.read() {
             if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
@@ -141,15 +146,10 @@ widget_component! {
                     ButtonAction::Pressed => true,
                     ButtonAction::Released => false,
                 };
-                println!("=== BUTTON ACTION: {:?}", msg);
                 drop(state.write(ButtonState { pressed }));
                 drop(signals.write(Box::new(*msg)));
             }
         }
-
-        unmounter.listen(move |id, _state, _messages, _signals| {
-            println!("=== BUTTON UNMOUNTED: {}", id.to_string());
-        });
 
         widget!{
             (#{key} text: {label})
@@ -157,6 +157,50 @@ widget_component! {
     }
 }
 ```
+
+### Hooks
+Hooks are used to put common widget logic into separate functions that can be chained in widgets and another hooks (you can build a reusable dependency chain of logic with that).
+Usually it is used to listen for life cycle events such as mount, change and unmount, additionally you can chain hooks to be processed sequentially in order they are chained in widgets and other hooks.
+```rust
+widget_hook! {
+    use_empty {}
+}
+
+widget_hook! {
+    use_button(life_cycle) [use_empty] {
+        life_cycle.mount(move |_, state, _, _| {
+            drop(state.write(ButtonState { pressed: false }));
+        });
+    }
+}
+
+widget_component! {
+    button(key, props, state, messenger, signals) [use_button] {
+        let label = props.read_cloned_or_default::<String>();
+
+        while let Some(msg) = messenger.read() {
+            if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
+                let pressed = match msg {
+                    ButtonAction::Pressed => true,
+                    ButtonAction::Released => false,
+                };
+                drop(state.write(ButtonState { pressed }));
+                drop(signals.write(Box::new(*msg)));
+            }
+        }
+
+        widget!{
+            (#{key} text: {label})
+        }
+    }
+}
+```
+What happens under the hood:
+- Application calls `button` on a node
+    - `button` calls `use_button` hook
+        - `use_button` calls `use_empty` hook
+    - `use_button` logic is executed
+- `button` logic is executed
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
@@ -198,7 +242,8 @@ raui = { version = "0.5", features = ["all"] }
 
 ## TODO
 RAUI is still in early development phase, so prepare for these changes until v1.0:
+- Create renderer for at least one popular Rust graphics engine.
+- Create TODO app as an example.
 - Reduce unnecessary allocations in processing pipeline.
 - Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
-- Create renderer for at least one popular Rust graphics engine.
 - Make C API bindings.

@@ -5,7 +5,7 @@ use crate::{
     state::{State, StateData, StateUpdate},
     widget::{
         component::WidgetComponent, context::WidgetContext, node::WidgetNode, unit::WidgetUnit,
-        WidgetId, WidgetPhase, WidgetUnmountClosure, WidgetUnmounter,
+        WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
     },
 };
 use std::{
@@ -23,7 +23,7 @@ pub struct Application {
     message_receiver: MessageReceiver,
     signal_sender: Sender<Signal>,
     signal_receiver: SignalReceiver,
-    unmount_closures: HashMap<WidgetId, Box<WidgetUnmountClosure>>,
+    unmount_closures: HashMap<WidgetId, Vec<Box<WidgetUnmountClosure>>>,
     dirty: bool,
     render_changed: bool,
 }
@@ -164,11 +164,13 @@ impl Application {
                 if used_ids.contains(id) {
                     true
                 } else {
-                    if let Some(mut closure) = self.unmount_closures.remove(id) {
-                        let message_sender = &self.message_sender;
-                        let signal_sender =
-                            SignalSender::new(id.clone(), self.signal_sender.clone());
-                        (closure)(id, state, message_sender, &signal_sender);
+                    if let Some(closures) = self.unmount_closures.remove(id) {
+                        for mut closure in closures {
+                            let message_sender = &self.message_sender;
+                            let signal_sender =
+                                SignalSender::new(id.clone(), self.signal_sender.clone());
+                            (closure)(id, state, message_sender, &signal_sender);
+                        }
                     }
                     false
                 }
@@ -251,46 +253,66 @@ impl Application {
                 };
                 let messenger = Messenger::new(self.message_sender.clone(), messages_list);
                 let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
-                let mut unmounter = WidgetUnmounter::default();
-                let new_node = match states.get(&id) {
+                let mut life_cycle = WidgetLifeCycle::default();
+                let (new_node, mounted) = match states.get(&id) {
                     Some(state) => {
-                        let state = State::new(state, StateUpdate::new(sender));
+                        let state = State::new(state, StateUpdate::new(sender.clone()));
                         let context = WidgetContext {
                             id: id.clone(),
                             key: &key,
                             props: &props,
                             state,
-                            phase: WidgetPhase::Update,
                             messenger,
                             signals,
-                            unmounter: &mut unmounter,
+                            life_cycle: &mut life_cycle,
                             named_slots,
                             listed_slots,
                         };
-                        (processor)(context)
+                        ((processor)(context), false)
                     }
                     None => {
                         let state_data = Box::new(()) as StateData;
-                        let state = State::new(&state_data, StateUpdate::new(sender));
+                        let state = State::new(&state_data, StateUpdate::new(sender.clone()));
                         let context = WidgetContext {
                             id: id.clone(),
                             key: &key,
                             props: &props,
                             state,
-                            phase: WidgetPhase::Mount,
                             messenger,
                             signals,
-                            unmounter: &mut unmounter,
+                            life_cycle: &mut life_cycle,
                             named_slots,
                             listed_slots,
                         };
                         let node = (processor)(context);
                         new_states.insert(id.clone(), state_data);
-                        node
+                        (node, true)
                     }
                 };
-                if let Some(closure) = unmounter.into_inner() {
-                    self.unmount_closures.insert(id.clone(), closure);
+                let (mount, change, unmount) = life_cycle.unwrap();
+                if mounted {
+                    if let Some(state) = new_states.get(&id) {
+                        for mut closure in mount {
+                            let state = State::new(state, StateUpdate::new(sender.clone()));
+                            let message_sender = self.message_sender.clone();
+                            let signal_sender =
+                                SignalSender::new(id.clone(), self.signal_sender.clone());
+                            (closure)(&id, &state, &message_sender, &signal_sender);
+                        }
+                    }
+                } else {
+                    if let Some(state) = states.get(&id) {
+                        for mut closure in change {
+                            let state = State::new(state, StateUpdate::new(sender.clone()));
+                            let message_sender = self.message_sender.clone();
+                            let signal_sender =
+                                SignalSender::new(id.clone(), self.signal_sender.clone());
+                            (closure)(&id, &state, &message_sender, &signal_sender);
+                        }
+                    }
+                }
+                if !unmount.is_empty() {
+                    self.unmount_closures.insert(id.clone(), unmount);
                 }
                 let new_node = self.process_node(
                     new_node,

@@ -7,35 +7,74 @@ pub mod utils;
 use crate::{
     messenger::MessageSender,
     signals::SignalSender,
-    state::StateData,
+    state::{State, StateData},
     widget::{context::WidgetContext, node::WidgetNode},
 };
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
+    ops::Deref,
 };
 
 #[derive(Default, Hash, Eq, PartialEq, Clone)]
 pub struct WidgetId {
-    type_name: String,
-    path: Vec<String>,
+    id: String,
+    type_name_len: u8,
+    key_len: u8,
+    depth: usize,
 }
 
 impl WidgetId {
     pub fn new(type_name: String, path: Vec<String>) -> Self {
-        Self { type_name, path }
+        if type_name.len() >= 256 {
+            panic!(
+                "WidgetId `type_name` (\"{}\") cannot be longer than 255 characters!",
+                type_name
+            );
+        }
+        let type_name_len = type_name.len() as u8;
+        let key_len = path.last().map(|p| p.len()).unwrap_or_default() as u8;
+        let depth = path.len();
+        let count = type_name.len() + 1 + path.iter().map(|part| 1 + part.len()).sum::<usize>();
+        let mut id = String::with_capacity(count);
+        id.push_str(&type_name);
+        id.push(':');
+        for (i, part) in path.into_iter().enumerate() {
+            if part.len() >= 256 {
+                panic!(
+                    "WidgetId `path[{}]` (\"{}\") cannot be longer than 255 characters!",
+                    i, part
+                );
+            }
+            id.push('/');
+            id.push_str(&part);
+        }
+        Self {
+            id,
+            type_name_len,
+            key_len,
+            depth,
+        }
     }
 
+    #[inline]
     pub fn depth(&self) -> usize {
-        self.path.len()
+        self.depth
     }
 
+    #[inline]
     pub fn type_name(&self) -> &str {
-        &self.type_name
+        &self.id.as_str()[0..self.type_name_len as usize]
     }
 
-    pub fn key(&self) -> Option<&str> {
-        self.path.last().map(|v| v.as_str())
+    #[inline]
+    pub fn key(&self) -> &str {
+        &self.id[(self.id.len() - self.key_len as usize)..]
+    }
+
+    #[inline]
+    pub fn parts(&self) -> impl Iterator<Item = &str> {
+        self.id[(self.type_name_len as usize + 2)..].split('/')
     }
 
     pub fn hashed_value(&self) -> u64 {
@@ -45,18 +84,17 @@ impl WidgetId {
     }
 }
 
-impl ToString for WidgetId {
-    fn to_string(&self) -> String {
-        let count =
-            self.type_name.len() + 1 + self.path.iter().map(|part| 1 + part.len()).sum::<usize>();
-        let mut result = String::with_capacity(count);
-        result.push_str(&self.type_name);
-        result.push(':');
-        for part in &self.path {
-            result.push('/');
-            result.push_str(part);
-        }
-        result
+impl Deref for WidgetId {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.id
+    }
+}
+
+impl AsRef<str> for WidgetId {
+    fn as_ref(&self) -> &str {
+        &self.id
     }
 }
 
@@ -68,27 +106,52 @@ impl std::fmt::Debug for WidgetId {
 
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum WidgetPhase {
-    Mount,
-    Update,
-}
-
+pub type WidgetMountClosure = dyn FnMut(&WidgetId, &State, &MessageSender, &SignalSender);
+pub type WidgetChangeClosure = dyn FnMut(&WidgetId, &State, &MessageSender, &SignalSender);
 pub type WidgetUnmountClosure = dyn FnMut(&WidgetId, &StateData, &MessageSender, &SignalSender);
 
 #[derive(Default)]
-pub struct WidgetUnmounter(Option<Box<WidgetUnmountClosure>>);
+pub struct WidgetLifeCycle {
+    mount: Vec<Box<WidgetMountClosure>>,
+    change: Vec<Box<WidgetChangeClosure>>,
+    unmount: Vec<Box<WidgetUnmountClosure>>,
+}
 
-impl WidgetUnmounter {
-    pub fn listen<F>(&mut self, f: F)
+impl WidgetLifeCycle {
+    pub fn mount<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(&WidgetId, &State, &MessageSender, &SignalSender),
+    {
+        self.mount.push(Box::new(f));
+    }
+
+    pub fn change<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(&WidgetId, &State, &MessageSender, &SignalSender),
+    {
+        self.change.push(Box::new(f));
+    }
+
+    pub fn unmount<F>(&mut self, f: F)
     where
         F: 'static + FnMut(&WidgetId, &StateData, &MessageSender, &SignalSender),
     {
-        self.0 = Some(Box::new(f));
+        self.unmount.push(Box::new(f));
     }
 
-    pub fn into_inner(self) -> Option<Box<WidgetUnmountClosure>> {
-        self.0
+    pub fn unwrap(
+        self,
+    ) -> (
+        Vec<Box<WidgetMountClosure>>,
+        Vec<Box<WidgetChangeClosure>>,
+        Vec<Box<WidgetUnmountClosure>>,
+    ) {
+        let Self {
+            mount,
+            change,
+            unmount,
+        } = self;
+        (mount, change, unmount)
     }
 }
 
@@ -226,16 +289,68 @@ macro_rules! unpack_named_slots {
 
 #[macro_export]
 macro_rules! widget_component {
-    {$name:ident $( ( $( $param:ident ),+ ) )? $code:block} => {
+    {$vis:vis $name:ident $( ( $( $param:ident ),+ ) )? $([ $( $hook:path ),+ ])? $code:block} => {
         #[allow(unused_variables)]
         #[allow(unused_mut)]
-        fn $name(
-            context: $crate::widget::context::WidgetContext
+        $vis fn $name(
+            mut context: $crate::widget::context::WidgetContext
         ) -> $crate::widget::node::WidgetNode {
-            $(
-                unpack_context!(context => { $( $param ),+ });
-            )?
-            $code
+            {
+                $(
+                    $(
+                        context.use_hook($hook);
+                    ),+
+                )?
+            }
+            {
+                $(
+                    unpack_context!(context => { $( $param ),+ });
+                )?
+                $code
+            }
         }
     };
+}
+
+#[macro_export]
+macro_rules! widget_hook {
+    {$vis:vis $name:ident $( ( $( $param:ident ),+ ) )? $([ $( $hook:path ),+ ])? $code:block} => {
+        #[allow(unused_variables)]
+        #[allow(unused_mut)]
+        $vis fn $name(
+            context: &mut $crate::widget::context::WidgetContext
+        ) {
+            {
+                $(
+                    $(
+                        context.use_hook($hook);
+                    ),+
+                )?
+            }
+            {
+                $(
+                    unpack_context!(context => { $( $param ),+ });
+                )?
+                $code
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_widget_id() {
+        let id = WidgetId::new(
+            "type".to_owned(),
+            vec!["parent".to_owned(), "me".to_owned()],
+        );
+        assert_eq!(id.to_string(), "type:/parent/me".to_owned());
+        assert_eq!(id.type_name(), "type");
+        assert_eq!(id.parts().next().unwrap(), "parent");
+        assert_eq!(id.key(), "me");
+        assert_eq!(id.clone(), id);
+    }
 }

@@ -1,7 +1,6 @@
 #![cfg(test)]
 
 use crate::prelude::*;
-use std::convert::TryInto;
 
 #[test]
 fn test_macro() {
@@ -91,23 +90,15 @@ fn test_macro() {
 
 #[test]
 #[allow(dead_code)]
+#[cfg(feature = "html")]
 fn test_hello_world() {
+    use std::convert::TryInto;
+
     #[derive(Debug, Default, Copy, Clone)]
     struct AppProps {
         pub index: usize,
     }
     implement_props_data!(AppProps);
-
-    #[derive(Debug, Default, Copy, Clone)]
-    struct ButtonState {
-        pub pressed: bool,
-    }
-
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-    enum ButtonAction {
-        Pressed,
-        Released,
-    }
 
     // convenient macro that produces widget component processing function.
     widget_component! {
@@ -132,15 +123,68 @@ fn test_hello_world() {
         }
     }
 
+    #[derive(Debug, Default, Copy, Clone)]
+    struct ButtonState {
+        pub pressed: bool,
+    }
+
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    enum ButtonAction {
+        Pressed,
+        Released,
+    }
+
+    widget_hook! {
+        use_empty(life_cycle) {
+            life_cycle.mount(|_, _, _, _| {
+                println!("=== BUTTON MOUNTED");
+            });
+
+            life_cycle.change(|_, _, _, _| {
+                println!("=== BUTTON CHANGED");
+            });
+
+            life_cycle.unmount(|_, _, _, _| {
+                println!("=== EMPTY UNMOUNTED");
+            });
+        }
+    }
+
+    // you use life cycle hooks for storing closures that will be called when widget will be
+    // mounted/changed/unmounted. they exists for you to be able to resuse some common logic across
+    // multiple components. each closure provides arguments such as:
+    // - widget id
+    // - widget state
+    // - message sender (this one is used to message other widgets you know about)
+    // - signal sender (this one is used to message application host)
+    // although this hook uses only life cycle, you can make different hooks that use many
+    // arguments, even use context you got from the component!
+    widget_hook! {
+        use_button(key, life_cycle) [use_empty] {
+            let key_ = key.to_owned();
+            life_cycle.mount(move |_, state, _, _| {
+                println!("=== BUTTON MOUNTED: {}", key_);
+                drop(state.write(ButtonState { pressed: false }));
+            });
+
+            let key_ = key.to_owned();
+            life_cycle.change(move |_, _, _, _| {
+                println!("=== BUTTON CHANGED: {}", key_);
+            });
+
+            let key_ = key.to_owned();
+            life_cycle.unmount(move |_, _, _, _| {
+                println!("=== BUTTON UNMOUNTED: {}", key_);
+            });
+        }
+    }
+
     widget_component! {
-        button(key, props, unmounter, phase, state, messenger, signals) {
-            println!("=== PROCESS BUTTON: {} | PHASE: {:?}", key, phase);
+        button(key, props, state, messenger, signals) [use_button] {
+            println!("=== PROCESS BUTTON: {}", key);
             // buttons use string as props data.
             let label = props.read_cloned_or_default::<String>();
 
-            if phase == WidgetPhase::Mount {
-                drop(state.write(ButtonState { pressed: false }));
-            }
             while let Some(msg) = messenger.read() {
                 if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                     let pressed = match msg {
@@ -152,18 +196,6 @@ fn test_hello_world() {
                     drop(signals.write(Box::new(*msg)));
                 }
             }
-
-            let k = key.to_string();
-            // you use unmounter for storing closures that will be called when widget will be
-            // unmounted from the widget tree.
-            // closure provides arguments such as:
-            // - widget id
-            // - widget state
-            // - message sender (this one is used to message other widgets you know about)
-            // - signal sender (this one is used to message application host)
-            unmounter.listen(move |_, _, _, _| {
-                println!("=== BUTTON UNMOUNTED: {}", k);
-            });
 
             widget!{
                 (#{key} text: {label})

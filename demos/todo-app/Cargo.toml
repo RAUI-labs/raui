@@ -1,0 +1,11 @@
+[package]
+name = "todo-app"
+version = "0.1.0"
+authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+ggez = "0.5"
+raui-core = { version = "0.6", path = "../../raui-core" }
+raui-ggez-renderer = { version = "0.6", path = "../../raui-ggez-renderer" }

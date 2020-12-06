@@ -1,9 +1,9 @@
 [package]
-name = "raui-yaml-renderer"
+name = "raui-ggez-renderer"
 version = "0.6.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
-description = "RAUI renderer for YAML format"
+description = "RAUI renderer for GGEZ game engine"
 readme = "../README.md"
 license = "MIT"
 repository = "https://github.com/PsichiX/raui"
@@ -13,4 +13,4 @@ categories = ["gui", "rendering::graphics-api"]
 [dependencies]
 raui-core = { path = "../raui-core", version = "0.6" }
 serde = { version = "1", features = ["derive"] }
-serde_yaml = "0.8"
+ggez = "0.5"
