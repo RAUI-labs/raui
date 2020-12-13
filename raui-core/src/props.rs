@@ -38,6 +38,13 @@ impl Props {
         Self(Box::new(data))
     }
 
+    pub fn is<T>(&self) -> bool
+    where
+        T: 'static + PropsData,
+    {
+        self.0.as_any().downcast_ref::<T>().is_some()
+    }
+
     pub fn read<T>(&self) -> Result<&T, PropsError>
     where
         T: 'static + PropsData,
@@ -65,6 +72,21 @@ impl Props {
         T: 'static + PropsData + Clone + Default,
     {
         self.read_cloned().unwrap_or_default()
+    }
+}
+
+impl<T> From<T> for Props
+where
+    T: 'static + PropsData,
+{
+    fn from(data: T) -> Self {
+        Self(Box::from(data))
+    }
+}
+
+impl From<&Self> for Props {
+    fn from(data: &Self) -> Self {
+        data.clone()
     }
 }
 
@@ -135,6 +157,19 @@ where
 {
     fn clone_props(&self) -> Box<dyn PropsData> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl<T> PropsData for Box<T>
+where
+    T: PropsData + Clone,
+{
+    fn clone_props(&self) -> Box<dyn PropsData> {
+        self.clone()
     }
 
     fn as_any(&self) -> &dyn Any {

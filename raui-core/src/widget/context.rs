@@ -1,19 +1,15 @@
 use crate::{
-    messenger::Messenger,
     props::Props,
-    signals::SignalSender,
     state::State,
     widget::{node::WidgetNode, WidgetId, WidgetLifeCycle},
 };
 use std::collections::HashMap;
 
 pub struct WidgetContext<'a> {
-    pub id: WidgetId,
+    pub id: &'a WidgetId,
     pub key: &'a str,
     pub props: &'a Props,
     pub state: State<'a>,
-    pub messenger: Messenger,
-    pub signals: SignalSender,
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,

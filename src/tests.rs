@@ -1,6 +1,7 @@
 #![cfg(test)]
 
 use crate::prelude::*;
+use std::str::FromStr;
 
 #[test]
 fn test_macro() {
@@ -136,11 +137,11 @@ fn test_hello_world() {
 
     widget_hook! {
         use_empty(life_cycle) {
-            life_cycle.mount(|_, _, _, _| {
+            life_cycle.mount(|_, _, _, _, _| {
                 println!("=== BUTTON MOUNTED");
             });
 
-            life_cycle.change(|_, _, _, _| {
+            life_cycle.change(|_, _, _, _, _| {
                 println!("=== BUTTON CHANGED");
             });
 
@@ -162,14 +163,25 @@ fn test_hello_world() {
     widget_hook! {
         use_button(key, life_cycle) [use_empty] {
             let key_ = key.to_owned();
-            life_cycle.mount(move |_, state, _, _| {
+            life_cycle.mount(move |_, _, state, _, _| {
                 println!("=== BUTTON MOUNTED: {}", key_);
                 drop(state.write(ButtonState { pressed: false }));
             });
 
             let key_ = key.to_owned();
-            life_cycle.change(move |_, _, _, _| {
+            life_cycle.change(move |_, _, state, messenger, signals| {
                 println!("=== BUTTON CHANGED: {}", key_);
+                for msg in messenger.messages {
+                    if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
+                        let pressed = match msg {
+                            ButtonAction::Pressed => true,
+                            ButtonAction::Released => false,
+                        };
+                        println!("=== BUTTON ACTION: {:?}", msg);
+                        drop(state.write(ButtonState { pressed }));
+                        drop(signals.write(Box::new(*msg)));
+                    }
+                }
             });
 
             let key_ = key.to_owned();
@@ -180,25 +192,11 @@ fn test_hello_world() {
     }
 
     widget_component! {
-        button(key, props, state, messenger, signals) [use_button] {
+        button(key, props) [use_button] {
             println!("=== PROCESS BUTTON: {}", key);
-            // buttons use string as props data.
-            let label = props.read_cloned_or_default::<String>();
-
-            while let Some(msg) = messenger.read() {
-                if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
-                    let pressed = match msg {
-                        ButtonAction::Pressed => true,
-                        ButtonAction::Released => false,
-                    };
-                    println!("=== BUTTON ACTION: {:?}", msg);
-                    drop(state.write(ButtonState { pressed }));
-                    drop(signals.write(Box::new(*msg)));
-                }
-            }
 
             widget!{
-                (#{key} text: {label})
+                (#{key} text: {props})
             }
         }
     }
@@ -214,12 +212,12 @@ fn test_hello_world() {
     }
 
     widget_component! {
-        vertical_box(key, listed_slots) {
+        vertical_box(id, key, listed_slots) {
             // listed slots are just widget node children.
             // here we just unwrap widget units (final atomic UI elements that renderers read).
             let items = listed_slots
                 .into_iter()
-                .map(|slot| ListBoxItem {
+                .map(|slot| FlexBoxItem {
                     slot: slot.try_into().expect("Cannot convert slot to WidgetUnit!"),
                     ..Default::default()
                 })
@@ -227,7 +225,8 @@ fn test_hello_world() {
 
             // we use `{{{ ... }}}` to inform macro that this is widget unit.
             widget! {{{
-                ListBox {
+                FlexBox {
+                    id: id.to_owned(),
                     items,
                     ..Default::default()
                 }
@@ -236,11 +235,12 @@ fn test_hello_world() {
     }
 
     widget_component! {
-        text(key, props) {
+        text(id, key, props) {
             let text = props.read_cloned_or_default::<String>();
 
             widget!{{{
                 TextBox {
+                    id: id.to_owned(),
                     text,
                     ..Default::default()
                 }
@@ -290,5 +290,140 @@ fn test_hello_world() {
     application.apply(tree);
     if let Ok(output) = application.render(&mut HtmlRenderer::default()) {
         println!("=== OUTPUT:\n{}", output);
+    }
+}
+
+#[test]
+fn test_layout_no_wrap() {
+    let mut layout_engine = DefaultLayoutEngine::default();
+    let view = Rect {
+        left: 0.0,
+        right: 1024.0,
+        top: 0.0,
+        bottom: 576.0,
+    };
+
+    let tree = widget! {{{
+        FlexBox {
+            id: WidgetId::from_str("type:/list").unwrap(),
+            direction: FlexBoxDirection::VerticalTopToBottom,
+            separation: 10.0,
+            items: vec![
+                FlexBoxItem {
+                    fill: 1.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/0").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Exact(100.0),
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+                FlexBoxItem {
+                    fill: 1.0,
+                    grow: 1.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/1").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Fill,
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+                FlexBoxItem {
+                    fill: 1.0,
+                    grow: 2.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/2").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Fill,
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        }
+    }}};
+
+    let mut application = Application::new();
+    application.apply(tree);
+    application.forced_process();
+    println!(
+        "=== TREE INSPECTION:\n{:#?}",
+        application.rendered_tree().inspect()
+    );
+    if application.layout(view, &mut layout_engine).is_ok() {
+        println!("=== LAYOUT:\n{:#?}", application.layout_data());
+    }
+}
+
+#[test]
+fn test_layout_wrapping() {
+    let mut layout_engine = DefaultLayoutEngine::default();
+    let view = Rect {
+        left: 0.0,
+        right: 1024.0,
+        top: 0.0,
+        bottom: 576.0,
+    };
+
+    let tree = widget! {{{
+        FlexBox {
+            id: WidgetId::from_str("type:/list").unwrap(),
+            direction: FlexBoxDirection::HorizontalLeftToRight,
+            separation: 10.0,
+            wrap: true,
+            items: vec![
+                FlexBoxItem {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 1.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/0").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Exact(100.0),
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+                FlexBoxItem {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 1.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/1").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Exact(200.0),
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+                FlexBoxItem {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 2.0,
+                    slot: SizeBox {
+                        id: WidgetId::from_str("type:/list/2").unwrap(),
+                        width: SizeBoxSizeValue::Fill,
+                        height: SizeBoxSizeValue::Exact(50.0),
+                        ..Default::default()
+                    }.into(),
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        }
+    }}};
+
+    let mut application = Application::new();
+    application.apply(tree);
+    application.forced_process();
+    println!(
+        "=== TREE INSPECTION:\n{:#?}",
+        application.rendered_tree().inspect()
+    );
+    if application.layout(view, &mut layout_engine).is_ok() {
+        println!("=== LAYOUT:\n{:#?}", application.layout_data());
     }
 }

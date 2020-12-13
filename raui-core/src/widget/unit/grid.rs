@@ -1,7 +1,7 @@
 use crate::{
     widget::{
         unit::{WidgetUnit, WidgetUnitData},
-        utils::{Rect, Vec2},
+        utils::{IntRect, Rect},
         WidgetId,
     },
     Scalar,
@@ -9,38 +9,31 @@ use crate::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ContentBoxItemLayout {
-    #[serde(default)]
-    pub anchors: Rect,
-    #[serde(default)]
-    pub margin: Rect,
-    #[serde(default)]
-    pub align: Vec2,
-    #[serde(default)]
-    pub offset: Vec2,
-    #[serde(default)]
-    pub depth: Scalar,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ContentBoxItem {
+pub struct GridBoxItem {
     #[serde(default)]
     pub slot: WidgetUnit,
     #[serde(default)]
-    pub layout: ContentBoxItemLayout,
+    pub space_occupancy: IntRect,
+    #[serde(default)]
+    pub margin: Rect,
+    #[serde(default)]
+    pub horizontal_align: Scalar,
+    pub vertical_align: Scalar,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ContentBox {
+pub struct GridBox {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub items: Vec<ContentBoxItem>,
+    pub items: Vec<GridBoxItem>,
     #[serde(default)]
-    pub clipping: bool,
+    pub cols: usize,
+    #[serde(default)]
+    pub rows: usize,
 }
 
-impl WidgetUnitData for ContentBox {
+impl WidgetUnitData for GridBox {
     fn id(&self) -> &WidgetId {
         &self.id
     }

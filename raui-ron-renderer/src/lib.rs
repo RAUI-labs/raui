@@ -1,4 +1,4 @@
-use raui_core::{renderer::Renderer, widget::unit::WidgetUnit};
+use raui_core::{layout::Layout, renderer::Renderer, widget::unit::WidgetUnit};
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -9,7 +9,7 @@ pub struct RonRenderer {
 }
 
 impl Renderer<String, ron::error::Error> for RonRenderer {
-    fn render(&mut self, tree: &WidgetUnit) -> Result<String, ron::error::Error> {
+    fn render(&mut self, tree: &WidgetUnit, _layout: &Layout) -> Result<String, ron::error::Error> {
         if let Some(config) = &self.pretty {
             ron::ser::to_string_pretty(tree, config.clone())
         } else {
@@ -22,7 +22,11 @@ impl Renderer<String, ron::error::Error> for RonRenderer {
 pub struct RonValueRenderer;
 
 impl Renderer<ron::value::Value, ron::error::Error> for RonValueRenderer {
-    fn render(&mut self, tree: &WidgetUnit) -> Result<ron::value::Value, ron::error::Error> {
+    fn render(
+        &mut self,
+        tree: &WidgetUnit,
+        _layout: &Layout,
+    ) -> Result<ron::value::Value, ron::error::Error> {
         match ron::ser::to_string(tree) {
             Ok(s) => ron::value::Value::from_str(&s),
             Err(e) => Err(e),

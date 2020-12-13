@@ -1,16 +1,34 @@
 use crate::{
-    widget::utils::{Color, Rect},
+    widget::{
+        unit::WidgetUnitData,
+        utils::{Color, Rect},
+        WidgetId,
+    },
     Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ImageBoxImageScaling {
+    Resize,
+    Grid(Scalar),
+}
+
+impl Default for ImageBoxImageScaling {
+    fn default() -> Self {
+        Self::Resize
+    }
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxImage {
     #[serde(default)]
     pub id: String,
     #[serde(default)]
-    pub source_rect: Rect,
+    pub source_rect: Option<Rect>,
+    #[serde(default)]
+    pub scaling: ImageBoxImageScaling,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -34,10 +52,34 @@ impl Default for ImageBoxMaterial {
     }
 }
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum ImageBoxSizeValue {
+    Fill,
+    Exact(Scalar),
+}
+
+impl Default for ImageBoxSizeValue {
+    fn default() -> Self {
+        Self::Fill
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBox {
     #[serde(default)]
-    pub meta: Option<String>,
+    pub id: WidgetId,
+    #[serde(default)]
+    pub width: ImageBoxSizeValue,
+    #[serde(default)]
+    pub height: ImageBoxSizeValue,
+    #[serde(default)]
+    pub content_keep_aspect_ratio: bool,
     #[serde(default)]
     pub material: ImageBoxMaterial,
+}
+
+impl WidgetUnitData for ImageBox {
+    fn id(&self) -> &WidgetId {
+        &self.id
+    }
 }

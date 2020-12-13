@@ -5,18 +5,21 @@ pub mod unit;
 pub mod utils;
 
 use crate::{
-    messenger::MessageSender,
+    messenger::{MessageSender, Messenger},
+    props::Props,
     signals::SignalSender,
     state::{State, StateData},
     widget::{context::WidgetContext, node::WidgetNode},
 };
+use serde::{Deserialize, Serialize};
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
     ops::Deref,
+    str::FromStr,
 };
 
-#[derive(Default, Hash, Eq, PartialEq, Clone)]
+#[derive(Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct WidgetId {
     id: String,
     type_name_len: u8,
@@ -98,36 +101,51 @@ impl AsRef<str> for WidgetId {
     }
 }
 
+impl FromStr for WidgetId {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some(index) = s.find(':') {
+            let type_name = s[..index].to_owned();
+            let rest = &s[(index + 2)..];
+            let path = rest.split('/').map(|p| p.to_owned()).collect::<Vec<_>>();
+            Ok(Self::new(type_name, path))
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl std::fmt::Debug for WidgetId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.to_string())
+        f.write_str(self.as_ref())
     }
 }
 
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
 
-pub type WidgetMountClosure = dyn FnMut(&WidgetId, &State, &MessageSender, &SignalSender);
-pub type WidgetChangeClosure = dyn FnMut(&WidgetId, &State, &MessageSender, &SignalSender);
+pub type WidgetMountOrChangeClosure =
+    dyn FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender);
 pub type WidgetUnmountClosure = dyn FnMut(&WidgetId, &StateData, &MessageSender, &SignalSender);
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
-    mount: Vec<Box<WidgetMountClosure>>,
-    change: Vec<Box<WidgetChangeClosure>>,
+    mount: Vec<Box<WidgetMountOrChangeClosure>>,
+    change: Vec<Box<WidgetMountOrChangeClosure>>,
     unmount: Vec<Box<WidgetUnmountClosure>>,
 }
 
 impl WidgetLifeCycle {
     pub fn mount<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&WidgetId, &State, &MessageSender, &SignalSender),
+        F: 'static + FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender),
     {
         self.mount.push(Box::new(f));
     }
 
     pub fn change<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&WidgetId, &State, &MessageSender, &SignalSender),
+        F: 'static + FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender),
     {
         self.change.push(Box::new(f));
     }
@@ -142,8 +160,8 @@ impl WidgetLifeCycle {
     pub fn unwrap(
         self,
     ) -> (
-        Vec<Box<WidgetMountClosure>>,
-        Vec<Box<WidgetChangeClosure>>,
+        Vec<Box<WidgetMountOrChangeClosure>>,
+        Vec<Box<WidgetMountOrChangeClosure>>,
         Vec<Box<WidgetUnmountClosure>>,
     ) {
         let Self {
@@ -199,7 +217,7 @@ macro_rules! widget {
             #[allow(unused_mut)]
             let mut props = $crate::props::Props::default();
             $(
-                props = $crate::props::Props::new($props);
+                props = $crate::props::Props::from($props);
             )?
             #[allow(unused_mut)]
             let mut named_slots = std::collections::HashMap::new();
@@ -289,7 +307,12 @@ macro_rules! unpack_named_slots {
 
 #[macro_export]
 macro_rules! widget_component {
-    {$vis:vis $name:ident $( ( $( $param:ident ),+ ) )? $([ $( $hook:path ),+ ])? $code:block} => {
+    {
+        $vis:vis $name:ident
+        $( ( $( $param:ident ),+ ) )?
+        $([ $( $hook:path ),+ $(,)? ])?
+        $code:block
+    } => {
         #[allow(unused_variables)]
         #[allow(unused_mut)]
         $vis fn $name(
@@ -314,7 +337,12 @@ macro_rules! widget_component {
 
 #[macro_export]
 macro_rules! widget_hook {
-    {$vis:vis $name:ident $( ( $( $param:ident ),+ ) )? $([ $( $hook:path ),+ ])? $code:block} => {
+    {
+        $vis:vis $name:ident
+        $( ( $( $param:ident ),+ ) )?
+        $([ $( $hook:path ),+ $(,)? ])?
+        $code:block
+    } => {
         #[allow(unused_variables)]
         #[allow(unused_mut)]
         $vis fn $name(

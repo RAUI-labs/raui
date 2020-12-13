@@ -1,5 +1,5 @@
 use ggez::{graphics, Context};
-use raui_core::{renderer::Renderer, widget::unit::WidgetUnit};
+use raui_core::{layout::Layout, renderer::Renderer, widget::unit::WidgetUnit};
 
 pub struct GgezRenderer<'a> {
     context: &'a mut Context,
@@ -12,7 +12,7 @@ impl<'a> GgezRenderer<'a> {
 }
 
 impl<'a> Renderer<(), ()> for GgezRenderer<'a> {
-    fn render(&mut self, _tree: &WidgetUnit) -> Result<(), ()> {
+    fn render(&mut self, _tree: &WidgetUnit, _layout: &Layout) -> Result<(), ()> {
         let _size = graphics::size(self.context);
         Ok(())
     }

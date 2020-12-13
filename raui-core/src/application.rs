@@ -1,11 +1,12 @@
 use crate::{
+    layout::{Layout, LayoutEngine},
     messenger::{MessageReceiver, MessageSender, Messages, Messenger},
     renderer::Renderer,
     signals::{Signal, SignalReceiver, SignalSender},
     state::{State, StateData, StateUpdate},
     widget::{
         component::WidgetComponent, context::WidgetContext, node::WidgetNode, unit::WidgetUnit,
-        WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
+        utils::Rect, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
     },
 };
 use std::{
@@ -17,6 +18,7 @@ use std::{
 pub struct Application {
     tree: WidgetNode,
     rendered_tree: WidgetUnit,
+    layout: Layout,
     states: HashMap<WidgetId, StateData>,
     state_receivers: HashMap<WidgetId, Receiver<StateData>>,
     message_sender: MessageSender,
@@ -30,6 +32,13 @@ pub struct Application {
 
 impl Default for Application {
     fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Application {
+    #[inline]
+    pub fn new() -> Self {
         let (message_sender, message_receiver) = channel();
         let message_sender = MessageSender::new(message_sender);
         let message_receiver = MessageReceiver::new(message_receiver);
@@ -38,6 +47,7 @@ impl Default for Application {
         Self {
             tree: Default::default(),
             rendered_tree: Default::default(),
+            layout: Default::default(),
             states: Default::default(),
             state_receivers: Default::default(),
             message_sender,
@@ -48,13 +58,6 @@ impl Default for Application {
             dirty: true,
             render_changed: false,
         }
-    }
-}
-
-impl Application {
-    #[inline]
-    pub fn new() -> Self {
-        Self::default()
     }
 
     #[inline]
@@ -83,6 +86,11 @@ impl Application {
     }
 
     #[inline]
+    pub fn layout_data(&self) -> &Layout {
+        &self.layout
+    }
+
+    #[inline]
     pub fn apply(&mut self, tree: WidgetNode) {
         self.tree = tree;
         self.dirty = true;
@@ -94,7 +102,7 @@ impl Application {
     where
         R: Renderer<T, E>,
     {
-        renderer.render(&self.rendered_tree)
+        renderer.render(&self.rendered_tree, &self.layout)
     }
 
     #[inline]
@@ -103,9 +111,31 @@ impl Application {
         R: Renderer<T, E>,
     {
         if self.render_changed {
-            Ok(Some(renderer.render(&self.rendered_tree)?))
+            Ok(Some(self.render(renderer)?))
         } else {
             Ok(None)
+        }
+    }
+
+    #[inline]
+    pub fn layout<L, E>(&mut self, ui_space: Rect, layout_engine: &mut L) -> Result<(), E>
+    where
+        L: LayoutEngine<E>,
+    {
+        self.layout = layout_engine.layout(ui_space, &self.rendered_tree)?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn layout_change<L, E>(&mut self, ui_space: Rect, layout_engine: &mut L) -> Result<bool, E>
+    where
+        L: LayoutEngine<E>,
+    {
+        if self.render_changed {
+            self.layout(ui_space, layout_engine)?;
+            Ok(true)
+        } else {
+            Ok(false)
         }
     }
 
@@ -251,19 +281,15 @@ impl Application {
                     Some(messages) => messages,
                     None => Messages::new(),
                 };
-                let messenger = Messenger::new(self.message_sender.clone(), messages_list);
-                let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
                 let mut life_cycle = WidgetLifeCycle::default();
                 let (new_node, mounted) = match states.get(&id) {
                     Some(state) => {
                         let state = State::new(state, StateUpdate::new(sender.clone()));
                         let context = WidgetContext {
-                            id: id.clone(),
+                            id: &id,
                             key: &key,
                             props: &props,
                             state,
-                            messenger,
-                            signals,
                             life_cycle: &mut life_cycle,
                             named_slots,
                             listed_slots,
@@ -274,12 +300,10 @@ impl Application {
                         let state_data = Box::new(()) as StateData;
                         let state = State::new(&state_data, StateUpdate::new(sender.clone()));
                         let context = WidgetContext {
-                            id: id.clone(),
+                            id: &id,
                             key: &key,
                             props: &props,
                             state,
-                            messenger,
-                            signals,
                             life_cycle: &mut life_cycle,
                             named_slots,
                             listed_slots,
@@ -291,23 +315,26 @@ impl Application {
                 };
                 let (mount, change, unmount) = life_cycle.unwrap();
                 if mounted {
-                    if let Some(state) = new_states.get(&id) {
-                        for mut closure in mount {
+                    if !mount.is_empty() {
+                        if let Some(state) = new_states.get(&id) {
                             let state = State::new(state, StateUpdate::new(sender.clone()));
-                            let message_sender = self.message_sender.clone();
+                            let messenger =
+                                Messenger::new(self.message_sender.clone(), &messages_list);
                             let signal_sender =
                                 SignalSender::new(id.clone(), self.signal_sender.clone());
-                            (closure)(&id, &state, &message_sender, &signal_sender);
+                            for mut closure in mount {
+                                (closure)(&id, &props, &state, &messenger, &signal_sender);
+                            }
                         }
                     }
-                } else {
+                } else if !change.is_empty() {
                     if let Some(state) = states.get(&id) {
+                        let state = State::new(state, StateUpdate::new(sender.clone()));
+                        let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
+                        let signal_sender =
+                            SignalSender::new(id.clone(), self.signal_sender.clone());
                         for mut closure in change {
-                            let state = State::new(state, StateUpdate::new(sender.clone()));
-                            let message_sender = self.message_sender.clone();
-                            let signal_sender =
-                                SignalSender::new(id.clone(), self.signal_sender.clone());
-                            (closure)(&id, &state, &message_sender, &signal_sender);
+                            (closure)(&id, &props, &state, &messenger, &signal_sender);
                         }
                     }
                 }

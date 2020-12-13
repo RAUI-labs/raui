@@ -206,38 +206,38 @@ What happens under the hood:
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
 ```toml
 [dependencies]
-raui = { version = "0.5", features = ["all"] }
+raui = { version = "*", features = ["all"] }
 ```
 
 - `raui-core` - Core module that contains all RAUI essential logic.
   ```toml
   [dependencies]
-  raui-core = "0.5"
+  raui-core = "*"
   ```
 - `raui-binary-renderer` - Renders RAUI widget tree into binary format.
   ```toml
   [dependencies]
-  raui-binary-renderer = "0.5"
+  raui-binary-renderer = "*"
   ```
 - `raui-html-renderer` - Renders RAUI widget tree into simple HTML format.
   ```toml
   [dependencies]
-  raui-html-renderer = "0.5"
+  raui-html-renderer = "*"
   ```
 - `raui-json-renderer` - Renders RAUI widget tree into JSON format.
   ```toml
   [dependencies]
-  raui-json-renderer = "0.5"
+  raui-json-renderer = "*"
   ```
 - `raui-ron-renderer` - Renders RAUI widget tree into RON format.
   ```toml
   [dependencies]
-  raui-ron-renderer = "0.5"
+  raui-ron-renderer = "*"
   ```
 - `raui-yaml-renderer` - Renders RAUI widget tree into YAML format.
   ```toml
   [dependencies]
-  raui-yaml-renderer = "0.5"
+  raui-yaml-renderer = "*"
   ```
 
 ## TODO

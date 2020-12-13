@@ -112,7 +112,7 @@ impl Default for HtmlRenderer {
 }
 
 impl Renderer<String, Error> for HtmlRenderer {
-    fn render(&mut self, tree: &WidgetUnit) -> Result<String, Error> {
+    fn render(&mut self, tree: &WidgetUnit, _layout: &Layout) -> Result<String, Error> {
         let mut result = String::new();
         self.write_document(&mut result, tree)?;
         Ok(result)
@@ -267,15 +267,27 @@ impl HtmlRenderer {
                     }
                 } (writer, level));
             }
-            WidgetUnit::ImageBox(ImageBox { .. }) => {
-                node!(self: div [writer] level={level} {
-                } (writer, level));
-            }
-            WidgetUnit::ListBox(ListBox { items, .. }) => {
+            WidgetUnit::FlexBox(FlexBox { items, .. }) => {
                 node!(self: div [writer] level={level} {
                     for item in items {
                         self.write_node(writer, &item.slot, level)?;
                     }
+                } (writer, level));
+            }
+            WidgetUnit::GridBox(GridBox { items, .. }) => {
+                node!(self: div [writer] level={level} {
+                    for item in items {
+                        self.write_node(writer, &item.slot, level)?;
+                    }
+                } (writer, level));
+            }
+            WidgetUnit::SizeBox(SizeBox { slot, .. }) => {
+                node!(self: div [writer] level={level} {
+                    self.write_node(writer, slot, level)?;
+                } (writer, level));
+            }
+            WidgetUnit::ImageBox(ImageBox { .. }) => {
+                node!(self: div [writer] level={level} {
                 } (writer, level));
             }
             WidgetUnit::TextBox(TextBox { text, .. }) => {

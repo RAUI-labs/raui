@@ -7,5 +7,5 @@ publish = false
 
 [dependencies]
 ggez = "0.5"
-raui-core = { version = "0.6", path = "../../raui-core" }
-raui-ggez-renderer = { version = "0.6", path = "../../raui-ggez-renderer" }
+raui-core = { version = "0.7", path = "../../raui-core" }
+raui-ggez-renderer = { version = "0.7", path = "../../raui-ggez-renderer" }
