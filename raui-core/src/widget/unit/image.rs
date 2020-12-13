@@ -75,6 +75,8 @@ pub struct ImageBox {
     #[serde(default)]
     pub content_keep_aspect_ratio: bool,
     #[serde(default)]
+    pub content_aspect_ratio_alignment: (Scalar, Scalar),
+    #[serde(default)]
     pub material: ImageBoxMaterial,
 }
 

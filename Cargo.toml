@@ -65,5 +65,5 @@ members = [
   "raui-json-renderer",
   "raui-ron-renderer",
   "raui-yaml-renderer",
-  "demos/todo-app",
+  "demos/hello-world",
 ]

@@ -11,6 +11,7 @@ use raui_core::{
             text::TextBoxAlignment,
             WidgetUnit,
         },
+        utils::{lerp, Rect},
         WidgetId,
     },
     Scalar,
@@ -99,7 +100,75 @@ impl<'a> GgezRenderer<'a> {
                 ImageBoxMaterial::Image(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
                         if let Some(resource) = self.resources.images.get(&image.id) {
-                            let rect = item.ui_space;
+                            let rect = if unit.content_keep_aspect_ratio {
+                                let ox = item.ui_space.left;
+                                let oy = item.ui_space.top;
+                                let width = resource.width() as Scalar;
+                                let height = resource.height() as Scalar;
+                                if item.ui_space.width() >= item.ui_space.height() {
+                                    if width >= height {
+                                        let h = item.ui_space.height();
+                                        let w = h * width / height;
+                                        let o = lerp(
+                                            0.0,
+                                            item.ui_space.width() - w,
+                                            unit.content_aspect_ratio_alignment.0,
+                                        );
+                                        Rect {
+                                            left: o + ox,
+                                            right: w + o + ox,
+                                            top: oy,
+                                            bottom: h + oy,
+                                        }
+                                    } else {
+                                        let w = item.ui_space.width();
+                                        let h = w * height / width;
+                                        let o = lerp(
+                                            0.0,
+                                            item.ui_space.height() - h,
+                                            unit.content_aspect_ratio_alignment.1,
+                                        );
+                                        Rect {
+                                            left: ox,
+                                            right: w + ox,
+                                            top: o + oy,
+                                            bottom: h + o + oy,
+                                        }
+                                    }
+                                } else {
+                                    if width >= height {
+                                        let w = item.ui_space.width();
+                                        let h = w * height / width;
+                                        let o = lerp(
+                                            0.0,
+                                            item.ui_space.height() - h,
+                                            unit.content_aspect_ratio_alignment.1,
+                                        );
+                                        Rect {
+                                            left: ox,
+                                            right: w + ox,
+                                            top: o + oy,
+                                            bottom: h + o + oy,
+                                        }
+                                    } else {
+                                        let h = item.ui_space.height();
+                                        let w = h * width / height;
+                                        let o = lerp(
+                                            0.0,
+                                            item.ui_space.width() - w,
+                                            unit.content_aspect_ratio_alignment.0,
+                                        );
+                                        Rect {
+                                            left: o + ox,
+                                            right: w + o + ox,
+                                            top: oy,
+                                            bottom: h + oy,
+                                        }
+                                    }
+                                }
+                            } else {
+                                item.ui_space
+                            };
                             let mut builder = MeshBuilder::new();
                             match image.scaling {
                                 ImageBoxImageScaling::Strech => {
@@ -270,10 +339,15 @@ impl<'a> GgezRenderer<'a> {
                                 TextBoxAlignment::Right => Align::Right,
                             },
                         );
-                        if graphics::draw(
+                        // NOTE:
+                        // this is a solution for a but that when passing position to DrawParam,
+                        // next item after text is positioned relative to this text offset.
+                        graphics::queue_text(self.context, &text, [rect.left, rect.top], None);
+                        if graphics::draw_queued_text(
                             self.context,
-                            &text,
-                            graphics::DrawParam::default().dest([rect.left, rect.top]),
+                            graphics::DrawParam::default(),
+                            None,
+                            graphics::FilterMode::Linear,
                         )
                         .is_ok()
                         {

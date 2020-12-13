@@ -8,6 +8,7 @@
     1. [Widget](#widget)
     1. [Component Function](#component-function)
     1. [Hooks](#hooks)
+    1. [Layouting](#layouting)
 1. [Installation](#installation)
 1. [TODO](#todo)
 
@@ -96,14 +97,14 @@ widget_component! {
     vertical_box(key, listed_slots) {
         let items = listed_slots
             .into_iter()
-            .map(|slot| ListBoxItem {
+            .map(|slot| FlexBoxItem {
                 slot: slot.try_into().expect("Cannot convert slot to WidgetUnit!"),
                 ..Default::default()
             })
             .collect::<Vec<_>>();
 
         widget! {{{
-            ListBox {
+            FlexBox {
                 items,
                 ..Default::default()
             }
@@ -202,6 +203,21 @@ What happens under the hood:
     - `use_button` logic is executed
 - `button` logic is executed
 
+### Layouting
+**TODO**
+RAUI exposes API (`Application::layout()`) to allow use custom layout engines to perform widget tree positioning data, which is later used by custom UI renderers to specify boxes where given widgets should be placed.
+Every call to perform layouting will store a layout data inside Application, you can always access that data at any time.
+There is a `DefaultLayoutEngine` that does this in a generic way.
+If you find some part of its pipeline working different than what you've expected, feel free to create your custom layout engine!
+```rust
+let mut application = Application::new();
+application.apply(tree);
+application.process();
+if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
+    println!("LAYOUT:\n{:#?}", application.layout_data());
+}
+```
+
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
 ```toml
@@ -214,30 +230,35 @@ raui = { version = "*", features = ["all"] }
   [dependencies]
   raui-core = "*"
   ```
-- `raui-binary-renderer` - Renders RAUI widget tree into binary format.
+- `raui-binary-renderer` - Renders RAUI widget tree into binary format (`binary` feature).
   ```toml
   [dependencies]
   raui-binary-renderer = "*"
   ```
-- `raui-html-renderer` - Renders RAUI widget tree into simple HTML format.
+- `raui-html-renderer` - Renders RAUI widget tree into simple HTML format (`html` feature).
   ```toml
   [dependencies]
   raui-html-renderer = "*"
   ```
-- `raui-json-renderer` - Renders RAUI widget tree into JSON format.
+- `raui-json-renderer` - Renders RAUI widget tree into JSON format (`json` feature).
   ```toml
   [dependencies]
   raui-json-renderer = "*"
   ```
-- `raui-ron-renderer` - Renders RAUI widget tree into RON format.
+- `raui-ron-renderer` - Renders RAUI widget tree into RON format (`ron` feature).
   ```toml
   [dependencies]
   raui-ron-renderer = "*"
   ```
-- `raui-yaml-renderer` - Renders RAUI widget tree into YAML format.
+- `raui-yaml-renderer` - Renders RAUI widget tree into YAML format (`yaml` feature).
   ```toml
   [dependencies]
   raui-yaml-renderer = "*"
+  ```
+- `raui-ggez-renderer` - Renders RAUI widget tree with GGEZ renderer.
+  ```toml
+  [dependencies]
+  raui-ggez-renderer = "*"
   ```
 
 ## TODO
