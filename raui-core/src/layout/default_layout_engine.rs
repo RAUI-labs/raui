@@ -39,12 +39,12 @@ impl DefaultLayoutEngine {
             .iter()
             .filter_map(|item| {
                 let left = lerp(0.0, size_available.x, item.layout.anchors.left);
-                let right = lerp(0.0, size_available.x, item.layout.anchors.right);
-                let top = lerp(0.0, size_available.y, item.layout.anchors.top);
-                let bottom = lerp(0.0, size_available.y, item.layout.anchors.bottom);
                 let left = left + item.layout.margin.left + item.layout.offset.x;
+                let right = lerp(0.0, size_available.x, item.layout.anchors.right);
                 let right = right - item.layout.margin.right + item.layout.offset.x;
+                let top = lerp(0.0, size_available.y, item.layout.anchors.top);
                 let top = top + item.layout.margin.top + item.layout.offset.y;
+                let bottom = lerp(0.0, size_available.y, item.layout.anchors.bottom);
                 let bottom = bottom - item.layout.margin.bottom + item.layout.offset.y;
                 let width = (right - left).max(0.0);
                 let height = (bottom - top).max(0.0);
@@ -55,12 +55,12 @@ impl DefaultLayoutEngine {
                 if let Some(mut child) = Self::layout_node(size, &item.slot) {
                     let diff = child.local_space.width() - width;
                     let ox = lerp(0.0, diff, item.layout.align.x);
-                    child.local_space.left -= ox;
-                    child.local_space.right -= ox;
+                    child.local_space.left += left - ox;
+                    child.local_space.right += left - ox;
                     let diff = child.local_space.height() - height;
                     let oy = lerp(0.0, diff, item.layout.align.y);
-                    child.local_space.top -= oy;
-                    child.local_space.bottom -= oy;
+                    child.local_space.top += top - oy;
+                    child.local_space.bottom += top - oy;
                     Some(child)
                 } else {
                     None
@@ -444,19 +444,25 @@ impl DefaultLayoutEngine {
             .items
             .iter()
             .filter_map(|item| {
+                let left = item.space_occupancy.left as Scalar * cell_width;
+                let right = item.space_occupancy.right as Scalar * cell_width;
+                let top = item.space_occupancy.top as Scalar * cell_height;
+                let bottom = item.space_occupancy.bottom as Scalar * cell_height;
+                let width = (right - left - item.margin.left - item.margin.right).max(0.0);
+                let height = (bottom - top - item.margin.top - item.margin.bottom).max(0.0);
                 let size = Vec2 {
-                    x: (cell_width - item.margin.left - item.margin.right).max(0.0),
-                    y: (cell_height - item.margin.top - item.margin.bottom).max(0.0),
+                    x: width,
+                    y: height,
                 };
                 if let Some(mut child) = Self::layout_node(size, &item.slot) {
-                    let diff = cell_width - child.local_space.width();
+                    let diff = size.x - child.local_space.width();
                     let ox = lerp(0.0, diff, item.horizontal_align);
-                    let diff = cell_height - child.local_space.height();
+                    let diff = size.y - child.local_space.height();
                     let oy = lerp(0.0, diff, item.vertical_align);
-                    child.local_space.left = child.local_space.left + item.margin.left - ox;
-                    child.local_space.right = child.local_space.right + item.margin.left - ox;
-                    child.local_space.top = child.local_space.top + item.margin.top - oy;
-                    child.local_space.bottom = child.local_space.bottom + item.margin.top - oy;
+                    child.local_space.left += left + item.margin.left - ox;
+                    child.local_space.right += left + item.margin.left - ox;
+                    child.local_space.top += top + item.margin.top - oy;
+                    child.local_space.bottom += top + item.margin.top - oy;
                     Some(child)
                 } else {
                     None

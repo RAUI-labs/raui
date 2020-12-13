@@ -4,7 +4,20 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TextBoxAlignment {
+    Left,
+    Center,
+    Right,
+}
+
+impl Default for TextBoxAlignment {
+    fn default() -> Self {
+        Self::Left
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextBoxDirection {
     HorizontalLeftToRight,
     HorizontalRightToLeft,
@@ -15,6 +28,24 @@ pub enum TextBoxDirection {
 impl Default for TextBoxDirection {
     fn default() -> Self {
         Self::HorizontalLeftToRight
+    }
+}
+
+impl TextBoxDirection {
+    pub fn is_horizontal(&self) -> bool {
+        *self == Self::HorizontalLeftToRight || *self == Self::HorizontalRightToLeft
+    }
+
+    pub fn is_vertical(&self) -> bool {
+        *self == Self::VerticalTopToBottom || *self == Self::VerticalBottomToTop
+    }
+
+    pub fn is_order_ascending(&self) -> bool {
+        *self == Self::HorizontalLeftToRight || *self == Self::VerticalTopToBottom
+    }
+
+    pub fn is_order_descending(&self) -> bool {
+        *self == Self::HorizontalRightToLeft || *self == Self::VerticalBottomToTop
     }
 }
 
@@ -52,6 +83,8 @@ pub struct TextBox {
     pub width: TextBoxSizeValue,
     #[serde(default)]
     pub height: TextBoxSizeValue,
+    #[serde(default)]
+    pub alignment: TextBoxAlignment,
     #[serde(default)]
     pub direction: TextBoxDirection,
     #[serde(default)]
