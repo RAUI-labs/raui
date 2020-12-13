@@ -2,16 +2,24 @@
 extern crate raui_core;
 
 mod app;
-mod components;
+mod ui;
 
 use crate::app::App;
 use ggez::{event, ContextBuilder};
 
 fn main() {
+    let resource_dir = if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        let mut path = std::path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        path
+    } else {
+        std::path::PathBuf::from("./resources")
+    };
     let (mut ctx, mut event_loop) = ContextBuilder::new("TODO App", "Cool Game Author")
+        .add_resource_path(resource_dir)
         .build()
         .expect("Could not create GGEZ context");
-    let mut app = App::new();
+    let mut app = App::new(&mut ctx);
     if let Err(error) = event::run(&mut ctx, &mut event_loop, &mut app) {
         println!("Error: {}", error)
     }
