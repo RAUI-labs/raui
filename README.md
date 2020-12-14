@@ -228,7 +228,7 @@ if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
 
 ## Media
 - `GGEZ Hello World` with vertical flex box, text box, grid box and image box.
-  ![GGEZ Hello World](./media/ggez-hello-world.png)
+  ![GGEZ Hello World](https://github.com/PsichiX/raui/blob/master/media/ggez-hello-world.png?raw=true)
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
