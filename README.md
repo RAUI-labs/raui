@@ -9,6 +9,7 @@
     1. [Component Function](#component-function)
     1. [Hooks](#hooks)
     1. [Layouting](#layouting)
+1. [Media](#media)
 1. [Installation](#installation)
 1. [TODO](#todo)
 
@@ -224,6 +225,10 @@ if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
     println!("LAYOUT:\n{:#?}", application.layout_data());
 }
 ```
+
+## Media
+- `GGEZ Hello World` with vertical flex box, text box, grid box and image box.
+  ![GGEZ Hello World](./media/ggez-hello-world.png)
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).

@@ -12,6 +12,7 @@ categories = ["gui", "rendering::graphics-api"]
 exclude = [
   ".github/**",
   "demos/**",
+  "media/**",
 ]
 
 [features]
