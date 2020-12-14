@@ -204,8 +204,9 @@ What happens under the hood:
 - `button` logic is executed
 
 ### Layouting
-**TODO**
-RAUI exposes API (`Application::layout()`) to allow use custom layout engines to perform widget tree positioning data, which is later used by custom UI renderers to specify boxes where given widgets should be placed.
+_**TODO**_
+
+RAUI exposes API (`Application::layout()`) to allow use of custom layout engines to perform widget tree positioning data, which is later used by custom UI renderers to specify boxes where given widgets should be placed.
 Every call to perform layouting will store a layout data inside Application, you can always access that data at any time.
 There is a `DefaultLayoutEngine` that does this in a generic way.
 If you find some part of its pipeline working different than what you've expected, feel free to create your custom layout engine!

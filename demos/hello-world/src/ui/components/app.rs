@@ -36,8 +36,10 @@ widget_component! {
                                             id: "cat".to_owned(),
                                             ..Default::default()
                                         }),
-                                        content_keep_aspect_ratio: true,
-                                        content_aspect_ratio_alignment: (1.0, 0.5),
+                                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                                            horizontal_alignment: 1.0,
+                                            vertical_alignment: 0.5
+                                        }),
                                         ..Default::default()
                                     }.into(),
                                     space_occupancy: IntRect {
@@ -81,8 +83,10 @@ widget_component! {
                                             id: "cats".to_owned(),
                                             ..Default::default()
                                         }),
-                                        content_keep_aspect_ratio: true,
-                                        content_aspect_ratio_alignment: (0.5, 0.5),
+                                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                                            horizontal_alignment: 0.5,
+                                            vertical_alignment: 0.5
+                                        }),
                                         ..Default::default()
                                     }.into(),
                                     space_occupancy: IntRect {

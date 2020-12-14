@@ -100,7 +100,7 @@ impl<'a> GgezRenderer<'a> {
                 ImageBoxMaterial::Image(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
                         if let Some(resource) = self.resources.images.get(&image.id) {
-                            let rect = if unit.content_keep_aspect_ratio {
+                            let rect = if let Some(aspect) = unit.content_keep_aspect_ratio {
                                 let ox = item.ui_space.left;
                                 let oy = item.ui_space.top;
                                 let width = resource.width() as Scalar;
@@ -112,7 +112,7 @@ impl<'a> GgezRenderer<'a> {
                                         let o = lerp(
                                             0.0,
                                             item.ui_space.width() - w,
-                                            unit.content_aspect_ratio_alignment.0,
+                                            aspect.horizontal_alignment,
                                         );
                                         Rect {
                                             left: o + ox,
@@ -126,7 +126,7 @@ impl<'a> GgezRenderer<'a> {
                                         let o = lerp(
                                             0.0,
                                             item.ui_space.height() - h,
-                                            unit.content_aspect_ratio_alignment.1,
+                                            aspect.vertical_alignment,
                                         );
                                         Rect {
                                             left: ox,
@@ -142,7 +142,7 @@ impl<'a> GgezRenderer<'a> {
                                         let o = lerp(
                                             0.0,
                                             item.ui_space.height() - h,
-                                            unit.content_aspect_ratio_alignment.1,
+                                            aspect.vertical_alignment,
                                         );
                                         Rect {
                                             left: ox,
@@ -156,7 +156,7 @@ impl<'a> GgezRenderer<'a> {
                                         let o = lerp(
                                             0.0,
                                             item.ui_space.width() - w,
-                                            unit.content_aspect_ratio_alignment.0,
+                                            aspect.horizontal_alignment,
                                         );
                                         Rect {
                                             left: o + ox,
@@ -340,7 +340,7 @@ impl<'a> GgezRenderer<'a> {
                             },
                         );
                         // NOTE:
-                        // this is a solution for a but that when passing position to DrawParam,
+                        // this is a solution for a bug that when passing position to DrawParam,
                         // next item after text is positioned relative to this text offset.
                         graphics::queue_text(self.context, &text, [rect.left, rect.top], None);
                         if graphics::draw_queued_text(

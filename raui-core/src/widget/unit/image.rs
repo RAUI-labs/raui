@@ -64,6 +64,14 @@ impl Default for ImageBoxSizeValue {
     }
 }
 
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+pub struct ImageBoxAspectRatio {
+    #[serde(default)]
+    pub horizontal_alignment: Scalar,
+    #[serde(default)]
+    pub vertical_alignment: Scalar,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBox {
     #[serde(default)]
@@ -73,9 +81,7 @@ pub struct ImageBox {
     #[serde(default)]
     pub height: ImageBoxSizeValue,
     #[serde(default)]
-    pub content_keep_aspect_ratio: bool,
-    #[serde(default)]
-    pub content_aspect_ratio_alignment: (Scalar, Scalar),
+    pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,
 }
