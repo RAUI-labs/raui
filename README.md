@@ -34,8 +34,9 @@ let tree = widget! {
 };
 let mut renderer = HtmlRenderer::default();
 application.apply(tree);
+application.layout(view, &mut DefaultLayoutEngine);
 if let Ok(output) = application.render(&mut renderer) {
-    println!("{}", output);
+    println!("OUTPUT: {}", output);
 }
 ```
 
@@ -134,23 +135,26 @@ widget_hook! {
         life_cycle.mount(move |_, state, _, _| {
             drop(state.write(ButtonState { pressed: false }));
         });
+
+        let key_ = key.to_owned();
+        life_cycle.change(move |_, _, state, messenger, signals| {
+            for msg in messenger.messages {
+                if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
+                    let pressed = match msg {
+                        ButtonAction::Pressed => true,
+                        ButtonAction::Released => false,
+                    };
+                    drop(state.write(ButtonState { pressed }));
+                    drop(signals.write(Box::new(*msg)));
+                }
+            }
+        });
     }
 }
 
 widget_component! {
     button(key, props, state, messenger, signals) [use_button] {
         let label = props.read_cloned_or_default::<String>();
-
-        while let Some(msg) = messenger.read() {
-            if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
-                let pressed = match msg {
-                    ButtonAction::Pressed => true,
-                    ButtonAction::Released => false,
-                };
-                drop(state.write(ButtonState { pressed }));
-                drop(signals.write(Box::new(*msg)));
-            }
-        }
 
         widget!{
             (#{key} text: {label})
@@ -168,30 +172,32 @@ widget_hook! {
 }
 
 widget_hook! {
-    use_button(life_cycle) [use_empty] {
-        life_cycle.mount(move |_, state, _, _| {
+    use_button(key, life_cycle) [use_empty] {
+        let key_ = key.to_owned();
+        life_cycle.mount(move |_, _, state, _, _| {
             drop(state.write(ButtonState { pressed: false }));
+        });
+
+        let key_ = key.to_owned();
+        life_cycle.change(move |_, _, state, messenger, signals| {
+            for msg in messenger.messages {
+                if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
+                    let pressed = match msg {
+                        ButtonAction::Pressed => true,
+                        ButtonAction::Released => false,
+                    };
+                    drop(state.write(ButtonState { pressed }));
+                    drop(signals.write(Box::new(*msg)));
+                }
+            }
         });
     }
 }
 
 widget_component! {
-    button(key, props, state, messenger, signals) [use_button] {
-        let label = props.read_cloned_or_default::<String>();
-
-        while let Some(msg) = messenger.read() {
-            if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
-                let pressed = match msg {
-                    ButtonAction::Pressed => true,
-                    ButtonAction::Released => false,
-                };
-                drop(state.write(ButtonState { pressed }));
-                drop(signals.write(Box::new(*msg)));
-            }
-        }
-
+    button(key, props) [use_button] {
         widget!{
-            (#{key} text: {label})
+            (#{key} text: {props})
         }
     }
 }
