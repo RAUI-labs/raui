@@ -6,6 +6,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
 ggez = "0.5"
-raui-core = { version = "0.8", path = "../../raui-core" }
-raui-ggez-renderer = { version = "0.8", path = "../../raui-ggez-renderer" }
+raui-core = { version = "0.9", path = "../../raui-core" }
+raui-ggez-renderer = { version = "0.9", path = "../../raui-ggez-renderer" }

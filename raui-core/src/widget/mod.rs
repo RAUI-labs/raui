@@ -178,7 +178,7 @@ macro_rules! widget {
     {()} => ($crate::widget::node::WidgetNode::None);
     {[]} => ($crate::widget::node::WidgetNode::Unit(Default::default()));
     ({{$expr:expr}}) => {
-        $crate::widget::node::WidgetNode::Unit($crate::widget::unit::WidgetUnit::from($expr))
+        $crate::widget::node::WidgetNode::Unit($crate::widget::unit::WidgetUnitNode::from($expr))
     };
     ({$expr:expr}) => {
         $crate::widget::node::WidgetNode::from($expr)
@@ -196,6 +196,9 @@ macro_rules! widget {
                 {
                     $($named_slot_name:ident = $named_slot_widget:tt)+
                 }
+            )?
+            $(
+                |[ $listed_slot_widgets:expr ]|
             )?
             $(
                 [
@@ -223,7 +226,7 @@ macro_rules! widget {
             let mut named_slots = std::collections::HashMap::new();
             $(
                 $(
-                    let widget = widget_wrap!{$named_slot_widget};
+                    let widget = $crate::widget_wrap!{$named_slot_widget};
                     if widget.is_some() {
                         let name = stringify!($named_slot_name).to_owned();
                         named_slots.insert(name, widget);
@@ -233,8 +236,11 @@ macro_rules! widget {
             #[allow(unused_mut)]
             let mut listed_slots = vec![];
             $(
+                listed_slots.extend($listed_slot_widgets);
+            )?
+            $(
                 $(
-                    let widget = widget_wrap!{$listed_slot_widget};
+                    let widget = $crate::widget_wrap!{$listed_slot_widget};
                     if widget.is_some() {
                         listed_slots.push(widget);
                     }
@@ -259,7 +265,7 @@ macro_rules! widget_wrap {
         $crate::widget::node::WidgetNode::from($expr)
     };
     ($tree:tt) => {
-        widget!($tree)
+        $crate::widget!($tree)
     };
 }
 
@@ -275,8 +281,13 @@ macro_rules! destruct {
 
 #[macro_export]
 macro_rules! unpack_context {
+    ($value:expr => $prop:ident) => {
+        #[allow(unused_mut)]
+        let mut $prop = match $value {
+            $crate::widget::context::WidgetContext { $prop, .. } => $prop,
+        };
+    };
     ($value:expr => { $($prop:ident),+ }) => {
-        #[allow(unused_variables)]
         #[allow(unused_mut)]
         let ( $( mut $prop ),+ ) = match $value {
             $crate::widget::context::WidgetContext { $( $prop ),+ , .. } => ( $( $prop ),+ ),
@@ -286,15 +297,24 @@ macro_rules! unpack_context {
 
 #[macro_export]
 macro_rules! unpack_named_slots {
+    ($map:expr => $name:ident) => {
+        #[allow(unused_mut)]
+        let mut $name = {
+            let mut map = $map;
+            match map.remove(stringify!($name)) {
+                Some(widget) => widget,
+                None => $crate::widget::node::WidgetNode::None,
+            }
+        };
+    };
     ($map:expr => { $($name:ident),+ }) => {
-        #[allow(unused_variables)]
-        let ( $( $name ),+ ) = {
+        #[allow(unused_mut)]
+        let ( $( mut $name ),+ ) = {
             let mut map = $map;
             (
                 $(
                     {
-                        let name = stringify!($name);
-                        match map.remove(name) {
+                        match map.remove(stringify!($name)) {
                             Some(widget) => widget,
                             None => $crate::widget::node::WidgetNode::None,
                         }
@@ -327,7 +347,7 @@ macro_rules! widget_component {
             }
             {
                 $(
-                    unpack_context!(context => { $( $param ),+ });
+                    $crate::unpack_context!(context => { $( $param ),+ });
                 )?
                 $code
             }
@@ -337,6 +357,32 @@ macro_rules! widget_component {
 
 #[macro_export]
 macro_rules! widget_hook {
+    {
+        $vis:vis $name:ident
+        $( $param:ident )?
+        $([ $( $hook:path ),+ $(,)? ])?
+        $code:block
+    } => {
+        #[allow(unused_variables)]
+        #[allow(unused_mut)]
+        $vis fn $name(
+            context: &mut $crate::widget::context::WidgetContext
+        ) {
+            {
+                $(
+                    $(
+                        context.use_hook($hook);
+                    ),+
+                )?
+            }
+            {
+                $(
+                    $crate::unpack_context!(context => $param);
+                )?
+                $code
+            }
+        }
+    };
     {
         $vis:vis $name:ident
         $( ( $( $param:ident ),+ ) )?
@@ -357,7 +403,7 @@ macro_rules! widget_hook {
             }
             {
                 $(
-                    unpack_context!(context => { $( $param ),+ });
+                    $crate::unpack_context!(context => { $( $param ),+ });
                 )?
                 $code
             }

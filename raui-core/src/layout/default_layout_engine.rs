@@ -106,7 +106,7 @@ impl DefaultLayoutEngine {
             let mut lines = vec![];
             let mut line = vec![];
             for item in items {
-                let local_main = item.basis.unwrap_or_else(|| {
+                let local_main = item.layout.basis.unwrap_or_else(|| {
                     if unit.direction.is_horizontal() {
                         Self::calc_unit_min_width(&item.slot)
                     } else {
@@ -115,9 +115,9 @@ impl DefaultLayoutEngine {
                 });
                 let local_main = local_main
                     + if unit.direction.is_horizontal() {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     } else {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     };
                 let local_cross = if unit.direction.is_horizontal() {
                     Self::calc_unit_min_height(&item.slot)
@@ -126,9 +126,9 @@ impl DefaultLayoutEngine {
                 };
                 let local_cross = local_cross
                     + if unit.direction.is_horizontal() {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     } else {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     };
                 if !line.is_empty() && main + local_main > main_available {
                     main += line.len().checked_sub(1).unwrap_or(0) as Scalar * unit.separation;
@@ -139,7 +139,7 @@ impl DefaultLayoutEngine {
                 }
                 main += local_main;
                 cross = cross.max(local_cross);
-                grow += item.grow;
+                grow += item.layout.grow;
                 line.push((item, local_main, local_cross));
             }
             main += line.len().checked_sub(1).unwrap_or(0) as Scalar * unit.separation;
@@ -157,7 +157,7 @@ impl DefaultLayoutEngine {
                 let child_main = if main < main_available {
                     local_main
                         + if grow > 0.0 {
-                            diff * item.grow / grow
+                            diff * item.layout.grow / grow
                         } else {
                             0.0
                         }
@@ -166,19 +166,19 @@ impl DefaultLayoutEngine {
                 };
                 let child_main = (child_main
                     - if unit.direction.is_horizontal() {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     } else {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     })
                 .max(0.0);
                 let child_cross = (local_cross
                     - if unit.direction.is_horizontal() {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     } else {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     })
                 .max(0.0);
-                let child_cross = lerp(child_cross, cross_available, item.fill);
+                let child_cross = lerp(child_cross, cross_available, item.layout.fill);
                 let rect = if unit.direction.is_horizontal() {
                     Vec2 {
                         x: child_main,
@@ -193,42 +193,45 @@ impl DefaultLayoutEngine {
                 if let Some(mut child) = Self::layout_node(rect, &item.slot) {
                     if unit.direction.is_horizontal() {
                         if unit.direction.is_order_ascending() {
-                            child.local_space.left += new_main + item.margin.left;
-                            child.local_space.right += new_main + item.margin.left;
+                            child.local_space.left += new_main + item.layout.margin.left;
+                            child.local_space.right += new_main + item.layout.margin.left;
                         } else {
                             let left = child.local_space.left;
                             let right = child.local_space.right;
                             child.local_space.left =
-                                size_available.x - right - new_main - item.margin.right;
+                                size_available.x - right - new_main - item.layout.margin.right;
                             child.local_space.right =
-                                size_available.x - left - new_main - item.margin.right;
+                                size_available.x - left - new_main - item.layout.margin.right;
                         }
                         new_main += rect.x;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.height(),
-                            item.align,
+                            item.layout.align,
                         );
-                        child.local_space.top += cross_max + item.margin.top + diff;
-                        child.local_space.bottom += cross_max + item.margin.top + diff;
+                        child.local_space.top += cross_max + item.layout.margin.top + diff;
+                        child.local_space.bottom += cross_max + item.layout.margin.top + diff;
                         new_cross = new_cross.max(rect.y);
                     } else {
                         if unit.direction.is_order_ascending() {
-                            child.local_space.top += new_main + item.margin.top;
-                            child.local_space.bottom += new_main + item.margin.top;
+                            child.local_space.top += new_main + item.layout.margin.top;
+                            child.local_space.bottom += new_main + item.layout.margin.top;
                         } else {
                             let top = child.local_space.top;
                             let bottom = child.local_space.bottom;
                             child.local_space.top =
-                                size_available.y - bottom - new_main - item.margin.bottom;
+                                size_available.y - bottom - new_main - item.layout.margin.bottom;
                             child.local_space.bottom =
-                                size_available.y - top - new_main - item.margin.bottom;
+                                size_available.y - top - new_main - item.layout.margin.bottom;
                         }
                         new_main += rect.y;
-                        let diff =
-                            lerp(0.0, cross_available - child.local_space.width(), item.align);
-                        child.local_space.left += cross_max + item.margin.left + diff;
-                        child.local_space.right += cross_max + item.margin.left + diff;
+                        let diff = lerp(
+                            0.0,
+                            cross_available - child.local_space.width(),
+                            item.layout.align,
+                        );
+                        child.local_space.left += cross_max + item.layout.margin.left + diff;
+                        child.local_space.right += cross_max + item.layout.margin.left + diff;
                         new_cross = new_cross.max(rect.x);
                     }
                     new_main += unit.separation;
@@ -280,7 +283,7 @@ impl DefaultLayoutEngine {
         let axis_sizes = items
             .iter()
             .map(|item| {
-                let local_main = item.basis.unwrap_or_else(|| {
+                let local_main = item.layout.basis.unwrap_or_else(|| {
                     if unit.direction.is_horizontal() {
                         Self::calc_unit_min_width(&item.slot)
                     } else {
@@ -289,9 +292,9 @@ impl DefaultLayoutEngine {
                 });
                 let local_main = local_main
                     + if unit.direction.is_horizontal() {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     } else {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     };
                 let local_cross = if unit.direction.is_horizontal() {
                     Self::calc_unit_min_height(&item.slot)
@@ -300,15 +303,15 @@ impl DefaultLayoutEngine {
                 };
                 let local_cross = local_cross
                     + if unit.direction.is_horizontal() {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     } else {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     };
-                let local_cross = lerp(local_cross, cross_available, item.fill);
+                let local_cross = lerp(local_cross, cross_available, item.layout.fill);
                 main += local_main;
                 cross = cross.max(local_cross);
-                grow += item.grow;
-                shrink += item.shrink;
+                grow += item.layout.grow;
+                shrink += item.layout.shrink;
                 (local_main, local_cross)
             })
             .collect::<Vec<_>>();
@@ -323,14 +326,14 @@ impl DefaultLayoutEngine {
                 let child_main = if main < main_available {
                     axis_size.0
                         + if grow > 0.0 {
-                            diff * item.grow / grow
+                            diff * item.layout.grow / grow
                         } else {
                             0.0
                         }
                 } else if main > main_available {
                     axis_size.0
                         + if shrink > 0.0 {
-                            diff * item.shrink / shrink
+                            diff * item.layout.shrink / shrink
                         } else {
                             0.0
                         }
@@ -339,16 +342,16 @@ impl DefaultLayoutEngine {
                 };
                 let child_main = (child_main
                     - if unit.direction.is_horizontal() {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     } else {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     })
                 .max(0.0);
                 let child_cross = (axis_size.1
                     - if unit.direction.is_horizontal() {
-                        item.margin.top + item.margin.bottom
+                        item.layout.margin.top + item.layout.margin.bottom
                     } else {
-                        item.margin.left + item.margin.right
+                        item.layout.margin.left + item.layout.margin.right
                     })
                 .max(0.0);
                 let rect = if unit.direction.is_horizontal() {
@@ -365,42 +368,45 @@ impl DefaultLayoutEngine {
                 if let Some(mut child) = Self::layout_node(rect, &item.slot) {
                     if unit.direction.is_horizontal() {
                         if unit.direction.is_order_ascending() {
-                            child.local_space.left += new_main + item.margin.left;
-                            child.local_space.right += new_main + item.margin.left;
+                            child.local_space.left += new_main + item.layout.margin.left;
+                            child.local_space.right += new_main + item.layout.margin.left;
                         } else {
                             let left = child.local_space.left;
                             let right = child.local_space.right;
                             child.local_space.left =
-                                size_available.x - right - new_main - item.margin.right;
+                                size_available.x - right - new_main - item.layout.margin.right;
                             child.local_space.right =
-                                size_available.x - left - new_main - item.margin.right;
+                                size_available.x - left - new_main - item.layout.margin.right;
                         }
                         new_main += rect.x;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.height(),
-                            item.align,
+                            item.layout.align,
                         );
-                        child.local_space.top += item.margin.top + diff;
-                        child.local_space.bottom += item.margin.top + diff;
+                        child.local_space.top += item.layout.margin.top + diff;
+                        child.local_space.bottom += item.layout.margin.top + diff;
                         new_cross = new_cross.max(rect.y);
                     } else {
                         if unit.direction.is_order_ascending() {
-                            child.local_space.top += new_main + item.margin.top;
-                            child.local_space.bottom += new_main + item.margin.top;
+                            child.local_space.top += new_main + item.layout.margin.top;
+                            child.local_space.bottom += new_main + item.layout.margin.top;
                         } else {
                             let top = child.local_space.top;
                             let bottom = child.local_space.bottom;
                             child.local_space.top =
-                                size_available.y - bottom - new_main - item.margin.bottom;
+                                size_available.y - bottom - new_main - item.layout.margin.bottom;
                             child.local_space.bottom =
-                                size_available.y - top - new_main - item.margin.bottom;
+                                size_available.y - top - new_main - item.layout.margin.bottom;
                         }
                         new_main += rect.y;
-                        let diff =
-                            lerp(0.0, cross_available - child.local_space.width(), item.align);
-                        child.local_space.left += item.margin.left + diff;
-                        child.local_space.right += item.margin.left + diff;
+                        let diff = lerp(
+                            0.0,
+                            cross_available - child.local_space.width(),
+                            item.layout.align,
+                        );
+                        child.local_space.left += item.layout.margin.left + diff;
+                        child.local_space.right += item.layout.margin.left + diff;
                         new_cross = new_cross.max(rect.x);
                     }
                     new_main += unit.separation;
@@ -444,25 +450,27 @@ impl DefaultLayoutEngine {
             .items
             .iter()
             .filter_map(|item| {
-                let left = item.space_occupancy.left as Scalar * cell_width;
-                let right = item.space_occupancy.right as Scalar * cell_width;
-                let top = item.space_occupancy.top as Scalar * cell_height;
-                let bottom = item.space_occupancy.bottom as Scalar * cell_height;
-                let width = (right - left - item.margin.left - item.margin.right).max(0.0);
-                let height = (bottom - top - item.margin.top - item.margin.bottom).max(0.0);
+                let left = item.layout.space_occupancy.left as Scalar * cell_width;
+                let right = item.layout.space_occupancy.right as Scalar * cell_width;
+                let top = item.layout.space_occupancy.top as Scalar * cell_height;
+                let bottom = item.layout.space_occupancy.bottom as Scalar * cell_height;
+                let width =
+                    (right - left - item.layout.margin.left - item.layout.margin.right).max(0.0);
+                let height =
+                    (bottom - top - item.layout.margin.top - item.layout.margin.bottom).max(0.0);
                 let size = Vec2 {
                     x: width,
                     y: height,
                 };
                 if let Some(mut child) = Self::layout_node(size, &item.slot) {
                     let diff = size.x - child.local_space.width();
-                    let ox = lerp(0.0, diff, item.horizontal_align);
+                    let ox = lerp(0.0, diff, item.layout.horizontal_align);
                     let diff = size.y - child.local_space.height();
-                    let oy = lerp(0.0, diff, item.vertical_align);
-                    child.local_space.left += left + item.margin.left - ox;
-                    child.local_space.right += left + item.margin.left - ox;
-                    child.local_space.top += top + item.margin.top - oy;
-                    child.local_space.bottom += top + item.margin.top - oy;
+                    let oy = lerp(0.0, diff, item.layout.vertical_align);
+                    child.local_space.left += left + item.layout.margin.left - ox;
+                    child.local_space.right += left + item.layout.margin.left - ox;
+                    child.local_space.top += top + item.layout.margin.top - oy;
+                    child.local_space.bottom += top + item.layout.margin.top - oy;
                     Some(child)
                 } else {
                     None

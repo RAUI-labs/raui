@@ -1,10 +1,11 @@
-use crate::ui::components::{app::app, title_bar::title_bar};
+use crate::ui::components::{app::app, content::content, title_bar::title_bar};
 use ggez::{event::EventHandler, graphics, Context, GameResult};
 use raui_core::{application::Application as UI, prelude::*};
-use raui_ggez_renderer::{GgezRenderer, GgezResources};
+use raui_ggez_renderer::prelude::*;
 
 pub struct App {
     ui: UI,
+    ui_interactions: GgezInteractionsEngine,
     ui_resources: GgezResources,
 }
 
@@ -25,25 +26,40 @@ impl App {
         );
 
         let mut ui = UI::new();
+        ui.setup(install_components);
         let tree = widget! {
             (app {
                 title = (title_bar)
+                content = (content)
             })
         };
         ui.apply(tree);
-        Self { ui, ui_resources }
+        let ui_interactions = GgezInteractionsEngine::with_capacity(32, 1024);
+        Self {
+            ui,
+            ui_interactions,
+            ui_resources,
+        }
     }
 }
 
 impl EventHandler for App {
-    fn update(&mut self, _: &mut Context) -> GameResult<()> {
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        self.ui_interactions.update(ctx);
         self.ui.process();
+        self.ui
+            .interact(&mut self.ui_interactions)
+            .expect("Could not interact with UI");
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, graphics::WHITE);
         let (width, height) = graphics::drawable_size(ctx);
+        drop(graphics::set_screen_coordinates(
+            ctx,
+            graphics::Rect::new(0.0, 0.0, width, height),
+        ));
+        graphics::clear(ctx, graphics::WHITE);
         let ui_space = Rect {
             left: 0.0,
             right: width,
@@ -52,10 +68,10 @@ impl EventHandler for App {
         };
         self.ui
             .layout(ui_space, &mut DefaultLayoutEngine)
-            .expect("UI could not layout widgets!");
+            .expect("UI could not layout widgets");
         self.ui
             .render(&mut GgezRenderer::new(ctx, &mut self.ui_resources))
-            .expect("GGEZ renderer could not render UI!");
+            .expect("GGEZ renderer could not render UI");
         graphics::present(ctx)
     }
 }

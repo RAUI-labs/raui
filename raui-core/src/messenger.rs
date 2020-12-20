@@ -38,11 +38,18 @@ impl MessageSender {
         Self(sender)
     }
 
-    pub fn write(&self, id: WidgetId, message: Message) -> bool {
+    pub fn write<T>(&self, id: WidgetId, message: T) -> bool
+    where
+        T: 'static + Any,
+    {
+        self.0.send((id, Box::new(message))).is_ok()
+    }
+
+    pub fn write_raw(&self, id: WidgetId, message: Message) -> bool {
         self.0.send((id, message)).is_ok()
     }
 
-    pub fn write_all<I>(&self, messages: I)
+    pub fn write_raw_all<I>(&self, messages: I)
     where
         I: IntoIterator<Item = (WidgetId, Message)>,
     {

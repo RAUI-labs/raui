@@ -82,7 +82,7 @@ fn test_macro() {
                 hole = {widget! {()}}
             } [
                 (text: {"hole".to_owned()})
-                {{WidgetUnit::None}}
+                {{WidgetUnitNode::None}}
                 {{WidgetNode::None}}
             ])
         }
@@ -93,13 +93,20 @@ fn test_macro() {
 #[allow(dead_code)]
 #[cfg(feature = "html")]
 fn test_hello_world() {
+    use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
 
-    #[derive(Debug, Default, Copy, Clone)]
+    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct AppProps {
         pub index: usize,
     }
-    implement_props_data!(AppProps);
+    implement_props_data!(AppProps, "AppProps");
+
+    let v = Box::new(AppProps { index: 42 }) as Box<dyn PropsData>;
+    let s = serde_json::to_string(&v).unwrap();
+    println!("=== SERIALIZED APP PROPS: {}", &s);
+    let d = serde_json::from_str::<Box<dyn PropsData>>(&s).unwrap();
+    println!("=== DESERIALIZED APP PROPS: {:?}", d);
 
     // convenient macro that produces widget component processing function.
     widget_component! {
@@ -217,15 +224,15 @@ fn test_hello_world() {
             // here we just unwrap widget units (final atomic UI elements that renderers read).
             let items = listed_slots
                 .into_iter()
-                .map(|slot| FlexBoxItem {
-                    slot: slot.try_into().expect("Cannot convert slot to WidgetUnit!"),
+                .map(|slot| FlexBoxItemNode {
+                    slot: slot.try_into().expect("Cannot convert slot to WidgetUnitNode!"),
                     ..Default::default()
                 })
                 .collect::<Vec<_>>();
 
             // we use `{{{ ... }}}` to inform macro that this is widget unit.
             widget! {{{
-                FlexBox {
+                FlexBoxNode {
                     id: id.to_owned(),
                     items,
                     ..Default::default()
@@ -239,7 +246,7 @@ fn test_hello_world() {
             let text = props.read_cloned_or_default::<String>();
 
             widget!{{{
-                TextBox {
+                TextBoxNode {
                     id: id.to_owned(),
                     text,
                     ..Default::default()
@@ -304,42 +311,48 @@ fn test_layout_no_wrap() {
     };
 
     let tree = widget! {{{
-        FlexBox {
+        FlexBoxNode {
             id: WidgetId::from_str("type:/list").unwrap(),
             direction: FlexBoxDirection::VerticalTopToBottom,
             separation: 10.0,
             items: vec![
-                FlexBoxItem {
-                    fill: 1.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/0").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Exact(100.0),
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        fill: 1.0,
+                        ..Default::default()
+                    },
                 },
-                FlexBoxItem {
-                    fill: 1.0,
-                    grow: 1.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/1").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Fill,
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        fill: 1.0,
+                        grow: 1.0,
+                        ..Default::default()
+                    },
                 },
-                FlexBoxItem {
-                    fill: 1.0,
-                    grow: 2.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/2").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Fill,
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        fill: 1.0,
+                        grow: 2.0,
+                        ..Default::default()
+                    },
                 },
             ],
             ..Default::default()
@@ -369,52 +382,123 @@ fn test_layout_wrapping() {
     };
 
     let tree = widget! {{{
-        FlexBox {
+        FlexBoxNode {
             id: WidgetId::from_str("type:/list").unwrap(),
             direction: FlexBoxDirection::HorizontalLeftToRight,
             separation: 10.0,
             wrap: true,
             items: vec![
-                FlexBoxItem {
-                    basis: Some(400.0),
-                    fill: 1.0,
-                    grow: 1.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/0").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Exact(100.0),
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        basis: Some(400.0),
+                        fill: 1.0,
+                        grow: 1.0,
+                        ..Default::default()
+                    },
                 },
-                FlexBoxItem {
-                    basis: Some(400.0),
-                    fill: 1.0,
-                    grow: 1.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/1").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Exact(200.0),
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        basis: Some(400.0),
+                        fill: 1.0,
+                        grow: 1.0,
+                        ..Default::default()
+                    },
                 },
-                FlexBoxItem {
-                    basis: Some(400.0),
-                    fill: 1.0,
-                    grow: 2.0,
-                    slot: SizeBox {
+                FlexBoxItemNode {
+                    slot: SizeBoxNode {
                         id: WidgetId::from_str("type:/list/2").unwrap(),
                         width: SizeBoxSizeValue::Fill,
                         height: SizeBoxSizeValue::Exact(50.0),
                         ..Default::default()
                     }.into(),
-                    ..Default::default()
+                    layout: FlexBoxItemLayout {
+                        basis: Some(400.0),
+                        fill: 1.0,
+                        grow: 2.0,
+                        ..Default::default()
+                    },
                 },
             ],
             ..Default::default()
         }
     }}};
+
+    let mut application = Application::new();
+    application.apply(tree);
+    application.forced_process();
+    println!(
+        "=== TREE INSPECTION:\n{:#?}",
+        application.rendered_tree().inspect()
+    );
+    if application.layout(view, &mut layout_engine).is_ok() {
+        println!("=== LAYOUT:\n{:#?}", application.layout_data());
+    }
+}
+
+#[test]
+fn test_components() {
+    let mut layout_engine = DefaultLayoutEngine::default();
+    let view = Rect {
+        left: 0.0,
+        right: 1024.0,
+        top: 0.0,
+        bottom: 576.0,
+    };
+
+    let tree = widget! {
+        (#{"app"} vertical_box: {
+            VerticalBoxProps {
+                separation: 10.0,
+                ..Default::default()
+            }
+        } [
+            (size_box: {
+                Props::new(SizeBoxProps {
+                    height: SizeBoxSizeValue::Exact(100.0),
+                    ..Default::default()
+                }).with(FlexBoxItemLayout {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 1.0,
+                    ..Default::default()
+                })
+            })
+            (size_box: {
+                Props::new(SizeBoxProps {
+                    height: SizeBoxSizeValue::Exact(200.0),
+                    ..Default::default()
+                }).with(FlexBoxItemLayout {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 1.0,
+                    ..Default::default()
+                })
+            })
+            (size_box: {
+                Props::new(SizeBoxProps {
+                    height: SizeBoxSizeValue::Exact(50.0),
+                    ..Default::default()
+                }).with(FlexBoxItemLayout {
+                    basis: Some(400.0),
+                    fill: 1.0,
+                    grow: 2.0,
+                    ..Default::default()
+                })
+            })
+        ])
+    };
 
     let mut application = Application::new();
     application.apply(tree);

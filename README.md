@@ -277,6 +277,7 @@ raui = { version = "*", features = ["all"] }
 RAUI is still in early development phase, so prepare for these changes until v1.0:
 - Create renderer for at least one popular Rust graphics engine.
 - Create TODO app as an example.
+- Implement VDOM diffing algorithm for tree rebuilding optimizations.
 - Reduce unnecessary allocations in processing pipeline.
 - Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
 - Make C API bindings.

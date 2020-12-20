@@ -1,21 +1,48 @@
 use crate::{
+    interactive::InteractionsEngine,
     layout::{Layout, LayoutEngine},
     messenger::{MessageReceiver, MessageSender, Messages, Messenger},
+    props::{Props, PropsData, PropsDef},
     renderer::Renderer,
     signals::{Signal, SignalReceiver, SignalSender},
     state::{State, StateData, StateUpdate},
     widget::{
-        component::WidgetComponent, context::WidgetContext, node::WidgetNode, unit::WidgetUnit,
-        utils::Rect, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
+        component::{WidgetComponent, WidgetComponentDef},
+        context::WidgetContext,
+        node::{WidgetNode, WidgetNodeDef},
+        unit::{
+            content::{
+                ContentBoxItemNode, ContentBoxItemNodeDef, ContentBoxNode, ContentBoxNodeDef,
+            },
+            flex::{FlexBoxItemNode, FlexBoxItemNodeDef, FlexBoxNode, FlexBoxNodeDef},
+            grid::{GridBoxItemNode, GridBoxItemNodeDef, GridBoxNode, GridBoxNodeDef},
+            image::{ImageBoxNode, ImageBoxNodeDef},
+            size::{SizeBoxNode, SizeBoxNodeDef},
+            text::{TextBoxNode, TextBoxNodeDef},
+            WidgetUnit, WidgetUnitNode, WidgetUnitNodeDef,
+        },
+        utils::Rect,
+        FnWidget, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
     },
 };
 use std::{
+    any::TypeId,
     collections::{HashMap, HashSet},
     convert::TryInto,
     sync::mpsc::{channel, Receiver, Sender},
 };
 
+#[derive(Debug, Clone)]
+pub enum ApplicationError {
+    PropsMappingByTypeNotFound(TypeId),
+    PropsMappingByNameNotFound(String),
+    ComponentMappingNotFound(String),
+}
+
 pub struct Application {
+    component_mappings: HashMap<String, FnWidget>,
+    props_mappings: HashMap<TypeId, String>,
+    props_mappings_table: HashMap<String, TypeId>,
     tree: WidgetNode,
     rendered_tree: WidgetUnit,
     layout: Layout,
@@ -25,6 +52,7 @@ pub struct Application {
     message_receiver: MessageReceiver,
     signal_sender: Sender<Signal>,
     signal_receiver: SignalReceiver,
+    last_signals: Vec<Signal>,
     unmount_closures: HashMap<WidgetId, Vec<Box<WidgetUnmountClosure>>>,
     dirty: bool,
     render_changed: bool,
@@ -45,6 +73,9 @@ impl Application {
         let (signal_sender, signal_receiver) = channel();
         let signal_receiver = SignalReceiver::new(signal_receiver);
         Self {
+            component_mappings: Default::default(),
+            props_mappings: Default::default(),
+            props_mappings_table: Default::default(),
             tree: Default::default(),
             rendered_tree: Default::default(),
             layout: Default::default(),
@@ -54,10 +85,463 @@ impl Application {
             message_receiver,
             signal_sender,
             signal_receiver,
+            last_signals: Default::default(),
             unmount_closures: Default::default(),
             dirty: true,
             render_changed: false,
         }
+    }
+
+    #[inline]
+    pub fn setup<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut Self),
+    {
+        (f)(self);
+    }
+
+    #[inline]
+    pub fn map_component(&mut self, type_name: &str, processor: FnWidget) {
+        self.component_mappings
+            .insert(type_name.to_owned(), processor);
+    }
+
+    #[inline]
+    pub fn unmap_component(&mut self, type_name: &str) {
+        self.component_mappings.remove(type_name);
+    }
+
+    #[inline]
+    pub fn map_props<T>(&mut self, type_name: &str)
+    where
+        T: 'static + PropsData,
+    {
+        let t = TypeId::of::<T>();
+        self.props_mappings.insert(t, type_name.to_owned());
+        self.props_mappings_table.insert(type_name.to_owned(), t);
+    }
+
+    #[inline]
+    pub fn unmap_props<T>(&mut self)
+    where
+        T: 'static + PropsData,
+    {
+        if let Some(name) = self.props_mappings.remove(&TypeId::of::<T>()) {
+            self.props_mappings_table.remove(&name);
+        }
+    }
+
+    pub fn props_to_serializable(&self, props: Props) -> Result<PropsDef, ApplicationError> {
+        let props = props
+            .into_inner()
+            .into_iter()
+            .map(|(k, v)| match self.props_mappings.get(&k) {
+                Some(name) => Ok((name.to_owned(), v)),
+                None => Err(ApplicationError::PropsMappingByTypeNotFound(k)),
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        Ok(PropsDef(props))
+    }
+
+    pub fn node_to_serializable(
+        &self,
+        node: WidgetNode,
+    ) -> Result<WidgetNodeDef, ApplicationError> {
+        Ok(match node {
+            WidgetNode::None => WidgetNodeDef::None,
+            WidgetNode::Component(v) => {
+                WidgetNodeDef::Component(self.component_to_serializable(v)?)
+            }
+            WidgetNode::Unit(v) => WidgetNodeDef::Unit(self.unit_to_serializable(v)?),
+        })
+    }
+
+    pub fn component_to_serializable(
+        &self,
+        component: WidgetComponent,
+    ) -> Result<WidgetComponentDef, ApplicationError> {
+        let WidgetComponent {
+            type_name,
+            key,
+            props,
+            listed_slots,
+            named_slots,
+            ..
+        } = component;
+        if self.component_mappings.get(&type_name).is_none() {
+            return Err(ApplicationError::ComponentMappingNotFound(type_name));
+        }
+        let props = self.props_to_serializable(props)?;
+        let listed_slots = listed_slots
+            .into_iter()
+            .map(|node| self.node_to_serializable(node))
+            .collect::<Result<Vec<_>, _>>()?;
+        let named_slots = named_slots
+            .into_iter()
+            .map(|(key, node)| self.node_to_serializable(node).map(|node| (key, node)))
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        Ok(WidgetComponentDef {
+            type_name,
+            key,
+            props,
+            listed_slots,
+            named_slots,
+        })
+    }
+
+    pub fn unit_to_serializable(
+        &self,
+        unit: WidgetUnitNode,
+    ) -> Result<WidgetUnitNodeDef, ApplicationError> {
+        Ok(match unit {
+            WidgetUnitNode::None => WidgetUnitNodeDef::None,
+            WidgetUnitNode::ContentBox(v) => {
+                let ContentBoxNode {
+                    id,
+                    props,
+                    items,
+                    clipping,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let ContentBoxItemNode { slot, layout } = item;
+                        self.node_to_serializable(slot)
+                            .map(|slot| ContentBoxItemNodeDef { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNodeDef::ContentBox(ContentBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    clipping,
+                })
+            }
+            WidgetUnitNode::FlexBox(v) => {
+                let FlexBoxNode {
+                    id,
+                    props,
+                    items,
+                    direction,
+                    separation,
+                    wrap,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let FlexBoxItemNode { slot, layout } = item;
+                        self.node_to_serializable(slot)
+                            .map(|slot| FlexBoxItemNodeDef { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNodeDef::FlexBox(FlexBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    direction,
+                    separation,
+                    wrap,
+                })
+            }
+            WidgetUnitNode::GridBox(v) => {
+                let GridBoxNode {
+                    id,
+                    props,
+                    items,
+                    cols,
+                    rows,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let GridBoxItemNode { slot, layout } = item;
+                        self.node_to_serializable(slot)
+                            .map(|slot| GridBoxItemNodeDef { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNodeDef::GridBox(GridBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    cols,
+                    rows,
+                })
+            }
+            WidgetUnitNode::SizeBox(v) => {
+                let SizeBoxNode {
+                    id,
+                    props,
+                    slot,
+                    width,
+                    height,
+                    margin,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                let slot = Box::new(self.node_to_serializable(*slot)?);
+                WidgetUnitNodeDef::SizeBox(SizeBoxNodeDef {
+                    id,
+                    props,
+                    slot,
+                    width,
+                    height,
+                    margin,
+                })
+            }
+            WidgetUnitNode::ImageBox(v) => {
+                let ImageBoxNode {
+                    id,
+                    props,
+                    width,
+                    height,
+                    content_keep_aspect_ratio,
+                    material,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                WidgetUnitNodeDef::ImageBox(ImageBoxNodeDef {
+                    id,
+                    props,
+                    width,
+                    height,
+                    content_keep_aspect_ratio,
+                    material,
+                })
+            }
+            WidgetUnitNode::TextBox(v) => {
+                let TextBoxNode {
+                    id,
+                    props,
+                    text,
+                    width,
+                    height,
+                    alignment,
+                    direction,
+                    font,
+                    color,
+                } = v;
+                let props = self.props_to_serializable(props)?;
+                WidgetUnitNodeDef::TextBox(TextBoxNodeDef {
+                    id,
+                    props,
+                    text,
+                    width,
+                    height,
+                    alignment,
+                    direction,
+                    font,
+                    color,
+                })
+            }
+        })
+    }
+
+    pub fn props_from_serializable(&self, props: PropsDef) -> Result<Props, ApplicationError> {
+        let props = props
+            .0
+            .into_iter()
+            .map(|(k, v)| match self.props_mappings_table.get(&k) {
+                Some(typeid) => Ok((*typeid, v)),
+                None => Err(ApplicationError::PropsMappingByNameNotFound(k)),
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        Ok(Props::from_raw(props))
+    }
+
+    pub fn node_from_serializable(
+        &self,
+        node: WidgetNodeDef,
+    ) -> Result<WidgetNode, ApplicationError> {
+        Ok(match node {
+            WidgetNodeDef::None => WidgetNode::None,
+            WidgetNodeDef::Component(v) => {
+                WidgetNode::Component(self.component_from_serializable(v)?)
+            }
+            WidgetNodeDef::Unit(v) => WidgetNode::Unit(self.unit_from_serializable(v)?),
+        })
+    }
+
+    pub fn component_from_serializable(
+        &self,
+        component: WidgetComponentDef,
+    ) -> Result<WidgetComponent, ApplicationError> {
+        let WidgetComponentDef {
+            type_name,
+            key,
+            props,
+            listed_slots,
+            named_slots,
+        } = component;
+        let processor = match self.component_mappings.get(&type_name) {
+            Some(processor) => *processor,
+            None => return Err(ApplicationError::ComponentMappingNotFound(type_name)),
+        };
+        let props = self.props_from_serializable(props)?;
+        let listed_slots = listed_slots
+            .into_iter()
+            .map(|node| self.node_from_serializable(node))
+            .collect::<Result<Vec<_>, _>>()?;
+        let named_slots = named_slots
+            .into_iter()
+            .map(|(key, node)| self.node_from_serializable(node).map(|node| (key, node)))
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        Ok(WidgetComponent {
+            processor,
+            type_name,
+            key,
+            props,
+            listed_slots,
+            named_slots,
+        })
+    }
+
+    pub fn unit_from_serializable(
+        &self,
+        unit: WidgetUnitNodeDef,
+    ) -> Result<WidgetUnitNode, ApplicationError> {
+        Ok(match unit {
+            WidgetUnitNodeDef::None => WidgetUnitNode::None,
+            WidgetUnitNodeDef::ContentBox(v) => {
+                let ContentBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    clipping,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let ContentBoxItemNodeDef { slot, layout } = item;
+                        self.node_from_serializable(slot)
+                            .map(|slot| ContentBoxItemNode { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNode::ContentBox(ContentBoxNode {
+                    id,
+                    props,
+                    items,
+                    clipping,
+                })
+            }
+            WidgetUnitNodeDef::FlexBox(v) => {
+                let FlexBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    direction,
+                    separation,
+                    wrap,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let FlexBoxItemNodeDef { slot, layout } = item;
+                        self.node_from_serializable(slot)
+                            .map(|slot| FlexBoxItemNode { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNode::FlexBox(FlexBoxNode {
+                    id,
+                    props,
+                    items,
+                    direction,
+                    separation,
+                    wrap,
+                })
+            }
+            WidgetUnitNodeDef::GridBox(v) => {
+                let GridBoxNodeDef {
+                    id,
+                    props,
+                    items,
+                    cols,
+                    rows,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                let items = items
+                    .into_iter()
+                    .map(|item| {
+                        let GridBoxItemNodeDef { slot, layout } = item;
+                        self.node_from_serializable(slot)
+                            .map(|slot| GridBoxItemNode { slot, layout })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                WidgetUnitNode::GridBox(GridBoxNode {
+                    id,
+                    props,
+                    items,
+                    cols,
+                    rows,
+                })
+            }
+            WidgetUnitNodeDef::SizeBox(v) => {
+                let SizeBoxNodeDef {
+                    id,
+                    props,
+                    slot,
+                    width,
+                    height,
+                    margin,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                let slot = Box::new(self.node_from_serializable(*slot)?);
+                WidgetUnitNode::SizeBox(SizeBoxNode {
+                    id,
+                    props,
+                    slot,
+                    width,
+                    height,
+                    margin,
+                })
+            }
+            WidgetUnitNodeDef::ImageBox(v) => {
+                let ImageBoxNodeDef {
+                    id,
+                    props,
+                    width,
+                    height,
+                    content_keep_aspect_ratio,
+                    material,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                WidgetUnitNode::ImageBox(ImageBoxNode {
+                    id,
+                    props,
+                    width,
+                    height,
+                    content_keep_aspect_ratio,
+                    material,
+                })
+            }
+            WidgetUnitNodeDef::TextBox(v) => {
+                let TextBoxNodeDef {
+                    id,
+                    props,
+                    text,
+                    width,
+                    height,
+                    alignment,
+                    direction,
+                    font,
+                    color,
+                } = v;
+                let props = self.props_from_serializable(props)?;
+                WidgetUnitNode::TextBox(TextBoxNode {
+                    id,
+                    props,
+                    text,
+                    width,
+                    height,
+                    alignment,
+                    direction,
+                    font,
+                    color,
+                })
+            }
+        })
     }
 
     #[inline]
@@ -94,7 +578,6 @@ impl Application {
     pub fn apply(&mut self, tree: WidgetNode) {
         self.tree = tree;
         self.dirty = true;
-        self.process();
     }
 
     #[inline]
@@ -140,13 +623,21 @@ impl Application {
     }
 
     #[inline]
+    pub fn interact<I, E>(&self, interactions_engine: &mut I) -> Result<(), E>
+    where
+        I: InteractionsEngine<E>,
+    {
+        interactions_engine.perform_interactions(self)
+    }
+
+    #[inline]
     pub fn messenger(&self) -> &MessageSender {
         &self.message_sender
     }
 
     #[inline]
-    pub fn signals(&self) -> &SignalReceiver {
-        &self.signal_receiver
+    pub fn signals(&self) -> &[Signal] {
+        &self.last_signals
     }
 
     #[inline]
@@ -206,6 +697,7 @@ impl Application {
                 }
             })
             .collect();
+        self.last_signals = self.signal_receiver.read_all();
         if let Ok(tree) = rendered_tree.try_into() {
             self.rendered_tree = tree;
             true
@@ -218,142 +710,213 @@ impl Application {
         &mut self,
         node: WidgetNode,
         states: &'a HashMap<WidgetId, StateData>,
-        mut path: Vec<String>,
+        path: Vec<String>,
         messages: &mut HashMap<WidgetId, Messages>,
         new_states: &mut HashMap<WidgetId, StateData>,
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
     ) -> WidgetNode {
         match node {
-            WidgetNode::Component(component) => {
-                let WidgetComponent {
-                    processor,
-                    type_name,
-                    key,
-                    props,
-                    listed_slots,
+            WidgetNode::Component(component) => self.process_node_component(
+                component,
+                states,
+                path,
+                messages,
+                new_states,
+                used_ids,
+                possible_key,
+            ),
+            WidgetNode::Unit(unit) => {
+                self.process_node_unit(unit, states, path, messages, new_states, used_ids)
+            }
+            _ => node,
+        }
+    }
+
+    fn process_node_component<'a>(
+        &mut self,
+        component: WidgetComponent,
+        states: &'a HashMap<WidgetId, StateData>,
+        mut path: Vec<String>,
+        messages: &mut HashMap<WidgetId, Messages>,
+        new_states: &mut HashMap<WidgetId, StateData>,
+        used_ids: &mut HashSet<WidgetId>,
+        possible_key: String,
+    ) -> WidgetNode {
+        let WidgetComponent {
+            processor,
+            type_name,
+            key,
+            props,
+            listed_slots,
+            named_slots,
+        } = component;
+        let key = match &key {
+            Some(key) => key.to_owned(),
+            None => possible_key.to_owned(),
+        };
+        path.push(key.clone());
+        let id = WidgetId::new(type_name.to_owned(), path.clone());
+        used_ids.insert(id.clone());
+        let (sender, receiver) = channel();
+        let messages_list = match messages.remove(&id) {
+            Some(messages) => messages,
+            None => Messages::new(),
+        };
+        let mut life_cycle = WidgetLifeCycle::default();
+        let (new_node, mounted) = match states.get(&id) {
+            Some(state) => {
+                let state = State::new(state, StateUpdate::new(sender.clone()));
+                let context = WidgetContext {
+                    id: &id,
+                    key: &key,
+                    props: &props,
+                    state,
+                    life_cycle: &mut life_cycle,
                     named_slots,
-                } = component;
-                let key = match &key {
-                    Some(key) => key.to_owned(),
-                    None => possible_key.to_owned(),
+                    listed_slots,
                 };
-                path.push(key.clone());
-                let listed_slots = listed_slots
+                ((processor)(context), false)
+            }
+            None => {
+                let state_data = Box::new(()) as StateData;
+                let state = State::new(&state_data, StateUpdate::new(sender.clone()));
+                let context = WidgetContext {
+                    id: &id,
+                    key: &key,
+                    props: &props,
+                    state,
+                    life_cycle: &mut life_cycle,
+                    named_slots,
+                    listed_slots,
+                };
+                let node = (processor)(context);
+                new_states.insert(id.clone(), state_data);
+                (node, true)
+            }
+        };
+        let (mount, change, unmount) = life_cycle.unwrap();
+        if mounted {
+            if !mount.is_empty() {
+                if let Some(state) = new_states.get(&id) {
+                    let state = State::new(state, StateUpdate::new(sender.clone()));
+                    let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
+                    let signal_sender = SignalSender::new(id.clone(), self.signal_sender.clone());
+                    for mut closure in mount {
+                        (closure)(&id, &props, &state, &messenger, &signal_sender);
+                    }
+                }
+            }
+        } else if !change.is_empty() {
+            if let Some(state) = states.get(&id) {
+                let state = State::new(state, StateUpdate::new(sender.clone()));
+                let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
+                let signal_sender = SignalSender::new(id.clone(), self.signal_sender.clone());
+                for mut closure in change {
+                    (closure)(&id, &props, &state, &messenger, &signal_sender);
+                }
+            }
+        }
+        if !unmount.is_empty() {
+            self.unmount_closures.insert(id.clone(), unmount);
+        }
+        let new_node = self.process_node(
+            new_node,
+            states,
+            path,
+            messages,
+            new_states,
+            used_ids,
+            possible_key,
+        );
+        self.state_receivers.insert(id, receiver);
+        new_node
+    }
+
+    fn process_node_unit<'a>(
+        &mut self,
+        mut unit: WidgetUnitNode,
+        states: &'a HashMap<WidgetId, StateData>,
+        path: Vec<String>,
+        messages: &mut HashMap<WidgetId, Messages>,
+        new_states: &mut HashMap<WidgetId, StateData>,
+        used_ids: &mut HashSet<WidgetId>,
+    ) -> WidgetNode {
+        match &mut unit {
+            WidgetUnitNode::ContentBox(unit) => {
+                let items = std::mem::replace(&mut unit.items, Vec::new());
+                unit.items = items
                     .into_iter()
                     .enumerate()
-                    .map(|(i, node)| {
-                        self.process_node(
-                            node,
+                    .map(|(i, mut node)| {
+                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        node.slot = self.process_node(
+                            slot,
                             states,
                             path.clone(),
                             messages,
                             new_states,
                             used_ids,
                             format!("<{}>", i),
-                        )
+                        );
+                        node
                     })
-                    .filter(|node| node.is_some())
                     .collect::<Vec<_>>();
-                let named_slots = named_slots
+            }
+            WidgetUnitNode::FlexBox(unit) => {
+                let items = std::mem::replace(&mut unit.items, Vec::new());
+                unit.items = items
                     .into_iter()
                     .enumerate()
-                    .map(|(i, (name, node))| {
-                        (
-                            name.to_owned(),
-                            self.process_node(
-                                node,
-                                states,
-                                path.clone(),
-                                messages,
-                                new_states,
-                                used_ids,
-                                format!("<{}:{}>", i, name),
-                            ),
-                        )
+                    .map(|(i, mut node)| {
+                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        node.slot = self.process_node(
+                            slot,
+                            states,
+                            path.clone(),
+                            messages,
+                            new_states,
+                            used_ids,
+                            format!("<{}>", i),
+                        );
+                        node
                     })
-                    .filter(|(_, node)| node.is_some())
-                    .collect::<HashMap<_, _>>();
-                let id = WidgetId::new(type_name.to_owned(), path.clone());
-                used_ids.insert(id.clone());
-                let (sender, receiver) = channel();
-                let messages_list = match messages.remove(&id) {
-                    Some(messages) => messages,
-                    None => Messages::new(),
-                };
-                let mut life_cycle = WidgetLifeCycle::default();
-                let (new_node, mounted) = match states.get(&id) {
-                    Some(state) => {
-                        let state = State::new(state, StateUpdate::new(sender.clone()));
-                        let context = WidgetContext {
-                            id: &id,
-                            key: &key,
-                            props: &props,
-                            state,
-                            life_cycle: &mut life_cycle,
-                            named_slots,
-                            listed_slots,
-                        };
-                        ((processor)(context), false)
-                    }
-                    None => {
-                        let state_data = Box::new(()) as StateData;
-                        let state = State::new(&state_data, StateUpdate::new(sender.clone()));
-                        let context = WidgetContext {
-                            id: &id,
-                            key: &key,
-                            props: &props,
-                            state,
-                            life_cycle: &mut life_cycle,
-                            named_slots,
-                            listed_slots,
-                        };
-                        let node = (processor)(context);
-                        new_states.insert(id.clone(), state_data);
-                        (node, true)
-                    }
-                };
-                let (mount, change, unmount) = life_cycle.unwrap();
-                if mounted {
-                    if !mount.is_empty() {
-                        if let Some(state) = new_states.get(&id) {
-                            let state = State::new(state, StateUpdate::new(sender.clone()));
-                            let messenger =
-                                Messenger::new(self.message_sender.clone(), &messages_list);
-                            let signal_sender =
-                                SignalSender::new(id.clone(), self.signal_sender.clone());
-                            for mut closure in mount {
-                                (closure)(&id, &props, &state, &messenger, &signal_sender);
-                            }
-                        }
-                    }
-                } else if !change.is_empty() {
-                    if let Some(state) = states.get(&id) {
-                        let state = State::new(state, StateUpdate::new(sender.clone()));
-                        let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
-                        let signal_sender =
-                            SignalSender::new(id.clone(), self.signal_sender.clone());
-                        for mut closure in change {
-                            (closure)(&id, &props, &state, &messenger, &signal_sender);
-                        }
-                    }
-                }
-                if !unmount.is_empty() {
-                    self.unmount_closures.insert(id.clone(), unmount);
-                }
-                let new_node = self.process_node(
-                    new_node,
+                    .collect::<Vec<_>>();
+            }
+            WidgetUnitNode::GridBox(unit) => {
+                let items = std::mem::replace(&mut unit.items, Vec::new());
+                unit.items = items
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, mut node)| {
+                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        node.slot = self.process_node(
+                            slot,
+                            states,
+                            path.clone(),
+                            messages,
+                            new_states,
+                            used_ids,
+                            format!("<{}>", i),
+                        );
+                        node
+                    })
+                    .collect::<Vec<_>>();
+            }
+            WidgetUnitNode::SizeBox(unit) => {
+                let slot = *std::mem::replace(&mut unit.slot, Default::default());
+                unit.slot = Box::new(self.process_node(
+                    slot,
                     states,
-                    path,
+                    path.clone(),
                     messages,
                     new_states,
                     used_ids,
-                    possible_key,
-                );
-                self.state_receivers.insert(id, receiver);
-                new_node
+                    "0".to_owned(),
+                ));
             }
-            _ => node,
+            _ => {}
         }
+        unit.into()
     }
 }

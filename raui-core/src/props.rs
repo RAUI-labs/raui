@@ -1,10 +1,18 @@
-use std::{any::Any, borrow::Cow};
+use serde::{Deserialize, Serialize};
+use std::{
+    any::{type_name, Any, TypeId},
+    collections::HashMap,
+    fmt::Debug,
+};
 
+#[derive(Debug, Clone)]
 pub enum PropsError {
     CouldNotReadData,
+    HasNoDataOfType(String),
 }
 
-pub trait PropsData: Any {
+#[typetag::serde(tag = "type", content = "value")]
+pub trait PropsData: Debug {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
 }
@@ -15,44 +23,58 @@ impl Clone for Box<dyn PropsData> {
     }
 }
 
-#[derive(Clone)]
-pub struct Props(Box<dyn PropsData>);
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct PropsDef(pub HashMap<String, Box<dyn PropsData>>);
 
-impl Default for Props {
-    fn default() -> Self {
-        Self(Box::new(()))
-    }
-}
-
-impl std::fmt::Debug for Props {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Props {...}")
-    }
-}
+#[derive(Debug, Default, Clone)]
+pub struct Props(HashMap<TypeId, Box<dyn PropsData>>);
 
 impl Props {
+    pub(crate) fn from_raw(map: HashMap<TypeId, Box<dyn PropsData>>) -> Self {
+        Self(map)
+    }
+
     pub fn new<T>(data: T) -> Self
     where
         T: 'static + PropsData,
     {
-        Self(Box::new(data))
+        let mut result = HashMap::with_capacity(1);
+        result.insert(TypeId::of::<T>(), Box::new(data) as Box<dyn PropsData>);
+        Self(result)
     }
 
-    pub fn is<T>(&self) -> bool
+    pub fn has<T>(&self) -> bool
     where
         T: 'static + PropsData,
     {
-        self.0.as_any().downcast_ref::<T>().is_some()
+        let e = TypeId::of::<T>();
+        self.0.iter().any(|(t, _)| *t == e)
+    }
+
+    pub fn consume<T>(&mut self) -> Result<Box<dyn PropsData>, PropsError>
+    where
+        T: 'static + PropsData,
+    {
+        if let Some(v) = self.0.remove(&TypeId::of::<T>()) {
+            Ok(v)
+        } else {
+            Err(PropsError::HasNoDataOfType(type_name::<T>().to_owned()))
+        }
     }
 
     pub fn read<T>(&self) -> Result<&T, PropsError>
     where
         T: 'static + PropsData,
     {
-        if let Some(data) = self.0.as_any().downcast_ref::<T>() {
-            Ok(data)
+        let e = TypeId::of::<T>();
+        if let Some((_, v)) = self.0.iter().find(|(t, _)| **t == e) {
+            if let Some(data) = v.as_any().downcast_ref::<T>() {
+                Ok(data)
+            } else {
+                Err(PropsError::CouldNotReadData)
+            }
         } else {
-            Err(PropsError::CouldNotReadData)
+            Err(PropsError::HasNoDataOfType(type_name::<T>().to_owned()))
         }
     }
 
@@ -60,11 +82,7 @@ impl Props {
     where
         T: 'static + PropsData + Clone,
     {
-        if let Some(data) = self.0.as_any().downcast_ref::<T>() {
-            Ok(data.clone())
-        } else {
-            Err(PropsError::CouldNotReadData)
-        }
+        self.read::<T>().map(|v| v.clone())
     }
 
     pub fn read_cloned_or_default<T>(&self) -> T
@@ -73,6 +91,40 @@ impl Props {
     {
         self.read_cloned().unwrap_or_default()
     }
+
+    pub fn write<T>(&mut self, data: T)
+    where
+        T: 'static + PropsData,
+    {
+        self.0
+            .insert(TypeId::of::<T>(), Box::new(data) as Box<dyn PropsData>);
+    }
+
+    pub fn with<T>(mut self, data: T) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        self.write(data);
+        self
+    }
+
+    pub fn without<T>(mut self) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        self.0.remove(&TypeId::of::<T>());
+        self
+    }
+
+    pub fn merge(self, other: Self) -> Self {
+        let mut result = self.into_inner();
+        result.extend(other.into_inner());
+        Self(result)
+    }
+
+    pub(crate) fn into_inner(self) -> HashMap<TypeId, Box<dyn PropsData>> {
+        self.0
+    }
 }
 
 impl<T> From<T> for Props
@@ -80,7 +132,7 @@ where
     T: 'static + PropsData,
 {
     fn from(data: T) -> Self {
-        Self(Box::from(data))
+        Self::new(data)
     }
 }
 
@@ -92,7 +144,8 @@ impl From<&Self> for Props {
 
 #[macro_export]
 macro_rules! implement_props_data {
-    ($type_name:ty) => {
+    ($type_name:ty, $tag_name:literal) => {
+        #[$crate::typetag::serde(name = $tag_name)]
         impl $crate::props::PropsData for $type_name
         where
             Self: Clone,
@@ -108,71 +161,18 @@ macro_rules! implement_props_data {
     };
 }
 
-implement_props_data!(());
-implement_props_data!(i8);
-implement_props_data!(i16);
-implement_props_data!(i32);
-implement_props_data!(i64);
-implement_props_data!(i128);
-implement_props_data!(u8);
-implement_props_data!(u16);
-implement_props_data!(u32);
-implement_props_data!(u64);
-implement_props_data!(u128);
-implement_props_data!(f32);
-implement_props_data!(f64);
-implement_props_data!(bool);
-implement_props_data!(String);
-
-impl<T> PropsData for Option<T>
-where
-    T: PropsData + Clone,
-{
-    fn clone_props(&self) -> Box<dyn PropsData> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-impl<T, E> PropsData for Result<T, E>
-where
-    T: PropsData + Clone,
-    E: 'static + Clone,
-{
-    fn clone_props(&self) -> Box<dyn PropsData> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-impl<T> PropsData for Cow<'static, T>
-where
-    T: PropsData + Clone,
-{
-    fn clone_props(&self) -> Box<dyn PropsData> {
-        Box::new(self.clone())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-impl<T> PropsData for Box<T>
-where
-    T: PropsData + Clone,
-{
-    fn clone_props(&self) -> Box<dyn PropsData> {
-        self.clone()
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+implement_props_data!((), "()");
+implement_props_data!(i8, "i8");
+implement_props_data!(i16, "i16");
+implement_props_data!(i32, "i32");
+implement_props_data!(i64, "i64");
+implement_props_data!(i128, "i128");
+implement_props_data!(u8, "u8");
+implement_props_data!(u16, "u16");
+implement_props_data!(u32, "u32");
+implement_props_data!(u64, "u64");
+implement_props_data!(u128, "u128");
+implement_props_data!(f32, "f32");
+implement_props_data!(f64, "f64");
+implement_props_data!(bool, "bool");
+implement_props_data!(String, "String");

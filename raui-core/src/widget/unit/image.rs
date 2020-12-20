@@ -1,5 +1,7 @@
 use crate::{
+    props::{Props, PropsDef},
     widget::{
+        node::WidgetNode,
         unit::WidgetUnitData,
         utils::{Color, Rect},
         WidgetId,
@@ -7,7 +9,7 @@ use crate::{
     Scalar,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryFrom};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ImageBoxImageScaling {
@@ -29,6 +31,8 @@ pub struct ImageBoxImage {
     pub source_rect: Option<Rect>,
     #[serde(default)]
     pub scaling: ImageBoxImageScaling,
+    #[serde(default)]
+    pub tint: Color,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -90,4 +94,68 @@ impl WidgetUnitData for ImageBox {
     fn id(&self) -> &WidgetId {
         &self.id
     }
+}
+
+impl TryFrom<ImageBoxNode> for ImageBox {
+    type Error = ();
+
+    fn try_from(node: ImageBoxNode) -> Result<Self, Self::Error> {
+        let ImageBoxNode {
+            id,
+            width,
+            height,
+            content_keep_aspect_ratio,
+            material,
+            ..
+        } = node;
+        Ok(Self {
+            id,
+            width,
+            height,
+            content_keep_aspect_ratio,
+            material,
+        })
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct ImageBoxNode {
+    pub id: WidgetId,
+    pub props: Props,
+    pub width: ImageBoxSizeValue,
+    pub height: ImageBoxSizeValue,
+    pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
+    pub material: ImageBoxMaterial,
+}
+
+impl ImageBoxNode {
+    pub fn remap_props<F>(&mut self, mut f: F)
+    where
+        F: FnMut(Props) -> Props,
+    {
+        let props = std::mem::replace(&mut self.props, Default::default());
+        self.props = (f)(props);
+    }
+}
+
+impl Into<WidgetNode> for ImageBoxNode {
+    fn into(self) -> WidgetNode {
+        WidgetNode::Unit(self.into())
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ImageBoxNodeDef {
+    #[serde(default)]
+    pub id: WidgetId,
+    #[serde(default)]
+    pub props: PropsDef,
+    #[serde(default)]
+    pub width: ImageBoxSizeValue,
+    #[serde(default)]
+    pub height: ImageBoxSizeValue,
+    #[serde(default)]
+    pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
+    #[serde(default)]
+    pub material: ImageBoxMaterial,
 }

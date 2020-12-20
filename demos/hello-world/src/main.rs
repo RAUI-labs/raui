@@ -17,6 +17,11 @@ fn main() {
     };
     let (mut ctx, mut event_loop) = ContextBuilder::new("TODO App", "Cool Game Author")
         .add_resource_path(resource_dir)
+        .window_mode(
+            ggez::conf::WindowMode::default()
+                .resizable(true)
+                .maximized(false),
+        )
         .build()
         .expect("Could not create GGEZ context");
     let mut app = App::new(&mut ctx);

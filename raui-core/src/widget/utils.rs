@@ -73,12 +73,23 @@ impl IntRect {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Color {
     pub r: Scalar,
     pub g: Scalar,
     pub b: Scalar,
     pub a: Scalar,
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Default, Copy, Clone)]
