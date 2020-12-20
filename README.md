@@ -64,7 +64,7 @@ Widgets are divided into three categories:
 - **Widget Unit** - an atomic element that renderers use to convert into target renderable data format for rendering engine of choice.
   ```rust
   widget!{{{
-      TextBox {
+      TextBoxNode {
           text: "Hello World".to_owned(),
           ..Default::default()
       }
@@ -99,14 +99,14 @@ widget_component! {
     vertical_box(key, listed_slots) {
         let items = listed_slots
             .into_iter()
-            .map(|slot| FlexBoxItem {
+            .map(|slot| FlexBoxItemNode {
                 slot: slot.try_into().expect("Cannot convert slot to WidgetUnit!"),
                 ..Default::default()
             })
             .collect::<Vec<_>>();
 
         widget! {{{
-            FlexBox {
+            FlexBoxNode {
                 items,
                 ..Default::default()
             }
@@ -227,7 +227,9 @@ if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
 ```
 
 ## Media
-- `GGEZ Hello World` with vertical flex box, text box, grid box and image box.
+- [`GGEZ Hello World`](https://github.com/PsichiX/raui/tree/master/demos/hello-world)
+  with vertical flex box, text box, grid box and image boxes wrapped by interactive buttons.
+
   ![GGEZ Hello World](https://github.com/PsichiX/raui/blob/master/media/ggez-hello-world.png?raw=true)
 
 ## Installation
