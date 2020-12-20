@@ -1,6 +1,6 @@
 [package]
 name = "raui-capi"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI bindings for C language"
