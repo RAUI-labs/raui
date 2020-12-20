@@ -169,6 +169,18 @@ impl WidgetUnitNode {
         }
     }
 
+    pub fn props_mut(&mut self) -> Option<&mut Props> {
+        match self {
+            Self::ContentBox(v) => Some(&mut v.props),
+            Self::FlexBox(v) => Some(&mut v.props),
+            Self::GridBox(v) => Some(&mut v.props),
+            Self::SizeBox(v) => Some(&mut v.props),
+            Self::ImageBox(v) => Some(&mut v.props),
+            Self::TextBox(v) => Some(&mut v.props),
+            _ => None,
+        }
+    }
+
     pub fn remap_props<F>(&mut self, f: F)
     where
         F: FnMut(Props) -> Props,

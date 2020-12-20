@@ -2,7 +2,7 @@ use crate::{
     application::Application,
     interactive::InteractionsEngine,
     widget::{
-        component::interactive::button::{ButtonAction, ButtonSignal},
+        component::interactive::button::{ButtonAction, ButtonSignal, TextChange},
         unit::WidgetUnit,
         WidgetId,
     },
@@ -25,7 +25,7 @@ pub enum Interaction {
     PointerDown(PointerButton, Scalar, Scalar),
     PointerUp(PointerButton, Scalar, Scalar),
     // AxisChange(usize, Scalar, Scalar),
-    // Character(char),
+    TextChange(TextChange),
 }
 
 impl Default for Interaction {
@@ -145,6 +145,7 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
         }
         while let Some(interaction) = self.interactions_queue.pop_front() {
             match interaction {
+                Interaction::None => {}
                 Interaction::Select(id) => {
                     self.select_button(app, Some(&id));
                 }
@@ -184,8 +185,12 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                     }
                 }
                 // Interaction::AxisChange(axis, x, y) => {}
-                // Interaction::Character(c) => {}
-                _ => {}
+                Interaction::TextChange(change) => {
+                    if let Some(id) = &self.selected {
+                        app.messenger()
+                            .write(id.to_owned(), ButtonAction::TextChange(change));
+                    }
+                }
             }
         }
         Ok(())

@@ -9,9 +9,10 @@
     1. [Component Function](#component-function)
     1. [Hooks](#hooks)
     1. [Layouting](#layouting)
+    1. [Interactivity](#interactivity)
 1. [Media](#media)
 1. [Installation](#installation)
-1. [TODO](#todo)
+1. [Milestones](#milestones)
 
 ## About
 RAUI is heavely inspired by **React** declarative UI composition and **UE4 Slate** widget components system.
@@ -226,6 +227,26 @@ if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
 }
 ```
 
+### Interactivity
+_**TODO**_
+
+RAUI allows you to ease and automate interactions with UI by use of Interactions Engine - this is just a struct that implements `perform_interactions` method with reference to Application, and all you should do there is to send user input related messages to widgets.
+There is `DefaultInteractionsEngine` that covers button and input field actions sent from mouse (or any single pointer), keyboard and gamepad.
+RAUI integrations that use these devices should make use of this struct composed in them and call its `interact` metgod with information about what input change was made.
+There is an example of that feature covered in GGEZ integration crate (`GgezInteractionsEngine` struct).
+
+**NOTE: Interactions engines should use layout for pointer events so make sure that you rebuild layout before you perform interactions!**
+```rust
+let mut application = Application::new();
+let mut interactions = DefaultInteractionsEngine::new();
+interactions.interact(Interaction::PointerMove(200.0, 100.0));
+interactions.interact(Interaction::PointerDown(PointerButton::Trigger, 200.0, 100.0));
+application.apply(tree);
+application.process();
+application.layout(view, &mut DefaultLayoutEngine);
+application.interact(view, &mut interactions);
+```
+
 ## Media
 - [`GGEZ Hello World`](https://github.com/PsichiX/raui/tree/master/demos/hello-world)
   with vertical flex box, text box, grid box and image boxes wrapped by interactive buttons.
@@ -275,11 +296,15 @@ raui = { version = "*", features = ["all"] }
   raui-ggez-renderer = "*"
   ```
 
-## TODO
+## Milestones
 RAUI is still in early development phase, so prepare for these changes until v1.0:
+- [x] Add suport for layouting.
+- [x] Add suport for interactions (user input).
 - [x] Create renderer for at least one popular Rust graphics engine.
-- [ ] Create renderer Oxygengine game engine.
+- [x] Create basic user components.
+- [x] Create basic Hello World example application.
 - [ ] Create TODO app as an example.
+- [ ] Create renderer for Oxygengine game engine.
 - [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
 - [ ] Reduce unnecessary allocations in processing pipeline.
 - [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.

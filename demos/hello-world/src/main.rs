@@ -26,6 +26,6 @@ fn main() {
         .expect("Could not create GGEZ context");
     let mut app = App::new(&mut ctx);
     if let Err(error) = event::run(&mut ctx, &mut event_loop, &mut app) {
-        println!("Error: {}", error)
+        println!("Error: {}", error);
     }
 }

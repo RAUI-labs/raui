@@ -5,13 +5,26 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ButtonProps {
     pub selected: bool,
     pub trigger: bool,
     pub context: bool,
+    pub text: Vec<TextChange>,
 }
 implement_props_data!(ButtonProps, "ButtonProps");
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TextChange {
+    InsertCharacter(char),
+    MoveCursorLeft,
+    MoveCursorRight,
+    MoveCursorStart,
+    MoveCursorEnd,
+    DeleteLeft,
+    DeleteRight,
+    NewLine,
+}
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ButtonAction {
@@ -24,6 +37,7 @@ pub enum ButtonAction {
     ContextStart,
     ContextStop,
     ContextCancel,
+    TextChange(TextChange),
 }
 
 impl Default for ButtonAction {
@@ -63,6 +77,8 @@ widget_hook! {
                 Ok(state) => state.clone(),
                 Err(_) => ButtonProps::default(),
             };
+            let empty = data.text.is_empty();
+            data.text.clear();
             let mut dirty = false;
             for msg in messenger.messages {
                 if let Some(action) = msg.downcast_ref::<ButtonAction>() {
@@ -101,11 +117,15 @@ widget_hook! {
                             data.context = false;
                             dirty = true;
                         }
+                        ButtonAction::TextChange(change) => {
+                            data.text.push(*change);
+                            dirty = true;
+                        }
                         _ => {}
                     }
                 }
             }
-            if dirty {
+            if dirty || data.text.is_empty() != empty {
                 drop(state.write(data));
             }
         });
@@ -115,12 +135,14 @@ widget_hook! {
 widget_component! {
     pub button(id, props, state, named_slots) [use_button] {
         unpack_named_slots!(named_slots => content);
-        let state = match state.read::<ButtonProps>() {
-            Ok(state) => state.clone(),
-            Err(_) => ButtonProps::default(),
-        };
+        if let Some(props) = content.props_mut() {
+            let s = match state.read::<ButtonProps>() {
+                Ok(state) => state.clone(),
+                Err(_) => ButtonProps::default(),
+            };
+            props.write(s)
+        }
         let SizeBoxProps { width, height, margin } = props.read_cloned_or_default();
-        content.remap_props(|props| props.with(state));
 
         widget! {{{
             SizeBoxNode {

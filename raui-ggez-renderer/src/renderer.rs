@@ -84,6 +84,16 @@ impl<'a> GgezRenderer<'a> {
                     if let Some(item) = layout.items.get(&unit.id) {
                         if let Some(resource) = self.resources.images.get(&image.id) {
                             let color = [image.tint.r, image.tint.g, image.tint.b, image.tint.a];
+                            let source = image.source_rect.unwrap_or_else(|| Rect {
+                                left: 0.0,
+                                right: 1.0,
+                                top: 0.0,
+                                bottom: 1.0,
+                            });
+                            let sfx = source.left;
+                            let stx = source.right;
+                            let sfy = source.top;
+                            let sty = source.bottom;
                             let rect = if let Some(aspect) = unit.content_keep_aspect_ratio {
                                 let ox = item.ui_space.left;
                                 let oy = item.ui_space.top;
@@ -159,22 +169,22 @@ impl<'a> GgezRenderer<'a> {
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
-                                            uv: [0.0, 0.0],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.top],
-                                            uv: [1.0, 0.0],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.bottom],
-                                            uv: [1.0, 1.0],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left, rect.bottom],
-                                            uv: [0.0, 1.0],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                     ];
@@ -187,82 +197,85 @@ impl<'a> GgezRenderer<'a> {
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
-                                            uv: [0.0, 0.0],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left + v, rect.top],
-                                            uv: [fx, 0.0],
+                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right - v, rect.top],
-                                            uv: [1.0 - fx, 0.0],
+                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.top],
-                                            uv: [1.0, 0.0],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top + v],
-                                            uv: [0.0, fy],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left + v, rect.top + v],
-                                            uv: [fx, fy],
+                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right - v, rect.top + v],
-                                            uv: [1.0 - fx, fy],
+                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.top + v],
-                                            uv: [1.0, fy],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left, rect.bottom - v],
-                                            uv: [0.0, 1.0 - fy],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 1.0 - fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left + v, rect.bottom - v],
-                                            uv: [fx, 1.0 - fy],
+                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 1.0 - fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right - v, rect.bottom - v],
-                                            uv: [1.0 - fx, 1.0 - fy],
+                                            uv: [
+                                                lerp(sfx, stx, 1.0 - fx),
+                                                lerp(sfy, sty, 1.0 - fy),
+                                            ],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.bottom - v],
-                                            uv: [1.0, 1.0 - fy],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 1.0 - fy)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left, rect.bottom],
-                                            uv: [0.0, 1.0],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.left + v, rect.bottom],
-                                            uv: [fx, 1.0],
+                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right - v, rect.bottom],
-                                            uv: [1.0 - fx, 1.0],
+                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
                                             pos: [rect.right, rect.bottom],
-                                            uv: [1.0, 1.0],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                     ];

@@ -7,6 +7,7 @@ widget_component! {
             selected,
             trigger,
             context,
+            ..
         } = props.read_cloned_or_default();
         let ImageButtonProps {
             id,

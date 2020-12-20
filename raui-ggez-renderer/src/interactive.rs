@@ -1,10 +1,14 @@
-use ggez::{input::mouse, Context};
+use ggez::{
+    input::{keyboard::KeyCode, mouse},
+    Context,
+};
 use raui_core::{
     application::Application,
     interactive::{
         default_interactions_engine::{DefaultInteractionsEngine, Interaction, PointerButton},
         InteractionsEngine,
     },
+    widget::component::interactive::button::TextChange,
     Scalar,
 };
 
@@ -70,6 +74,40 @@ impl GgezInteractionsEngine {
                 ));
             }
             self.trigger_context = mouse_context;
+        }
+    }
+
+    pub fn text_input_event(&mut self, character: char) {
+        self.engine
+            .interact(Interaction::TextChange(TextChange::InsertCharacter(
+                character,
+            )));
+    }
+
+    pub fn key_down_event(&mut self, keycode: KeyCode) {
+        match keycode {
+            KeyCode::Left => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::MoveCursorLeft)),
+            KeyCode::Right => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::MoveCursorRight)),
+            KeyCode::Home => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::MoveCursorStart)),
+            KeyCode::End => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::MoveCursorEnd)),
+            KeyCode::Back => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::DeleteLeft)),
+            KeyCode::Delete => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::DeleteRight)),
+            KeyCode::Return | KeyCode::NumpadEnter => self
+                .engine
+                .interact(Interaction::TextChange(TextChange::NewLine)),
+            _ => {}
         }
     }
 }

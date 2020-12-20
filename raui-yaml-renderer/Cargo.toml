@@ -1,6 +1,6 @@
 [package]
 name = "raui-yaml-renderer"
-version = "0.9.2"
+version = "0.10.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for YAML format"
@@ -11,6 +11,6 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.9" }
+raui-core = { path = "../raui-core", version = "0.10" }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.8"

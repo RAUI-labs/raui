@@ -53,6 +53,14 @@ impl WidgetNode {
         }
     }
 
+    pub fn props_mut(&mut self) -> Option<&mut Props> {
+        match self {
+            Self::Component(c) => Some(&mut c.props),
+            Self::Unit(u) => u.props_mut(),
+            _ => None,
+        }
+    }
+
     pub fn remap_props<F>(&mut self, f: F)
     where
         F: FnMut(Props) -> Props,

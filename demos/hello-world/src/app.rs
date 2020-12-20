@@ -1,5 +1,10 @@
 use crate::ui::components::{app::app, content::content, title_bar::title_bar};
-use ggez::{event::EventHandler, graphics, Context, GameResult};
+use ggez::{
+    event::EventHandler,
+    graphics,
+    input::keyboard::{KeyCode, KeyMods},
+    Context, GameResult,
+};
 use raui_core::{application::Application as UI, prelude::*};
 use raui_ggez_renderer::prelude::*;
 
@@ -51,6 +56,17 @@ impl EventHandler for App {
             .interact(&mut self.ui_interactions)
             .expect("Could not interact with UI");
         Ok(())
+    }
+
+    fn text_input_event(&mut self, _: &mut Context, character: char) {
+        self.ui_interactions.text_input_event(character);
+    }
+
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _: KeyMods, _: bool) {
+        if keycode == KeyCode::Escape {
+            ggez::event::quit(ctx);
+        }
+        self.ui_interactions.key_down_event(keycode);
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
