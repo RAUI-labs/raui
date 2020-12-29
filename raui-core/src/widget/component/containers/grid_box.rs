@@ -16,6 +16,7 @@ implement_props_data!(GridBoxProps, "GridBoxProps");
 
 widget_component! {
     pub grid_box(id, props, listed_slots) {
+        let GridBoxProps { cols, rows } = props.read_cloned_or_default();
         let items = listed_slots.into_iter().map(|slot| {
             let layout = slot
                 .props()
@@ -26,7 +27,6 @@ widget_component! {
                 layout,
             }
         }).collect::<Vec<_>>();
-        let GridBoxProps { cols, rows } = props.read_cloned_or_default();
 
         widget! {{{
             GridBoxNode {

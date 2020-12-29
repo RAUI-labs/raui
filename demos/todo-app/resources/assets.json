@@ -1,0 +1,18 @@
+{
+  "fonts": {
+    "": "/fonts/Roboto/Roboto-Regular.ttf",
+    "bold": "/fonts/Roboto/Roboto-Bold.ttf",
+    "italic": "/fonts/Roboto/Roboto-Italic.ttf",
+    "bold-italic": "/fonts/Roboto/Roboto-BoldItalic.ttf"
+  },
+  "images": {
+    "icon-light-mode": "/icons/light-mode.png",
+    "icon-dark-mode": "/icons/dark-mode.png",
+    "icon-add": "/icons/add.png",
+    "icon-delete": "/icons/delete.png",
+    "icon-edit": "/icons/edit.png",
+    "icon-save": "/icons/save.png",
+    "icon-check-box-on": "/icons/check-box-on.png",
+    "icon-check-box-off": "/icons/check-box-off.png"
+  }
+}

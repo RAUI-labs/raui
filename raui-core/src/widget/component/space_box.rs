@@ -6,7 +6,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-struct SpaceBoxProps {
+pub struct SpaceBoxProps {
     #[serde(default)]
     pub width: Scalar,
     #[serde(default)]

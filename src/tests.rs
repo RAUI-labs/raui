@@ -144,15 +144,15 @@ fn test_hello_world() {
 
     widget_hook! {
         use_empty(life_cycle) {
-            life_cycle.mount(|_, _, _, _, _| {
+            life_cycle.mount(|_| {
                 println!("=== BUTTON MOUNTED");
             });
 
-            life_cycle.change(|_, _, _, _, _| {
+            life_cycle.change(|_| {
                 println!("=== BUTTON CHANGED");
             });
 
-            life_cycle.unmount(|_, _, _, _| {
+            life_cycle.unmount(|_| {
                 println!("=== EMPTY UNMOUNTED");
             });
         }
@@ -170,29 +170,29 @@ fn test_hello_world() {
     widget_hook! {
         use_button(key, life_cycle) [use_empty] {
             let key_ = key.to_owned();
-            life_cycle.mount(move |_, _, state, _, _| {
+            life_cycle.mount(move |context| {
                 println!("=== BUTTON MOUNTED: {}", key_);
-                drop(state.write(ButtonState { pressed: false }));
+                drop(context.state.write(ButtonState { pressed: false }));
             });
 
             let key_ = key.to_owned();
-            life_cycle.change(move |_, _, state, messenger, signals| {
+            life_cycle.change(move |context| {
                 println!("=== BUTTON CHANGED: {}", key_);
-                for msg in messenger.messages {
+                for msg in context.messenger.messages {
                     if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                         let pressed = match msg {
                             ButtonAction::Pressed => true,
                             ButtonAction::Released => false,
                         };
                         println!("=== BUTTON ACTION: {:?}", msg);
-                        drop(state.write(ButtonState { pressed }));
-                        drop(signals.write(Box::new(*msg)));
+                        drop(context.state.write(ButtonState { pressed }));
+                        drop(context.signals.write(*msg));
                     }
                 }
             });
 
             let key_ = key.to_owned();
-            life_cycle.unmount(move |_, _, _, _| {
+            life_cycle.unmount(move |_| {
                 println!("=== BUTTON UNMOUNTED: {}", key_);
             });
         }

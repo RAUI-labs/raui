@@ -8,7 +8,7 @@ use crate::{
     state::{State, StateData, StateUpdate},
     widget::{
         component::{WidgetComponent, WidgetComponentDef},
-        context::WidgetContext,
+        context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
         node::{WidgetNode, WidgetNodeDef},
         unit::{
             content::{
@@ -39,6 +39,20 @@ pub enum ApplicationError {
     ComponentMappingNotFound(String),
 }
 
+#[derive(Debug, Clone)]
+pub enum InvalidationCause {
+    None,
+    Forced,
+    StateChange(WidgetId),
+    MessageReceived(WidgetId),
+}
+
+impl Default for InvalidationCause {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 pub struct Application {
     component_mappings: HashMap<String, FnWidget>,
     props_mappings: HashMap<TypeId, String>,
@@ -56,6 +70,7 @@ pub struct Application {
     unmount_closures: HashMap<WidgetId, Vec<Box<WidgetUnmountClosure>>>,
     dirty: bool,
     render_changed: bool,
+    last_invalidation_cause: InvalidationCause,
 }
 
 impl Default for Application {
@@ -89,6 +104,7 @@ impl Application {
             unmount_closures: Default::default(),
             dirty: true,
             render_changed: false,
+            last_invalidation_cause: Default::default(),
         }
     }
 
@@ -164,6 +180,7 @@ impl Application {
             type_name,
             key,
             props,
+            shared_props,
             listed_slots,
             named_slots,
             ..
@@ -172,6 +189,10 @@ impl Application {
             return Err(ApplicationError::ComponentMappingNotFound(type_name));
         }
         let props = self.props_to_serializable(props)?;
+        let shared_props = match shared_props {
+            Some(props) => Some(self.props_to_serializable(props)?),
+            None => None,
+        };
         let listed_slots = listed_slots
             .into_iter()
             .map(|node| self.node_to_serializable(node))
@@ -184,6 +205,7 @@ impl Application {
             type_name,
             key,
             props,
+            shared_props,
             listed_slots,
             named_slots,
         })
@@ -370,6 +392,7 @@ impl Application {
             type_name,
             key,
             props,
+            shared_props,
             listed_slots,
             named_slots,
         } = component;
@@ -378,6 +401,10 @@ impl Application {
             None => return Err(ApplicationError::ComponentMappingNotFound(type_name)),
         };
         let props = self.props_from_serializable(props)?;
+        let shared_props = match shared_props {
+            Some(props) => Some(self.props_from_serializable(props)?),
+            None => None,
+        };
         let listed_slots = listed_slots
             .into_iter()
             .map(|node| self.node_from_serializable(node))
@@ -391,6 +418,7 @@ impl Application {
             type_name,
             key,
             props,
+            shared_props,
             listed_slots,
             named_slots,
         })
@@ -545,6 +573,11 @@ impl Application {
     }
 
     #[inline]
+    pub fn last_invalidation_cause(&self) -> &InvalidationCause {
+        &self.last_invalidation_cause
+    }
+
+    #[inline]
     pub fn is_dirty(&self) -> bool {
         self.dirty
     }
@@ -647,6 +680,7 @@ impl Application {
     }
 
     pub fn process(&mut self) -> bool {
+        self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
         let changed_states = self
             .state_receivers
@@ -658,6 +692,15 @@ impl Application {
         let mut messages = self.message_receiver.process();
         if !self.dirty && changed_states.is_empty() && messages.is_empty() {
             return false;
+        }
+        if self.dirty {
+            self.last_invalidation_cause = InvalidationCause::Forced;
+        }
+        if let Some((id, _)) = changed_states.iter().next() {
+            self.last_invalidation_cause = InvalidationCause::StateChange(id.to_owned());
+        }
+        if let Some((id, _)) = messages.iter().next() {
+            self.last_invalidation_cause = InvalidationCause::MessageReceived(id.to_owned());
         }
         self.dirty = false;
         self.state_receivers.clear();
@@ -677,6 +720,7 @@ impl Application {
             &mut new_states,
             &mut used_ids,
             "<*>".to_string(),
+            None,
         );
         self.states = states
             .into_iter()
@@ -687,10 +731,15 @@ impl Application {
                 } else {
                     if let Some(closures) = self.unmount_closures.remove(id) {
                         for mut closure in closures {
-                            let message_sender = &self.message_sender;
-                            let signal_sender =
-                                SignalSender::new(id.clone(), self.signal_sender.clone());
-                            (closure)(id, state, message_sender, &signal_sender);
+                            let messenger = &self.message_sender;
+                            let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                            let context = WidgetUnmountContext {
+                                id,
+                                state,
+                                messenger,
+                                signals,
+                            };
+                            (closure)(context);
                         }
                     }
                     false
@@ -706,6 +755,7 @@ impl Application {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn process_node<'a>(
         &mut self,
         node: WidgetNode,
@@ -715,6 +765,7 @@ impl Application {
         new_states: &mut HashMap<WidgetId, StateData>,
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
+        master_shared_props: Option<Props>,
     ) -> WidgetNode {
         match node {
             WidgetNode::Component(component) => self.process_node_component(
@@ -725,14 +776,22 @@ impl Application {
                 new_states,
                 used_ids,
                 possible_key,
+                master_shared_props,
             ),
-            WidgetNode::Unit(unit) => {
-                self.process_node_unit(unit, states, path, messages, new_states, used_ids)
-            }
+            WidgetNode::Unit(unit) => self.process_node_unit(
+                unit,
+                states,
+                path,
+                messages,
+                new_states,
+                used_ids,
+                master_shared_props,
+            ),
             _ => node,
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn process_node_component<'a>(
         &mut self,
         component: WidgetComponent,
@@ -742,21 +801,31 @@ impl Application {
         new_states: &mut HashMap<WidgetId, StateData>,
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
+        master_shared_props: Option<Props>,
     ) -> WidgetNode {
         let WidgetComponent {
             processor,
             type_name,
             key,
             props,
+            shared_props,
             listed_slots,
             named_slots,
         } = component;
+        let shared_props = match (master_shared_props, shared_props) {
+            (Some(master_shared_props), Some(shared_props)) => {
+                master_shared_props.merge(shared_props)
+            }
+            (None, Some(shared_props)) => shared_props,
+            (Some(master_shared_props), None) => master_shared_props,
+            _ => Default::default(),
+        };
         let key = match &key {
             Some(key) => key.to_owned(),
             None => possible_key.to_owned(),
         };
         path.push(key.clone());
-        let id = WidgetId::new(type_name.to_owned(), path.clone());
+        let id = WidgetId::new(type_name, path.clone());
         used_ids.insert(id.clone());
         let (sender, receiver) = channel();
         let messages_list = match messages.remove(&id) {
@@ -771,6 +840,7 @@ impl Application {
                     id: &id,
                     key: &key,
                     props: &props,
+                    shared_props: &shared_props,
                     state,
                     life_cycle: &mut life_cycle,
                     named_slots,
@@ -785,6 +855,7 @@ impl Application {
                     id: &id,
                     key: &key,
                     props: &props,
+                    shared_props: &shared_props,
                     state,
                     life_cycle: &mut life_cycle,
                     named_slots,
@@ -799,21 +870,37 @@ impl Application {
         if mounted {
             if !mount.is_empty() {
                 if let Some(state) = new_states.get(&id) {
-                    let state = State::new(state, StateUpdate::new(sender.clone()));
-                    let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
-                    let signal_sender = SignalSender::new(id.clone(), self.signal_sender.clone());
                     for mut closure in mount {
-                        (closure)(&id, &props, &state, &messenger, &signal_sender);
+                        let state = State::new(state, StateUpdate::new(sender.clone()));
+                        let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
+                        let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                        let context = WidgetMountOrChangeContext {
+                            id: &id,
+                            props: &props,
+                            shared_props: &shared_props,
+                            state,
+                            messenger,
+                            signals,
+                        };
+                        (closure)(context);
                     }
                 }
             }
         } else if !change.is_empty() {
             if let Some(state) = states.get(&id) {
-                let state = State::new(state, StateUpdate::new(sender.clone()));
-                let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
-                let signal_sender = SignalSender::new(id.clone(), self.signal_sender.clone());
                 for mut closure in change {
-                    (closure)(&id, &props, &state, &messenger, &signal_sender);
+                    let state = State::new(state, StateUpdate::new(sender.clone()));
+                    let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
+                    let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                    let context = WidgetMountOrChangeContext {
+                        id: &id,
+                        props: &props,
+                        shared_props: &shared_props,
+                        state,
+                        messenger,
+                        signals,
+                    };
+                    (closure)(context);
                 }
             }
         }
@@ -828,11 +915,13 @@ impl Application {
             new_states,
             used_ids,
             possible_key,
+            Some(shared_props),
         );
         self.state_receivers.insert(id, receiver);
         new_node
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn process_node_unit<'a>(
         &mut self,
         mut unit: WidgetUnitNode,
@@ -841,6 +930,7 @@ impl Application {
         messages: &mut HashMap<WidgetId, Messages>,
         new_states: &mut HashMap<WidgetId, StateData>,
         used_ids: &mut HashSet<WidgetId>,
+        master_shared_props: Option<Props>,
     ) -> WidgetNode {
         match &mut unit {
             WidgetUnitNode::ContentBox(unit) => {
@@ -849,7 +939,7 @@ impl Application {
                     .into_iter()
                     .enumerate()
                     .map(|(i, mut node)| {
-                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        let slot = std::mem::take(&mut node.slot);
                         node.slot = self.process_node(
                             slot,
                             states,
@@ -858,6 +948,7 @@ impl Application {
                             new_states,
                             used_ids,
                             format!("<{}>", i),
+                            master_shared_props.clone(),
                         );
                         node
                     })
@@ -869,7 +960,7 @@ impl Application {
                     .into_iter()
                     .enumerate()
                     .map(|(i, mut node)| {
-                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        let slot = std::mem::take(&mut node.slot);
                         node.slot = self.process_node(
                             slot,
                             states,
@@ -878,6 +969,7 @@ impl Application {
                             new_states,
                             used_ids,
                             format!("<{}>", i),
+                            master_shared_props.clone(),
                         );
                         node
                     })
@@ -889,7 +981,7 @@ impl Application {
                     .into_iter()
                     .enumerate()
                     .map(|(i, mut node)| {
-                        let slot = std::mem::replace(&mut node.slot, Default::default());
+                        let slot = std::mem::take(&mut node.slot);
                         node.slot = self.process_node(
                             slot,
                             states,
@@ -898,21 +990,23 @@ impl Application {
                             new_states,
                             used_ids,
                             format!("<{}>", i),
+                            master_shared_props.clone(),
                         );
                         node
                     })
                     .collect::<Vec<_>>();
             }
             WidgetUnitNode::SizeBox(unit) => {
-                let slot = *std::mem::replace(&mut unit.slot, Default::default());
+                let slot = *std::mem::take(&mut unit.slot);
                 unit.slot = Box::new(self.process_node(
                     slot,
                     states,
-                    path.clone(),
+                    path,
                     messages,
                     new_states,
                     used_ids,
                     "0".to_owned(),
+                    master_shared_props,
                 ));
             }
             _ => {}

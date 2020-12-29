@@ -37,12 +37,53 @@ impl<'a> State<'a> {
         Self { data, update }
     }
 
-    pub fn read<T: 'static>(&self) -> Result<&'a T, StateError> {
+    pub fn read<T>(&self) -> Result<&'a T, StateError>
+    where
+        T: 'static,
+    {
         if let Some(data) = self.data.downcast_ref::<T>() {
             Ok(data)
         } else {
             Err(StateError::CouldNotReadData)
         }
+    }
+
+    pub fn map_or_default<T, R, F>(&self, mut f: F) -> R
+    where
+        T: 'static,
+        R: Default,
+        F: FnMut(&T) -> R,
+    {
+        match self.read() {
+            Ok(data) => f(data),
+            Err(_) => R::default(),
+        }
+    }
+
+    pub fn map_or_else<T, R, F, E>(&self, mut f: F, mut e: E) -> R
+    where
+        T: 'static,
+        F: FnMut(&T) -> R,
+        E: FnMut() -> R,
+    {
+        match self.read() {
+            Ok(data) => f(data),
+            Err(_) => e(),
+        }
+    }
+
+    pub fn read_cloned<T>(&self) -> Result<T, StateError>
+    where
+        T: 'static + Clone,
+    {
+        self.read::<T>().map(|v| v.clone())
+    }
+
+    pub fn read_cloned_or_default<T>(&self) -> T
+    where
+        T: 'static + Clone + Default,
+    {
+        self.read_cloned().unwrap_or_default()
     }
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>

@@ -20,7 +20,7 @@ implement_props_data!(VerticalBoxProps, "VerticalBoxProps");
 widget_component! {
     pub vertical_box(key, props, listed_slots) {
         let VerticalBoxProps { separation, reversed } = props.read_cloned_or_default();
-        let props = FlexBoxProps {
+        let props = props.clone().with(FlexBoxProps {
             direction: if reversed {
                 FlexBoxDirection::VerticalBottomToTop
             } else {
@@ -28,7 +28,7 @@ widget_component! {
             },
             separation,
             wrap: false,
-        };
+        });
 
         widget! {
             (#{key} flex_box: {props} |[ listed_slots ]|)

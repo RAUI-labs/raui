@@ -1,15 +1,36 @@
 use crate::{
     unpack_named_slots, widget,
-    widget::{component::containers::size_box::SizeBoxProps, unit::size::SizeBoxNode},
+    widget::{component::containers::size_box::SizeBoxProps, unit::size::SizeBoxNode, WidgetId},
     widget_component, widget_hook,
 };
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ButtonMessage {
+    #[serde(default)]
+    pub sender: WidgetId,
+    #[serde(default)]
+    pub action: ButtonAction,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ButtonSettingsProps {
+    #[serde(default)]
+    pub disabled: bool,
+    #[serde(default)]
+    pub notify: Option<WidgetId>,
+}
+implement_props_data!(ButtonSettingsProps, "ButtonSettingsProps");
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ButtonProps {
+    #[serde(default)]
     pub selected: bool,
+    #[serde(default)]
     pub trigger: bool,
+    #[serde(default)]
     pub context: bool,
+    #[serde(default)]
     pub text: Vec<TextChange>,
 }
 implement_props_data!(ButtonProps, "ButtonProps");
@@ -26,7 +47,7 @@ pub enum TextChange {
     NewLine,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ButtonAction {
     None,
     Select,
@@ -62,42 +83,47 @@ impl Default for ButtonSignal {
 }
 
 widget_hook! {
-    use_button life_cycle {
-        life_cycle.mount(|id, _, state, _, signals| {
-            drop(state.write(ButtonProps::default()));
-            drop(signals.write(ButtonSignal::Register));
+    use_button(life_cycle) {
+        life_cycle.mount(|context| {
+            drop(context.state.write(ButtonProps::default()));
+            context.signals.write(ButtonSignal::Register);
         });
 
-        life_cycle.unmount(|id, _, _, signals| {
-            drop(signals.write(ButtonSignal::Unregister));
+        life_cycle.unmount(|context| {
+            context.signals.write(ButtonSignal::Unregister);
         });
 
-        life_cycle.change(|_, _, state, messenger, signals| {
-            let mut data = match state.read::<ButtonProps>() {
+        life_cycle.change(|context| {
+            let ButtonSettingsProps { disabled, notify } = context.props.read_cloned_or_default();
+            let mut data = match context.state.read::<ButtonProps>() {
                 Ok(state) => state.clone(),
                 Err(_) => ButtonProps::default(),
             };
             let empty = data.text.is_empty();
             data.text.clear();
             let mut dirty = false;
-            for msg in messenger.messages {
+            for msg in context.messenger.messages {
                 if let Some(action) = msg.downcast_ref::<ButtonAction>() {
                     match action {
                         ButtonAction::Select => {
-                            data.selected = true;
-                            dirty = true;
+                            if !disabled {
+                                data.selected = true;
+                                dirty = true;
+                            }
                         }
                         ButtonAction::Unselect => {
                             data.selected = false;
                             dirty = true;
                         }
                         ButtonAction::TriggerStart => {
-                            data.trigger = true;
-                            dirty = true;
+                            if !disabled {
+                                data.trigger = true;
+                                dirty = true;
+                            }
                         }
                         ButtonAction::TriggerStop => {
                             data.trigger = false;
-                            signals.write(ButtonSignal::Trigger);
+                            context.signals.write(ButtonSignal::Trigger);
                             dirty = true;
                         }
                         ButtonAction::TriggerCancel => {
@@ -105,12 +131,14 @@ widget_hook! {
                             dirty = true;
                         }
                         ButtonAction::ContextStart => {
-                            data.context = true;
-                            dirty = true;
+                            if !disabled {
+                                data.context = true;
+                                dirty = true;
+                            }
                         }
                         ButtonAction::ContextStop => {
                             data.context = false;
-                            signals.write(ButtonSignal::Context);
+                            context.signals.write(ButtonSignal::Context);
                             dirty = true;
                         }
                         ButtonAction::ContextCancel => {
@@ -118,15 +146,23 @@ widget_hook! {
                             dirty = true;
                         }
                         ButtonAction::TextChange(change) => {
-                            data.text.push(*change);
-                            dirty = true;
+                            if !disabled {
+                                data.text.push(*change);
+                                dirty = true;
+                            }
                         }
                         _ => {}
+                    }
+                    if let Some(ref notify) = notify {
+                        context.messenger.write(notify.to_owned(), ButtonMessage {
+                            sender: context.id.to_owned(),
+                            action: *action,
+                        });
                     }
                 }
             }
             if dirty || data.text.is_empty() != empty {
-                drop(state.write(data));
+                drop(context.state.write(data));
             }
         });
     }
@@ -135,6 +171,7 @@ widget_hook! {
 widget_component! {
     pub button(id, props, state, named_slots) [use_button] {
         unpack_named_slots!(named_slots => content);
+        let SizeBoxProps { width, height, margin } = props.read_cloned_or_default();
         if let Some(props) = content.props_mut() {
             let s = match state.read::<ButtonProps>() {
                 Ok(state) => state.clone(),
@@ -142,7 +179,6 @@ widget_component! {
             };
             props.write(s)
         }
-        let SizeBoxProps { width, height, margin } = props.read_cloned_or_default();
 
         widget! {{{
             SizeBoxNode {

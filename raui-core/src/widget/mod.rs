@@ -5,11 +5,11 @@ pub mod unit;
 pub mod utils;
 
 use crate::{
-    messenger::{MessageSender, Messenger},
-    props::Props,
-    signals::SignalSender,
-    state::{State, StateData},
-    widget::{context::WidgetContext, node::WidgetNode},
+    application::Application,
+    widget::{
+        context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
+        node::WidgetNode,
+    },
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -58,6 +58,11 @@ impl WidgetId {
             key_len,
             depth,
         }
+    }
+
+    #[inline]
+    pub fn is_valid(&self) -> bool {
+        !self.id.is_empty()
     }
 
     #[inline]
@@ -124,9 +129,8 @@ impl std::fmt::Debug for WidgetId {
 
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
 
-pub type WidgetMountOrChangeClosure =
-    dyn FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender);
-pub type WidgetUnmountClosure = dyn FnMut(&WidgetId, &StateData, &MessageSender, &SignalSender);
+pub type WidgetMountOrChangeClosure = dyn FnMut(WidgetMountOrChangeContext);
+pub type WidgetUnmountClosure = dyn FnMut(WidgetUnmountContext);
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
@@ -138,25 +142,26 @@ pub struct WidgetLifeCycle {
 impl WidgetLifeCycle {
     pub fn mount<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender),
+        F: 'static + FnMut(WidgetMountOrChangeContext),
     {
         self.mount.push(Box::new(f));
     }
 
     pub fn change<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&WidgetId, &Props, &State, &Messenger, &SignalSender),
+        F: 'static + FnMut(WidgetMountOrChangeContext),
     {
         self.change.push(Box::new(f));
     }
 
     pub fn unmount<F>(&mut self, f: F)
     where
-        F: 'static + FnMut(&WidgetId, &StateData, &MessageSender, &SignalSender),
+        F: 'static + FnMut(WidgetUnmountContext),
     {
         self.unmount.push(Box::new(f));
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn unwrap(
         self,
     ) -> (
@@ -171,6 +176,77 @@ impl WidgetLifeCycle {
         } = self;
         (mount, change, unmount)
     }
+}
+
+pub fn setup(app: &mut Application) {
+    app.map_props::<()>("()");
+    app.map_props::<i8>("i8");
+    app.map_props::<i16>("i16");
+    app.map_props::<i32>("i32");
+    app.map_props::<i64>("i64");
+    app.map_props::<i128>("i128");
+    app.map_props::<u8>("u8");
+    app.map_props::<u16>("u16");
+    app.map_props::<u32>("u32");
+    app.map_props::<u64>("u64");
+    app.map_props::<u128>("u128");
+    app.map_props::<f32>("f32");
+    app.map_props::<f64>("f64");
+    app.map_props::<bool>("bool");
+    app.map_props::<String>("String");
+    app.map_props::<unit::content::ContentBoxItemLayout>("ContentBoxItemLayout");
+    app.map_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
+    app.map_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
+    app.map_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
+    app.map_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
+    app.map_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
+    app.map_props::<component::containers::horizontal_box::HorizontalBoxProps>(
+        "HorizontalBoxProps",
+    );
+    app.map_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
+    app.map_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
+    app.map_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
+    app.map_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
+    app.map_props::<component::containers::wrap_box::WrapBoxProps>("WrapBoxProps");
+    app.map_props::<component::image_box::ImageBoxProps>("ImageBoxProps");
+    app.map_props::<component::space_box::SpaceBoxProps>("SpaceBoxProps");
+    app.map_props::<component::text_box::TextBoxProps>("TextBoxProps");
+    app.map_props::<component::interactive::button::ButtonProps>("ButtonProps");
+    app.map_props::<component::interactive::input_field::InputFieldProps>("InputFieldProps");
+
+    app.map_component(
+        "content_box",
+        component::containers::content_box::content_box,
+    );
+    app.map_component("flex_box", component::containers::flex_box::flex_box);
+    app.map_component("grid_box", component::containers::grid_box::grid_box);
+    app.map_component(
+        "horizontal_box",
+        component::containers::horizontal_box::horizontal_box,
+    );
+    app.map_component("size_box", component::containers::size_box::size_box);
+    app.map_component("switch_box", component::containers::switch_box::switch_box);
+    app.map_component(
+        "variant_box",
+        component::containers::variant_box::variant_box,
+    );
+    app.map_component(
+        "vertical_box",
+        component::containers::vertical_box::vertical_box,
+    );
+    app.map_component("wrap_box", component::containers::wrap_box::wrap_box);
+    app.map_component("image_box", component::image_box::image_box);
+    app.map_component("space_box", component::space_box::space_box);
+    app.map_component("text_box", component::text_box::text_box);
+    app.map_component("button", component::interactive::button::button);
+    app.map_component(
+        "input_field",
+        component::interactive::input_field::input_field,
+    );
+    app.map_component(
+        "input_field_content",
+        component::interactive::input_field::input_field_content,
+    );
 }
 
 #[macro_export]
@@ -191,6 +267,9 @@ macro_rules! widget {
             $type_id:path
             $(
                 : {$props:expr}
+            )?
+            $(
+                | {$shared_props:expr}
             )?
             $(
                 {
@@ -222,6 +301,12 @@ macro_rules! widget {
             $(
                 props = $crate::props::Props::from($props);
             )?
+            #[allow(unused_assignments)]
+            #[allow(unused_mut)]
+            let mut shared_props = None;
+            $(
+                shared_props = Some($crate::props::Props::from($shared_props));
+            )?
             #[allow(unused_mut)]
             let mut named_slots = std::collections::HashMap::new();
             $(
@@ -251,6 +336,7 @@ macro_rules! widget {
                 type_name,
                 key,
                 props,
+                shared_props,
                 named_slots,
                 listed_slots,
             };
@@ -272,26 +358,9 @@ macro_rules! widget_wrap {
 #[macro_export]
 macro_rules! destruct {
     {$type_id:path { $($prop:ident),+ } ($value:expr) => $code:block} => {
-        #[allow(unused_variables)]
         match $value {
             $type_id { $( $prop ),+ , .. } => $code
         }
-    };
-}
-
-#[macro_export]
-macro_rules! unpack_context {
-    ($value:expr => $prop:ident) => {
-        #[allow(unused_mut)]
-        let mut $prop = match $value {
-            $crate::widget::context::WidgetContext { $prop, .. } => $prop,
-        };
-    };
-    ($value:expr => { $($prop:ident),+ }) => {
-        #[allow(unused_mut)]
-        let ( $( mut $prop ),+ ) = match $value {
-            $crate::widget::context::WidgetContext { $( $prop ),+ , .. } => ( $( $prop ),+ ),
-        };
     };
 }
 
@@ -333,7 +402,6 @@ macro_rules! widget_component {
         $([ $( $hook:path ),+ $(,)? ])?
         $code:block
     } => {
-        #[allow(unused_variables)]
         #[allow(unused_mut)]
         $vis fn $name(
             mut context: $crate::widget::context::WidgetContext
@@ -347,7 +415,10 @@ macro_rules! widget_component {
             }
             {
                 $(
-                    $crate::unpack_context!(context => { $( $param ),+ });
+                    #[allow(unused_mut)]
+                    let $crate::widget::context::WidgetContext {
+                        $( mut $param ),+ , ..
+                    } = context;
                 )?
                 $code
             }
@@ -359,37 +430,10 @@ macro_rules! widget_component {
 macro_rules! widget_hook {
     {
         $vis:vis $name:ident
-        $( $param:ident )?
-        $([ $( $hook:path ),+ $(,)? ])?
-        $code:block
-    } => {
-        #[allow(unused_variables)]
-        #[allow(unused_mut)]
-        $vis fn $name(
-            context: &mut $crate::widget::context::WidgetContext
-        ) {
-            {
-                $(
-                    $(
-                        context.use_hook($hook);
-                    ),+
-                )?
-            }
-            {
-                $(
-                    $crate::unpack_context!(context => $param);
-                )?
-                $code
-            }
-        }
-    };
-    {
-        $vis:vis $name:ident
         $( ( $( $param:ident ),+ ) )?
         $([ $( $hook:path ),+ $(,)? ])?
         $code:block
     } => {
-        #[allow(unused_variables)]
         #[allow(unused_mut)]
         $vis fn $name(
             context: &mut $crate::widget::context::WidgetContext
@@ -403,7 +447,10 @@ macro_rules! widget_hook {
             }
             {
                 $(
-                    $crate::unpack_context!(context => { $( $param ),+ });
+                    #[allow(unused_mut)]
+                    let $crate::widget::context::WidgetContext {
+                        $( $param ),+ , ..
+                    } = context;
                 )?
                 $code
             }

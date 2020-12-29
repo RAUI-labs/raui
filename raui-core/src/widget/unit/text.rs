@@ -57,10 +57,6 @@ pub struct TextBoxFont {
     pub name: String,
     #[serde(default)]
     pub size: Scalar,
-    #[serde(default)]
-    pub bold: bool,
-    #[serde(default)]
-    pub italic: bool,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
@@ -147,7 +143,7 @@ impl TextBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

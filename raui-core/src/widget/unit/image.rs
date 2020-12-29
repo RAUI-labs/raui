@@ -14,13 +14,22 @@ use std::{collections::HashMap, convert::TryFrom};
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ImageBoxImageScaling {
     Strech,
-    Frame(Scalar),
+    // (frame size, frame only)
+    Frame(Scalar, bool),
 }
 
 impl Default for ImageBoxImageScaling {
     fn default() -> Self {
         Self::Strech
     }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ImageBoxColor {
+    #[serde(default)]
+    pub color: Color,
+    #[serde(default)]
+    pub scaling: ImageBoxImageScaling,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -45,14 +54,14 @@ pub struct ImageBoxProcedural {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImageBoxMaterial {
-    Color(Color),
+    Color(ImageBoxColor),
     Image(ImageBoxImage),
     Procedural(ImageBoxProcedural),
 }
 
 impl Default for ImageBoxMaterial {
     fn default() -> Self {
-        Self::Color(Color::default())
+        Self::Color(Default::default())
     }
 }
 
@@ -133,7 +142,7 @@ impl ImageBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

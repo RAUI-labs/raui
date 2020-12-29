@@ -1,0 +1,186 @@
+use crate::{
+    app::AppSignal,
+    ui::components::{
+        app_bar::app_bar,
+        tasks_list::{tasks_list, TaskProps, TasksProps},
+    },
+};
+use raui_core::prelude::*;
+use raui_material::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ThemeMode {
+    Light,
+    Dark,
+}
+
+pub type ThemeModeProps = ThemeMode;
+implement_props_data!(ThemeModeProps, "ThemeModeProps");
+
+impl Default for ThemeMode {
+    fn default() -> Self {
+        Self::Dark
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct AppState {
+    pub theme: ThemeMode,
+    pub tasks: Vec<TaskProps>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct AppSharedProps {
+    pub id: WidgetId,
+}
+implement_props_data!(AppSharedProps, "AppSharedProps");
+
+#[derive(Debug, Clone)]
+pub enum AppMessage {
+    ToggleTheme,
+    AddTask(String),
+    DeleteTask(usize),
+    ToggleTask(usize),
+    Save,
+    Load(AppState),
+}
+
+fn new_theme(theme: ThemeMode) -> ThemeProps {
+    let mut theme = match theme {
+        ThemeMode::Light => new_light_theme(),
+        ThemeMode::Dark => new_dark_theme(),
+    };
+    theme.text_variants.insert(
+        "title".to_owned(),
+        ThemedTextMaterial {
+            font: TextBoxFont {
+                name: "bold".to_owned(),
+                size: 24.0,
+            },
+            ..Default::default()
+        },
+    );
+    theme.switch_variants.insert(
+        "checkbox".to_owned(),
+        ThemedSwitchMaterial {
+            on: ThemedImageMaterial::Image(ImageBoxImage {
+                id: "icon-check-box-on".to_owned(),
+                ..Default::default()
+            }),
+            off: ThemedImageMaterial::Image(ImageBoxImage {
+                id: "icon-check-box-off".to_owned(),
+                ..Default::default()
+            }),
+        },
+    );
+    theme
+}
+
+widget_hook! {
+    use_app(life_cycle) {
+        life_cycle.mount(|context| {
+            drop(context.state.write(AppState::default()));
+            context.signals.write(AppSignal::Ready(context.id.to_owned()));
+        });
+
+        life_cycle.change(|context| {
+            for msg in context.messenger.messages {
+                if let Some(msg) = msg.downcast_ref::<AppMessage>() {
+                    match msg {
+                        AppMessage::ToggleTheme => {
+                            let mut data = match context.state.read::<AppState>() {
+                                Ok(state) => state.clone(),
+                                Err(_) => AppState::default(),
+                            };
+                            data.theme = match data.theme {
+                                ThemeMode::Light => ThemeMode::Dark,
+                                ThemeMode::Dark => ThemeMode::Light,
+                            };
+                            drop(context.state.write(data));
+                        }
+                        AppMessage::AddTask(name) => {
+                            let mut data = match context.state.read::<AppState>() {
+                                Ok(state) => state.clone(),
+                                Err(_) => AppState::default(),
+                            };
+                            data.tasks.push(TaskProps::new(name));
+                            drop(context.state.write(data));
+                        }
+                        AppMessage::DeleteTask(index) => {
+                            let mut data = match context.state.read::<AppState>() {
+                                Ok(state) => state.clone(),
+                                Err(_) => AppState::default(),
+                            };
+                            data.tasks.remove(*index);
+                            drop(context.state.write(data));
+                        }
+                        AppMessage::ToggleTask(index) => {
+                            let mut data = match context.state.read::<AppState>() {
+                                Ok(state) => state.clone(),
+                                Err(_) => AppState::default(),
+                            };
+                            if let Some(item) = data.tasks.get_mut(*index) {
+                                item.done = !item.done;
+                            }
+                            drop(context.state.write(data));
+                        }
+                        AppMessage::Save => {
+                            if let Ok(data) = context.state.read::<AppState>() {
+                                context.signals.write(AppSignal::Save(data.clone()));
+                            }
+                        }
+                        AppMessage::Load(data) => {
+                            drop(context.state.write(data.clone()));
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+widget_component! {
+    pub app(id, key, props, state) [use_app] {
+        let (theme_mode, tasks) = state.map_or_default::<AppState, _, _>(|s| {
+            (s.theme, s.tasks.clone())
+        });
+        let theme = new_theme(theme_mode);
+        let shared_props = Props::new(AppSharedProps { id: id.to_owned() })
+            .with(theme)
+            .with(theme_mode);
+        let content_props = props.clone().with(ContentBoxItemLayout {
+            margin: Rect {
+                left: 32.0,
+                right: 32.0,
+                top: 32.0,
+                bottom: 32.0,
+            },
+            ..Default::default()
+        }).with(VerticalBoxProps {
+            separation: 10.0,
+            ..Default::default()
+        });
+        let bar_props = FlexBoxItemLayout {
+            grow: 0.0,
+            shrink: 0.0,
+            ..Default::default()
+        };
+        let tasks_props = Props::new(FlexBoxItemLayout {
+            grow: 0.0,
+            shrink: 0.0,
+            ..Default::default()
+        }).with(TasksProps {
+            tasks,
+        });
+
+        widget!{
+            (#{key} wrap_paper: {props.clone()} {
+                content = (#{"app-content"} vertical_paper: {content_props} | {shared_props} [
+                    (#{"app-bar"} app_bar: {bar_props})
+                    (#{"tasks-list"} tasks_list: {tasks_props})
+                ])
+            })
+        }
+    }
+}

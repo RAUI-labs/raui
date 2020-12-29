@@ -11,9 +11,9 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContentBoxItemLayout {
-    #[serde(default)]
+    #[serde(default = "ContentBoxItemLayout::default_anchors")]
     pub anchors: Rect,
     #[serde(default)]
     pub margin: Rect,
@@ -25,6 +25,29 @@ pub struct ContentBoxItemLayout {
     pub depth: Scalar,
 }
 implement_props_data!(ContentBoxItemLayout, "ContentBoxItemLayout");
+
+impl ContentBoxItemLayout {
+    fn default_anchors() -> Rect {
+        Rect {
+            left: 0.0,
+            right: 1.0,
+            top: 0.0,
+            bottom: 1.0,
+        }
+    }
+}
+
+impl Default for ContentBoxItemLayout {
+    fn default() -> Self {
+        Self {
+            anchors: Self::default_anchors(),
+            margin: Default::default(),
+            align: Default::default(),
+            offset: Default::default(),
+            depth: 0.0,
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ContentBoxItem {
@@ -92,7 +115,7 @@ impl TryFrom<ContentBoxNode> for ContentBox {
         } = node;
         let items = items
             .into_iter()
-            .map(|item| ContentBoxItem::try_from(item))
+            .map(ContentBoxItem::try_from)
             .collect::<Result<_, _>>()?;
         Ok(Self {
             id,
@@ -115,7 +138,7 @@ impl ContentBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

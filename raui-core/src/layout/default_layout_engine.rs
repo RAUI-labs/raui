@@ -108,9 +108,9 @@ impl DefaultLayoutEngine {
             for item in items {
                 let local_main = item.layout.basis.unwrap_or_else(|| {
                     if unit.direction.is_horizontal() {
-                        Self::calc_unit_min_width(&item.slot)
+                        Self::calc_unit_min_width(size_available, &item.slot)
                     } else {
-                        Self::calc_unit_min_height(&item.slot)
+                        Self::calc_unit_min_height(size_available, &item.slot)
                     }
                 });
                 let local_main = local_main
@@ -120,9 +120,9 @@ impl DefaultLayoutEngine {
                         item.layout.margin.top + item.layout.margin.bottom
                     };
                 let local_cross = if unit.direction.is_horizontal() {
-                    Self::calc_unit_min_height(&item.slot)
+                    Self::calc_unit_min_height(size_available, &item.slot)
                 } else {
-                    Self::calc_unit_min_width(&item.slot)
+                    Self::calc_unit_min_width(size_available, &item.slot)
                 };
                 let local_cross = local_cross
                     + if unit.direction.is_horizontal() {
@@ -131,7 +131,7 @@ impl DefaultLayoutEngine {
                         item.layout.margin.left + item.layout.margin.right
                     };
                 if !line.is_empty() && main + local_main > main_available {
-                    main += line.len().checked_sub(1).unwrap_or(0) as Scalar * unit.separation;
+                    main += line.len().saturating_sub(1) as Scalar * unit.separation;
                     lines.push((main, cross, grow, std::mem::replace(&mut line, vec![])));
                     main = 0.0;
                     cross = 0.0;
@@ -142,7 +142,7 @@ impl DefaultLayoutEngine {
                 grow += item.layout.grow;
                 line.push((item, local_main, local_cross));
             }
-            main += line.len().checked_sub(1).unwrap_or(0) as Scalar * unit.separation;
+            main += line.len().saturating_sub(1) as Scalar * unit.separation;
             lines.push((main, cross, grow, line));
             (lines, count)
         };
@@ -280,42 +280,40 @@ impl DefaultLayoutEngine {
             .iter()
             .filter(|item| item.slot.is_some())
             .collect::<Vec<_>>();
-        let axis_sizes = items
-            .iter()
-            .map(|item| {
-                let local_main = item.layout.basis.unwrap_or_else(|| {
-                    if unit.direction.is_horizontal() {
-                        Self::calc_unit_min_width(&item.slot)
-                    } else {
-                        Self::calc_unit_min_height(&item.slot)
-                    }
-                });
-                let local_main = local_main
-                    + if unit.direction.is_horizontal() {
-                        item.layout.margin.left + item.layout.margin.right
-                    } else {
-                        item.layout.margin.top + item.layout.margin.bottom
-                    };
-                let local_cross = if unit.direction.is_horizontal() {
-                    Self::calc_unit_min_height(&item.slot)
+        let mut axis_sizes = Vec::with_capacity(items.len());
+        for item in &items {
+            let local_main = item.layout.basis.unwrap_or_else(|| {
+                if unit.direction.is_horizontal() {
+                    Self::calc_unit_min_width(size_available, &item.slot)
                 } else {
-                    Self::calc_unit_min_width(&item.slot)
+                    Self::calc_unit_min_height(size_available, &item.slot)
+                }
+            });
+            let local_main = local_main
+                + if unit.direction.is_horizontal() {
+                    item.layout.margin.left + item.layout.margin.right
+                } else {
+                    item.layout.margin.top + item.layout.margin.bottom
                 };
-                let local_cross = local_cross
-                    + if unit.direction.is_horizontal() {
-                        item.layout.margin.top + item.layout.margin.bottom
-                    } else {
-                        item.layout.margin.left + item.layout.margin.right
-                    };
-                let local_cross = lerp(local_cross, cross_available, item.layout.fill);
-                main += local_main;
-                cross = cross.max(local_cross);
-                grow += item.layout.grow;
-                shrink += item.layout.shrink;
-                (local_main, local_cross)
-            })
-            .collect::<Vec<_>>();
-        main += items.len().checked_sub(1).unwrap_or(0) as Scalar * unit.separation;
+            let local_cross = if unit.direction.is_horizontal() {
+                Self::calc_unit_min_height(size_available, &item.slot)
+            } else {
+                Self::calc_unit_min_width(size_available, &item.slot)
+            };
+            let local_cross = local_cross
+                + if unit.direction.is_horizontal() {
+                    item.layout.margin.top + item.layout.margin.bottom
+                } else {
+                    item.layout.margin.left + item.layout.margin.right
+                };
+            let local_cross = lerp(local_cross, cross_available, item.layout.fill);
+            main += local_main;
+            cross = cross.max(local_cross);
+            grow += item.layout.grow;
+            shrink += item.layout.shrink;
+            axis_sizes.push((local_main, local_cross));
+        }
+        main += items.len().saturating_sub(1) as Scalar * unit.separation;
         let diff = main_available - main;
         let mut new_main = 0.0;
         let mut new_cross: Scalar = 0.0;
@@ -564,8 +562,26 @@ impl DefaultLayoutEngine {
         }
     }
 
-    fn calc_unit_min_width(unit: &WidgetUnit) -> Scalar {
+    fn calc_unit_min_width(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
+            WidgetUnit::None => 0.0,
+            // TODO: improve this shit.
+            WidgetUnit::ContentBox(b) => b.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_width(size_available, &i.slot).max(a)
+            }),
+            WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_width(size_available, b),
+            // TODO: improve this shit.
+            WidgetUnit::GridBox(b) => b.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_width(size_available, &i.slot).max(a)
+            }),
+            WidgetUnit::SizeBox(b) => {
+                (match b.width {
+                    SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &b.slot),
+                    SizeBoxSizeValue::Fill => 0.0,
+                    SizeBoxSizeValue::Exact(v) => v,
+                }) + b.margin.left
+                    + b.margin.right
+            }
             WidgetUnit::ImageBox(b) => match b.width {
                 ImageBoxSizeValue::Fill => 0.0,
                 ImageBoxSizeValue::Exact(v) => v,
@@ -574,21 +590,103 @@ impl DefaultLayoutEngine {
                 TextBoxSizeValue::Fill => 0.0,
                 TextBoxSizeValue::Exact(v) => v,
             },
-            WidgetUnit::SizeBox(b) => {
-                b.margin.top
-                    + b.margin.bottom
-                    + match b.width {
-                        SizeBoxSizeValue::Content => Self::calc_unit_min_width(&b.slot),
-                        SizeBoxSizeValue::Fill => 0.0,
-                        SizeBoxSizeValue::Exact(v) => v,
-                    }
-            }
-            _ => 0.0,
         }
     }
 
-    fn calc_unit_min_height(unit: &WidgetUnit) -> Scalar {
+    fn calc_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.direction.is_horizontal() {
+            Self::calc_horizontal_flex_box_min_width(size_available, unit)
+        } else {
+            Self::calc_vertical_flex_box_min_width(size_available, unit)
+        }
+    }
+
+    fn calc_horizontal_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.wrap {
+            let mut result: Scalar = 0.0;
+            let mut line = 0.0;
+            let mut first = true;
+            for item in &unit.items {
+                let size = Self::calc_unit_min_width(size_available, &item.slot);
+                if first || line + size <= size_available.x {
+                    line += size;
+                    if !first {
+                        line += unit.separation;
+                    }
+                    first = false;
+                } else {
+                    result = result.max(line);
+                    line = 0.0;
+                    first = true;
+                }
+            }
+            result.max(line)
+        } else {
+            let mut result = 0.0;
+            for item in &unit.items {
+                result += Self::calc_unit_min_width(size_available, &item.slot);
+            }
+            result + (unit.items.len().saturating_sub(1) as Scalar) * unit.separation
+        }
+    }
+
+    fn calc_vertical_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.wrap {
+            let mut result = 0.0;
+            let mut line_length = 0.0;
+            let mut line: Scalar = 0.0;
+            let mut lines: usize = 0;
+            let mut first = true;
+            for item in &unit.items {
+                let width = Self::calc_unit_min_width(size_available, &item.slot);
+                let height = Self::calc_unit_min_height(size_available, &item.slot);
+                if first || line_length + height <= size_available.y {
+                    line_length += height;
+                    if !first {
+                        line_length += unit.separation;
+                    }
+                    line = line.max(width);
+                    first = false;
+                } else {
+                    result += line;
+                    line_length = 0.0;
+                    line = 0.0;
+                    lines += 1;
+                    first = true;
+                }
+            }
+            result += line;
+            lines += 1;
+            result + (lines.saturating_sub(1) as Scalar) * unit.separation
+        } else {
+            unit.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_width(size_available, &i.slot).max(a)
+            })
+        }
+    }
+
+    fn calc_unit_min_height(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
+            WidgetUnit::None => 0.0,
+            // TODO: improve this shit.
+            WidgetUnit::ContentBox(b) => b.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_height(size_available, &i.slot).max(a)
+            }),
+            WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_height(size_available, b),
+            // TODO: improve this shit.
+            WidgetUnit::GridBox(b) => b.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_height(size_available, &i.slot).max(a)
+            }),
+            WidgetUnit::SizeBox(b) => {
+                (match b.height {
+                    SizeBoxSizeValue::Content => {
+                        Self::calc_unit_min_height(size_available, &b.slot)
+                    }
+                    SizeBoxSizeValue::Fill => 0.0,
+                    SizeBoxSizeValue::Exact(v) => v,
+                }) + b.margin.top
+                    + b.margin.bottom
+            }
             WidgetUnit::ImageBox(b) => match b.height {
                 ImageBoxSizeValue::Fill => 0.0,
                 ImageBoxSizeValue::Exact(v) => v,
@@ -597,16 +695,78 @@ impl DefaultLayoutEngine {
                 TextBoxSizeValue::Fill => 0.0,
                 TextBoxSizeValue::Exact(v) => v,
             },
-            WidgetUnit::SizeBox(b) => {
-                b.margin.top
-                    + b.margin.bottom
-                    + match b.height {
-                        SizeBoxSizeValue::Content => Self::calc_unit_min_height(&b.slot),
-                        SizeBoxSizeValue::Fill => 0.0,
-                        SizeBoxSizeValue::Exact(v) => v,
+        }
+    }
+
+    fn calc_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.direction.is_horizontal() {
+            Self::calc_horizontal_flex_box_min_height(size_available, unit)
+        } else {
+            Self::calc_vertical_flex_box_min_height(size_available, unit)
+        }
+    }
+
+    fn calc_horizontal_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.wrap {
+            let mut result = 0.0;
+            let mut line_length = 0.0;
+            let mut line: Scalar = 0.0;
+            let mut lines: usize = 0;
+            let mut first = true;
+            for item in &unit.items {
+                let width = Self::calc_unit_min_width(size_available, &item.slot);
+                let height = Self::calc_unit_min_height(size_available, &item.slot);
+                if first || line_length + width <= size_available.x {
+                    line_length += width;
+                    if !first {
+                        line_length += unit.separation;
                     }
+                    line = line.max(height);
+                    first = false;
+                } else {
+                    result += line;
+                    line_length = 0.0;
+                    line = 0.0;
+                    lines += 1;
+                    first = true;
+                }
             }
-            _ => 0.0,
+            result += line;
+            lines += 1;
+            result + (lines.saturating_sub(1) as Scalar) * unit.separation
+        } else {
+            unit.items.iter().fold(0.0, |a, i| {
+                Self::calc_unit_min_height(size_available, &i.slot).max(a)
+            })
+        }
+    }
+
+    fn calc_vertical_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+        if unit.wrap {
+            let mut result: Scalar = 0.0;
+            let mut line = 0.0;
+            let mut first = true;
+            for item in &unit.items {
+                let size = Self::calc_unit_min_height(size_available, &item.slot);
+                if first || line + size <= size_available.y {
+                    line += size;
+                    if !first {
+                        line += unit.separation;
+                    }
+                    first = false;
+                } else {
+                    result = result.max(line);
+                    line = 0.0;
+                    first = true;
+                }
+            }
+            result.max(line)
+        } else {
+            let mut result = 0.0;
+            for item in &unit.items {
+                result += Self::calc_unit_min_height(size_available, &item.slot);
+            }
+            result + (unit.items.len().saturating_sub(1) as Scalar) * unit.separation
         }
     }
 

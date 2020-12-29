@@ -5,7 +5,6 @@ pub mod space_box;
 pub mod text_box;
 
 use crate::{
-    application::Application,
     props::{Props, PropsDef},
     widget::{
         node::{WidgetNode, WidgetNodeDef},
@@ -21,6 +20,7 @@ pub struct WidgetComponent {
     pub type_name: String,
     pub key: Option<String>,
     pub props: Props,
+    pub shared_props: Option<Props>,
     pub listed_slots: Vec<WidgetNode>,
     pub named_slots: HashMap<String, WidgetNode>,
 }
@@ -30,7 +30,7 @@ impl WidgetComponent {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }
@@ -74,22 +74,9 @@ pub struct WidgetComponentDef {
     #[serde(default)]
     pub props: PropsDef,
     #[serde(default)]
+    pub shared_props: Option<PropsDef>,
+    #[serde(default)]
     pub listed_slots: Vec<WidgetNodeDef>,
     #[serde(default)]
     pub named_slots: HashMap<String, WidgetNodeDef>,
-}
-
-pub fn install_components(app: &mut Application) {
-    app.map_component("content_box", containers::content_box::content_box);
-    app.map_component("flex_box", containers::flex_box::flex_box);
-    app.map_component("grid_box", containers::grid_box::grid_box);
-    app.map_component("horizontal_box", containers::horizontal_box::horizontal_box);
-    app.map_component("size_box", containers::size_box::size_box);
-    app.map_component("switch_box", containers::switch_box::switch_box);
-    app.map_component("variant_box", containers::variant_box::variant_box);
-    app.map_component("vertical_box", containers::vertical_box::vertical_box);
-    app.map_component("wrap_box", containers::wrap_box::wrap_box);
-    app.map_component("image_box", image_box::image_box);
-    app.map_component("space_box", space_box::space_box);
-    app.map_component("text_box", text_box::text_box);
 }

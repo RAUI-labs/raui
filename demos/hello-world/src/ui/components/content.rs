@@ -9,7 +9,6 @@ widget_component! {
         let props = props.clone().with(GridBoxProps {
             cols: 2,
             rows: 2,
-            ..Default::default()
         });
 
         let props0 = Props::new(ImageButtonProps {

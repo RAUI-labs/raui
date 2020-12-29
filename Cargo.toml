@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
@@ -16,12 +16,14 @@ exclude = [
 ]
 
 [features]
+material = ["raui-material"]
 binary = ["raui-binary-renderer"]
 html = ["raui-html-renderer"]
 json = ["raui-json-renderer"]
 ron = ["raui-ron-renderer"]
 yaml = ["raui-yaml-renderer"]
 all = [
+  "material",
   "binary",
   "html",
   "json",
@@ -30,31 +32,36 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.10" }
+raui-core = { path = "./raui-core", version = "0.11" }
+
+[dependencies.raui-material]
+path = "./raui-material"
+version = "0.11"
+optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.10"
+version = "0.11"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.10"
+version = "0.11"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.10"
+version = "0.11"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.10"
+version = "0.11"
 optional = true
 
 [dependencies.raui-yaml-renderer]
 path = "./raui-yaml-renderer"
-version = "0.10"
+version = "0.11"
 optional = true
 
 [dev-dependencies]
@@ -69,7 +76,9 @@ members = [
   "raui-ggez-renderer",
   "raui-html-renderer",
   "raui-json-renderer",
+  "raui-material",
   "raui-ron-renderer",
   "raui-yaml-renderer",
   "demos/hello-world",
+  "demos/todo-app",
 ]

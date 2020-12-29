@@ -85,7 +85,7 @@ impl SizeBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

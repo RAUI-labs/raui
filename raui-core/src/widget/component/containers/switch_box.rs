@@ -1,9 +1,6 @@
 use crate::{
     widget,
-    widget::{
-        unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
-        utils::Rect,
-    },
+    widget::unit::content::{ContentBoxItemNode, ContentBoxNode},
     widget_component,
 };
 use serde::{Deserialize, Serialize};
@@ -25,15 +22,7 @@ widget_component! {
                 vec![
                     ContentBoxItemNode {
                         slot,
-                        layout: ContentBoxItemLayout {
-                            anchors: Rect {
-                                left: 0.0,
-                                right: 1.0,
-                                top: 0.0,
-                                bottom: 1.0,
-                            },
-                            ..Default::default()
-                        }
+                        ..Default::default()
                     }
                 ]
             } else {

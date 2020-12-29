@@ -18,23 +18,17 @@ implement_props_data!(FlexBoxProps, "FlexBoxProps");
 
 widget_component! {
     pub flex_box(id, props, listed_slots) {
+        let FlexBoxProps { direction, separation, wrap } = props.read_cloned_or_default();
         let items = listed_slots.into_iter().map(|slot| {
-            let layout = match slot
+            let layout = slot
                 .props()
                 .expect("WidgetNode has no Props")
-                .read::<FlexBoxItemLayout>() {
-                    Ok(layout) => layout.clone(),
-                    Err(_) => FlexBoxItemLayout {
-                        fill: 1.0,
-                        ..Default::default()
-                    },
-                };
+                .read_cloned_or_default::<FlexBoxItemLayout>();
             FlexBoxItemNode {
                 slot,
                 layout,
             }
         }).collect::<Vec<_>>();
-        let FlexBoxProps { direction, separation, wrap } = props.read_cloned_or_default();
 
         widget! {{{
             FlexBoxNode {

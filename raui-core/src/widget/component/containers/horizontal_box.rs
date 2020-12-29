@@ -20,7 +20,7 @@ implement_props_data!(HorizontalBoxProps, "HorizontalBoxProps");
 widget_component! {
     pub horizontal_box(key, props, listed_slots) {
         let HorizontalBoxProps { separation, reversed } = props.read_cloned_or_default();
-        let props = FlexBoxProps {
+        let props = props.clone().with(FlexBoxProps {
             direction: if reversed {
                 FlexBoxDirection::HorizontalRightToLeft
             } else {
@@ -28,7 +28,7 @@ widget_component! {
             },
             separation,
             wrap: false,
-        };
+        });
 
         widget! {
             (#{key} flex_box: {props} |[ listed_slots ]|)

@@ -61,11 +61,11 @@ impl MessageSender {
 
 pub struct Messenger<'a> {
     sender: MessageSender,
-    pub messages: &'a Messages,
+    pub messages: &'a [Message],
 }
 
 impl<'a> Messenger<'a> {
-    pub fn new(sender: MessageSender, messages: &'a Messages) -> Self {
+    pub fn new(sender: MessageSender, messages: &'a [Message]) -> Self {
         Self { sender, messages }
     }
 
@@ -73,6 +73,17 @@ impl<'a> Messenger<'a> {
     where
         T: 'static,
     {
-        self.sender.write(id, Box::new(message))
+        self.sender.write(id, message)
+    }
+
+    pub fn write_raw(&self, id: WidgetId, message: Message) -> bool {
+        self.sender.write_raw(id, message)
+    }
+
+    pub fn write_raw_all<I>(&self, messages: I)
+    where
+        I: IntoIterator<Item = (WidgetId, Message)>,
+    {
+        self.sender.write_raw_all(messages);
     }
 }

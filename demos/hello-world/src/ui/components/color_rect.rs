@@ -12,7 +12,10 @@ widget_component! {
     pub color_rect(key, props) {
         let color = props.read_cloned_or_default::<ColorRectProps>().color;
         let props = props.clone().with(ImageBoxProps {
-            material: ImageBoxMaterial::Color(color),
+            material: ImageBoxMaterial::Color(ImageBoxColor {
+                color,
+                scaling: ImageBoxImageScaling::Frame(10.0, true),
+            }),
             ..Default::default()
         });
 

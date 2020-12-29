@@ -1,0 +1,65 @@
+use crate::theme::{ThemeColor, ThemeProps, ThemedWidgetProps};
+use raui_core::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct IconImage {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub source_rect: Option<Rect>,
+    #[serde(default)]
+    pub scaling: ImageBoxImageScaling,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct IconPaperProps {
+    #[serde(default)]
+    pub image: IconImage,
+    #[serde(default)]
+    pub size_level: usize,
+}
+implement_props_data!(IconPaperProps, "IconPaperProps");
+
+widget_component! {
+    pub icon_paper(key, props, shared_props) {
+        let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
+        let tint = match shared_props.read::<ThemeProps>() {
+            Ok(props) => match themed_props.color {
+                ThemeColor::Default => props.active_colors.contrast.default.main,
+                ThemeColor::Primary => props.active_colors.contrast.primary.main,
+                ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
+            },
+            Err(_) => Default::default(),
+        };
+        let icon_props = props.read_cloned_or_default::<IconPaperProps>();
+        let size = match shared_props.read::<ThemeProps>() {
+            Ok(props) => props
+                .icons_level_sizes
+                .get(icon_props.size_level)
+                .copied()
+                .unwrap_or(24.0),
+            Err(_) => 24.0,
+        };
+        let IconImage {id, source_rect, scaling } = icon_props.image;
+        let image = ImageBoxImage {
+            id,
+            source_rect,
+            scaling,
+            tint,
+        };
+        let props = ImageBoxProps {
+            width: ImageBoxSizeValue::Exact(size),
+            height: ImageBoxSizeValue::Exact(size),
+            content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                horizontal_alignment: 0.5,
+                vertical_alignment: 0.5,
+            }),
+            material: ImageBoxMaterial::Image(image),
+        };
+
+        widget! {
+            (#{key} image_box: {props})
+        }
+    }
+}

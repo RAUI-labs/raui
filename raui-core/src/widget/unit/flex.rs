@@ -11,15 +11,15 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlexBoxItemLayout {
     #[serde(default)]
     pub basis: Option<Scalar>,
-    #[serde(default)]
+    #[serde(default = "FlexBoxItemLayout::default_fill")]
     pub fill: Scalar,
-    #[serde(default)]
+    #[serde(default = "FlexBoxItemLayout::default_grow")]
     pub grow: Scalar,
-    #[serde(default)]
+    #[serde(default = "FlexBoxItemLayout::default_shrink")]
     pub shrink: Scalar,
     #[serde(default)]
     pub margin: Rect,
@@ -27,6 +27,33 @@ pub struct FlexBoxItemLayout {
     pub align: Scalar,
 }
 implement_props_data!(FlexBoxItemLayout, "FlexBoxItemLayout");
+
+impl FlexBoxItemLayout {
+    fn default_fill() -> Scalar {
+        1.0
+    }
+
+    fn default_grow() -> Scalar {
+        1.0
+    }
+
+    fn default_shrink() -> Scalar {
+        1.0
+    }
+}
+
+impl Default for FlexBoxItemLayout {
+    fn default() -> Self {
+        Self {
+            basis: None,
+            fill: Self::default_fill(),
+            grow: Self::default_grow(),
+            shrink: Self::default_shrink(),
+            margin: Default::default(),
+            align: 0.0,
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FlexBoxItem {
@@ -132,7 +159,7 @@ impl TryFrom<FlexBoxNode> for FlexBox {
         } = node;
         let items = items
             .into_iter()
-            .map(|item| FlexBoxItem::try_from(item))
+            .map(FlexBoxItem::try_from)
             .collect::<Result<_, _>>()?;
         Ok(Self {
             id,
@@ -159,7 +186,7 @@ impl FlexBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

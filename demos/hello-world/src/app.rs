@@ -31,7 +31,7 @@ impl App {
         );
 
         let mut ui = UI::new();
-        ui.setup(install_components);
+        ui.setup(setup);
         let tree = widget! {
             (app {
                 title = (title_bar)

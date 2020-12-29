@@ -56,15 +56,139 @@ impl<'a> GgezRenderer<'a> {
             }
             WidgetUnit::SizeBox(unit) => self.render_node(&unit.slot, layout),
             WidgetUnit::ImageBox(unit) => match &unit.material {
-                ImageBoxMaterial::Color(color) => {
+                ImageBoxMaterial::Color(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
+                        let color = [image.color.r, image.color.g, image.color.b, image.color.a];
                         let rect = item.ui_space;
                         let mut builder = MeshBuilder::new();
-                        builder.rectangle(
-                            graphics::DrawMode::fill(),
-                            graphics::Rect::new(rect.left, rect.top, rect.width(), rect.height()),
-                            graphics::Color::new(color.r, color.g, color.b, color.a),
-                        );
+                        match image.scaling {
+                            ImageBoxImageScaling::Strech => {
+                                let vertices = &[
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                ];
+                                let indices = &[0, 1, 2, 2, 3, 0];
+                                builder.raw(vertices, indices, None);
+                            }
+                            ImageBoxImageScaling::Frame(v, only) => {
+                                let vertices = &[
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left + v, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right - v, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.top],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.top + v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left + v, rect.top + v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right - v, rect.top + v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.top + v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.bottom - v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left + v, rect.bottom - v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right - v, rect.bottom - v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.bottom - v],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.left + v, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right - v, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                    graphics::Vertex {
+                                        pos: [rect.right, rect.bottom],
+                                        uv: [0.0, 0.0],
+                                        color,
+                                    },
+                                ];
+                                if only {
+                                    let indices = &[
+                                        0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2, 4, 5,
+                                        9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13, 12, 8, 9,
+                                        10, 14, 14, 13, 9, 10, 11, 15, 15, 14, 10,
+                                    ];
+                                    builder.raw(vertices, indices, None);
+                                } else {
+                                    let indices = &[
+                                        0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2, 4, 5,
+                                        9, 9, 8, 4, 5, 6, 10, 10, 9, 5, 6, 7, 11, 11, 10, 6, 8, 9,
+                                        13, 13, 12, 8, 9, 10, 14, 14, 13, 9, 10, 11, 15, 15, 14,
+                                        10,
+                                    ];
+                                    builder.raw(vertices, indices, None);
+                                }
+                            }
+                        }
                         if let Ok(mesh) = builder.build(self.context) {
                             if graphics::draw(self.context, &mesh, graphics::DrawParam::default())
                                 .is_ok()
@@ -84,7 +208,7 @@ impl<'a> GgezRenderer<'a> {
                     if let Some(item) = layout.items.get(&unit.id) {
                         if let Some(resource) = self.resources.images.get(&image.id) {
                             let color = [image.tint.r, image.tint.g, image.tint.b, image.tint.a];
-                            let source = image.source_rect.unwrap_or_else(|| Rect {
+                            let source = image.source_rect.unwrap_or(Rect {
                                 left: 0.0,
                                 right: 1.0,
                                 top: 0.0,
@@ -129,35 +253,33 @@ impl<'a> GgezRenderer<'a> {
                                             bottom: h + o + oy,
                                         }
                                     }
+                                } else if width >= height {
+                                    let w = item.ui_space.width();
+                                    let h = w * height / width;
+                                    let o = lerp(
+                                        0.0,
+                                        item.ui_space.height() - h,
+                                        aspect.vertical_alignment,
+                                    );
+                                    Rect {
+                                        left: ox,
+                                        right: w + ox,
+                                        top: o + oy,
+                                        bottom: h + o + oy,
+                                    }
                                 } else {
-                                    if width >= height {
-                                        let w = item.ui_space.width();
-                                        let h = w * height / width;
-                                        let o = lerp(
-                                            0.0,
-                                            item.ui_space.height() - h,
-                                            aspect.vertical_alignment,
-                                        );
-                                        Rect {
-                                            left: ox,
-                                            right: w + ox,
-                                            top: o + oy,
-                                            bottom: h + o + oy,
-                                        }
-                                    } else {
-                                        let h = item.ui_space.height();
-                                        let w = h * width / height;
-                                        let o = lerp(
-                                            0.0,
-                                            item.ui_space.width() - w,
-                                            aspect.horizontal_alignment,
-                                        );
-                                        Rect {
-                                            left: o + ox,
-                                            right: w + o + ox,
-                                            top: oy,
-                                            bottom: h + oy,
-                                        }
+                                    let h = item.ui_space.height();
+                                    let w = h * width / height;
+                                    let o = lerp(
+                                        0.0,
+                                        item.ui_space.width() - w,
+                                        aspect.horizontal_alignment,
+                                    );
+                                    Rect {
+                                        left: o + ox,
+                                        right: w + o + ox,
+                                        top: oy,
+                                        bottom: h + oy,
                                     }
                                 }
                             } else {
@@ -191,7 +313,7 @@ impl<'a> GgezRenderer<'a> {
                                     let indices = &[0, 1, 2, 2, 3, 0];
                                     builder.raw(vertices, indices, Some(resource.clone()));
                                 }
-                                ImageBoxImageScaling::Frame(v) => {
+                                ImageBoxImageScaling::Frame(v, only) => {
                                     let fx = v / resource.width() as Scalar;
                                     let fy = v / resource.height() as Scalar;
                                     let vertices = &[
@@ -279,13 +401,22 @@ impl<'a> GgezRenderer<'a> {
                                             color,
                                         },
                                     ];
-                                    let indices = &[
-                                        0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2, 4, 5,
-                                        9, 9, 8, 4, 5, 6, 10, 10, 9, 5, 6, 7, 11, 11, 10, 6, 8, 9,
-                                        13, 13, 12, 8, 9, 10, 14, 14, 13, 9, 10, 11, 15, 15, 14,
-                                        10,
-                                    ];
-                                    builder.raw(vertices, indices, Some(resource.clone()));
+                                    if only {
+                                        let indices = &[
+                                            0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2,
+                                            4, 5, 9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13,
+                                            12, 8, 9, 10, 14, 14, 13, 9, 10, 11, 15, 15, 14, 10,
+                                        ];
+                                        builder.raw(vertices, indices, Some(resource.clone()));
+                                    } else {
+                                        let indices = &[
+                                            0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2,
+                                            4, 5, 9, 9, 8, 4, 5, 6, 10, 10, 9, 5, 6, 7, 11, 11, 10,
+                                            6, 8, 9, 13, 13, 12, 8, 9, 10, 14, 14, 13, 9, 10, 11,
+                                            15, 15, 14, 10,
+                                        ];
+                                        builder.raw(vertices, indices, Some(resource.clone()));
+                                    }
                                 }
                             }
                             if let Ok(mesh) = builder.build(self.context) {
@@ -327,7 +458,7 @@ impl<'a> GgezRenderer<'a> {
                                 unit.color.a,
                             ),
                         ));
-                        text.set_font(resource.clone(), Scale::uniform(unit.font.size));
+                        text.set_font(*resource, Scale::uniform(unit.font.size));
                         text.set_bounds(
                             [rect.width(), rect.height()],
                             match unit.alignment {

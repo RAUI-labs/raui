@@ -56,17 +56,11 @@ impl Default for WidgetUnit {
 
 impl WidgetUnit {
     pub fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
+        matches!(self, Self::None)
     }
 
     pub fn is_some(&self) -> bool {
-        match self {
-            Self::None => false,
-            _ => true,
-        }
+        !matches!(self, Self::None)
     }
 
     pub fn as_data(&self) -> Option<&dyn WidgetUnitData> {
@@ -144,17 +138,11 @@ impl Default for WidgetUnitNode {
 
 impl WidgetUnitNode {
     pub fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
+        matches!(self, Self::None)
     }
 
     pub fn is_some(&self) -> bool {
-        match self {
-            Self::None => false,
-            _ => true,
-        }
+        !matches!(self, Self::None)
     }
 
     pub fn props(&self) -> Option<&Props> {

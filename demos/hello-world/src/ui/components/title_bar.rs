@@ -26,7 +26,6 @@ widget_component! {
                 font: TextBoxFont {
                     name: "verdana".to_owned(),
                     size: 48.0,
-                    ..Default::default()
                 },
                 color: if trigger {
                     Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }

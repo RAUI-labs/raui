@@ -78,6 +78,30 @@ impl Props {
         }
     }
 
+    pub fn map_or_default<T, R, F>(&self, mut f: F) -> R
+    where
+        T: 'static + PropsData,
+        R: Default,
+        F: FnMut(&T) -> R,
+    {
+        match self.read() {
+            Ok(data) => f(data),
+            Err(_) => R::default(),
+        }
+    }
+
+    pub fn map_or_else<T, R, F, E>(&self, mut f: F, mut e: E) -> R
+    where
+        T: 'static + PropsData,
+        F: FnMut(&T) -> R,
+        E: FnMut() -> R,
+    {
+        match self.read() {
+            Ok(data) => f(data),
+            Err(_) => e(),
+        }
+    }
+
     pub fn read_cloned<T>(&self) -> Result<T, PropsError>
     where
         T: 'static + PropsData + Clone,

@@ -7,6 +7,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 pub enum WidgetNode {
     None,
@@ -109,6 +110,7 @@ impl From<WidgetUnitNode> for Box<WidgetNode> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WidgetNodeDef {
     None,

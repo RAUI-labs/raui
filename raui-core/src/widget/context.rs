@@ -1,6 +1,8 @@
 use crate::{
+    messenger::{MessageSender, Messenger},
     props::Props,
-    state::State,
+    signals::SignalSender,
+    state::{State, StateData},
     widget::{node::WidgetNode, WidgetId, WidgetLifeCycle},
 };
 use std::collections::HashMap;
@@ -9,6 +11,7 @@ pub struct WidgetContext<'a> {
     pub id: &'a WidgetId,
     pub key: &'a str,
     pub props: &'a Props,
+    pub shared_props: &'a Props,
     pub state: State<'a>,
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
@@ -38,8 +41,26 @@ impl<'a> std::fmt::Debug for WidgetContext<'a> {
         f.debug_struct("WidgetContext")
             .field("id", &self.id)
             .field("key", &self.key)
+            .field("props", &self.props)
+            .field("shared_props", &self.shared_props)
             .field("named_slots", &self.named_slots)
             .field("listed_slots", &self.listed_slots)
             .finish()
     }
+}
+
+pub struct WidgetMountOrChangeContext<'a> {
+    pub id: &'a WidgetId,
+    pub props: &'a Props,
+    pub shared_props: &'a Props,
+    pub state: State<'a>,
+    pub messenger: Messenger<'a>,
+    pub signals: SignalSender,
+}
+
+pub struct WidgetUnmountContext<'a> {
+    pub id: &'a WidgetId,
+    pub state: &'a StateData,
+    pub messenger: &'a MessageSender,
+    pub signals: SignalSender,
 }

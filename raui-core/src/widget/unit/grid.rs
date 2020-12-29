@@ -93,7 +93,7 @@ impl TryFrom<GridBoxNode> for GridBox {
         } = node;
         let items = items
             .into_iter()
-            .map(|item| GridBoxItem::try_from(item))
+            .map(GridBoxItem::try_from)
             .collect::<Result<_, _>>()?;
         Ok(Self {
             id,
@@ -118,7 +118,7 @@ impl GridBoxNode {
     where
         F: FnMut(Props) -> Props,
     {
-        let props = std::mem::replace(&mut self.props, Default::default());
+        let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
 }

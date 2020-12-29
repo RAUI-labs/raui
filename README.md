@@ -15,7 +15,7 @@
 1. [Milestones](#milestones)
 
 ## About
-RAUI is heavely inspired by **React** declarative UI composition and **UE4 Slate** widget components system.
+RAUI (_spelled as **"ra"** (Egiptian god) + **"oui"** (french for "yes")_) is heavely inspired by **React** declarative UI composition and **UE4 Slate** widget components system.
 
 The main idea behind RAUI architecture is to treat UI as another data that you transform into target renderable data format used by your rendering engine of choice.
 
@@ -132,22 +132,20 @@ enum ButtonAction {
 }
 
 widget_hook! {
-    use_button(key, life_cycle) {
-        let key_ = key.to_owned();
-        life_cycle.mount(move |_, state, _, _| {
-            drop(state.write(ButtonState { pressed: false }));
+    use_button(life_cycle) {
+        life_cycle.mount(move |context| {
+            drop(context.state.write(ButtonState { pressed: false }));
         });
 
-        let key_ = key.to_owned();
-        life_cycle.change(move |_, _, state, messenger, signals| {
-            for msg in messenger.messages {
+        life_cycle.change(move |context| {
+            for msg in context.messenger.messages {
                 if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                     let pressed = match msg {
                         ButtonAction::Pressed => true,
                         ButtonAction::Released => false,
                     };
-                    drop(state.write(ButtonState { pressed }));
-                    drop(signals.write(Box::new(*msg)));
+                    drop(context.state.write(ButtonState { pressed }));
+                    drop(context.signals.write(*msg));
                 }
             }
         });
@@ -155,7 +153,7 @@ widget_hook! {
 }
 
 widget_component! {
-    button(key, props, state, messenger, signals) [use_button] {
+    button(key, props) [use_button] {
         let label = props.read_cloned_or_default::<String>();
 
         widget!{
@@ -174,22 +172,20 @@ widget_hook! {
 }
 
 widget_hook! {
-    use_button(key, life_cycle) [use_empty] {
-        let key_ = key.to_owned();
-        life_cycle.mount(move |_, _, state, _, _| {
-            drop(state.write(ButtonState { pressed: false }));
+    use_button(life_cycle) [use_empty] {
+        life_cycle.mount(move |context| {
+            drop(context.state.write(ButtonState { pressed: false }));
         });
 
-        let key_ = key.to_owned();
-        life_cycle.change(move |_, _, state, messenger, signals| {
-            for msg in messenger.messages {
+        life_cycle.change(move |context| {
+            for msg in context.messenger.messages {
                 if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                     let pressed = match msg {
                         ButtonAction::Pressed => true,
                         ButtonAction::Released => false,
                     };
-                    drop(state.write(ButtonState { pressed }));
-                    drop(signals.write(Box::new(*msg)));
+                    drop(context.state.write(ButtonState { pressed }));
+                    drop(context.signals.write(*msg));
                 }
             }
         });
@@ -248,10 +244,10 @@ application.interact(view, &mut interactions);
 ```
 
 ## Media
-- [`GGEZ Hello World`](https://github.com/PsichiX/raui/tree/master/demos/hello-world)
-  with vertical flex box, text box, grid box and image boxes wrapped by interactive buttons.
+- [`RAUI + GGEZ todo app`](https://github.com/PsichiX/raui/tree/master/demos/todo-app)
+  An example of TODO app with GGEZ renderer and dark theme Material component library.
 
-  ![GGEZ Hello World](https://github.com/PsichiX/raui/blob/master/media/ggez-hello-world.png?raw=true)
+  ![RAUI + GGEZ todo app](https://github.com/PsichiX/raui/blob/master/media/raui-ggez-todo-app-material-ui.gif?raw=true)
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
@@ -264,6 +260,11 @@ raui = { version = "*", features = ["all"] }
   ```toml
   [dependencies]
   raui-core = "*"
+  ```
+- `raui-material` - Material Library module that contains themeable Material components for RAUI.
+  ```toml
+  [dependencies]
+  raui-material = "*"
   ```
 - `raui-binary-renderer` - Renders RAUI widget tree into binary format (`binary` feature).
   ```toml
@@ -298,14 +299,17 @@ raui = { version = "*", features = ["all"] }
 
 ## Milestones
 RAUI is still in early development phase, so prepare for these changes until v1.0:
+- [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning.
+- [ ] Create renderer for Oxygengine game engine.
+- [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
+- [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
+- [ ] Make C API bindings.
+
+Things that now are done:
 - [x] Add suport for layouting.
 - [x] Add suport for interactions (user input).
 - [x] Create renderer for at least one popular Rust graphics engine.
 - [x] Create basic user components.
 - [x] Create basic Hello World example application.
-- [ ] Create TODO app as an example.
-- [ ] Create renderer for Oxygengine game engine.
-- [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
-- [ ] Reduce unnecessary allocations in processing pipeline.
-- [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
-- [ ] Make C API bindings.
+- [x] Decouple shared props from props (don't merge them, put shared props in context).
+- [x] Create TODO app as an example.

@@ -1,6 +1,9 @@
 use crate::{
     unpack_named_slots, widget,
-    widget::component::interactive::button::{button, ButtonProps, TextChange},
+    widget::{
+        component::interactive::button::{button, ButtonProps, ButtonSettingsProps, TextChange},
+        WidgetId,
+    },
     widget_component, widget_hook,
 };
 use serde::{Deserialize, Serialize};
@@ -13,20 +16,29 @@ pub struct InputFieldProps {
 }
 implement_props_data!(InputFieldProps, "InputFieldProps");
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct InputFieldMessage {
+    #[serde(default)]
+    pub sender: WidgetId,
+    #[serde(default)]
+    pub data: InputFieldProps,
+}
+
 widget_hook! {
-    use_input_field life_cycle {
-        life_cycle.mount(|id, props, state, _, _| {
-            let props = props.read_cloned_or_default::<InputFieldProps>();
-            drop(state.write(props));
+    use_input_field(life_cycle) {
+        life_cycle.mount(|context| {
+            let props = context.props.read_cloned_or_default::<InputFieldProps>();
+            drop(context.state.write(props));
         });
 
-        life_cycle.change(|_, props, state, _, signals| {
-            let props = props.read_cloned_or_default::<ButtonProps>();
-            let mut data = match state.read::<InputFieldProps>() {
+        life_cycle.change(|context| {
+            let ButtonSettingsProps { disabled, notify } = context.props.read_cloned_or_default();
+            let props = context.props.read_cloned_or_default::<ButtonProps>();
+            let mut data = match context.state.read::<InputFieldProps>() {
                 Ok(state) => state.clone(),
                 Err(_) => InputFieldProps::default(),
             };
-            if !props.text.is_empty() {
+            if !disabled && !props.text.is_empty() {
                 for change in &props.text {
                     match change {
                         TextChange::InsertCharacter(c) => {
@@ -61,7 +73,13 @@ widget_hook! {
                     }
                     data.cursor_position = data.cursor_position.min(data.text.len());
                 }
-                drop(state.write(data));
+                if let Some(notify) = notify {
+                    context.messenger.write(notify, InputFieldMessage {
+                        sender: context.id.to_owned(),
+                        data: data.clone(),
+                    });
+                }
+                drop(context.state.write(data));
             }
         });
     }
@@ -77,6 +95,9 @@ widget_component! {
             if let Ok(p) = props.read::<ButtonProps>() {
                 content_props.write(p.clone());
             };
+            if let Ok(p) = props.read::<ButtonSettingsProps>() {
+                content_props.write(p.clone());
+            };
         }
 
         content
@@ -89,7 +110,7 @@ widget_component! {
 
         widget! {
             (#{key} button: {props.clone()} {
-                content = (input_field_content {
+                content = (input_field_content: {props.clone()} {
                     content = {content}
                 })
             })
