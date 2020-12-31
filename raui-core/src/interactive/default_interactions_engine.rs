@@ -34,6 +34,13 @@ impl Default for Interaction {
     }
 }
 
+#[derive(Debug, Default, Copy, Clone)]
+pub struct DefaultInteractionsEngineResult {
+    pub captured_pointer_location: bool,
+    pub captured_pointer_action: bool,
+    pub captured_text_change: bool,
+}
+
 /// Single pointer + Keyboard + Gamepad
 #[derive(Debug, Default)]
 pub struct DefaultInteractionsEngine {
@@ -113,6 +120,57 @@ impl DefaultInteractionsEngine {
         result
     }
 
+    fn does_hover_widget(&self, app: &Application, x: Scalar, y: Scalar) -> bool {
+        self.does_hover_widget_inner(app, x, y, app.rendered_tree())
+    }
+
+    fn does_hover_widget_inner(
+        &self,
+        app: &Application,
+        x: Scalar,
+        y: Scalar,
+        unit: &WidgetUnit,
+    ) -> bool {
+        if let Some(data) = unit.as_data() {
+            if let Some(layout) = app.layout_data().items.get(data.id()) {
+                let rect = layout.ui_space;
+                if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
+                    return true;
+                }
+            }
+        }
+        match unit {
+            WidgetUnit::ContentBox(unit) => {
+                for item in &unit.items {
+                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                        return true;
+                    }
+                }
+            }
+            WidgetUnit::FlexBox(unit) => {
+                for item in &unit.items {
+                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                        return true;
+                    }
+                }
+            }
+            WidgetUnit::GridBox(unit) => {
+                for item in &unit.items {
+                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                        return true;
+                    }
+                }
+            }
+            WidgetUnit::SizeBox(unit) => {
+                if self.does_hover_widget_inner(app, x, y, &unit.slot) {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        false
+    }
+
     fn select_button(&mut self, app: &Application, id: Option<&WidgetId>) {
         if self.selected.as_ref() != id {
             if let Some(selected) = self.selected.as_ref() {
@@ -128,8 +186,11 @@ impl DefaultInteractionsEngine {
     }
 }
 
-impl InteractionsEngine<()> for DefaultInteractionsEngine {
-    fn perform_interactions(&mut self, app: &Application) -> Result<(), ()> {
+impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteractionsEngine {
+    fn perform_interactions(
+        &mut self,
+        app: &Application,
+    ) -> Result<DefaultInteractionsEngineResult, ()> {
         for (id, signal) in app.signals() {
             if let Some(signal) = signal.downcast_ref::<ButtonSignal>() {
                 match signal {
@@ -143,6 +204,7 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                 }
             }
         }
+        let mut result = DefaultInteractionsEngineResult::default();
         while let Some(interaction) = self.interactions_queue.pop_front() {
             match interaction {
                 Interaction::None => {}
@@ -154,7 +216,11 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                 }
                 Interaction::PointerMove(x, y) => {
                     let found = self.find_button(app, x, y);
-                    self.select_button(app, found);
+                    if found.is_some() {
+                        self.select_button(app, found);
+                    } else if self.does_hover_widget(app, x, y) {
+                        result.captured_pointer_location = true;
+                    }
                 }
                 Interaction::PointerDown(button, _, _) => {
                     if let Some(id) = &self.selected {
@@ -168,6 +234,7 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                                     .write(id.to_owned(), ButtonAction::ContextStart);
                             }
                         }
+                        result.captured_pointer_action = true;
                     }
                 }
                 Interaction::PointerUp(button, _, _) => {
@@ -182,6 +249,7 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                                     .write(id.to_owned(), ButtonAction::ContextStop);
                             }
                         }
+                        result.captured_pointer_action = true;
                     }
                 }
                 // Interaction::AxisChange(axis, x, y) => {}
@@ -189,10 +257,11 @@ impl InteractionsEngine<()> for DefaultInteractionsEngine {
                     if let Some(id) = &self.selected {
                         app.messenger()
                             .write(id.to_owned(), ButtonAction::TextChange(change));
+                        result.captured_text_change = true;
                     }
                 }
             }
         }
-        Ok(())
+        Ok(result)
     }
 }

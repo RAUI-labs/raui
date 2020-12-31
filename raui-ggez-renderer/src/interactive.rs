@@ -5,10 +5,13 @@ use ggez::{
 use raui_core::{
     application::Application,
     interactive::{
-        default_interactions_engine::{DefaultInteractionsEngine, Interaction, PointerButton},
+        default_interactions_engine::{
+            DefaultInteractionsEngine, DefaultInteractionsEngineResult, Interaction, PointerButton,
+        },
         InteractionsEngine,
     },
-    widget::component::interactive::button::TextChange,
+    layout::CoordsMapping,
+    widget::{component::interactive::button::TextChange, utils::Vec2},
     Scalar,
 };
 
@@ -32,13 +35,16 @@ impl GgezInteractionsEngine {
         }
     }
 
-    pub fn update(&mut self, ctx: &mut Context) {
+    pub fn update(&mut self, ctx: &mut Context, mapping: &CoordsMapping) {
         let mouse_pos = mouse::position(ctx);
         if (mouse_pos.x - self.pointer_position.0).abs() > 1.0e-6
             || (mouse_pos.y - self.pointer_position.1).abs() > 1.0e-6
         {
-            self.engine
-                .interact(Interaction::PointerMove(mouse_pos.x, mouse_pos.y));
+            let Vec2 { x, y } = mapping.real_to_virtual_vec2(Vec2 {
+                x: mouse_pos.x,
+                y: mouse_pos.y,
+            });
+            self.engine.interact(Interaction::PointerMove(x, y));
             self.pointer_position = (mouse_pos.x, mouse_pos.y);
         }
         let mouse_trigger = mouse::button_pressed(ctx, mouse::MouseButton::Left);
@@ -112,8 +118,11 @@ impl GgezInteractionsEngine {
     }
 }
 
-impl InteractionsEngine<()> for GgezInteractionsEngine {
-    fn perform_interactions(&mut self, app: &Application) -> Result<(), ()> {
+impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for GgezInteractionsEngine {
+    fn perform_interactions(
+        &mut self,
+        app: &Application,
+    ) -> Result<DefaultInteractionsEngineResult, ()> {
         self.engine.perform_interactions(app)
     }
 }

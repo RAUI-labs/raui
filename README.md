@@ -36,7 +36,13 @@ let tree = widget! {
 };
 let mut renderer = HtmlRenderer::default();
 application.apply(tree);
-application.layout(view, &mut DefaultLayoutEngine);
+let mapping = CoordsMapping::new(Rect {
+    left: 0.0,
+    right: 1024.0,
+    top: 0.0,
+    bottom: 576.0,
+});
+application.layout(&mapping, &mut DefaultLayoutEngine);
 if let Ok(output) = application.render(&mut renderer) {
     println!("OUTPUT: {}", output);
 }
@@ -210,7 +216,7 @@ What happens under the hood:
 ### Layouting
 _**TODO**_
 
-RAUI exposes API (`Application::layout()`) to allow use of custom layout engines to perform widget tree positioning data, which is later used by custom UI renderers to specify boxes where given widgets should be placed.
+RAUI exposes API (`Application::layout()`) to allow use of virtual-to-real coords mapping and custom layout engines to perform widget tree positioning data, which is later used by custom UI renderers to specify boxes where given widgets should be placed.
 Every call to perform layouting will store a layout data inside Application, you can always access that data at any time.
 There is a `DefaultLayoutEngine` that does this in a generic way.
 If you find some part of its pipeline working different than what you've expected, feel free to create your custom layout engine!
@@ -218,7 +224,13 @@ If you find some part of its pipeline working different than what you've expecte
 let mut application = Application::new();
 application.apply(tree);
 application.process();
-if application.layout(view, &mut DefaultLayoutEngine).is_ok() {
+let mapping = CoordsMapping::new(Rect {
+    left: 0.0,
+    right: 1024.0,
+    top: 0.0,
+    bottom: 576.0,
+});
+if application.layout(&mapping, &mut DefaultLayoutEngine).is_ok() {
     println!("LAYOUT:\n{:#?}", application.layout_data());
 }
 ```
@@ -239,11 +251,22 @@ interactions.interact(Interaction::PointerMove(200.0, 100.0));
 interactions.interact(Interaction::PointerDown(PointerButton::Trigger, 200.0, 100.0));
 application.apply(tree);
 application.process();
-application.layout(view, &mut DefaultLayoutEngine);
-application.interact(view, &mut interactions);
+let mapping = CoordsMapping::new(Rect {
+    left: 0.0,
+    right: 1024.0,
+    top: 0.0,
+    bottom: 576.0,
+});
+application.layout(&mapping, &mut DefaultLayoutEngine);
+application.interact(&mapping, &mut interactions);
 ```
 
 ## Media
+- [`RAUI + GGEZ In-Game`](https://github.com/PsichiX/raui/tree/master/demos/in-game)
+  An example of an In-Game integration of RAUI with custom Material theme, using GGEZ as a renderer.
+
+  ![RAUI + GGEZ In-Game](https://github.com/PsichiX/raui/blob/master/media/raui-ggez-in-game-material-ui.gif?raw=true)
+
 - [`RAUI + GGEZ todo app`](https://github.com/PsichiX/raui/tree/master/demos/todo-app)
   An example of TODO app with GGEZ renderer and dark theme Material component library.
 
@@ -261,7 +284,7 @@ raui = { version = "*", features = ["all"] }
   [dependencies]
   raui-core = "*"
   ```
-- `raui-material` - Material Library module that contains themeable Material components for RAUI.
+- `raui-material` - Material Library module that contains themeable Material components for RAUI (`material` feature).
   ```toml
   [dependencies]
   raui-material = "*"
@@ -299,10 +322,12 @@ raui = { version = "*", features = ["all"] }
 
 ## Milestones
 RAUI is still in early development phase, so prepare for these changes until v1.0:
+- [ ] Integrate RAUI into one public open source Rust game.
 - [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning.
 - [ ] Create renderer for Oxygengine game engine.
 - [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
 - [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
+- [ ] Make WASM/JS API bindings.
 - [ ] Make C API bindings.
 
 Things that now are done:
@@ -313,3 +338,4 @@ Things that now are done:
 - [x] Create basic Hello World example application.
 - [x] Decouple shared props from props (don't merge them, put shared props in context).
 - [x] Create TODO app as an example.
+- [x] Create In-Game app as an example.

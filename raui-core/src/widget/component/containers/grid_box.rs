@@ -17,14 +17,15 @@ implement_props_data!(GridBoxProps, "GridBoxProps");
 widget_component! {
     pub grid_box(id, props, listed_slots) {
         let GridBoxProps { cols, rows } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().map(|slot| {
-            let layout = slot
-                .props()
-                .expect("WidgetNode has no Props")
-                .read_cloned_or_default::<GridBoxItemLayout>();
-            GridBoxItemNode {
-                slot,
-                layout,
+        let items = listed_slots.into_iter().filter_map(|slot| {
+            if let Some(props) = slot.props() {
+                let layout = props.read_cloned_or_default::<GridBoxItemLayout>();
+                Some(GridBoxItemNode {
+                    slot,
+                    layout,
+                })
+            } else {
+                None
             }
         }).collect::<Vec<_>>();
 

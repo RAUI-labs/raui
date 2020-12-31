@@ -143,6 +143,15 @@ pub fn new_dark_theme() -> ThemeProps {
     )
 }
 
+pub fn new_all_white_theme() -> ThemeProps {
+    make_default_theme(
+        color_from_rgba(255, 255, 255, 1.0),
+        color_from_rgba(255, 255, 255, 1.0),
+        color_from_rgba(255, 255, 255, 1.0),
+        color_from_rgba(255, 255, 255, 1.0),
+    )
+}
+
 pub fn make_default_theme(
     default: Color,
     primary: Color,

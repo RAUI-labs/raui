@@ -46,11 +46,23 @@ impl App {
             ui_resources,
         }
     }
+
+    fn make_coords_mapping(ctx: &Context) -> CoordsMapping {
+        let (width, height) = graphics::drawable_size(ctx);
+        let area = Rect {
+            left: 0.0,
+            right: width,
+            top: 0.0,
+            bottom: height,
+        };
+        CoordsMapping::new(area)
+    }
 }
 
 impl EventHandler for App {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        self.ui_interactions.update(ctx);
+        let mapping = Self::make_coords_mapping(ctx);
+        self.ui_interactions.update(ctx, &mapping);
         self.ui.process();
         self.ui
             .interact(&mut self.ui_interactions)
@@ -76,17 +88,15 @@ impl EventHandler for App {
             graphics::Rect::new(0.0, 0.0, width, height),
         ));
         graphics::clear(ctx, graphics::WHITE);
-        let ui_space = Rect {
-            left: 0.0,
-            right: width,
-            top: 0.0,
-            bottom: height,
-        };
+        let mapping = Self::make_coords_mapping(ctx);
         self.ui
-            .layout(ui_space, &mut DefaultLayoutEngine)
+            .layout(&mapping, &mut DefaultLayoutEngine)
             .expect("UI could not layout widgets");
         self.ui
-            .render(&mut GgezRenderer::new(ctx, &mut self.ui_resources))
+            .render(
+                &mapping,
+                &mut GgezRenderer::new(ctx, &mut self.ui_resources),
+            )
             .expect("GGEZ renderer could not render UI");
         graphics::present(ctx)
     }

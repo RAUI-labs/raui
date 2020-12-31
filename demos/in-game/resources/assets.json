@@ -1,0 +1,39 @@
+{
+  "fonts": {
+    "": "/fonts/MiKrollFantasy.ttf"
+  },
+  "images": {
+    "in-game-minimap": "/images/in-game-minimap.png",
+    "panel": "/images/panel.png",
+    "frame": "/images/frame.png",
+    "cell": "/images/cell.png",
+    "framed-cell": "/images/framed-cell.png",
+    "button-down": "/images/button-down.png",
+    "button-up": "/images/button-up.png",
+    "rect-key-down": "/images/rect-key-down.png",
+    "rect-key-up": "/images/rect-key-up.png",
+    "round-key-down": "/images/round-key-down.png",
+    "round-key-up": "/images/round-key-up.png",
+    "icon-0": "/images/icons/0.png",
+    "icon-1": "/images/icons/1.png",
+    "icon-2": "/images/icons/2.png",
+    "icon-3": "/images/icons/3.png",
+    "icon-4": "/images/icons/4.png",
+    "icon-5": "/images/icons/5.png",
+    "icon-6": "/images/icons/6.png",
+    "icon-7": "/images/icons/7.png",
+    "icon-8": "/images/icons/8.png",
+    "icon-9": "/images/icons/9.png",
+    "icon-10": "/images/icons/10.png",
+    "icon-11": "/images/icons/11.png",
+    "icon-12": "/images/icons/12.png",
+    "icon-13": "/images/icons/13.png",
+    "icon-14": "/images/icons/14.png",
+    "icon-15": "/images/icons/15.png",
+    "icon-16": "/images/icons/16.png",
+    "icon-17": "/images/icons/17.png",
+    "icon-18": "/images/icons/18.png",
+    "icon-prev": "/images/icons/prev.png",
+    "icon-next": "/images/icons/next.png"
+  }
+}

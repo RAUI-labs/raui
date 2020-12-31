@@ -303,12 +303,12 @@ fn test_hello_world() {
 #[test]
 fn test_layout_no_wrap() {
     let mut layout_engine = DefaultLayoutEngine::default();
-    let view = Rect {
+    let mapping = CoordsMapping::new(Rect {
         left: 0.0,
         right: 1024.0,
         top: 0.0,
         bottom: 576.0,
-    };
+    });
 
     let tree = widget! {{{
         FlexBoxNode {
@@ -366,7 +366,7 @@ fn test_layout_no_wrap() {
         "=== TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
-    if application.layout(view, &mut layout_engine).is_ok() {
+    if application.layout(&mapping, &mut layout_engine).is_ok() {
         println!("=== LAYOUT:\n{:#?}", application.layout_data());
     }
 }
@@ -374,12 +374,12 @@ fn test_layout_no_wrap() {
 #[test]
 fn test_layout_wrapping() {
     let mut layout_engine = DefaultLayoutEngine::default();
-    let view = Rect {
+    let mapping = CoordsMapping::new(Rect {
         left: 0.0,
         right: 1024.0,
         top: 0.0,
         bottom: 576.0,
-    };
+    });
 
     let tree = widget! {{{
         FlexBoxNode {
@@ -442,7 +442,7 @@ fn test_layout_wrapping() {
         "=== TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
-    if application.layout(view, &mut layout_engine).is_ok() {
+    if application.layout(&mapping, &mut layout_engine).is_ok() {
         println!("=== LAYOUT:\n{:#?}", application.layout_data());
     }
 }
@@ -450,12 +450,12 @@ fn test_layout_wrapping() {
 #[test]
 fn test_components() {
     let mut layout_engine = DefaultLayoutEngine::default();
-    let view = Rect {
+    let mapping = CoordsMapping::new(Rect {
         left: 0.0,
         right: 1024.0,
         top: 0.0,
         bottom: 576.0,
-    };
+    });
 
     let tree = widget! {
         (#{"app"} vertical_box: {
@@ -507,7 +507,7 @@ fn test_components() {
         "=== TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
-    if application.layout(view, &mut layout_engine).is_ok() {
+    if application.layout(&mapping, &mut layout_engine).is_ok() {
         println!("=== LAYOUT:\n{:#?}", application.layout_data());
     }
 }

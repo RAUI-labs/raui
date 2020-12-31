@@ -1,6 +1,6 @@
 use crate::{
     interactive::InteractionsEngine,
-    layout::{Layout, LayoutEngine},
+    layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{MessageReceiver, MessageSender, Messages, Messenger},
     props::{Props, PropsData, PropsDef},
     renderer::Renderer,
@@ -21,7 +21,6 @@ use crate::{
             text::{TextBoxNode, TextBoxNodeDef},
             WidgetUnit, WidgetUnitNode, WidgetUnitNodeDef,
         },
-        utils::Rect,
         FnWidget, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
     },
 };
@@ -614,41 +613,49 @@ impl Application {
     }
 
     #[inline]
-    pub fn render<R, T, E>(&self, renderer: &mut R) -> Result<T, E>
+    pub fn render<R, T, E>(&self, mapping: &CoordsMapping, renderer: &mut R) -> Result<T, E>
     where
         R: Renderer<T, E>,
     {
-        renderer.render(&self.rendered_tree, &self.layout)
+        renderer.render(&self.rendered_tree, mapping, &self.layout)
     }
 
     #[inline]
-    pub fn render_change<R, T, E>(&mut self, renderer: &mut R) -> Result<Option<T>, E>
+    pub fn render_change<R, T, E>(
+        &mut self,
+        mapping: &CoordsMapping,
+        renderer: &mut R,
+    ) -> Result<Option<T>, E>
     where
         R: Renderer<T, E>,
     {
         if self.render_changed {
-            Ok(Some(self.render(renderer)?))
+            Ok(Some(self.render(mapping, renderer)?))
         } else {
             Ok(None)
         }
     }
 
     #[inline]
-    pub fn layout<L, E>(&mut self, ui_space: Rect, layout_engine: &mut L) -> Result<(), E>
+    pub fn layout<L, E>(&mut self, mapping: &CoordsMapping, layout_engine: &mut L) -> Result<(), E>
     where
         L: LayoutEngine<E>,
     {
-        self.layout = layout_engine.layout(ui_space, &self.rendered_tree)?;
+        self.layout = layout_engine.layout(mapping, &self.rendered_tree)?;
         Ok(())
     }
 
     #[inline]
-    pub fn layout_change<L, E>(&mut self, ui_space: Rect, layout_engine: &mut L) -> Result<bool, E>
+    pub fn layout_change<L, E>(
+        &mut self,
+        mapping: &CoordsMapping,
+        layout_engine: &mut L,
+    ) -> Result<bool, E>
     where
         L: LayoutEngine<E>,
     {
         if self.render_changed {
-            self.layout(ui_space, layout_engine)?;
+            self.layout(mapping, layout_engine)?;
             Ok(true)
         } else {
             Ok(false)
@@ -656,9 +663,9 @@ impl Application {
     }
 
     #[inline]
-    pub fn interact<I, E>(&self, interactions_engine: &mut I) -> Result<(), E>
+    pub fn interact<I, R, E>(&self, interactions_engine: &mut I) -> Result<R, E>
     where
-        I: InteractionsEngine<E>,
+        I: InteractionsEngine<R, E>,
     {
         interactions_engine.perform_interactions(self)
     }

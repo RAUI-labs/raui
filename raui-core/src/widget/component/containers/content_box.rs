@@ -15,14 +15,15 @@ implement_props_data!(ContentBoxProps, "ContentBoxProps");
 widget_component! {
     pub content_box(id, props, listed_slots) {
         let ContentBoxProps { clipping } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().map(|slot| {
-            let layout = slot
-                .props()
-                .expect("WidgetNode has no Props")
-                .read_cloned_or_default::<ContentBoxItemLayout>();
-            ContentBoxItemNode {
-                slot,
-                layout,
+        let items = listed_slots.into_iter().filter_map(|slot| {
+            if let Some(props) = slot.props() {
+                let layout = props.read_cloned_or_default::<ContentBoxItemLayout>();
+                Some(ContentBoxItemNode {
+                    slot,
+                    layout,
+                })
+            } else {
+                None
             }
         }).collect::<Vec<_>>();
 

@@ -4,7 +4,7 @@ use ggez::{
     Context,
 };
 use raui_core::{
-    layout::Layout,
+    layout::{CoordsMapping, Layout},
     renderer::Renderer,
     widget::{
         unit::{
@@ -27,7 +27,12 @@ impl<'a> GgezRenderer<'a> {
         Self { context, resources }
     }
 
-    fn render_node(&mut self, unit: &WidgetUnit, layout: &Layout) -> Result<(), Error> {
+    fn render_node(
+        &mut self,
+        unit: &WidgetUnit,
+        mapping: &CoordsMapping,
+        layout: &Layout,
+    ) -> Result<(), Error> {
         match unit {
             WidgetUnit::None => Ok(()),
             WidgetUnit::ContentBox(unit) => {
@@ -38,28 +43,29 @@ impl<'a> GgezRenderer<'a> {
                     .collect::<Vec<_>>();
                 items.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
                 for (_, item) in items {
-                    self.render_node(&item.slot, layout)?;
+                    self.render_node(&item.slot, mapping, layout)?;
                 }
                 Ok(())
             }
             WidgetUnit::FlexBox(unit) => {
                 for item in &unit.items {
-                    self.render_node(&item.slot, layout)?;
+                    self.render_node(&item.slot, mapping, layout)?;
                 }
                 Ok(())
             }
             WidgetUnit::GridBox(unit) => {
                 for item in &unit.items {
-                    self.render_node(&item.slot, layout)?;
+                    self.render_node(&item.slot, mapping, layout)?;
                 }
                 Ok(())
             }
-            WidgetUnit::SizeBox(unit) => self.render_node(&unit.slot, layout),
+            WidgetUnit::SizeBox(unit) => self.render_node(&unit.slot, mapping, layout),
             WidgetUnit::ImageBox(unit) => match &unit.material {
                 ImageBoxMaterial::Color(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
+                        let scale = mapping.scale();
                         let color = [image.color.r, image.color.g, image.color.b, image.color.a];
-                        let rect = item.ui_space;
+                        let rect = mapping.virtual_to_real_rect(item.ui_space);
                         let mut builder = MeshBuilder::new();
                         match image.scaling {
                             ImageBoxImageScaling::Strech => {
@@ -89,6 +95,7 @@ impl<'a> GgezRenderer<'a> {
                                 builder.raw(vertices, indices, None);
                             }
                             ImageBoxImageScaling::Frame(v, only) => {
+                                let v = v * scale;
                                 let vertices = &[
                                     graphics::Vertex {
                                         pos: [rect.left, rect.top],
@@ -207,6 +214,7 @@ impl<'a> GgezRenderer<'a> {
                 ImageBoxMaterial::Image(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
                         if let Some(resource) = self.resources.images.get(&image.id) {
+                            let scale = mapping.scale();
                             let color = [image.tint.r, image.tint.g, image.tint.b, image.tint.a];
                             let source = image.source_rect.unwrap_or(Rect {
                                 left: 0.0,
@@ -218,6 +226,7 @@ impl<'a> GgezRenderer<'a> {
                             let stx = source.right;
                             let sfy = source.top;
                             let sty = source.bottom;
+                            // TODO: this shit is overengineered, use aspect ratios to simplify this.
                             let rect = if let Some(aspect) = unit.content_keep_aspect_ratio {
                                 let ox = item.ui_space.left;
                                 let oy = item.ui_space.top;
@@ -285,6 +294,7 @@ impl<'a> GgezRenderer<'a> {
                             } else {
                                 item.ui_space
                             };
+                            let rect = mapping.virtual_to_real_rect(rect);
                             let mut builder = MeshBuilder::new();
                             match image.scaling {
                                 ImageBoxImageScaling::Strech => {
@@ -316,6 +326,7 @@ impl<'a> GgezRenderer<'a> {
                                 ImageBoxImageScaling::Frame(v, only) => {
                                     let fx = v / resource.width() as Scalar;
                                     let fy = v / resource.height() as Scalar;
+                                    let v = v * scale;
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
@@ -449,7 +460,7 @@ impl<'a> GgezRenderer<'a> {
             WidgetUnit::TextBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
                     if let Some(resource) = self.resources.fonts.get(&unit.font.name) {
-                        let rect = item.ui_space;
+                        let rect = mapping.virtual_to_real_rect(item.ui_space);
                         let mut text = Text::new(TextFragment::new(unit.text.as_str()).color(
                             graphics::Color::new(
                                 unit.color.r,
@@ -458,7 +469,7 @@ impl<'a> GgezRenderer<'a> {
                                 unit.color.a,
                             ),
                         ));
-                        text.set_font(*resource, Scale::uniform(unit.font.size));
+                        text.set_font(*resource, Scale::uniform(unit.font.size * mapping.scale()));
                         text.set_bounds(
                             [rect.width(), rect.height()],
                             match unit.alignment {
@@ -498,7 +509,12 @@ impl<'a> GgezRenderer<'a> {
 }
 
 impl<'a> Renderer<(), Error> for GgezRenderer<'a> {
-    fn render(&mut self, tree: &WidgetUnit, layout: &Layout) -> Result<(), Error> {
-        self.render_node(tree, layout)
+    fn render(
+        &mut self,
+        tree: &WidgetUnit,
+        mapping: &CoordsMapping,
+        layout: &Layout,
+    ) -> Result<(), Error> {
+        self.render_node(tree, mapping, &layout)
     }
 }

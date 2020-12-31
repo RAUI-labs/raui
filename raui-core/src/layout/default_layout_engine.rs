@@ -1,5 +1,5 @@
 use crate::{
-    layout::{Layout, LayoutEngine, LayoutItem, LayoutNode},
+    layout::{CoordsMapping, Layout, LayoutEngine, LayoutItem, LayoutNode},
     widget::{
         unit::{
             content::ContentBox,
@@ -438,12 +438,16 @@ impl DefaultLayoutEngine {
     }
 
     pub fn layout_grid_box(size_available: Vec2, unit: &GridBox) -> Option<LayoutNode> {
-        if unit.cols == 0 || unit.rows == 0 {
-            return None;
-        }
-
-        let cell_width = size_available.x / unit.cols as Scalar;
-        let cell_height = size_available.y / unit.rows as Scalar;
+        let cell_width = if unit.cols > 0 {
+            size_available.x / unit.cols as Scalar
+        } else {
+            0.0
+        };
+        let cell_height = if unit.rows > 0 {
+            size_available.y / unit.rows as Scalar
+        } else {
+            0.0
+        };
         let children = unit
             .items
             .iter()
@@ -489,31 +493,31 @@ impl DefaultLayoutEngine {
 
     pub fn layout_size_box(size_available: Vec2, unit: &SizeBox) -> LayoutNode {
         let size = Vec2 {
-            x: (size_available.x - unit.margin.left - unit.margin.right).max(0.0),
-            y: (size_available.y - unit.margin.top - unit.margin.bottom).max(0.0),
+            x: match unit.width {
+                SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &unit.slot),
+                SizeBoxSizeValue::Fill => size_available.x - unit.margin.left - unit.margin.right,
+                SizeBoxSizeValue::Exact(v) => v,
+            },
+            y: match unit.height {
+                SizeBoxSizeValue::Content => Self::calc_unit_min_height(size_available, &unit.slot),
+                SizeBoxSizeValue::Fill => size_available.y - unit.margin.top - unit.margin.bottom,
+                SizeBoxSizeValue::Exact(v) => v,
+            },
         };
-        let (size, children) = if let Some(mut child) = Self::layout_node(size, &unit.slot) {
+        let children = if let Some(mut child) = Self::layout_node(size, &unit.slot) {
             child.local_space.left += unit.margin.left;
             child.local_space.right += unit.margin.left;
             child.local_space.top += unit.margin.top;
             child.local_space.bottom += unit.margin.top;
-            (child.local_space.size(), vec![child])
+            vec![child]
         } else {
-            (Default::default(), vec![])
+            vec![]
         };
         let local_space = Rect {
             left: 0.0,
-            right: match unit.width {
-                SizeBoxSizeValue::Content => size.x,
-                SizeBoxSizeValue::Fill => size_available.x,
-                SizeBoxSizeValue::Exact(v) => v,
-            },
+            right: size.x,
             top: 0.0,
-            bottom: match unit.height {
-                SizeBoxSizeValue::Content => size.y,
-                SizeBoxSizeValue::Fill => size_available.y,
-                SizeBoxSizeValue::Exact(v) => v,
-            },
+            bottom: size.y,
         };
         LayoutNode {
             id: unit.id.to_owned(),
@@ -565,15 +569,9 @@ impl DefaultLayoutEngine {
     fn calc_unit_min_width(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
             WidgetUnit::None => 0.0,
-            // TODO: improve this shit.
-            WidgetUnit::ContentBox(b) => b.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_width(size_available, &i.slot).max(a)
-            }),
+            WidgetUnit::ContentBox(b) => Self::calc_content_box_min_width(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_width(size_available, b),
-            // TODO: improve this shit.
-            WidgetUnit::GridBox(b) => b.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_width(size_available, &i.slot).max(a)
-            }),
+            WidgetUnit::GridBox(b) => Self::calc_grid_box_min_width(size_available, b),
             WidgetUnit::SizeBox(b) => {
                 (match b.width {
                     SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &b.slot),
@@ -593,6 +591,19 @@ impl DefaultLayoutEngine {
         }
     }
 
+    fn calc_content_box_min_width(size_available: Vec2, unit: &ContentBox) -> Scalar {
+        let mut result: Scalar = 0.0;
+        for item in &unit.items {
+            let size = Self::calc_unit_min_width(size_available, &item.slot)
+                + item.layout.margin.left
+                + item.layout.margin.right;
+            let width = item.layout.anchors.right - item.layout.anchors.left;
+            let size = if width > 0.0 { size / width } else { 0.0 };
+            result = result.max(size);
+        }
+        result
+    }
+
     fn calc_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
         if unit.direction.is_horizontal() {
             Self::calc_horizontal_flex_box_min_width(size_available, unit)
@@ -607,7 +618,9 @@ impl DefaultLayoutEngine {
             let mut line = 0.0;
             let mut first = true;
             for item in &unit.items {
-                let size = Self::calc_unit_min_width(size_available, &item.slot);
+                let size = Self::calc_unit_min_width(size_available, &item.slot)
+                    + item.layout.margin.left
+                    + item.layout.margin.right;
                 if first || line + size <= size_available.x {
                     line += size;
                     if !first {
@@ -624,7 +637,9 @@ impl DefaultLayoutEngine {
         } else {
             let mut result = 0.0;
             for item in &unit.items {
-                result += Self::calc_unit_min_width(size_available, &item.slot);
+                result += Self::calc_unit_min_width(size_available, &item.slot)
+                    + item.layout.margin.left
+                    + item.layout.margin.right;
             }
             result + (unit.items.len().saturating_sub(1) as Scalar) * unit.separation
         }
@@ -638,8 +653,12 @@ impl DefaultLayoutEngine {
             let mut lines: usize = 0;
             let mut first = true;
             for item in &unit.items {
-                let width = Self::calc_unit_min_width(size_available, &item.slot);
-                let height = Self::calc_unit_min_height(size_available, &item.slot);
+                let width = Self::calc_unit_min_width(size_available, &item.slot)
+                    + item.layout.margin.left
+                    + item.layout.margin.right;
+                let height = Self::calc_unit_min_height(size_available, &item.slot)
+                    + item.layout.margin.top
+                    + item.layout.margin.bottom;
                 if first || line_length + height <= size_available.y {
                     line_length += height;
                     if !first {
@@ -659,24 +678,37 @@ impl DefaultLayoutEngine {
             lines += 1;
             result + (lines.saturating_sub(1) as Scalar) * unit.separation
         } else {
-            unit.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_width(size_available, &i.slot).max(a)
+            unit.items.iter().fold(0.0, |a, item| {
+                (Self::calc_unit_min_width(size_available, &item.slot)
+                    + item.layout.margin.left
+                    + item.layout.margin.right)
+                    .max(a)
             })
         }
+    }
+
+    fn calc_grid_box_min_width(size_available: Vec2, unit: &GridBox) -> Scalar {
+        let mut result: Scalar = 0.0;
+        for item in &unit.items {
+            let size = Self::calc_unit_min_width(size_available, &item.slot)
+                + item.layout.margin.left
+                + item.layout.margin.right;
+            let size = if size > 0.0 {
+                (item.layout.space_occupancy.width() as Scalar * size) / unit.cols as Scalar
+            } else {
+                0.0
+            };
+            result = result.max(size);
+        }
+        result
     }
 
     fn calc_unit_min_height(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
             WidgetUnit::None => 0.0,
-            // TODO: improve this shit.
-            WidgetUnit::ContentBox(b) => b.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_height(size_available, &i.slot).max(a)
-            }),
+            WidgetUnit::ContentBox(b) => Self::calc_content_box_min_height(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_height(size_available, b),
-            // TODO: improve this shit.
-            WidgetUnit::GridBox(b) => b.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_height(size_available, &i.slot).max(a)
-            }),
+            WidgetUnit::GridBox(b) => Self::calc_grid_box_min_height(size_available, b),
             WidgetUnit::SizeBox(b) => {
                 (match b.height {
                     SizeBoxSizeValue::Content => {
@@ -698,6 +730,19 @@ impl DefaultLayoutEngine {
         }
     }
 
+    fn calc_content_box_min_height(size_available: Vec2, unit: &ContentBox) -> Scalar {
+        let mut result: Scalar = 0.0;
+        for item in &unit.items {
+            let size = Self::calc_unit_min_height(size_available, &item.slot)
+                + item.layout.margin.top
+                + item.layout.margin.bottom;
+            let height = item.layout.anchors.bottom - item.layout.anchors.top;
+            let size = if height > 0.0 { size / height } else { 0.0 };
+            result = result.max(size);
+        }
+        result
+    }
+
     fn calc_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
         if unit.direction.is_horizontal() {
             Self::calc_horizontal_flex_box_min_height(size_available, unit)
@@ -714,8 +759,12 @@ impl DefaultLayoutEngine {
             let mut lines: usize = 0;
             let mut first = true;
             for item in &unit.items {
-                let width = Self::calc_unit_min_width(size_available, &item.slot);
-                let height = Self::calc_unit_min_height(size_available, &item.slot);
+                let width = Self::calc_unit_min_width(size_available, &item.slot)
+                    + item.layout.margin.left
+                    + item.layout.margin.right;
+                let height = Self::calc_unit_min_height(size_available, &item.slot)
+                    + item.layout.margin.top
+                    + item.layout.margin.bottom;
                 if first || line_length + width <= size_available.x {
                     line_length += width;
                     if !first {
@@ -735,8 +784,11 @@ impl DefaultLayoutEngine {
             lines += 1;
             result + (lines.saturating_sub(1) as Scalar) * unit.separation
         } else {
-            unit.items.iter().fold(0.0, |a, i| {
-                Self::calc_unit_min_height(size_available, &i.slot).max(a)
+            unit.items.iter().fold(0.0, |a, item| {
+                (Self::calc_unit_min_height(size_available, &item.slot)
+                    + item.layout.margin.top
+                    + item.layout.margin.bottom)
+                    .max(a)
             })
         }
     }
@@ -747,7 +799,9 @@ impl DefaultLayoutEngine {
             let mut line = 0.0;
             let mut first = true;
             for item in &unit.items {
-                let size = Self::calc_unit_min_height(size_available, &item.slot);
+                let size = Self::calc_unit_min_height(size_available, &item.slot)
+                    + item.layout.margin.top
+                    + item.layout.margin.bottom;
                 if first || line + size <= size_available.y {
                     line += size;
                     if !first {
@@ -764,10 +818,28 @@ impl DefaultLayoutEngine {
         } else {
             let mut result = 0.0;
             for item in &unit.items {
-                result += Self::calc_unit_min_height(size_available, &item.slot);
+                result += Self::calc_unit_min_height(size_available, &item.slot)
+                    + item.layout.margin.top
+                    + item.layout.margin.bottom;
             }
             result + (unit.items.len().saturating_sub(1) as Scalar) * unit.separation
         }
+    }
+
+    fn calc_grid_box_min_height(size_available: Vec2, unit: &GridBox) -> Scalar {
+        let mut result: Scalar = 0.0;
+        for item in &unit.items {
+            let size = Self::calc_unit_min_height(size_available, &item.slot)
+                + item.layout.margin.top
+                + item.layout.margin.bottom;
+            let size = if size > 0.0 {
+                (item.layout.space_occupancy.height() as Scalar * size) / unit.cols as Scalar
+            } else {
+                0.0
+            };
+            result = result.max(size);
+        }
+        result
     }
 
     fn unpack_node(ui_space: Rect, node: LayoutNode, items: &mut HashMap<WidgetId, LayoutItem>) {
@@ -796,7 +868,8 @@ impl DefaultLayoutEngine {
 }
 
 impl LayoutEngine<()> for DefaultLayoutEngine {
-    fn layout(&mut self, ui_space: Rect, tree: &WidgetUnit) -> Result<Layout, ()> {
+    fn layout(&mut self, mapping: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, ()> {
+        let ui_space = mapping.virtual_area();
         if let Some(root) = Self::layout_node(ui_space.size(), tree) {
             let mut items = HashMap::with_capacity(root.count());
             Self::unpack_node(ui_space, root, &mut items);

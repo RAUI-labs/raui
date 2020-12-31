@@ -112,7 +112,12 @@ impl Default for HtmlRenderer {
 }
 
 impl Renderer<String, Error> for HtmlRenderer {
-    fn render(&mut self, tree: &WidgetUnit, _layout: &Layout) -> Result<String, Error> {
+    fn render(
+        &mut self,
+        tree: &WidgetUnit,
+        _: &CoordsMapping,
+        _layout: &Layout,
+    ) -> Result<String, Error> {
         let mut result = String::new();
         self.write_document(&mut result, tree)?;
         Ok(result)

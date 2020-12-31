@@ -32,7 +32,7 @@ pub struct ImageBoxColor {
     pub scaling: ImageBoxImageScaling,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImageBoxImage {
     #[serde(default)]
     pub id: String,
@@ -40,8 +40,30 @@ pub struct ImageBoxImage {
     pub source_rect: Option<Rect>,
     #[serde(default)]
     pub scaling: ImageBoxImageScaling,
-    #[serde(default)]
+    #[serde(default = "ImageBoxImage::default_tint")]
     pub tint: Color,
+}
+
+impl Default for ImageBoxImage {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            source_rect: Default::default(),
+            scaling: Default::default(),
+            tint: Self::default_tint(),
+        }
+    }
+}
+
+impl ImageBoxImage {
+    fn default_tint() -> Color {
+        Color {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
