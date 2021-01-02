@@ -43,7 +43,7 @@ let mapping = CoordsMapping::new(Rect {
     bottom: 576.0,
 });
 application.layout(&mapping, &mut DefaultLayoutEngine);
-if let Ok(output) = application.render(&mut renderer) {
+if let Ok(output) = application.render(&mapping, &mut renderer) {
     println!("OUTPUT: {}", output);
 }
 ```

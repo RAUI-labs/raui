@@ -8,6 +8,7 @@ pub mod renderer;
 pub mod state;
 #[macro_use]
 pub mod widget;
+pub mod animator;
 pub mod interactive;
 pub mod layout;
 pub mod signals;
@@ -17,6 +18,7 @@ pub type Integer = i32;
 
 pub mod prelude {
     pub use crate::{
+        animator::*,
         application::*,
         interactive::default_interactions_engine::*,
         interactive::*,

@@ -1,4 +1,5 @@
 use crate::{
+    animator::{AnimationUpdate, AnimationUpdateAction, Animator, AnimatorState},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{MessageReceiver, MessageSender, Messages, Messenger},
@@ -44,6 +45,7 @@ pub enum InvalidationCause {
     Forced,
     StateChange(WidgetId),
     MessageReceived(WidgetId),
+    AnimationInProgress(WidgetId),
 }
 
 impl Default for InvalidationCause {
@@ -61,6 +63,7 @@ pub struct Application {
     layout: Layout,
     states: HashMap<WidgetId, StateData>,
     state_receivers: HashMap<WidgetId, Receiver<StateData>>,
+    animators: HashMap<WidgetId, AnimatorState>,
     message_sender: MessageSender,
     message_receiver: MessageReceiver,
     signal_sender: Sender<Signal>,
@@ -95,6 +98,7 @@ impl Application {
             layout: Default::default(),
             states: Default::default(),
             state_receivers: Default::default(),
+            animators: Default::default(),
             message_sender,
             message_receiver,
             signal_sender,
@@ -717,9 +721,17 @@ impl Application {
         if let Some((id, _)) = messages.iter().next() {
             self.last_invalidation_cause = InvalidationCause::MessageReceived(id.to_owned());
         }
+        if let Some((id, _)) = self.animators.iter().find(|(_, a)| a.in_progress()) {
+            self.last_invalidation_cause = InvalidationCause::AnimationInProgress(id.to_owned());
+        }
         self.dirty = false;
+        let animators = std::mem::take(&mut self.animators);
+        self.animators = animators
+            .into_iter()
+            .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
+            .collect();
         self.state_receivers.clear();
-        let old_states = std::mem::replace(&mut self.states, HashMap::new());
+        let old_states = std::mem::take(&mut self.states);
         let states = old_states
             .into_iter()
             .chain(changed_states.into_iter())
@@ -757,6 +769,7 @@ impl Application {
                             (closure)(context);
                         }
                     }
+                    self.animators.remove(id);
                     false
                 }
             })
@@ -848,6 +861,7 @@ impl Application {
             None => Messages::new(),
         };
         let mut life_cycle = WidgetLifeCycle::default();
+        let animator = Animator::new(self.animators.get(&id), AnimationUpdate::default());
         let (new_node, mounted) = match states.get(&id) {
             Some(state) => {
                 let state = State::new(state, StateUpdate::new(sender.clone()));
@@ -857,6 +871,7 @@ impl Application {
                     props: &props,
                     shared_props: &shared_props,
                     state,
+                    animator: &animator,
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
@@ -872,6 +887,7 @@ impl Application {
                     props: &props,
                     shared_props: &shared_props,
                     state,
+                    animator: &animator,
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
@@ -881,6 +897,16 @@ impl Application {
                 (node, true)
             }
         };
+        match animator.into() {
+            AnimationUpdateAction::Start(anim) => {
+                self.animators
+                    .insert(id.to_owned(), AnimatorState::new(anim));
+            }
+            AnimationUpdateAction::Stop => {
+                self.animators.remove(&id);
+            }
+            _ => {}
+        }
         let (mount, change, unmount) = life_cycle.unwrap();
         if mounted {
             if !mount.is_empty() {
