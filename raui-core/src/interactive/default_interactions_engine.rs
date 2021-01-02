@@ -218,8 +218,12 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     let found = self.find_button(app, x, y);
                     if found.is_some() {
                         self.select_button(app, found);
-                    } else if self.does_hover_widget(app, x, y) {
                         result.captured_pointer_location = true;
+                    } else {
+                        self.select_button(app, None);
+                        if self.does_hover_widget(app, x, y) {
+                            result.captured_pointer_location = true;
+                        }
                     }
                 }
                 Interaction::PointerDown(button, _, _) => {

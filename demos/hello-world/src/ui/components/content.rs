@@ -6,11 +6,6 @@ use raui_core::prelude::*;
 
 widget_component! {
     pub content(key, props) {
-        let props = props.clone().with(GridBoxProps {
-            cols: 2,
-            rows: 2,
-        });
-
         let props0 = Props::new(ImageButtonProps {
             id: "cat".to_owned(),
             horizontal_alignment: 1.0,
@@ -28,6 +23,10 @@ widget_component! {
                 top: 8.0,
                 bottom: 8.0,
             },
+            ..Default::default()
+        }).with(SizeBoxProps {
+            width: SizeBoxSizeValue::Fill,
+            height: SizeBoxSizeValue::Fill,
             ..Default::default()
         });
 
@@ -68,6 +67,15 @@ widget_component! {
                 bottom: 8.0,
             },
             ..Default::default()
+        }).with(SizeBoxProps {
+            width: SizeBoxSizeValue::Fill,
+            height: SizeBoxSizeValue::Fill,
+            ..Default::default()
+        });
+
+        let props = props.clone().with(GridBoxProps {
+            cols: 2,
+            rows: 2,
         });
 
         widget! {

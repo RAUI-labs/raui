@@ -4,7 +4,7 @@ use crate::{
         unit::text::{
             TextBoxAlignment, TextBoxDirection, TextBoxFont, TextBoxNode, TextBoxSizeValue,
         },
-        utils::Color,
+        utils::{Color, Transform},
     },
     widget_component,
 };
@@ -26,6 +26,8 @@ pub struct TextBoxProps {
     pub font: TextBoxFont,
     #[serde(default)]
     pub color: Color,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(TextBoxProps, "TextBoxProps");
 
@@ -39,6 +41,7 @@ widget_component! {
             direction,
             font,
             color,
+            transform,
         } = props.read_cloned_or_default();
 
         widget! {{{
@@ -52,6 +55,7 @@ widget_component! {
                 direction,
                 font,
                 color,
+                transform,
             }
         }}}
     }

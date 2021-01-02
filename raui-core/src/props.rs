@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::{
     any::{type_name, Any, TypeId},
     collections::HashMap,
-    fmt::Debug,
 };
 
 #[derive(Debug, Clone)]
@@ -12,7 +11,7 @@ pub enum PropsError {
 }
 
 #[typetag::serde(tag = "type", content = "value")]
-pub trait PropsData: Debug {
+pub trait PropsData: std::fmt::Debug {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
 }

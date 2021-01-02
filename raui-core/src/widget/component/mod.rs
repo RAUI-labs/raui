@@ -43,6 +43,7 @@ impl std::fmt::Debug for WidgetComponent {
             s.field("key", key);
         }
         s.field("props", &self.props);
+        s.field("shared_props", &self.shared_props);
         if !self.listed_slots.is_empty() {
             s.field("listed_slots", &self.listed_slots);
         }

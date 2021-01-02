@@ -323,8 +323,10 @@ raui = { version = "*", features = ["all"] }
 ## Milestones
 RAUI is still in early development phase, so prepare for these changes until v1.0:
 - [ ] Integrate RAUI into one public open source Rust game.
-- [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning.
 - [ ] Create renderer for Oxygengine game engine.
+- [ ] Write documentation.
+- [ ] Write MD book about how to use RAUI properly and make UI efficient.
+- [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning.
 - [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
 - [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
 - [ ] Make WASM/JS API bindings.

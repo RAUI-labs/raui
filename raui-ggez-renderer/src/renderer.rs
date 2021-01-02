@@ -12,7 +12,7 @@ use raui_core::{
             text::TextBoxAlignment,
             WidgetUnit,
         },
-        utils::{lerp, Rect},
+        utils::{lerp, Rect, Transform, Vec2},
     },
     Scalar,
 };
@@ -25,6 +25,20 @@ pub struct GgezRenderer<'a> {
 impl<'a> GgezRenderer<'a> {
     pub fn new(context: &'a mut Context, resources: &'a mut GgezResources) -> Self {
         Self { context, resources }
+    }
+
+    fn transform_rect(rect: Rect, transform: &Transform) -> (Vec2, Scalar, Vec2, Rect) {
+        let offset = Vec2 {
+            x: lerp(rect.left, rect.right, transform.pivot.x),
+            y: lerp(rect.top, rect.bottom, transform.pivot.y),
+        };
+        let rect = Rect {
+            left: rect.left - offset.x,
+            right: rect.right - offset.x,
+            top: rect.top - offset.y,
+            bottom: rect.bottom - offset.y,
+        };
+        (offset, transform.rotation, transform.scale, rect)
     }
 
     fn render_node(
@@ -66,6 +80,8 @@ impl<'a> GgezRenderer<'a> {
                         let scale = mapping.scale();
                         let color = [image.color.r, image.color.g, image.color.b, image.color.a];
                         let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let (offset, rotation, scaling, rect) =
+                            Self::transform_rect(rect, &unit.transform);
                         let mut builder = MeshBuilder::new();
                         match image.scaling {
                             ImageBoxImageScaling::Strech => {
@@ -197,9 +213,11 @@ impl<'a> GgezRenderer<'a> {
                             }
                         }
                         if let Ok(mesh) = builder.build(self.context) {
-                            if graphics::draw(self.context, &mesh, graphics::DrawParam::default())
-                                .is_ok()
-                            {
+                            let params = graphics::DrawParam::default()
+                                .rotation(rotation)
+                                .scale([scaling.x, scaling.y])
+                                .dest([offset.x, offset.y]);
+                            if graphics::draw(self.context, &mesh, params).is_ok() {
                                 Ok(())
                             } else {
                                 Err(Error::CouldNotDrawImage(unit.id.to_owned()))
@@ -226,75 +244,32 @@ impl<'a> GgezRenderer<'a> {
                             let stx = source.right;
                             let sfy = source.top;
                             let sty = source.bottom;
-                            // TODO: this shit is overengineered, use aspect ratios to simplify this.
                             let rect = if let Some(aspect) = unit.content_keep_aspect_ratio {
                                 let ox = item.ui_space.left;
                                 let oy = item.ui_space.top;
-                                let width = resource.width() as Scalar;
-                                let height = resource.height() as Scalar;
-                                if item.ui_space.width() >= item.ui_space.height() {
-                                    if width >= height {
-                                        let h = item.ui_space.height();
-                                        let w = h * width / height;
-                                        let o = lerp(
-                                            0.0,
-                                            item.ui_space.width() - w,
-                                            aspect.horizontal_alignment,
-                                        );
-                                        Rect {
-                                            left: o + ox,
-                                            right: w + o + ox,
-                                            top: oy,
-                                            bottom: h + oy,
-                                        }
-                                    } else {
-                                        let w = item.ui_space.width();
-                                        let h = w * height / width;
-                                        let o = lerp(
-                                            0.0,
-                                            item.ui_space.height() - h,
-                                            aspect.vertical_alignment,
-                                        );
-                                        Rect {
-                                            left: ox,
-                                            right: w + ox,
-                                            top: o + oy,
-                                            bottom: h + o + oy,
-                                        }
-                                    }
-                                } else if width >= height {
-                                    let w = item.ui_space.width();
-                                    let h = w * height / width;
-                                    let o = lerp(
-                                        0.0,
-                                        item.ui_space.height() - h,
-                                        aspect.vertical_alignment,
-                                    );
-                                    Rect {
-                                        left: ox,
-                                        right: w + ox,
-                                        top: o + oy,
-                                        bottom: h + o + oy,
-                                    }
-                                } else {
-                                    let h = item.ui_space.height();
-                                    let w = h * width / height;
-                                    let o = lerp(
-                                        0.0,
-                                        item.ui_space.width() - w,
-                                        aspect.horizontal_alignment,
-                                    );
-                                    Rect {
-                                        left: o + ox,
-                                        right: w + o + ox,
-                                        top: oy,
-                                        bottom: h + oy,
-                                    }
+                                let rw = resource.width() as Scalar;
+                                let rh = resource.height() as Scalar;
+                                let iw = item.ui_space.width();
+                                let ih = item.ui_space.height();
+                                let ra = rw / rh;
+                                let ia = iw / ih;
+                                let scale = if ra >= ia { iw / rw } else { ih / rh };
+                                let w = rw * scale;
+                                let h = rh * scale;
+                                let ow = lerp(0.0, iw - w, aspect.horizontal_alignment);
+                                let oh = lerp(0.0, ih - h, aspect.vertical_alignment);
+                                Rect {
+                                    left: ox + ow,
+                                    right: ox + ow + w,
+                                    top: oy + oh,
+                                    bottom: oy + oh + h,
                                 }
                             } else {
                                 item.ui_space
                             };
                             let rect = mapping.virtual_to_real_rect(rect);
+                            let (offset, rotation, scaling, rect) =
+                                Self::transform_rect(rect, &unit.transform);
                             let mut builder = MeshBuilder::new();
                             match image.scaling {
                                 ImageBoxImageScaling::Strech => {
@@ -431,13 +406,11 @@ impl<'a> GgezRenderer<'a> {
                                 }
                             }
                             if let Ok(mesh) = builder.build(self.context) {
-                                if graphics::draw(
-                                    self.context,
-                                    &mesh,
-                                    graphics::DrawParam::default(),
-                                )
-                                .is_ok()
-                                {
+                                let params = graphics::DrawParam::default()
+                                    .rotation(rotation)
+                                    .scale([scaling.x, scaling.y])
+                                    .dest([offset.x, offset.y]);
+                                if graphics::draw(self.context, &mesh, params).is_ok() {
                                     Ok(())
                                 } else {
                                     Err(Error::CouldNotDrawImage(unit.id.to_owned()))
@@ -461,6 +434,8 @@ impl<'a> GgezRenderer<'a> {
                 if let Some(item) = layout.items.get(&unit.id) {
                     if let Some(resource) = self.resources.fonts.get(&unit.font.name) {
                         let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let (offset, rotation, scaling, rect) =
+                            Self::transform_rect(rect, &unit.transform);
                         let mut text = Text::new(TextFragment::new(unit.text.as_str()).color(
                             graphics::Color::new(
                                 unit.color.r,
@@ -482,15 +457,26 @@ impl<'a> GgezRenderer<'a> {
                         // this is a solution for a bug that when passing position to DrawParam,
                         // next item after text is positioned relative to this text offset.
                         graphics::queue_text(self.context, &text, [rect.left, rect.top], None);
+                        let params = graphics::DrawParam::default()
+                            .rotation(rotation)
+                            .scale([scaling.x, scaling.y])
+                            .dest([offset.x, offset.y]);
                         if graphics::draw_queued_text(
                             self.context,
-                            graphics::DrawParam::default(),
+                            params,
                             None,
                             graphics::FilterMode::Linear,
                         )
                         .is_ok()
                         {
-                            Ok(())
+                            // NOTE: yeah, we have to pop transforms after text rendering bc
+                            // otherwise they just apply tot he next drawable somehow.
+                            graphics::pop_transform(self.context);
+                            if graphics::apply_transformations(self.context).is_ok() {
+                                Ok(())
+                            } else {
+                                Err(Error::CouldNotDrawImage(unit.id.to_owned()))
+                            }
                         } else {
                             Err(Error::CouldNotDrawImage(unit.id.to_owned()))
                         }

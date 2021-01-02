@@ -16,34 +16,40 @@ widget_component! {
         } else {
             text.to_owned()
         };
+        let props = TextBoxProps {
+            text,
+            width: TextBoxSizeValue::Fill,
+            height: TextBoxSizeValue::Exact(32.0),
+            alignment: TextBoxAlignment::Center,
+            font: TextBoxFont {
+                name: "verdana".to_owned(),
+                size: 48.0,
+            },
+            color: if trigger {
+                Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }
+            } else if selected {
+                Color { r: 0.0, g: 0.0, b: 0.0, a: 0.85 }
+            } else {
+                Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+            },
+            ..Default::default()
+        };
 
         widget! {
-            (#{key} text_box: {TextBoxProps {
-                text,
-                width: TextBoxSizeValue::Fill,
-                height: TextBoxSizeValue::Exact(32.0),
-                alignment: TextBoxAlignment::Center,
-                font: TextBoxFont {
-                    name: "verdana".to_owned(),
-                    size: 48.0,
-                },
-                color: if trigger {
-                    Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }
-                } else if selected {
-                    Color { r: 0.0, g: 0.0, b: 0.0, a: 0.85 }
-                } else {
-                    Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
-                },
-                ..Default::default()
-            }})
+            (#{key} text_box: {props})
         }
     }
 }
 
 widget_component! {
-    pub title_bar(key) {
+    pub title_bar(key, props) {
+        let props = props.clone().with(SizeBoxProps {
+            width: SizeBoxSizeValue::Fill,
+            ..Default::default()
+        });
+
         widget! {
-            (#{key} input_field {
+            (#{key} input_field: {props} {
                 content = (title_bar_input)
             })
         }

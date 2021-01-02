@@ -14,10 +14,37 @@ pub trait LayoutEngine<E> {
     fn layout(&mut self, map_props: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, E>;
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct Layout {
     pub ui_space: Rect,
     pub items: HashMap<WidgetId, LayoutItem>,
+}
+
+impl std::fmt::Debug for Layout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Layout")
+            .field("ui_space", &self.ui_space)
+            .field("items", &LayoutSortedItems::new(&self.items))
+            .finish()
+    }
+}
+
+struct LayoutSortedItems<'a>(Vec<(&'a WidgetId, &'a LayoutItem)>);
+
+impl<'a> LayoutSortedItems<'a> {
+    fn new(items: &'a HashMap<WidgetId, LayoutItem>) -> Self {
+        let mut items = items.iter().collect::<Vec<_>>();
+        items.sort_by(|a, b| a.0.path().cmp(b.0.path()));
+        Self(items)
+    }
+}
+
+impl<'a> std::fmt::Debug for LayoutSortedItems<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map()
+            .entries(self.0.iter().map(|&(k, v)| (k, v)))
+            .finish()
+    }
 }
 
 impl Layout {

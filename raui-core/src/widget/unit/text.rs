@@ -1,6 +1,11 @@
 use crate::{
     props::{Props, PropsDef},
-    widget::{node::WidgetNode, unit::WidgetUnitData, utils::Color, WidgetId},
+    widget::{
+        node::WidgetNode,
+        unit::WidgetUnitData,
+        utils::{Color, Transform},
+        WidgetId,
+    },
     Scalar,
 };
 use serde::{Deserialize, Serialize};
@@ -89,6 +94,8 @@ pub struct TextBox {
     pub font: TextBoxFont,
     #[serde(default)]
     pub color: Color,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for TextBox {
@@ -110,6 +117,7 @@ impl TryFrom<TextBoxNode> for TextBox {
             direction,
             font,
             color,
+            transform,
             ..
         } = node;
         Ok(Self {
@@ -121,6 +129,7 @@ impl TryFrom<TextBoxNode> for TextBox {
             direction,
             font,
             color,
+            transform,
         })
     }
 }
@@ -136,6 +145,7 @@ pub struct TextBoxNode {
     pub direction: TextBoxDirection,
     pub font: TextBoxFont,
     pub color: Color,
+    pub transform: Transform,
 }
 
 impl TextBoxNode {
@@ -174,4 +184,6 @@ pub struct TextBoxNodeDef {
     pub font: TextBoxFont,
     #[serde(default)]
     pub color: Color,
+    #[serde(default)]
+    pub transform: Transform,
 }

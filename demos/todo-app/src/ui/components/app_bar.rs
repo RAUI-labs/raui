@@ -70,8 +70,8 @@ widget_hook! {
 }
 
 widget_component! {
-    pub app_bar(id, key, props, state) [use_app_bar] {
-        let theme_mode = props.read_cloned_or_default::<ThemeModeProps>();
+    pub app_bar(id, key, props, shared_props, state) [use_app_bar] {
+        let theme_mode = shared_props.read_cloned_or_default::<ThemeModeProps>();
         let props = props.clone().with(VerticalBoxProps {
             separation: 10.0,
             ..Default::default()
@@ -101,6 +101,10 @@ widget_component! {
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()
+        }).with(SizeBoxProps {
+            width: SizeBoxSizeValue::Fill,
+            height: SizeBoxSizeValue::Fill,
+            ..Default::default()
         });
         let theme_props = Props::new(FlexBoxItemLayout {
             fill: 0.0,
@@ -118,6 +122,7 @@ widget_component! {
                 ..Default::default()
             },
             size_level: 2,
+            ..Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()
@@ -137,6 +142,7 @@ widget_component! {
                 ..Default::default()
             },
             size_level: 2,
+            ..Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()
@@ -156,6 +162,7 @@ widget_component! {
                 ..Default::default()
             },
             size_level: 2,
+            ..Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()

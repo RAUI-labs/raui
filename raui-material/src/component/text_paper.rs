@@ -14,14 +14,27 @@ pub struct TextPaperProps {
     pub variant: String,
     #[serde(default)]
     pub use_main_color: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(TextPaperProps, "TextPaperProps");
 
 widget_component! {
     pub text_paper(key, props, shared_props) {
-        let TextPaperProps { text, width, height, variant, use_main_color } = props.read_cloned_or_default();
+        let TextPaperProps {
+            text,
+            width,
+            height,
+            variant,
+            use_main_color,
+            transform,
+        } = props.read_cloned_or_default();
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
-        let ThemedTextMaterial { alignment, direction, font } = match shared_props.read::<ThemeProps>() {
+        let ThemedTextMaterial {
+            alignment,
+            direction,
+            font,
+        } = match shared_props.read::<ThemeProps>() {
             Ok(props) => props
                 .text_variants
                 .get(&variant)
@@ -53,6 +66,7 @@ widget_component! {
             direction,
             font,
             color,
+            transform,
         };
 
         widget! {

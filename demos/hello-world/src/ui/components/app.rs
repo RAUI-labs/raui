@@ -9,12 +9,13 @@ widget_component! {
             shrink: 0.0,
             ..Default::default()
         }));
+        let props = VerticalBoxProps {
+            separation: 16.0,
+            ..Default::default()
+        };
 
         widget!{
-            (#{key} vertical_box: {VerticalBoxProps {
-                separation: 16.0,
-                ..Default::default()
-            }} [
+            (#{key} vertical_box: {props} [
                 {title}
                 {content}
             ])

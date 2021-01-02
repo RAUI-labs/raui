@@ -30,7 +30,7 @@ widget_hook! {
                     match msg {
                         InventoryMessage::Prev => {
                             let mut data = match context.state.read::<InventoryState>() {
-                                Ok(state) => state.clone(),
+                                Ok(state) => *state,
                                 Err(_) => InventoryState::default(),
                             };
                             data.index = data.index.saturating_sub(1);
@@ -38,7 +38,7 @@ widget_hook! {
                         }
                         InventoryMessage::Next => {
                             let mut data = match context.state.read::<InventoryState>() {
-                                Ok(state) => state.clone(),
+                                Ok(state) => *state,
                                 Err(_) => InventoryState::default(),
                             };
                             let count = context.props.map_or_default::<ItemCellsProps, _, _>(|p| {
@@ -58,7 +58,7 @@ widget_component! {
     pub inventory(id, key, props, shared_props, state) [use_inventory] {
         let ItemCellsProps { items } = props.read_cloned_or_default();
         let data = match state.read::<InventoryState>() {
-            Ok(data) => data.clone(),
+            Ok(data) => *data,
             Err(_) => InventoryState::default(),
         };
         let list_props = Props::new(PaperProps {

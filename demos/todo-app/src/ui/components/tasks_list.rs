@@ -106,6 +106,7 @@ widget_component! {
                 ..Default::default()
             },
             size_level: 2,
+            ..Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()
@@ -113,32 +114,25 @@ widget_component! {
             color: ThemeColor::Primary,
             variant: ThemeVariant::ContentOnly,
         });
-        let list_props = HorizontalBoxProps {
+        let list_props = Props::new(HorizontalBoxProps {
             separation: 10.0,
             ..Default::default()
-        };
-        let props = Props::new(WrapBoxProps {
+        }).with(ContentBoxItemLayout {
             margin: Rect {
                 left: 10.0,
                 right: 0.0,
                 top: 10.0,
                 bottom: 10.0,
             },
-        }).with(FlexBoxItemLayout {
-            fill: 0.0,
-            grow: 0.0,
-            shrink: 0.0,
             ..Default::default()
         });
 
         widget! {
-            (#{key} wrap_paper: {props} {
-                content = (#{key} horizontal_box: {list_props} [
-                    (#{"checkbox"} switch_button_paper: {checkbox_props})
-                    (#{"name"} text_paper: {name_props})
-                    (#{"delete"} icon_button_paper: {delete_props})
-                ])
-            })
+            (#{key} horizontal_paper: {list_props} [
+                (#{"checkbox"} switch_button_paper: {checkbox_props})
+                (#{"name"} text_paper: {name_props})
+                (#{"delete"} icon_button_paper: {delete_props})
+            ])
         }
     }
 }

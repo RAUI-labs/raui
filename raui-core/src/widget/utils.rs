@@ -5,23 +5,31 @@ use std::{
     marker::PhantomData,
 };
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct Vec2 {
+    #[serde(default)]
     pub x: Scalar,
+    #[serde(default)]
     pub y: Scalar,
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct IntVec2 {
+    #[serde(default)]
     pub x: Integer,
+    #[serde(default)]
     pub y: Integer,
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct Rect {
+    #[serde(default)]
     pub left: Scalar,
+    #[serde(default)]
     pub right: Scalar,
+    #[serde(default)]
     pub top: Scalar,
+    #[serde(default)]
     pub bottom: Scalar,
 }
 
@@ -45,11 +53,15 @@ impl Rect {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct IntRect {
+    #[serde(default)]
     pub left: Integer,
+    #[serde(default)]
     pub right: Integer,
+    #[serde(default)]
     pub top: Integer,
+    #[serde(default)]
     pub bottom: Integer,
 }
 
@@ -73,11 +85,15 @@ impl IntRect {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Color {
+    #[serde(default)]
     pub r: Scalar,
+    #[serde(default)]
     pub g: Scalar,
+    #[serde(default)]
     pub b: Scalar,
+    #[serde(default)]
     pub a: Scalar,
 }
 
@@ -89,6 +105,35 @@ impl Default for Color {
             b: 1.0,
             a: 1.0,
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct Transform {
+    #[serde(default)]
+    pub pivot: Vec2,
+    #[serde(default)]
+    pub translation: Vec2,
+    #[serde(default)]
+    pub rotation: Scalar,
+    #[serde(default)]
+    pub scale: Vec2,
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            pivot: Default::default(),
+            translation: Default::default(),
+            rotation: Default::default(),
+            scale: Self::default_scale(),
+        }
+    }
+}
+
+impl Transform {
+    fn default_scale() -> Vec2 {
+        Vec2 { x: 1.0, y: 1.0 }
     }
 }
 

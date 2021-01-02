@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::WidgetNode,
         unit::WidgetUnitData,
-        utils::{Color, Rect},
+        utils::{Color, Rect, Transform},
         WidgetId,
     },
     Scalar,
@@ -119,6 +119,8 @@ pub struct ImageBox {
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for ImageBox {
@@ -137,6 +139,7 @@ impl TryFrom<ImageBoxNode> for ImageBox {
             height,
             content_keep_aspect_ratio,
             material,
+            transform,
             ..
         } = node;
         Ok(Self {
@@ -145,6 +148,7 @@ impl TryFrom<ImageBoxNode> for ImageBox {
             height,
             content_keep_aspect_ratio,
             material,
+            transform,
         })
     }
 }
@@ -157,6 +161,7 @@ pub struct ImageBoxNode {
     pub height: ImageBoxSizeValue,
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     pub material: ImageBoxMaterial,
+    pub transform: Transform,
 }
 
 impl ImageBoxNode {
@@ -189,4 +194,6 @@ pub struct ImageBoxNodeDef {
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,
+    #[serde(default)]
+    pub transform: Transform,
 }

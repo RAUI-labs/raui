@@ -145,11 +145,11 @@ fn test_hello_world() {
     widget_hook! {
         use_empty(life_cycle) {
             life_cycle.mount(|_| {
-                println!("=== BUTTON MOUNTED");
+                println!("=== EMPTY MOUNTED");
             });
 
             life_cycle.change(|_| {
-                println!("=== BUTTON CHANGED");
+                println!("=== EMPTY CHANGED");
             });
 
             life_cycle.unmount(|_| {
@@ -255,6 +255,13 @@ fn test_hello_world() {
         }
     }
 
+    let mapping = CoordsMapping::new(Rect {
+        left: 0.0,
+        right: 1024.0,
+        top: 0.0,
+        bottom: 576.0,
+    });
+
     let mut application = Application::new();
     let tree = widget! {
         (app {
@@ -276,7 +283,7 @@ fn test_hello_world() {
     // `apply()` sets new widget tree.
     application.apply(tree);
     // `render()` calls renderer to perform transformations on processed application widget tree.
-    if let Ok(output) = application.render(&mut renderer) {
+    if let Ok(output) = application.render(&mapping, &mut renderer) {
         println!("=== OUTPUT:\n{}", output);
     }
 
@@ -285,7 +292,7 @@ fn test_hello_world() {
     // "change" is either any widget state change, or new message sent to any widget (messages
     // can be sent from application host, for example a mouse click, or from another widget).
     application.forced_process();
-    if let Ok(output) = application.render(&mut renderer) {
+    if let Ok(output) = application.render(&mapping, &mut renderer) {
         println!("=== OUTPUT:\n{}", output);
     }
 
@@ -295,7 +302,7 @@ fn test_hello_world() {
     println!("=== INPUT:\n{:#?}", tree);
     println!("=== PROCESS");
     application.apply(tree);
-    if let Ok(output) = application.render(&mut HtmlRenderer::default()) {
+    if let Ok(output) = application.render(&mapping, &mut HtmlRenderer::default()) {
         println!("=== OUTPUT:\n{}", output);
     }
 }

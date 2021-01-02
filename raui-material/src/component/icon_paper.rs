@@ -18,6 +18,8 @@ pub struct IconPaperProps {
     pub image: IconImage,
     #[serde(default)]
     pub size_level: usize,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(IconPaperProps, "IconPaperProps");
 
@@ -56,6 +58,7 @@ widget_component! {
                 vertical_alignment: 0.5,
             }),
             material: ImageBoxMaterial::Image(image),
+            transform: icon_props.transform,
         };
 
         widget! {

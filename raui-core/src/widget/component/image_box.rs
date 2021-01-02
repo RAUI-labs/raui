@@ -1,6 +1,9 @@
 use crate::{
     widget,
-    widget::unit::image::{ImageBoxAspectRatio, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue},
+    widget::{
+        unit::image::{ImageBoxAspectRatio, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue},
+        utils::Transform,
+    },
     widget_component,
 };
 use serde::{Deserialize, Serialize};
@@ -15,6 +18,8 @@ pub struct ImageBoxProps {
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(ImageBoxProps, "ImageBoxProps");
 
@@ -25,6 +30,7 @@ widget_component! {
             height,
             content_keep_aspect_ratio,
             material,
+            transform,
         } = props.read_cloned_or_default();
 
         widget! {{{
@@ -35,6 +41,7 @@ widget_component! {
                 height,
                 content_keep_aspect_ratio,
                 material,
+                transform,
             }
         }}}
     }

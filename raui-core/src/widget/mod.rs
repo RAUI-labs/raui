@@ -76,6 +76,11 @@ impl WidgetId {
     }
 
     #[inline]
+    pub fn path(&self) -> &str {
+        &self.id.as_str()[(self.type_name_len as usize + 2)..]
+    }
+
+    #[inline]
     pub fn key(&self) -> &str {
         &self.id[(self.id.len() - self.key_len as usize)..]
     }

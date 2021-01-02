@@ -81,7 +81,6 @@ widget_component! {
                 top: 2.0,
                 bottom: 2.0,
             },
-            ..Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()

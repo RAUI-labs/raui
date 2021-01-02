@@ -21,6 +21,8 @@ pub struct TextFieldPaperProps {
     #[serde(default)]
     pub use_main_color: bool,
     #[serde(default)]
+    pub transform: Transform,
+    #[serde(default)]
     pub paper_theme: ThemedWidgetProps,
     #[serde(default = "TextFieldPaperProps::default_padding")]
     pub padding: Rect,
@@ -46,6 +48,7 @@ impl Default for TextFieldPaperProps {
             height: Default::default(),
             variant: Default::default(),
             use_main_color: Default::default(),
+            transform: Default::default(),
             paper_theme: Default::default(),
             padding: Self::default_padding(),
         }
@@ -61,6 +64,7 @@ widget_component! {
             height,
             variant,
             use_main_color,
+            transform,
             paper_theme,
             padding,
         } = props.read_cloned_or_default();
@@ -88,6 +92,7 @@ widget_component! {
             height,
             variant,
             use_main_color,
+            transform,
         }).with(ContentBoxItemLayout {
             margin: padding,
             ..Default::default()

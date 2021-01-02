@@ -319,6 +319,7 @@ impl Application {
                     height,
                     content_keep_aspect_ratio,
                     material,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 WidgetUnitNodeDef::ImageBox(ImageBoxNodeDef {
@@ -328,6 +329,7 @@ impl Application {
                     height,
                     content_keep_aspect_ratio,
                     material,
+                    transform,
                 })
             }
             WidgetUnitNode::TextBox(v) => {
@@ -341,6 +343,7 @@ impl Application {
                     direction,
                     font,
                     color,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 WidgetUnitNodeDef::TextBox(TextBoxNodeDef {
@@ -353,6 +356,7 @@ impl Application {
                     direction,
                     font,
                     color,
+                    transform,
                 })
             }
         })
@@ -532,6 +536,7 @@ impl Application {
                     height,
                     content_keep_aspect_ratio,
                     material,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 WidgetUnitNode::ImageBox(ImageBoxNode {
@@ -541,6 +546,7 @@ impl Application {
                     height,
                     content_keep_aspect_ratio,
                     material,
+                    transform,
                 })
             }
             WidgetUnitNodeDef::TextBox(v) => {
@@ -554,6 +560,7 @@ impl Application {
                     direction,
                     font,
                     color,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 WidgetUnitNode::TextBox(TextBoxNode {
@@ -566,6 +573,7 @@ impl Application {
                     direction,
                     font,
                     color,
+                    transform,
                 })
             }
         })

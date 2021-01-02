@@ -149,18 +149,6 @@ widget_component! {
         let shared_props = Props::new(AppSharedProps { id: id.to_owned() })
             .with(theme)
             .with(theme_mode);
-        let content_props = props.clone().with(ContentBoxItemLayout {
-            margin: Rect {
-                left: 32.0,
-                right: 32.0,
-                top: 32.0,
-                bottom: 32.0,
-            },
-            ..Default::default()
-        }).with(VerticalBoxProps {
-            separation: 10.0,
-            ..Default::default()
-        });
         let bar_props = FlexBoxItemLayout {
             grow: 0.0,
             shrink: 0.0,
@@ -173,14 +161,24 @@ widget_component! {
         }).with(TasksProps {
             tasks,
         });
+        let props = props.clone().with(ContentBoxItemLayout {
+            margin: Rect {
+                left: 32.0,
+                right: 32.0,
+                top: 32.0,
+                bottom: 32.0,
+            },
+            ..Default::default()
+        }).with(VerticalBoxProps {
+            separation: 10.0,
+            ..Default::default()
+        });
 
         widget!{
-            (#{key} wrap_paper: {props.clone()} {
-                content = (#{"app-content"} vertical_paper: {content_props} | {shared_props} [
-                    (#{"app-bar"} app_bar: {bar_props})
-                    (#{"tasks-list"} tasks_list: {tasks_props})
-                ])
-            })
+            (#{key} vertical_paper: {props} | {shared_props} [
+                (#{"app-bar"} app_bar: {bar_props})
+                (#{"tasks-list"} tasks_list: {tasks_props})
+            ])
         }
     }
 }

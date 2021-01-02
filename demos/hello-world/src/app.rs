@@ -74,11 +74,14 @@ impl EventHandler for App {
         self.ui_interactions.text_input_event(character);
     }
 
-    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _: KeyMods, _: bool) {
+    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, keymods: KeyMods, _: bool) {
         if keycode == KeyCode::Escape {
             ggez::event::quit(ctx);
         }
         self.ui_interactions.key_down_event(keycode);
+        if keycode == KeyCode::P && keymods.contains(KeyMods::CTRL) {
+            println!("LAYOUT: {:#?}", self.ui.layout_data());
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
