@@ -1,6 +1,9 @@
 use crate::{
     widget,
-    widget::unit::content::{ContentBoxItemNode, ContentBoxNode},
+    widget::{
+        unit::content::{ContentBoxItemNode, ContentBoxNode},
+        utils::Transform,
+    },
     widget_component,
 };
 use serde::{Deserialize, Serialize};
@@ -11,12 +14,14 @@ pub struct SwitchBoxProps {
     pub active_index: Option<usize>,
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(SwitchBoxProps, "SwitchBoxProps");
 
 widget_component! {
     pub switch_box(id, props, listed_slots) {
-        let SwitchBoxProps { active_index, clipping } = props.read_cloned_or_default();
+        let SwitchBoxProps { active_index, clipping, transform } = props.read_cloned_or_default();
         let items = if let Some(index) = active_index {
             if let Some(slot) = listed_slots.into_iter().nth(index) {
                 vec![
@@ -38,6 +43,7 @@ widget_component! {
                 props: props.clone(),
                 items,
                 clipping,
+                transform,
             }
         }}}
     }

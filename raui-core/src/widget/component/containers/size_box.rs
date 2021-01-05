@@ -2,7 +2,7 @@ use crate::{
     unpack_named_slots, widget,
     widget::{
         unit::size::{SizeBoxNode, SizeBoxSizeValue},
-        utils::Rect,
+        utils::{Rect, Transform},
     },
     widget_component,
 };
@@ -16,13 +16,15 @@ pub struct SizeBoxProps {
     pub height: SizeBoxSizeValue,
     #[serde(default)]
     pub margin: Rect,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(SizeBoxProps, "SizeBoxProps");
 
 widget_component! {
     pub size_box(id, props, named_slots) {
         unpack_named_slots!(named_slots => content);
-        let SizeBoxProps { width, height, margin } = props.read_cloned_or_default();
+        let SizeBoxProps { width, height, margin, transform } = props.read_cloned_or_default();
 
         widget! {{{
             SizeBoxNode {
@@ -32,6 +34,7 @@ widget_component! {
                 width,
                 height,
                 margin,
+                transform,
             }
         }}}
     }

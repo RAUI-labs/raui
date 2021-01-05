@@ -1,6 +1,9 @@
 use crate::{
     widget,
-    widget::unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
+    widget::{
+        unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
+        utils::Transform,
+    },
     widget_component,
 };
 use serde::{Deserialize, Serialize};
@@ -11,12 +14,14 @@ pub struct GridBoxProps {
     pub cols: usize,
     #[serde(default)]
     pub rows: usize,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(GridBoxProps, "GridBoxProps");
 
 widget_component! {
     pub grid_box(id, props, listed_slots) {
-        let GridBoxProps { cols, rows } = props.read_cloned_or_default();
+        let GridBoxProps { cols, rows, transform } = props.read_cloned_or_default();
         let items = listed_slots.into_iter().filter_map(|slot| {
             if let Some(props) = slot.props() {
                 let layout = props.read_cloned_or_default::<GridBoxItemLayout>();
@@ -36,6 +41,7 @@ widget_component! {
                 items,
                 cols,
                 rows,
+                transform,
             }
         }}}
     }

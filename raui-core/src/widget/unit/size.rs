@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::{WidgetNode, WidgetNodeDef},
         unit::{WidgetUnit, WidgetUnitData},
-        utils::Rect,
+        utils::{Rect, Transform},
         WidgetId,
     },
     Scalar,
@@ -36,6 +36,8 @@ pub struct SizeBox {
     pub height: SizeBoxSizeValue,
     #[serde(default)]
     pub margin: Rect,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for SizeBox {
@@ -58,6 +60,7 @@ impl TryFrom<SizeBoxNode> for SizeBox {
             width,
             height,
             margin,
+            transform,
             ..
         } = node;
         Ok(Self {
@@ -66,6 +69,7 @@ impl TryFrom<SizeBoxNode> for SizeBox {
             width,
             height,
             margin,
+            transform,
         })
     }
 }
@@ -78,6 +82,7 @@ pub struct SizeBoxNode {
     pub width: SizeBoxSizeValue,
     pub height: SizeBoxSizeValue,
     pub margin: Rect,
+    pub transform: Transform,
 }
 
 impl SizeBoxNode {
@@ -110,4 +115,6 @@ pub struct SizeBoxNodeDef {
     pub height: SizeBoxSizeValue,
     #[serde(default)]
     pub margin: Rect,
+    #[serde(default)]
+    pub transform: Transform,
 }

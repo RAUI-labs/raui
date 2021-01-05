@@ -5,6 +5,7 @@ use crate::ui::components::{
 use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::f32::consts::PI;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemCellProps {
@@ -37,6 +38,10 @@ widget_hook! {
             for msg in context.messenger.messages {
                 if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
                     if msg.action == ButtonAction::TriggerStart {
+                        drop(context.animator.change(Some(Animation::Value(AnimatedValue {
+                            name: "click".to_owned(),
+                            duration: 0.15,
+                        }))));
                         match msg.sender.key() {
                             "prev" => {
                                 let id = context
@@ -70,7 +75,7 @@ widget_hook! {
 }
 
 widget_component! {
-    pub item_cell(id, key, props) [use_item_cell] {
+    pub item_cell(id, key, props, animator) [use_item_cell] {
         let ItemCellProps { image, thin } = props.read_cloned_or_default();
         let button_props = props.clone().with(SizeBoxProps {
             width: SizeBoxSizeValue::Exact(if thin { 18.0 } else { 24.0 }),
@@ -81,6 +86,7 @@ widget_component! {
                 top: 2.0,
                 bottom: 2.0,
             },
+            .. Default::default()
         }).with(ButtonSettingsProps {
             notify: Some(id.to_owned()),
             ..Default::default()
@@ -98,6 +104,7 @@ widget_component! {
                 })
             }
         } else {
+            let scale = lerp(1.0, 1.5, (animator.value_progress_or_zero("click") * PI).sin());
             let image_props = Props::new(ImageBoxProps {
                 content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
                     horizontal_alignment: 0.5,
@@ -107,6 +114,11 @@ widget_component! {
                     id: image,
                     ..Default::default()
                 }),
+                transform: Transform {
+                    pivot: Vec2 { x: 0.5, y: 0.5 },
+                    scale: Vec2 { x: scale, y: scale },
+                    ..Default::default()
+                },
                 ..Default::default()
             }).with(ContentBoxItemLayout {
                 margin: Rect {

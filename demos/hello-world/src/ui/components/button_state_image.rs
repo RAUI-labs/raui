@@ -13,6 +13,22 @@ widget_component! {
             id,
             horizontal_alignment,
         } = props.read_cloned_or_default();
+        let scale = if trigger || context {
+            Vec2 {
+                x: 1.1,
+                y: 1.1,
+            }
+        } else if selected {
+            Vec2 {
+                x: 1.05,
+                y: 1.05,
+            }
+        } else {
+            Vec2 {
+                x: 1.0,
+                y: 1.0,
+            }
+        };
         let image_props = ImageBoxProps {
             material: ImageBoxMaterial::Image(ImageBoxImage {
                 id,
@@ -31,6 +47,14 @@ widget_component! {
                 horizontal_alignment,
                 vertical_alignment: 0.5
             }),
+            transform: Transform {
+                pivot: Vec2 {
+                    x: 0.5,
+                    y: 0.5,
+                },
+                scale,
+                ..Default::default()
+            },
             ..Default::default()
         };
 

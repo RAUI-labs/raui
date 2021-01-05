@@ -3,7 +3,7 @@ use ggez::{
     event::EventHandler,
     graphics,
     input::keyboard::{KeyCode, KeyMods},
-    Context, GameResult,
+    timer, Context, GameResult,
 };
 use raui_core::{application::Application as UI, prelude::*};
 use raui_ggez_renderer::prelude::*;
@@ -63,6 +63,7 @@ impl EventHandler for App {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         let mapping = Self::make_coords_mapping(ctx);
         self.ui_interactions.update(ctx, &mapping);
+        self.ui.animations_delta_time = timer::delta(ctx).as_secs_f32();
         self.ui.process();
         self.ui
             .interact(&mut self.ui_interactions)

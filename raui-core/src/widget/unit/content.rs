@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::{WidgetNode, WidgetNodeDef},
         unit::{WidgetUnit, WidgetUnitData},
-        utils::{Rect, Vec2},
+        utils::{Rect, Transform, Vec2},
         WidgetId,
     },
     Scalar,
@@ -91,6 +91,8 @@ pub struct ContentBox {
     pub items: Vec<ContentBoxItem>,
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for ContentBox {
@@ -111,6 +113,7 @@ impl TryFrom<ContentBoxNode> for ContentBox {
             id,
             items,
             clipping,
+            transform,
             ..
         } = node;
         let items = items
@@ -121,6 +124,7 @@ impl TryFrom<ContentBoxNode> for ContentBox {
             id,
             items,
             clipping,
+            transform,
         })
     }
 }
@@ -131,6 +135,7 @@ pub struct ContentBoxNode {
     pub props: Props,
     pub items: Vec<ContentBoxItemNode>,
     pub clipping: bool,
+    pub transform: Transform,
 }
 
 impl ContentBoxNode {
@@ -159,4 +164,6 @@ pub struct ContentBoxNodeDef {
     pub items: Vec<ContentBoxItemNodeDef>,
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }

@@ -3,6 +3,7 @@ use crate::{
     widget::{
         component::containers::flex_box::{flex_box, FlexBoxProps},
         unit::flex::FlexBoxDirection,
+        utils::Transform,
     },
     widget_component, Scalar,
 };
@@ -14,12 +15,14 @@ pub struct HorizontalBoxProps {
     pub separation: Scalar,
     #[serde(default)]
     pub reversed: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(HorizontalBoxProps, "HorizontalBoxProps");
 
 widget_component! {
     pub horizontal_box(key, props, listed_slots) {
-        let HorizontalBoxProps { separation, reversed } = props.read_cloned_or_default();
+        let HorizontalBoxProps { separation, reversed, transform } = props.read_cloned_or_default();
         let props = props.clone().with(FlexBoxProps {
             direction: if reversed {
                 FlexBoxDirection::HorizontalRightToLeft
@@ -28,6 +31,7 @@ widget_component! {
             },
             separation,
             wrap: false,
+            transform,
         });
 
         widget! {

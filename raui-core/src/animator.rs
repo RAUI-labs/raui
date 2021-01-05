@@ -1,60 +1,64 @@
 use crate::{messenger::MessageSender, widget::WidgetId, Scalar};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::mpsc::Sender};
 
-#[derive(Debug, Clone)]
-pub enum AnimationUpdateAction {
-    None,
-    Stop,
-    Start(Animation),
+pub enum AnimationError {
+    CouldNotReadData,
+    CouldNotWriteData,
 }
 
-impl Default for AnimationUpdateAction {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct AnimationUpdate(AnimationUpdateAction);
+#[derive(Clone)]
+pub struct AnimationUpdate(Sender<Option<Animation>>);
 
 impl AnimationUpdate {
-    pub fn change(&mut self, animation: Option<Animation>) {
-        self.0 = match animation {
-            Some(anim) => AnimationUpdateAction::Start(anim),
-            None => AnimationUpdateAction::Stop,
-        };
+    pub fn new(sender: Sender<Option<Animation>>) -> Self {
+        Self(sender)
+    }
+
+    pub fn change(&self, data: Option<Animation>) -> Result<(), AnimationError> {
+        if self.0.send(data).is_err() {
+            Err(AnimationError::CouldNotWriteData)
+        } else {
+            Ok(())
+        }
     }
 }
 
 pub struct Animator<'a> {
-    state: Option<&'a AnimatorState>,
+    state: &'a AnimatorState,
     update: AnimationUpdate,
 }
 
 impl<'a> Animator<'a> {
     #[inline]
-    pub fn new(state: Option<&'a AnimatorState>, update: AnimationUpdate) -> Self {
+    pub fn new(state: &'a AnimatorState, update: AnimationUpdate) -> Self {
         Self { state, update }
     }
 
     #[inline]
-    pub fn change(&mut self, animation: Option<Animation>) {
-        self.update.change(animation)
+    pub fn change(&self, data: Option<Animation>) -> Result<(), AnimationError> {
+        self.update.change(data)
+    }
+
+    /// (progress factor, time, duration)
+    #[inline]
+    pub fn value(&self, name: &str) -> Option<(Scalar, Scalar, Scalar)> {
+        self.state.value(name)
     }
 
     #[inline]
-    pub fn value(&self, name: &str) -> Option<(Scalar, Scalar, Scalar)> {
-        match &self.state {
-            Some(state) => state.value(name),
-            None => None,
-        }
+    pub fn value_progress(&self, name: &str) -> Option<Scalar> {
+        self.value(name).map(|v| v.0)
     }
-}
 
-impl<'a> Into<AnimationUpdateAction> for Animator<'a> {
-    fn into(self) -> AnimationUpdateAction {
-        self.update.0
+    #[inline]
+    pub fn value_progress_or(&self, name: &str, v: Scalar) -> Scalar {
+        self.value_progress(name).unwrap_or(v)
+    }
+
+    #[inline]
+    pub fn value_progress_or_zero(&self, name: &str) -> Scalar {
+        self.value_progress(name).unwrap_or(0.0)
     }
 }
 
@@ -95,6 +99,21 @@ impl AnimatorState {
         self.sheet
             .get(name)
             .map(|p| (p.cached_progress, p.cached_time, p.duration))
+    }
+
+    #[inline]
+    pub fn value_progress(&self, name: &str) -> Option<Scalar> {
+        self.value(name).map(|v| v.0)
+    }
+
+    #[inline]
+    pub fn value_progress_or(&self, name: &str, v: Scalar) -> Scalar {
+        self.value_progress(name).unwrap_or(v)
+    }
+
+    #[inline]
+    pub fn value_progress_or_zero(&self, name: &str) -> Scalar {
+        self.value_progress(name).unwrap_or(0.0)
     }
 
     pub fn process(

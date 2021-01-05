@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::{WidgetNode, WidgetNodeDef},
         unit::{WidgetUnit, WidgetUnitData},
-        utils::Rect,
+        utils::{Rect, Transform},
         WidgetId,
     },
     Scalar,
@@ -133,6 +133,8 @@ pub struct FlexBox {
     pub separation: Scalar,
     #[serde(default)]
     pub wrap: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for FlexBox {
@@ -155,6 +157,7 @@ impl TryFrom<FlexBoxNode> for FlexBox {
             direction,
             separation,
             wrap,
+            transform,
             ..
         } = node;
         let items = items
@@ -167,6 +170,7 @@ impl TryFrom<FlexBoxNode> for FlexBox {
             direction,
             separation,
             wrap,
+            transform,
         })
     }
 }
@@ -179,6 +183,7 @@ pub struct FlexBoxNode {
     pub direction: FlexBoxDirection,
     pub separation: Scalar,
     pub wrap: bool,
+    pub transform: Transform,
 }
 
 impl FlexBoxNode {
@@ -211,4 +216,6 @@ pub struct FlexBoxNodeDef {
     pub separation: Scalar,
     #[serde(default)]
     pub wrap: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }

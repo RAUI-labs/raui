@@ -1,5 +1,5 @@
 use crate::{
-    animator::{AnimationUpdate, AnimationUpdateAction, Animator, AnimatorState},
+    animator::{AnimationUpdate, Animator, AnimatorState},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{MessageReceiver, MessageSender, Messages, Messenger},
@@ -24,6 +24,7 @@ use crate::{
         },
         FnWidget, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
     },
+    Scalar,
 };
 use std::{
     any::TypeId,
@@ -73,6 +74,7 @@ pub struct Application {
     dirty: bool,
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
+    pub animations_delta_time: Scalar,
 }
 
 impl Default for Application {
@@ -108,6 +110,7 @@ impl Application {
             dirty: true,
             render_changed: false,
             last_invalidation_cause: Default::default(),
+            animations_delta_time: 0.0,
         }
     }
 
@@ -226,6 +229,7 @@ impl Application {
                     props,
                     items,
                     clipping,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 let items = items
@@ -241,6 +245,7 @@ impl Application {
                     props,
                     items,
                     clipping,
+                    transform,
                 })
             }
             WidgetUnitNode::FlexBox(v) => {
@@ -251,6 +256,7 @@ impl Application {
                     direction,
                     separation,
                     wrap,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 let items = items
@@ -268,6 +274,7 @@ impl Application {
                     direction,
                     separation,
                     wrap,
+                    transform,
                 })
             }
             WidgetUnitNode::GridBox(v) => {
@@ -277,6 +284,7 @@ impl Application {
                     items,
                     cols,
                     rows,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 let items = items
@@ -293,6 +301,7 @@ impl Application {
                     items,
                     cols,
                     rows,
+                    transform,
                 })
             }
             WidgetUnitNode::SizeBox(v) => {
@@ -303,6 +312,7 @@ impl Application {
                     width,
                     height,
                     margin,
+                    transform,
                 } = v;
                 let props = self.props_to_serializable(props)?;
                 let slot = Box::new(self.node_to_serializable(*slot)?);
@@ -313,6 +323,7 @@ impl Application {
                     width,
                     height,
                     margin,
+                    transform,
                 })
             }
             WidgetUnitNode::ImageBox(v) => {
@@ -443,6 +454,7 @@ impl Application {
                     props,
                     items,
                     clipping,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 let items = items
@@ -458,6 +470,7 @@ impl Application {
                     props,
                     items,
                     clipping,
+                    transform,
                 })
             }
             WidgetUnitNodeDef::FlexBox(v) => {
@@ -468,6 +481,7 @@ impl Application {
                     direction,
                     separation,
                     wrap,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 let items = items
@@ -485,6 +499,7 @@ impl Application {
                     direction,
                     separation,
                     wrap,
+                    transform,
                 })
             }
             WidgetUnitNodeDef::GridBox(v) => {
@@ -494,6 +509,7 @@ impl Application {
                     items,
                     cols,
                     rows,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 let items = items
@@ -510,6 +526,7 @@ impl Application {
                     items,
                     cols,
                     rows,
+                    transform,
                 })
             }
             WidgetUnitNodeDef::SizeBox(v) => {
@@ -520,6 +537,7 @@ impl Application {
                     width,
                     height,
                     margin,
+                    transform,
                 } = v;
                 let props = self.props_from_serializable(props)?;
                 let slot = Box::new(self.node_from_serializable(*slot)?);
@@ -530,6 +548,7 @@ impl Application {
                     width,
                     height,
                     margin,
+                    transform,
                 })
             }
             WidgetUnitNodeDef::ImageBox(v) => {
@@ -699,6 +718,7 @@ impl Application {
     }
 
     pub fn process(&mut self) -> bool {
+        self.animations_delta_time = self.animations_delta_time.max(0.0);
         self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
         let changed_states = self
@@ -709,27 +729,26 @@ impl Application {
             })
             .collect::<HashMap<_, _>>();
         let mut messages = self.message_receiver.process();
-        if !self.dirty && changed_states.is_empty() && messages.is_empty() {
+        let changed_animators = self.animators.values().any(|a| a.in_progress());
+        if !self.dirty && changed_states.is_empty() && messages.is_empty() && !changed_animators {
             return false;
         }
         if self.dirty {
             self.last_invalidation_cause = InvalidationCause::Forced;
         }
-        if let Some((id, _)) = changed_states.iter().next() {
-            self.last_invalidation_cause = InvalidationCause::StateChange(id.to_owned());
+        if let Some((id, _)) = self.animators.iter().find(|(_, a)| a.in_progress()) {
+            self.last_invalidation_cause = InvalidationCause::AnimationInProgress(id.to_owned());
         }
         if let Some((id, _)) = messages.iter().next() {
             self.last_invalidation_cause = InvalidationCause::MessageReceived(id.to_owned());
         }
-        if let Some((id, _)) = self.animators.iter().find(|(_, a)| a.in_progress()) {
-            self.last_invalidation_cause = InvalidationCause::AnimationInProgress(id.to_owned());
+        if let Some((id, _)) = changed_states.iter().next() {
+            self.last_invalidation_cause = InvalidationCause::StateChange(id.to_owned());
+        }
+        for (k, a) in &mut self.animators {
+            a.process(self.animations_delta_time, &k, &self.message_sender);
         }
         self.dirty = false;
-        let animators = std::mem::take(&mut self.animators);
-        self.animators = animators
-            .into_iter()
-            .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
-            .collect();
         self.state_receivers.clear();
         let old_states = std::mem::take(&mut self.states);
         let states = old_states
@@ -775,6 +794,10 @@ impl Application {
             })
             .collect();
         self.last_signals = self.signal_receiver.read_all();
+        self.animators = std::mem::take(&mut self.animators)
+            .into_iter()
+            .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
+            .collect::<HashMap<_, _>>();
         if let Ok(tree) = rendered_tree.try_into() {
             self.rendered_tree = tree;
             true
@@ -856,22 +879,24 @@ impl Application {
         let id = WidgetId::new(type_name, path.clone());
         used_ids.insert(id.clone());
         let (sender, receiver) = channel();
+        let (animation_sender, animation_receiver) = channel();
         let messages_list = match messages.remove(&id) {
             Some(messages) => messages,
             None => Messages::new(),
         };
         let mut life_cycle = WidgetLifeCycle::default();
-        let animator = Animator::new(self.animators.get(&id), AnimationUpdate::default());
+        let default_animator_state = AnimatorState::default();
         let (new_node, mounted) = match states.get(&id) {
             Some(state) => {
                 let state = State::new(state, StateUpdate::new(sender.clone()));
+                let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
                     key: &key,
                     props: &props,
                     shared_props: &shared_props,
                     state,
-                    animator: &animator,
+                    animator,
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
@@ -881,13 +906,14 @@ impl Application {
             None => {
                 let state_data = Box::new(()) as StateData;
                 let state = State::new(&state_data, StateUpdate::new(sender.clone()));
+                let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
                     key: &key,
                     props: &props,
                     shared_props: &shared_props,
                     state,
-                    animator: &animator,
+                    animator,
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
@@ -897,16 +923,6 @@ impl Application {
                 (node, true)
             }
         };
-        match animator.into() {
-            AnimationUpdateAction::Start(anim) => {
-                self.animators
-                    .insert(id.to_owned(), AnimatorState::new(anim));
-            }
-            AnimationUpdateAction::Stop => {
-                self.animators.remove(&id);
-            }
-            _ => {}
-        }
         let (mount, change, unmount) = life_cycle.unwrap();
         if mounted {
             if !mount.is_empty() {
@@ -915,6 +931,10 @@ impl Application {
                         let state = State::new(state, StateUpdate::new(sender.clone()));
                         let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
                         let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                        let animator = Animator::new(
+                            self.animators.get(&id).unwrap_or(&default_animator_state),
+                            AnimationUpdate::new(animation_sender.clone()),
+                        );
                         let context = WidgetMountOrChangeContext {
                             id: &id,
                             props: &props,
@@ -922,6 +942,7 @@ impl Application {
                             state,
                             messenger,
                             signals,
+                            animator,
                         };
                         (closure)(context);
                     }
@@ -933,6 +954,10 @@ impl Application {
                     let state = State::new(state, StateUpdate::new(sender.clone()));
                     let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
                     let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                    let animator = Animator::new(
+                        self.animators.get(&id).unwrap_or(&default_animator_state),
+                        AnimationUpdate::new(animation_sender.clone()),
+                    );
                     let context = WidgetMountOrChangeContext {
                         id: &id,
                         props: &props,
@@ -940,6 +965,7 @@ impl Application {
                         state,
                         messenger,
                         signals,
+                        animator,
                     };
                     (closure)(context);
                 }
@@ -947,6 +973,17 @@ impl Application {
         }
         if !unmount.is_empty() {
             self.unmount_closures.insert(id.clone(), unmount);
+        }
+        while let Ok(data) = animation_receiver.try_recv() {
+            match data {
+                Some(data) => {
+                    self.animators
+                        .insert(id.to_owned(), AnimatorState::new(data));
+                }
+                None => {
+                    self.animators.remove(&id);
+                }
+            }
         }
         let new_node = self.process_node(
             new_node,

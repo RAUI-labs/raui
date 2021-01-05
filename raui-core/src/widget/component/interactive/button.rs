@@ -171,7 +171,7 @@ widget_hook! {
 widget_component! {
     pub button(id, props, state, named_slots) [use_button] {
         unpack_named_slots!(named_slots => content);
-        let SizeBoxProps { width, height, margin } = props.read_cloned_or_default();
+        let SizeBoxProps { width, height, margin, transform } = props.read_cloned_or_default();
         if let Some(props) = content.props_mut() {
             let s = match state.read::<ButtonProps>() {
                 Ok(state) => state.clone(),
@@ -188,6 +188,7 @@ widget_component! {
                 width,
                 height,
                 margin,
+                transform,
             }
         }}}
     }

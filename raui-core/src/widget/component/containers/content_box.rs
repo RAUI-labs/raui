@@ -1,6 +1,9 @@
 use crate::{
     widget,
-    widget::unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
+    widget::{
+        unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
+        utils::Transform,
+    },
     widget_component,
 };
 use serde::{Deserialize, Serialize};
@@ -9,12 +12,14 @@ use serde::{Deserialize, Serialize};
 pub struct ContentBoxProps {
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(ContentBoxProps, "ContentBoxProps");
 
 widget_component! {
     pub content_box(id, props, listed_slots) {
-        let ContentBoxProps { clipping } = props.read_cloned_or_default();
+        let ContentBoxProps { clipping, transform } = props.read_cloned_or_default();
         let items = listed_slots.into_iter().filter_map(|slot| {
             if let Some(props) = slot.props() {
                 let layout = props.read_cloned_or_default::<ContentBoxItemLayout>();
@@ -33,6 +38,7 @@ widget_component! {
                 props: props.clone(),
                 items,
                 clipping,
+                transform,
             }
         }}}
     }

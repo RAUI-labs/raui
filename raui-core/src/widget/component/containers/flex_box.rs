@@ -1,6 +1,9 @@
 use crate::{
     widget,
-    widget::unit::flex::{FlexBoxDirection, FlexBoxItemLayout, FlexBoxItemNode, FlexBoxNode},
+    widget::{
+        unit::flex::{FlexBoxDirection, FlexBoxItemLayout, FlexBoxItemNode, FlexBoxNode},
+        utils::Transform,
+    },
     widget_component, Scalar,
 };
 use serde::{Deserialize, Serialize};
@@ -13,12 +16,19 @@ pub struct FlexBoxProps {
     pub separation: Scalar,
     #[serde(default)]
     pub wrap: bool,
+    #[serde(default)]
+    pub transform: Transform,
 }
 implement_props_data!(FlexBoxProps, "FlexBoxProps");
 
 widget_component! {
     pub flex_box(id, props, listed_slots) {
-        let FlexBoxProps { direction, separation, wrap } = props.read_cloned_or_default();
+        let FlexBoxProps {
+            direction,
+            separation,
+            wrap,
+            transform,
+        } = props.read_cloned_or_default();
         let items = listed_slots.into_iter().filter_map(|slot| {
             if let Some(props) = slot.props() {
                 let layout = props.read_cloned_or_default::<FlexBoxItemLayout>();
@@ -39,6 +49,7 @@ widget_component! {
                 direction,
                 separation,
                 wrap,
+                transform,
             }
         }}}
     }

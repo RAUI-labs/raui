@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::{WidgetNode, WidgetNodeDef},
         unit::{WidgetUnit, WidgetUnitData},
-        utils::{IntRect, Rect},
+        utils::{IntRect, Rect, Transform},
         WidgetId,
     },
     Scalar,
@@ -68,6 +68,8 @@ pub struct GridBox {
     pub cols: usize,
     #[serde(default)]
     pub rows: usize,
+    #[serde(default)]
+    pub transform: Transform,
 }
 
 impl WidgetUnitData for GridBox {
@@ -89,6 +91,7 @@ impl TryFrom<GridBoxNode> for GridBox {
             items,
             cols,
             rows,
+            transform,
             ..
         } = node;
         let items = items
@@ -100,6 +103,7 @@ impl TryFrom<GridBoxNode> for GridBox {
             items,
             cols,
             rows,
+            transform,
         })
     }
 }
@@ -111,6 +115,7 @@ pub struct GridBoxNode {
     pub items: Vec<GridBoxItemNode>,
     pub cols: usize,
     pub rows: usize,
+    pub transform: Transform,
 }
 
 impl GridBoxNode {
@@ -141,4 +146,6 @@ pub struct GridBoxNodeDef {
     pub cols: usize,
     #[serde(default)]
     pub rows: usize,
+    #[serde(default)]
+    pub transform: Transform,
 }

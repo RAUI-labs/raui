@@ -1,5 +1,5 @@
 use crate::{
-    animator::Animator,
+    animator::{Animator, AnimatorState},
     messenger::{MessageSender, Messenger},
     props::Props,
     signals::SignalSender,
@@ -14,7 +14,7 @@ pub struct WidgetContext<'a> {
     pub props: &'a Props,
     pub shared_props: &'a Props,
     pub state: State<'a>,
-    pub animator: &'a Animator<'a>,
+    pub animator: &'a AnimatorState,
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,
@@ -58,6 +58,7 @@ pub struct WidgetMountOrChangeContext<'a> {
     pub state: State<'a>,
     pub messenger: Messenger<'a>,
     pub signals: SignalSender,
+    pub animator: Animator<'a>,
 }
 
 pub struct WidgetUnmountContext<'a> {
