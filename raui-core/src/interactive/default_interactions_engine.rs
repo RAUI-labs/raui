@@ -66,24 +66,24 @@ impl DefaultInteractionsEngine {
         self.interactions_queue.push_back(interaction);
     }
 
-    fn find_button<'a>(&self, app: &'a Application, x: Scalar, y: Scalar) -> Option<&'a WidgetId> {
+    fn find_button(&self, app: &Application, x: Scalar, y: Scalar) -> Option<WidgetId> {
         self.find_button_inner(app, x, y, app.rendered_tree())
     }
 
-    fn find_button_inner<'a>(
+    fn find_button_inner(
         &self,
-        app: &'a Application,
+        app: &Application,
         x: Scalar,
         y: Scalar,
-        unit: &'a WidgetUnit,
-    ) -> Option<&'a WidgetId> {
+        unit: &WidgetUnit,
+    ) -> Option<WidgetId> {
         let mut result = None;
         if let Some(data) = unit.as_data() {
             if self.buttons.contains(data.id()) {
                 if let Some(layout) = app.layout_data().items.get(data.id()) {
                     let rect = layout.ui_space;
                     if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
-                        result = Some(data.id());
+                        result = Some(data.id().to_owned());
                     }
                 }
             }
@@ -171,16 +171,14 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn select_button(&mut self, app: &Application, id: Option<&WidgetId>) {
-        if self.selected.as_ref() != id {
+    fn select_button(&mut self, app: &mut Application, id: Option<WidgetId>) {
+        if self.selected != id {
             if let Some(selected) = self.selected.as_ref() {
-                app.messenger()
-                    .write(selected.to_owned(), ButtonAction::Unselect);
+                app.send_message(selected, ButtonAction::Unselect);
             }
-            self.selected = id.map(|v| v.to_owned());
+            self.selected = id;
             if let Some(selected) = self.selected.as_ref() {
-                app.messenger()
-                    .write(selected.to_owned(), ButtonAction::Select);
+                app.send_message(selected, ButtonAction::Select);
             }
         }
     }
@@ -189,7 +187,7 @@ impl DefaultInteractionsEngine {
 impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteractionsEngine {
     fn perform_interactions(
         &mut self,
-        app: &Application,
+        app: &mut Application,
     ) -> Result<DefaultInteractionsEngineResult, ()> {
         for (id, signal) in app.signals() {
             if let Some(signal) = signal.downcast_ref::<ButtonSignal>() {
@@ -209,7 +207,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
             match interaction {
                 Interaction::None => {}
                 Interaction::Select(id) => {
-                    self.select_button(app, Some(&id));
+                    self.select_button(app, Some(id));
                 }
                 Interaction::Unselect => {
                     self.select_button(app, None);
@@ -230,12 +228,10 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     if let Some(id) = &self.selected {
                         match button {
                             PointerButton::Trigger => {
-                                app.messenger()
-                                    .write(id.to_owned(), ButtonAction::TriggerStart);
+                                app.send_message(id, ButtonAction::TriggerStart);
                             }
                             PointerButton::Context => {
-                                app.messenger()
-                                    .write(id.to_owned(), ButtonAction::ContextStart);
+                                app.send_message(id, ButtonAction::ContextStart);
                             }
                         }
                         result.captured_pointer_action = true;
@@ -245,12 +241,10 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     if let Some(id) = &self.selected {
                         match button {
                             PointerButton::Trigger => {
-                                app.messenger()
-                                    .write(id.to_owned(), ButtonAction::TriggerStop);
+                                app.send_message(id, ButtonAction::TriggerStop);
                             }
                             PointerButton::Context => {
-                                app.messenger()
-                                    .write(id.to_owned(), ButtonAction::ContextStop);
+                                app.send_message(id, ButtonAction::ContextStop);
                             }
                         }
                         result.captured_pointer_action = true;
@@ -259,8 +253,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                 // Interaction::AxisChange(axis, x, y) => {}
                 Interaction::TextChange(change) => {
                     if let Some(id) = &self.selected {
-                        app.messenger()
-                            .write(id.to_owned(), ButtonAction::TextChange(change));
+                        app.send_message(id, ButtonAction::TextChange(change));
                         result.captured_text_change = true;
                     }
                 }

@@ -5,7 +5,7 @@ pub enum StateError {
     CouldNotWriteData,
 }
 
-pub type StateData = Box<dyn Any>;
+pub type StateData = Box<dyn Any + Send + Sync>;
 
 #[derive(Clone)]
 pub struct StateUpdate(Sender<StateData>);
@@ -17,7 +17,7 @@ impl StateUpdate {
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>
     where
-        T: 'static,
+        T: 'static + Send + Sync,
     {
         if self.0.send(Box::new(data)).is_err() {
             Err(StateError::CouldNotWriteData)
@@ -88,7 +88,7 @@ impl<'a> State<'a> {
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>
     where
-        T: 'static,
+        T: 'static + Send + Sync,
     {
         self.update().write(data)
     }

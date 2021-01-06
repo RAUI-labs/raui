@@ -169,15 +169,13 @@ fn test_hello_world() {
     // arguments, even use context you got from the component!
     widget_hook! {
         use_button(key, life_cycle) [use_empty] {
-            let key_ = key.to_owned();
-            life_cycle.mount(move |context| {
-                println!("=== BUTTON MOUNTED: {}", key_);
+            life_cycle.mount(|context| {
+                println!("=== BUTTON MOUNTED: {}", context.id.key());
                 drop(context.state.write(ButtonState { pressed: false }));
             });
 
-            let key_ = key.to_owned();
-            life_cycle.change(move |context| {
-                println!("=== BUTTON CHANGED: {}", key_);
+            life_cycle.change(|context| {
+                println!("=== BUTTON CHANGED: {}", context.id.key());
                 for msg in context.messenger.messages {
                     if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                         let pressed = match msg {
@@ -191,9 +189,8 @@ fn test_hello_world() {
                 }
             });
 
-            let key_ = key.to_owned();
-            life_cycle.unmount(move |_| {
-                println!("=== BUTTON UNMOUNTED: {}", key_);
+            life_cycle.unmount(|context| {
+                println!("=== BUTTON UNMOUNTED: {}", context.id.key());
             });
         }
     }

@@ -1,34 +1,8 @@
 use crate::widget::WidgetId;
-use std::{
-    any::Any,
-    collections::HashMap,
-    sync::mpsc::{Receiver, Sender},
-};
+use std::{any::Any, sync::mpsc::Sender};
 
-pub type Message = Box<dyn Any>;
+pub type Message = Box<dyn Any + Send + Sync>;
 pub type Messages = Vec<Message>;
-
-pub struct MessageReceiver(Receiver<(WidgetId, Message)>);
-
-impl MessageReceiver {
-    pub fn new(receiver: Receiver<(WidgetId, Message)>) -> Self {
-        Self(receiver)
-    }
-
-    pub fn process(&mut self) -> HashMap<WidgetId, Messages> {
-        let mut result = HashMap::<WidgetId, Messages>::new();
-        while let Ok((id, message)) = self.0.try_recv() {
-            if let Some(list) = result.get_mut(&id) {
-                list.push(message);
-            } else {
-                let mut list = Messages::with_capacity(1);
-                list.push(message);
-                result.insert(id, list);
-            }
-        }
-        result
-    }
-}
 
 #[derive(Clone)]
 pub struct MessageSender(Sender<(WidgetId, Message)>);
@@ -40,7 +14,7 @@ impl MessageSender {
 
     pub fn write<T>(&self, id: WidgetId, message: T) -> bool
     where
-        T: 'static + Any,
+        T: 'static + Any + Send + Sync,
     {
         self.0.send((id, Box::new(message))).is_ok()
     }
@@ -71,7 +45,7 @@ impl<'a> Messenger<'a> {
 
     pub fn write<T>(&self, id: WidgetId, message: T) -> bool
     where
-        T: 'static,
+        T: 'static + Send + Sync,
     {
         self.sender.write(id, message)
     }

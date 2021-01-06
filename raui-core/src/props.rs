@@ -11,7 +11,7 @@ pub enum PropsError {
 }
 
 #[typetag::serde(tag = "type", content = "value")]
-pub trait PropsData: std::fmt::Debug {
+pub trait PropsData: std::fmt::Debug + Send + Sync {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
 }

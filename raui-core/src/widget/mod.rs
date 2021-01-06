@@ -133,46 +133,36 @@ impl std::fmt::Debug for WidgetId {
 }
 
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
-
-pub type WidgetMountOrChangeClosure = dyn FnMut(WidgetMountOrChangeContext);
-pub type WidgetUnmountClosure = dyn FnMut(WidgetUnmountContext);
+pub type FnWidgetMountOrChange = fn(WidgetMountOrChangeContext);
+pub type FnWidgetUnmount = fn(WidgetUnmountContext);
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
-    mount: Vec<Box<WidgetMountOrChangeClosure>>,
-    change: Vec<Box<WidgetMountOrChangeClosure>>,
-    unmount: Vec<Box<WidgetUnmountClosure>>,
+    mount: Vec<FnWidgetMountOrChange>,
+    change: Vec<FnWidgetMountOrChange>,
+    unmount: Vec<FnWidgetUnmount>,
 }
 
 impl WidgetLifeCycle {
-    pub fn mount<F>(&mut self, f: F)
-    where
-        F: 'static + FnMut(WidgetMountOrChangeContext),
-    {
-        self.mount.push(Box::new(f));
+    pub fn mount(&mut self, f: fn(WidgetMountOrChangeContext)) {
+        self.mount.push(f);
     }
 
-    pub fn change<F>(&mut self, f: F)
-    where
-        F: 'static + FnMut(WidgetMountOrChangeContext),
-    {
-        self.change.push(Box::new(f));
+    pub fn change(&mut self, f: fn(WidgetMountOrChangeContext)) {
+        self.change.push(f);
     }
 
-    pub fn unmount<F>(&mut self, f: F)
-    where
-        F: 'static + FnMut(WidgetUnmountContext),
-    {
-        self.unmount.push(Box::new(f));
+    pub fn unmount(&mut self, f: fn(WidgetUnmountContext)) {
+        self.unmount.push(f);
     }
 
     #[allow(clippy::type_complexity)]
     pub fn unwrap(
         self,
     ) -> (
-        Vec<Box<WidgetMountOrChangeClosure>>,
-        Vec<Box<WidgetMountOrChangeClosure>>,
-        Vec<Box<WidgetUnmountClosure>>,
+        Vec<FnWidgetMountOrChange>,
+        Vec<FnWidgetMountOrChange>,
+        Vec<FnWidgetUnmount>,
     ) {
         let Self {
             mount,

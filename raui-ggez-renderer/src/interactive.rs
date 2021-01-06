@@ -121,7 +121,7 @@ impl GgezInteractionsEngine {
 impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for GgezInteractionsEngine {
     fn perform_interactions(
         &mut self,
-        app: &Application,
+        app: &mut Application,
     ) -> Result<DefaultInteractionsEngineResult, ()> {
         self.engine.perform_interactions(app)
     }

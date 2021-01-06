@@ -2,10 +2,10 @@ use crate::{
     animator::{AnimationUpdate, Animator, AnimatorState},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
-    messenger::{MessageReceiver, MessageSender, Messages, Messenger},
+    messenger::{Message, MessageSender, Messages, Messenger},
     props::{Props, PropsData, PropsDef},
     renderer::Renderer,
-    signals::{Signal, SignalReceiver, SignalSender},
+    signals::{Signal, SignalSender},
     state::{State, StateData, StateUpdate},
     widget::{
         component::{WidgetComponent, WidgetComponentDef},
@@ -22,15 +22,15 @@ use crate::{
             text::{TextBoxNode, TextBoxNodeDef},
             WidgetUnit, WidgetUnitNode, WidgetUnitNodeDef,
         },
-        FnWidget, WidgetId, WidgetLifeCycle, WidgetUnmountClosure,
+        FnWidget, FnWidgetUnmount, WidgetId, WidgetLifeCycle,
     },
     Scalar,
 };
 use std::{
-    any::TypeId,
+    any::{Any, TypeId},
     collections::{HashMap, HashSet},
     convert::TryInto,
-    sync::mpsc::{channel, Receiver, Sender},
+    sync::mpsc::{channel, Sender},
 };
 
 #[derive(Debug, Clone)]
@@ -63,14 +63,11 @@ pub struct Application {
     rendered_tree: WidgetUnit,
     layout: Layout,
     states: HashMap<WidgetId, StateData>,
-    state_receivers: HashMap<WidgetId, Receiver<StateData>>,
+    state_changes: HashMap<WidgetId, StateData>,
     animators: HashMap<WidgetId, AnimatorState>,
-    message_sender: MessageSender,
-    message_receiver: MessageReceiver,
-    signal_sender: Sender<Signal>,
-    signal_receiver: SignalReceiver,
-    last_signals: Vec<Signal>,
-    unmount_closures: HashMap<WidgetId, Vec<Box<WidgetUnmountClosure>>>,
+    messages: HashMap<WidgetId, Messages>,
+    signals: Vec<Signal>,
+    unmount_closures: HashMap<WidgetId, Vec<FnWidgetUnmount>>,
     dirty: bool,
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
@@ -86,11 +83,6 @@ impl Default for Application {
 impl Application {
     #[inline]
     pub fn new() -> Self {
-        let (message_sender, message_receiver) = channel();
-        let message_sender = MessageSender::new(message_sender);
-        let message_receiver = MessageReceiver::new(message_receiver);
-        let (signal_sender, signal_receiver) = channel();
-        let signal_receiver = SignalReceiver::new(signal_receiver);
         Self {
             component_mappings: Default::default(),
             props_mappings: Default::default(),
@@ -99,13 +91,10 @@ impl Application {
             rendered_tree: Default::default(),
             layout: Default::default(),
             states: Default::default(),
-            state_receivers: Default::default(),
+            state_changes: Default::default(),
             animators: Default::default(),
-            message_sender,
-            message_receiver,
-            signal_sender,
-            signal_receiver,
-            last_signals: Default::default(),
+            messages: Default::default(),
+            signals: Default::default(),
             unmount_closures: Default::default(),
             dirty: true,
             render_changed: false,
@@ -694,7 +683,7 @@ impl Application {
     }
 
     #[inline]
-    pub fn interact<I, R, E>(&self, interactions_engine: &mut I) -> Result<R, E>
+    pub fn interact<I, R, E>(&mut self, interactions_engine: &mut I) -> Result<R, E>
     where
         I: InteractionsEngine<R, E>,
     {
@@ -702,13 +691,30 @@ impl Application {
     }
 
     #[inline]
-    pub fn messenger(&self) -> &MessageSender {
-        &self.message_sender
+    pub fn send_message<T>(&mut self, id: &WidgetId, data: T)
+    where
+        T: 'static + Any + Send + Sync,
+    {
+        self.send_message_raw(id, Box::new(data));
+    }
+
+    #[inline]
+    pub fn send_message_raw(&mut self, id: &WidgetId, data: Message) {
+        if let Some(list) = self.messages.get_mut(id) {
+            list.push(data);
+        } else {
+            self.messages.insert(id.to_owned(), vec![data]);
+        }
     }
 
     #[inline]
     pub fn signals(&self) -> &[Signal] {
-        &self.last_signals
+        &self.signals
+    }
+
+    #[inline]
+    pub fn consume_signals(&mut self) -> Vec<Signal> {
+        std::mem::take(&mut self.signals)
     }
 
     #[inline]
@@ -721,14 +727,8 @@ impl Application {
         self.animations_delta_time = self.animations_delta_time.max(0.0);
         self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
-        let changed_states = self
-            .state_receivers
-            .iter()
-            .filter_map(|(id, receiver)| {
-                receiver.try_iter().last().map(|state| (id.clone(), state))
-            })
-            .collect::<HashMap<_, _>>();
-        let mut messages = self.message_receiver.process();
+        let changed_states = std::mem::take(&mut self.state_changes);
+        let mut messages = std::mem::take(&mut self.messages);
         let changed_animators = self.animators.values().any(|a| a.in_progress());
         if !self.dirty && changed_states.is_empty() && messages.is_empty() && !changed_animators {
             return false;
@@ -745,16 +745,18 @@ impl Application {
         if let Some((id, _)) = changed_states.iter().next() {
             self.last_invalidation_cause = InvalidationCause::StateChange(id.to_owned());
         }
+        let (message_sender, message_receiver) = channel();
+        let message_sender = MessageSender::new(message_sender);
         for (k, a) in &mut self.animators {
-            a.process(self.animations_delta_time, &k, &self.message_sender);
+            a.process(self.animations_delta_time, &k, &message_sender);
         }
         self.dirty = false;
-        self.state_receivers.clear();
         let old_states = std::mem::take(&mut self.states);
         let states = old_states
             .into_iter()
             .chain(changed_states.into_iter())
             .collect::<HashMap<_, _>>();
+        let (signal_sender, signal_receiver) = channel();
         let tree = self.tree.clone();
         let mut used_ids = HashSet::new();
         let mut new_states = HashMap::new();
@@ -767,6 +769,8 @@ impl Application {
             &mut used_ids,
             "<*>".to_string(),
             None,
+            &message_sender,
+            &signal_sender,
         );
         self.states = states
             .into_iter()
@@ -776,9 +780,9 @@ impl Application {
                     true
                 } else {
                     if let Some(closures) = self.unmount_closures.remove(id) {
-                        for mut closure in closures {
-                            let messenger = &self.message_sender;
-                            let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                        for closure in closures {
+                            let messenger = &message_sender;
+                            let signals = SignalSender::new(id.clone(), signal_sender.clone());
                             let context = WidgetUnmountContext {
                                 id,
                                 state,
@@ -793,7 +797,17 @@ impl Application {
                 }
             })
             .collect();
-        self.last_signals = self.signal_receiver.read_all();
+        while let Ok((id, message)) = message_receiver.try_recv() {
+            if let Some(list) = self.messages.get_mut(&id) {
+                list.push(message);
+            } else {
+                self.messages.insert(id, vec![message]);
+            }
+        }
+        self.signals.clear();
+        while let Ok(data) = signal_receiver.try_recv() {
+            self.signals.push(data);
+        }
         self.animators = std::mem::take(&mut self.animators)
             .into_iter()
             .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
@@ -817,6 +831,8 @@ impl Application {
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
         master_shared_props: Option<Props>,
+        message_sender: &MessageSender,
+        signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         match node {
             WidgetNode::Component(component) => self.process_node_component(
@@ -828,6 +844,8 @@ impl Application {
                 used_ids,
                 possible_key,
                 master_shared_props,
+                message_sender,
+                signal_sender,
             ),
             WidgetNode::Unit(unit) => self.process_node_unit(
                 unit,
@@ -837,6 +855,8 @@ impl Application {
                 new_states,
                 used_ids,
                 master_shared_props,
+                message_sender,
+                signal_sender,
             ),
             _ => node,
         }
@@ -853,6 +873,8 @@ impl Application {
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
         master_shared_props: Option<Props>,
+        message_sender: &MessageSender,
+        signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         let WidgetComponent {
             processor,
@@ -878,7 +900,7 @@ impl Application {
         path.push(key.clone());
         let id = WidgetId::new(type_name, path.clone());
         used_ids.insert(id.clone());
-        let (sender, receiver) = channel();
+        let (state_sender, state_receiver) = channel();
         let (animation_sender, animation_receiver) = channel();
         let messages_list = match messages.remove(&id) {
             Some(messages) => messages,
@@ -888,7 +910,7 @@ impl Application {
         let default_animator_state = AnimatorState::default();
         let (new_node, mounted) = match states.get(&id) {
             Some(state) => {
-                let state = State::new(state, StateUpdate::new(sender.clone()));
+                let state = State::new(state, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
@@ -905,7 +927,7 @@ impl Application {
             }
             None => {
                 let state_data = Box::new(()) as StateData;
-                let state = State::new(&state_data, StateUpdate::new(sender.clone()));
+                let state = State::new(&state_data, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
@@ -927,10 +949,10 @@ impl Application {
         if mounted {
             if !mount.is_empty() {
                 if let Some(state) = new_states.get(&id) {
-                    for mut closure in mount {
-                        let state = State::new(state, StateUpdate::new(sender.clone()));
-                        let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
-                        let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                    for closure in mount {
+                        let state = State::new(state, StateUpdate::new(state_sender.clone()));
+                        let messenger = Messenger::new(message_sender.clone(), &messages_list);
+                        let signals = SignalSender::new(id.clone(), signal_sender.clone());
                         let animator = Animator::new(
                             self.animators.get(&id).unwrap_or(&default_animator_state),
                             AnimationUpdate::new(animation_sender.clone()),
@@ -950,10 +972,10 @@ impl Application {
             }
         } else if !change.is_empty() {
             if let Some(state) = states.get(&id) {
-                for mut closure in change {
-                    let state = State::new(state, StateUpdate::new(sender.clone()));
-                    let messenger = Messenger::new(self.message_sender.clone(), &messages_list);
-                    let signals = SignalSender::new(id.clone(), self.signal_sender.clone());
+                for closure in change {
+                    let state = State::new(state, StateUpdate::new(state_sender.clone()));
+                    let messenger = Messenger::new(message_sender.clone(), &messages_list);
+                    let signals = SignalSender::new(id.clone(), signal_sender.clone());
                     let animator = Animator::new(
                         self.animators.get(&id).unwrap_or(&default_animator_state),
                         AnimationUpdate::new(animation_sender.clone()),
@@ -994,8 +1016,12 @@ impl Application {
             used_ids,
             possible_key,
             Some(shared_props),
+            message_sender,
+            signal_sender,
         );
-        self.state_receivers.insert(id, receiver);
+        while let Ok(data) = state_receiver.try_recv() {
+            self.state_changes.insert(id.to_owned(), data);
+        }
         new_node
     }
 
@@ -1009,6 +1035,8 @@ impl Application {
         new_states: &mut HashMap<WidgetId, StateData>,
         used_ids: &mut HashSet<WidgetId>,
         master_shared_props: Option<Props>,
+        message_sender: &MessageSender,
+        signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         match &mut unit {
             WidgetUnitNode::ContentBox(unit) => {
@@ -1027,6 +1055,8 @@ impl Application {
                             used_ids,
                             format!("<{}>", i),
                             master_shared_props.clone(),
+                            message_sender,
+                            signal_sender,
                         );
                         node
                     })
@@ -1048,6 +1078,8 @@ impl Application {
                             used_ids,
                             format!("<{}>", i),
                             master_shared_props.clone(),
+                            message_sender,
+                            signal_sender,
                         );
                         node
                     })
@@ -1069,6 +1101,8 @@ impl Application {
                             used_ids,
                             format!("<{}>", i),
                             master_shared_props.clone(),
+                            message_sender,
+                            signal_sender,
                         );
                         node
                     })
@@ -1085,6 +1119,8 @@ impl Application {
                     used_ids,
                     "0".to_owned(),
                     master_shared_props,
+                    message_sender,
+                    signal_sender,
                 ));
             }
             _ => {}

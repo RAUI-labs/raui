@@ -13,8 +13,14 @@ pub mod interactive;
 pub mod layout;
 pub mod signals;
 
+#[cfg(feature = "scalar64")]
+pub type Scalar = f64;
+#[cfg(not(feature = "scalar64"))]
 pub type Scalar = f32;
+#[cfg(feature = "integer64")]
 pub type Integer = i32;
+#[cfg(not(feature = "integer64"))]
+pub type Integer = i64;
 
 pub mod prelude {
     pub use crate::{

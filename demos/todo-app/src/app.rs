@@ -72,10 +72,10 @@ impl App {
         ui_resources
     }
 
-    fn load(&self, id: WidgetId) {
+    fn load(&mut self, id: &WidgetId) {
         if let Ok(content) = read_to_string("./state.json") {
             if let Ok(state) = serde_json::from_str(&content) {
-                self.ui.messenger().write(id, AppMessage::Load(state));
+                self.ui.send_message(id, AppMessage::Load(state));
             }
         }
     }
@@ -106,10 +106,10 @@ impl EventHandler for App {
         self.ui
             .interact(&mut self.ui_interactions)
             .expect("Could not interact with UI");
-        for (_, data) in self.ui.signals() {
+        for (_, data) in self.ui.consume_signals() {
             if let Some(signal) = data.downcast_ref::<AppSignal>() {
                 match signal {
-                    AppSignal::Ready(id) => self.load(id.to_owned()),
+                    AppSignal::Ready(id) => self.load(id),
                     AppSignal::Save(state) => Self::save(state),
                 }
             }
