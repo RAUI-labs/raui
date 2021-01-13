@@ -1,6 +1,7 @@
 use crate::{
     widget,
     widget::{
+        component::WidgetAlpha,
         unit::text::{
             TextBoxAlignment, TextBoxDirection, TextBoxFont, TextBoxNode, TextBoxSizeValue,
         },
@@ -32,7 +33,7 @@ pub struct TextBoxProps {
 implement_props_data!(TextBoxProps, "TextBoxProps");
 
 widget_component! {
-    pub text_box(id, props) {
+    pub text_box(id, props, shared_props) {
         let TextBoxProps {
             width,
             height,
@@ -40,9 +41,11 @@ widget_component! {
             alignment,
             direction,
             font,
-            color,
+            mut color,
             transform,
         } = props.read_cloned_or_default();
+        let alpha = shared_props.read_cloned_or_default::<WidgetAlpha>().0;
+        color.a *= alpha;
 
         widget! {{{
             TextBoxNode {

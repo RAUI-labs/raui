@@ -323,7 +323,6 @@ raui = { version = "*", features = ["all"] }
 ## Milestones
 RAUI is still in early development phase, so prepare for these changes until v1.0:
 - [ ] Integrate RAUI into one public open source Rust game.
-- [ ] Create renderer for Oxygengine game engine.
 - [ ] Write documentation.
 - [ ] Write MD book about how to use RAUI properly and make UI efficient.
 - [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning.
@@ -341,3 +340,4 @@ Things that now are done:
 - [x] Decouple shared props from props (don't merge them, put shared props in context).
 - [x] Create TODO app as an example.
 - [x] Create In-Game app as an example.
+- [x] Create renderer for Oxygengine game engine.

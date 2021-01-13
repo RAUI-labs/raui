@@ -5,7 +5,7 @@ use std::{
     marker::PhantomData,
 };
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Vec2 {
     #[serde(default)]
     pub x: Scalar,
@@ -13,7 +13,7 @@ pub struct Vec2 {
     pub y: Scalar,
 }
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IntVec2 {
     #[serde(default)]
     pub x: Integer,
@@ -21,7 +21,7 @@ pub struct IntVec2 {
     pub y: Integer,
 }
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Rect {
     #[serde(default)]
     pub left: Scalar,
@@ -53,7 +53,7 @@ impl Rect {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IntRect {
     #[serde(default)]
     pub left: Integer,
@@ -85,7 +85,7 @@ impl IntRect {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Color {
     #[serde(default)]
     pub r: Scalar,
@@ -108,7 +108,7 @@ impl Default for Color {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Transform {
     #[serde(default)]
     pub pivot: Vec2,

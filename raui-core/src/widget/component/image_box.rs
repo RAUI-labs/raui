@@ -1,6 +1,7 @@
 use crate::{
     widget,
     widget::{
+        component::WidgetAlpha,
         unit::image::{ImageBoxAspectRatio, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue},
         utils::Transform,
     },
@@ -24,14 +25,24 @@ pub struct ImageBoxProps {
 implement_props_data!(ImageBoxProps, "ImageBoxProps");
 
 widget_component! {
-    pub image_box(id, props) {
+    pub image_box(id, props, shared_props) {
         let ImageBoxProps {
             width,
             height,
             content_keep_aspect_ratio,
-            material,
+            mut material,
             transform,
         } = props.read_cloned_or_default();
+        let alpha = shared_props.read_cloned_or_default::<WidgetAlpha>().0;
+        match &mut material {
+            ImageBoxMaterial::Color(image) => {
+                image.color.a *= alpha;
+            }
+            ImageBoxMaterial::Image(image) => {
+                image.tint.a *= alpha;
+            }
+            _ => {}
+        }
 
         widget! {{{
             ImageBoxNode {

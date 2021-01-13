@@ -10,9 +10,26 @@ use crate::{
         node::{WidgetNode, WidgetNodeDef},
         FnWidget,
     },
+    Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom};
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct WidgetAlpha(pub Scalar);
+implement_props_data!(WidgetAlpha, "WidgetAlpha");
+
+impl Default for WidgetAlpha {
+    fn default() -> Self {
+        Self(1.0)
+    }
+}
+
+impl WidgetAlpha {
+    pub fn multiply(&mut self, alpha: Scalar) {
+        self.0 *= alpha;
+    }
+}
 
 #[derive(Clone)]
 pub struct WidgetComponent {

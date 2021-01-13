@@ -104,9 +104,9 @@ fn test_hello_world() {
 
     let v = Box::new(AppProps { index: 42 }) as Box<dyn PropsData>;
     let s = serde_json::to_string(&v).unwrap();
-    println!("=== SERIALIZED APP PROPS: {}", &s);
+    println!("* SERIALIZED APP PROPS: {}", &s);
     let d = serde_json::from_str::<Box<dyn PropsData>>(&s).unwrap();
-    println!("=== DESERIALIZED APP PROPS: {:?}", d);
+    println!("* DESERIALIZED APP PROPS: {:?}", d);
 
     // convenient macro that produces widget component processing function.
     widget_component! {
@@ -145,15 +145,15 @@ fn test_hello_world() {
     widget_hook! {
         use_empty(life_cycle) {
             life_cycle.mount(|_| {
-                println!("=== EMPTY MOUNTED");
+                println!("* EMPTY MOUNTED");
             });
 
             life_cycle.change(|_| {
-                println!("=== EMPTY CHANGED");
+                println!("* EMPTY CHANGED");
             });
 
             life_cycle.unmount(|_| {
-                println!("=== EMPTY UNMOUNTED");
+                println!("* EMPTY UNMOUNTED");
             });
         }
     }
@@ -170,19 +170,19 @@ fn test_hello_world() {
     widget_hook! {
         use_button(key, life_cycle) [use_empty] {
             life_cycle.mount(|context| {
-                println!("=== BUTTON MOUNTED: {}", context.id.key());
+                println!("* BUTTON MOUNTED: {}", context.id.key());
                 drop(context.state.write(ButtonState { pressed: false }));
             });
 
             life_cycle.change(|context| {
-                println!("=== BUTTON CHANGED: {}", context.id.key());
+                println!("* BUTTON CHANGED: {}", context.id.key());
                 for msg in context.messenger.messages {
                     if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
                         let pressed = match msg {
                             ButtonAction::Pressed => true,
                             ButtonAction::Released => false,
                         };
-                        println!("=== BUTTON ACTION: {:?}", msg);
+                        println!("* BUTTON ACTION: {:?}", msg);
                         drop(context.state.write(ButtonState { pressed }));
                         drop(context.signals.write(*msg));
                     }
@@ -190,14 +190,14 @@ fn test_hello_world() {
             });
 
             life_cycle.unmount(|context| {
-                println!("=== BUTTON UNMOUNTED: {}", context.id.key());
+                println!("* BUTTON UNMOUNTED: {}", context.id.key());
             });
         }
     }
 
     widget_component! {
         button(key, props) [use_button] {
-            println!("=== PROCESS BUTTON: {}", key);
+            println!("* PROCESS BUTTON: {}", key);
 
             widget!{
                 (#{key} text: {props})
@@ -260,6 +260,7 @@ fn test_hello_world() {
     });
 
     let mut application = Application::new();
+    application.setup(setup);
     let tree = widget! {
         (app {
             // <named slot name> = ( <widget to put in a slot> )
@@ -270,38 +271,72 @@ fn test_hello_world() {
             ])
         })
     };
-    println!("=== INPUT:\n{:#?}", tree);
+    println!("* INPUT:\n{:#?}", tree);
 
     // some dummy widget tree renderer.
     // it reads widget unit tree and transforms it into target format.
     let mut renderer = HtmlRenderer::default();
 
-    println!("=== PROCESS");
+    println!("* PROCESS");
     // `apply()` sets new widget tree.
     application.apply(tree);
     // `render()` calls renderer to perform transformations on processed application widget tree.
     if let Ok(output) = application.render(&mapping, &mut renderer) {
-        println!("=== OUTPUT:\n{}", output);
+        println!("* OUTPUT:\n{}", output);
     }
 
-    println!("=== PROCESS");
+    println!("* PROCESS");
     // by default application won't process widget tree if nothing was changed.
     // "change" is either any widget state change, or new message sent to any widget (messages
     // can be sent from application host, for example a mouse click, or from another widget).
     application.forced_process();
     if let Ok(output) = application.render(&mapping, &mut renderer) {
-        println!("=== OUTPUT:\n{}", output);
+        println!("* OUTPUT:\n{}", output);
     }
 
     let tree = widget! {
         (app)
     };
-    println!("=== INPUT:\n{:#?}", tree);
-    println!("=== PROCESS");
+    println!("* INPUT:\n{:#?}", tree);
+    println!("* PROCESS");
     application.apply(tree);
     if let Ok(output) = application.render(&mapping, &mut HtmlRenderer::default()) {
-        println!("=== OUTPUT:\n{}", output);
+        println!("* OUTPUT:\n{}", output);
     }
+
+    let p = ContentBoxItemLayout {
+        anchors: Rect {
+            left: 0.0,
+            right: 1.0,
+            top: 0.0,
+            bottom: 1.0,
+        },
+        ..Default::default()
+    };
+    let c = widget! { (image_box: {p})};
+    let s = application.node_to_serializable(c).unwrap();
+    let s = serde_yaml::to_string(&s).unwrap();
+    println!("* SERIALIZED COMPONENT: {}", s);
+    let d = serde_yaml::from_str::<WidgetNodeDef>(&s).unwrap();
+    let d = application.node_from_serializable(d).unwrap();
+    println!("* DESERIALIZED COMPONENT: {:#?}", d);
+
+    let p = ContentBoxItemLayout {
+        anchors: Rect {
+            left: 0.0,
+            right: 1.0,
+            top: 0.0,
+            bottom: 1.0,
+        },
+        ..Default::default()
+    };
+    let c = widget! { (image_box: {p})};
+    let s = application.node_to_serializable(c).unwrap();
+    let s = serde_yaml::to_value(&s).unwrap();
+    println!("* SERIALIZED COMPONENT VALUE: {:#?}", s);
+    let d = serde_yaml::from_value::<WidgetNodeDef>(s).unwrap();
+    let d = application.node_from_serializable(d).unwrap();
+    println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
 }
 
 #[test]
@@ -367,11 +402,11 @@ fn test_layout_no_wrap() {
     application.apply(tree);
     application.forced_process();
     println!(
-        "=== TREE INSPECTION:\n{:#?}",
+        "* TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
     if application.layout(&mapping, &mut layout_engine).is_ok() {
-        println!("=== LAYOUT:\n{:#?}", application.layout_data());
+        println!("* LAYOUT:\n{:#?}", application.layout_data());
     }
 }
 
@@ -443,11 +478,11 @@ fn test_layout_wrapping() {
     application.apply(tree);
     application.forced_process();
     println!(
-        "=== TREE INSPECTION:\n{:#?}",
+        "* TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
     if application.layout(&mapping, &mut layout_engine).is_ok() {
-        println!("=== LAYOUT:\n{:#?}", application.layout_data());
+        println!("* LAYOUT:\n{:#?}", application.layout_data());
     }
 }
 
@@ -508,10 +543,10 @@ fn test_components() {
     application.apply(tree);
     application.forced_process();
     println!(
-        "=== TREE INSPECTION:\n{:#?}",
+        "* TREE INSPECTION:\n{:#?}",
         application.rendered_tree().inspect()
     );
     if application.layout(&mapping, &mut layout_engine).is_ok() {
-        println!("=== LAYOUT:\n{:#?}", application.layout_data());
+        println!("* LAYOUT:\n{:#?}", application.layout_data());
     }
 }

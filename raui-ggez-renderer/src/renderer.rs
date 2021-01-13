@@ -84,7 +84,7 @@ impl<'a> GgezRenderer<'a> {
                             Self::transform_rect(rect, &unit.transform);
                         let mut builder = MeshBuilder::new();
                         match image.scaling {
-                            ImageBoxImageScaling::Strech => {
+                            ImageBoxImageScaling::Stretch => {
                                 let vertices = &[
                                     graphics::Vertex {
                                         pos: [rect.left, rect.top],
@@ -272,7 +272,7 @@ impl<'a> GgezRenderer<'a> {
                                 Self::transform_rect(rect, &unit.transform);
                             let mut builder = MeshBuilder::new();
                             match image.scaling {
-                                ImageBoxImageScaling::Strech => {
+                                ImageBoxImageScaling::Stretch => {
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
@@ -501,6 +501,6 @@ impl<'a> Renderer<(), Error> for GgezRenderer<'a> {
         mapping: &CoordsMapping,
         layout: &Layout,
     ) -> Result<(), Error> {
-        self.render_node(tree, mapping, &layout)
+        self.render_node(tree, mapping, layout)
     }
 }

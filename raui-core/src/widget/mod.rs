@@ -14,12 +14,18 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::hash_map::DefaultHasher,
+    convert::TryFrom,
     hash::{Hash, Hasher},
     ops::Deref,
     str::FromStr,
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct WidgetIdDef(pub String);
+
 #[derive(Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(try_from = "WidgetIdDef")]
+#[serde(into = "WidgetIdDef")]
 pub struct WidgetId {
     id: String,
     type_name_len: u8,
@@ -129,6 +135,23 @@ impl FromStr for WidgetId {
 impl std::fmt::Debug for WidgetId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_ref())
+    }
+}
+
+impl TryFrom<WidgetIdDef> for WidgetId {
+    type Error = String;
+
+    fn try_from(id: WidgetIdDef) -> Result<Self, Self::Error> {
+        match Self::from_str(&id.0) {
+            Ok(id) => Ok(id),
+            Err(_) => Err(format!("Could not parse id: `{}`", id.0)),
+        }
+    }
+}
+
+impl Into<WidgetIdDef> for WidgetId {
+    fn into(self) -> WidgetIdDef {
+        WidgetIdDef(self.to_string())
     }
 }
 

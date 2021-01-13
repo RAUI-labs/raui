@@ -34,11 +34,37 @@ impl Default for Interaction {
     }
 }
 
+impl Interaction {
+    pub fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false,
+        }
+    }
+
+    #[inline]
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
 #[derive(Debug, Default, Copy, Clone)]
 pub struct DefaultInteractionsEngineResult {
     pub captured_pointer_location: bool,
     pub captured_pointer_action: bool,
     pub captured_text_change: bool,
+}
+
+impl DefaultInteractionsEngineResult {
+    #[inline]
+    pub fn is_any(&self) -> bool {
+        self.captured_pointer_action || self.captured_pointer_location || self.captured_text_change
+    }
+
+    #[inline]
+    pub fn is_none(&self) -> bool {
+        !self.is_any()
+    }
 }
 
 /// Single pointer + Keyboard + Gamepad
@@ -63,7 +89,16 @@ impl DefaultInteractionsEngine {
     }
 
     pub fn interact(&mut self, interaction: Interaction) {
-        self.interactions_queue.push_back(interaction);
+        if interaction.is_some() {
+            self.interactions_queue.push_back(interaction);
+        }
+    }
+
+    pub fn clear_queue(&mut self, put_unselect: bool) {
+        self.interactions_queue.clear();
+        if put_unselect {
+            self.interactions_queue.push_back(Interaction::Unselect);
+        }
     }
 
     fn find_button(&self, app: &Application, x: Scalar, y: Scalar) -> Option<WidgetId> {

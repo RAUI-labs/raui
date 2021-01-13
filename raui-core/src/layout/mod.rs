@@ -8,6 +8,7 @@ use crate::{
     },
     Scalar,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 pub trait LayoutEngine<E> {
@@ -131,12 +132,18 @@ impl Default for CoordsMappingScaling {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CoordsMapping {
     scale: Scalar,
     offset: Vec2,
     real_area: Rect,
     virtual_area: Rect,
+}
+
+impl Default for CoordsMapping {
+    fn default() -> Self {
+        Self::new(Default::default())
+    }
 }
 
 impl CoordsMapping {

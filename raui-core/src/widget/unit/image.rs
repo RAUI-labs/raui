@@ -13,14 +13,14 @@ use std::{collections::HashMap, convert::TryFrom};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ImageBoxImageScaling {
-    Strech,
+    Stretch,
     // (frame size, frame only)
     Frame(Scalar, bool),
 }
 
 impl Default for ImageBoxImageScaling {
     fn default() -> Self {
-        Self::Strech
+        Self::Stretch
     }
 }
 

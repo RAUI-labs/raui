@@ -46,7 +46,7 @@ widget_component! {
                 material: ImageBoxMaterial::Color(ImageBoxColor {
                     color,
                     scaling: if on {
-                        ImageBoxImageScaling::Strech
+                        ImageBoxImageScaling::Stretch
                     } else {
                         ImageBoxImageScaling::Frame(size_level as Scalar, true)
                     },
