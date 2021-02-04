@@ -14,7 +14,7 @@ widget_component! {
         let props = props.clone().with(ImageBoxProps {
             material: ImageBoxMaterial::Color(ImageBoxColor {
                 color,
-                scaling: ImageBoxImageScaling::Frame(10.0, true),
+                scaling: ImageBoxImageScaling::Frame((10.0, true).into()),
             }),
             ..Default::default()
         });

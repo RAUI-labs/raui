@@ -13,7 +13,7 @@ pub fn new_theme() -> ThemeProps {
         String::new(),
         ThemedImageMaterial::Image(ImageBoxImage {
             id: "panel".to_owned(),
-            scaling: ImageBoxImageScaling::Frame(24.0, false),
+            scaling: ImageBoxImageScaling::Frame((24.0, false).into()),
             ..Default::default()
         }),
     );
@@ -21,7 +21,7 @@ pub fn new_theme() -> ThemeProps {
         "frame".to_owned(),
         ThemedImageMaterial::Image(ImageBoxImage {
             id: "frame".to_owned(),
-            scaling: ImageBoxImageScaling::Frame(24.0, false),
+            scaling: ImageBoxImageScaling::Frame((24.0, false).into()),
             ..Default::default()
         }),
     );
@@ -29,7 +29,7 @@ pub fn new_theme() -> ThemeProps {
         "cell".to_owned(),
         ThemedImageMaterial::Image(ImageBoxImage {
             id: "cell".to_owned(),
-            scaling: ImageBoxImageScaling::Frame(3.0, false),
+            scaling: ImageBoxImageScaling::Frame((3.0, false).into()),
             ..Default::default()
         }),
     );
@@ -37,7 +37,7 @@ pub fn new_theme() -> ThemeProps {
         "framed-cell".to_owned(),
         ThemedImageMaterial::Image(ImageBoxImage {
             id: "framed-cell".to_owned(),
-            scaling: ImageBoxImageScaling::Frame(4.0, false),
+            scaling: ImageBoxImageScaling::Frame((4.0, false).into()),
             ..Default::default()
         }),
     );

@@ -33,6 +33,28 @@ pub struct Rect {
     pub bottom: Scalar,
 }
 
+impl From<Scalar> for Rect {
+    fn from(v: Scalar) -> Self {
+        Self {
+            left: v,
+            right: v,
+            top: v,
+            bottom: v,
+        }
+    }
+}
+
+impl From<(Scalar, Scalar)> for Rect {
+    fn from((w, h): (Scalar, Scalar)) -> Self {
+        Self {
+            left: 0.0,
+            right: w,
+            top: 0.0,
+            bottom: h,
+        }
+    }
+}
+
 impl Rect {
     #[inline]
     pub fn width(&self) -> Scalar {
@@ -81,6 +103,28 @@ impl IntRect {
         IntVec2 {
             x: self.width(),
             y: self.height(),
+        }
+    }
+}
+
+impl From<Integer> for IntRect {
+    fn from(v: Integer) -> Self {
+        Self {
+            left: v,
+            right: v,
+            top: v,
+            bottom: v,
+        }
+    }
+}
+
+impl From<(Integer, Integer)> for IntRect {
+    fn from((w, h): (Integer, Integer)) -> Self {
+        Self {
+            left: 0,
+            right: w,
+            top: 0,
+            bottom: h,
         }
     }
 }

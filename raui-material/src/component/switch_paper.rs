@@ -48,7 +48,7 @@ widget_component! {
                     scaling: if on {
                         ImageBoxImageScaling::Stretch
                     } else {
-                        ImageBoxImageScaling::Frame(size_level as Scalar, true)
+                        ImageBoxImageScaling::Frame((size_level as Scalar, true).into())
                     },
                 }),
                 width: ImageBoxSizeValue::Exact(size),

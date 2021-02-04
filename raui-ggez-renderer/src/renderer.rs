@@ -83,7 +83,7 @@ impl<'a> GgezRenderer<'a> {
                         let (offset, rotation, scaling, rect) =
                             Self::transform_rect(rect, &unit.transform);
                         let mut builder = MeshBuilder::new();
-                        match image.scaling {
+                        match &image.scaling {
                             ImageBoxImageScaling::Stretch => {
                                 let vertices = &[
                                     graphics::Vertex {
@@ -110,8 +110,11 @@ impl<'a> GgezRenderer<'a> {
                                 let indices = &[0, 1, 2, 2, 3, 0];
                                 builder.raw(vertices, indices, None);
                             }
-                            ImageBoxImageScaling::Frame(v, only) => {
-                                let v = v * scale;
+                            ImageBoxImageScaling::Frame(frame) => {
+                                let vl = frame.destination.left * scale;
+                                let vr = frame.destination.right * scale;
+                                let vt = frame.destination.top * scale;
+                                let vb = frame.destination.bottom * scale;
                                 let vertices = &[
                                     graphics::Vertex {
                                         pos: [rect.left, rect.top],
@@ -119,12 +122,12 @@ impl<'a> GgezRenderer<'a> {
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left + v, rect.top],
+                                        pos: [rect.left + vl, rect.top],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right - v, rect.top],
+                                        pos: [rect.right - vr, rect.top],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
@@ -134,42 +137,42 @@ impl<'a> GgezRenderer<'a> {
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left, rect.top + v],
+                                        pos: [rect.left, rect.top + vt],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left + v, rect.top + v],
+                                        pos: [rect.left + vl, rect.top + vt],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right - v, rect.top + v],
+                                        pos: [rect.right - vr, rect.top + vt],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right, rect.top + v],
+                                        pos: [rect.right, rect.top + vt],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left, rect.bottom - v],
+                                        pos: [rect.left, rect.bottom - vb],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left + v, rect.bottom - v],
+                                        pos: [rect.left + vl, rect.bottom - vb],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right - v, rect.bottom - v],
+                                        pos: [rect.right - vr, rect.bottom - vb],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right, rect.bottom - v],
+                                        pos: [rect.right, rect.bottom - vb],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
@@ -179,12 +182,12 @@ impl<'a> GgezRenderer<'a> {
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.left + v, rect.bottom],
+                                        pos: [rect.left + vl, rect.bottom],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
                                     graphics::Vertex {
-                                        pos: [rect.right - v, rect.bottom],
+                                        pos: [rect.right - vr, rect.bottom],
                                         uv: [0.0, 0.0],
                                         color,
                                     },
@@ -194,7 +197,7 @@ impl<'a> GgezRenderer<'a> {
                                         color,
                                     },
                                 ];
-                                if only {
+                                if frame.frame_only {
                                     let indices = &[
                                         0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2, 4, 5,
                                         9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13, 12, 8, 9,
@@ -271,7 +274,7 @@ impl<'a> GgezRenderer<'a> {
                             let (offset, rotation, scaling, rect) =
                                 Self::transform_rect(rect, &unit.transform);
                             let mut builder = MeshBuilder::new();
-                            match image.scaling {
+                            match &image.scaling {
                                 ImageBoxImageScaling::Stretch => {
                                     let vertices = &[
                                         graphics::Vertex {
@@ -298,10 +301,17 @@ impl<'a> GgezRenderer<'a> {
                                     let indices = &[0, 1, 2, 2, 3, 0];
                                     builder.raw(vertices, indices, Some(resource.clone()));
                                 }
-                                ImageBoxImageScaling::Frame(v, only) => {
-                                    let fx = v / resource.width() as Scalar;
-                                    let fy = v / resource.height() as Scalar;
-                                    let v = v * scale;
+                                ImageBoxImageScaling::Frame(frame) => {
+                                    let fl = frame.source.left / resource.width() as Scalar;
+                                    let fr =
+                                        1.0 - (frame.source.right / resource.width() as Scalar);
+                                    let ft = frame.source.top / resource.height() as Scalar;
+                                    let fb =
+                                        1.0 - (frame.source.bottom / resource.height() as Scalar);
+                                    let vl = frame.destination.left * scale;
+                                    let vr = frame.destination.right * scale;
+                                    let vt = frame.destination.top * scale;
+                                    let vb = frame.destination.bottom * scale;
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
@@ -309,13 +319,13 @@ impl<'a> GgezRenderer<'a> {
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left + v, rect.top],
-                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 0.0)],
+                                            pos: [rect.left + vl, rect.top],
+                                            uv: [lerp(sfx, stx, fl), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right - v, rect.top],
-                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, 0.0)],
+                                            pos: [rect.right - vr, rect.top],
+                                            uv: [lerp(sfx, stx, fr), lerp(sfy, sty, 0.0)],
                                             color,
                                         },
                                         graphics::Vertex {
@@ -324,46 +334,43 @@ impl<'a> GgezRenderer<'a> {
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left, rect.top + v],
-                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, fy)],
+                                            pos: [rect.left, rect.top + vt],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, ft)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left + v, rect.top + v],
-                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, fy)],
+                                            pos: [rect.left + vl, rect.top + vt],
+                                            uv: [lerp(sfx, stx, fl), lerp(sfy, sty, ft)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right - v, rect.top + v],
-                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, fy)],
+                                            pos: [rect.right - vr, rect.top + vt],
+                                            uv: [lerp(sfx, stx, fr), lerp(sfy, sty, ft)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right, rect.top + v],
-                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, fy)],
+                                            pos: [rect.right, rect.top + vt],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, ft)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left, rect.bottom - v],
-                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, 1.0 - fy)],
+                                            pos: [rect.left, rect.bottom - vb],
+                                            uv: [lerp(sfx, stx, 0.0), lerp(sfy, sty, fb)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left + v, rect.bottom - v],
-                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 1.0 - fy)],
+                                            pos: [rect.left + vl, rect.bottom - vb],
+                                            uv: [lerp(sfx, stx, fl), lerp(sfy, sty, fb)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right - v, rect.bottom - v],
-                                            uv: [
-                                                lerp(sfx, stx, 1.0 - fx),
-                                                lerp(sfy, sty, 1.0 - fy),
-                                            ],
+                                            pos: [rect.right - vr, rect.bottom - vb],
+                                            uv: [lerp(sfx, stx, fr), lerp(sfy, sty, fb)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right, rect.bottom - v],
-                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, 1.0 - fy)],
+                                            pos: [rect.right, rect.bottom - vb],
+                                            uv: [lerp(sfx, stx, 1.0), lerp(sfy, sty, fb)],
                                             color,
                                         },
                                         graphics::Vertex {
@@ -372,13 +379,13 @@ impl<'a> GgezRenderer<'a> {
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.left + v, rect.bottom],
-                                            uv: [lerp(sfx, stx, fx), lerp(sfy, sty, 1.0)],
+                                            pos: [rect.left + vl, rect.bottom],
+                                            uv: [lerp(sfx, stx, fl), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
-                                            pos: [rect.right - v, rect.bottom],
-                                            uv: [lerp(sfx, stx, 1.0 - fx), lerp(sfy, sty, 1.0)],
+                                            pos: [rect.right - vr, rect.bottom],
+                                            uv: [lerp(sfx, stx, fr), lerp(sfy, sty, 1.0)],
                                             color,
                                         },
                                         graphics::Vertex {
@@ -387,7 +394,7 @@ impl<'a> GgezRenderer<'a> {
                                             color,
                                         },
                                     ];
-                                    if only {
+                                    if frame.frame_only {
                                         let indices = &[
                                             0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2,
                                             4, 5, 9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13,

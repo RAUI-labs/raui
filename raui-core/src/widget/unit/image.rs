@@ -11,11 +11,37 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImageBoxFrame {
+    pub source: Rect,
+    pub destination: Rect,
+    pub frame_only: bool,
+}
+
+impl From<Scalar> for ImageBoxFrame {
+    fn from(v: Scalar) -> Self {
+        Self {
+            source: v.into(),
+            destination: v.into(),
+            frame_only: false,
+        }
+    }
+}
+
+impl From<(Scalar, bool)> for ImageBoxFrame {
+    fn from((v, fo): (Scalar, bool)) -> Self {
+        Self {
+            source: v.into(),
+            destination: v.into(),
+            frame_only: fo,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImageBoxImageScaling {
     Stretch,
-    // (frame size, frame only)
-    Frame(Scalar, bool),
+    Frame(ImageBoxFrame),
 }
 
 impl Default for ImageBoxImageScaling {

@@ -5,15 +5,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaperProps {
     #[serde(default = "PaperProps::default_frame")]
-    pub frame: Option<Scalar>,
+    pub frame: Option<ImageBoxFrame>,
     #[serde(default)]
     pub variant: String,
 }
 implement_props_data!(PaperProps, "PaperProps");
 
 impl PaperProps {
-    fn default_frame() -> Option<Scalar> {
-        Some(2.0)
+    fn default_frame() -> Option<ImageBoxFrame> {
+        Some(2.0.into())
     }
 }
 
@@ -91,7 +91,7 @@ widget_component! {
                     }).with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
-                            scaling: ImageBoxImageScaling::Frame(frame, true),
+                            scaling: ImageBoxImageScaling::Frame(frame),
                         }),
                         ..Default::default()
                     });
@@ -124,7 +124,7 @@ widget_component! {
                     }).with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
-                            scaling: ImageBoxImageScaling::Frame(frame, true),
+                            scaling: ImageBoxImageScaling::Frame(frame),
                         }),
                         ..Default::default()
                     });

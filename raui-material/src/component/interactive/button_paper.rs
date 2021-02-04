@@ -90,7 +90,7 @@ widget_component! {
                     }).with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
-                            scaling: ImageBoxImageScaling::Frame(frame, true),
+                            scaling: ImageBoxImageScaling::Frame(frame),
                         }),
                         ..Default::default()
                     });
@@ -118,7 +118,7 @@ widget_component! {
                     }).with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
-                            scaling: ImageBoxImageScaling::Frame(frame, true),
+                            scaling: ImageBoxImageScaling::Frame(frame),
                         }),
                         ..Default::default()
                     });
