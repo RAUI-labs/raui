@@ -36,10 +36,7 @@ impl Default for Interaction {
 
 impl Interaction {
     pub fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
+        matches!(self, Self::None)
     }
 
     #[inline]
