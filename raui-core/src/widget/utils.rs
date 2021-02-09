@@ -162,6 +162,9 @@ pub struct Transform {
     pub rotation: Scalar,
     #[serde(default)]
     pub scale: Vec2,
+    // {angle X, angle Y}
+    #[serde(default)]
+    pub skew: Vec2,
 }
 
 impl Default for Transform {
@@ -171,6 +174,7 @@ impl Default for Transform {
             translation: Default::default(),
             rotation: Default::default(),
             scale: Self::default_scale(),
+            skew: Default::default(),
         }
     }
 }

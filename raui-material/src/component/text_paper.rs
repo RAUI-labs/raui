@@ -15,6 +15,8 @@ pub struct TextPaperProps {
     #[serde(default)]
     pub use_main_color: bool,
     #[serde(default)]
+    pub alignment_override: Option<TextBoxAlignment>,
+    #[serde(default)]
     pub transform: Transform,
 }
 implement_props_data!(TextPaperProps, "TextPaperProps");
@@ -27,11 +29,12 @@ widget_component! {
             height,
             variant,
             use_main_color,
+            alignment_override,
             transform,
         } = props.read_cloned_or_default();
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
         let ThemedTextMaterial {
-            alignment,
+            mut alignment,
             direction,
             font,
         } = match shared_props.read::<ThemeProps>() {
@@ -42,6 +45,9 @@ widget_component! {
                 .unwrap_or_default(),
             Err(_) => Default::default(),
         };
+        if let Some(alignment_override) = alignment_override {
+            alignment = alignment_override;
+        }
         let color = match shared_props.read::<ThemeProps>() {
             Ok(props) => if use_main_color {
                 match themed_props.color {

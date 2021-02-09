@@ -21,6 +21,8 @@ pub struct TextFieldPaperProps {
     #[serde(default)]
     pub use_main_color: bool,
     #[serde(default)]
+    pub alignment_override: Option<TextBoxAlignment>,
+    #[serde(default)]
     pub transform: Transform,
     #[serde(default)]
     pub paper_theme: ThemedWidgetProps,
@@ -48,6 +50,7 @@ impl Default for TextFieldPaperProps {
             height: Default::default(),
             variant: Default::default(),
             use_main_color: Default::default(),
+            alignment_override: Default::default(),
             transform: Default::default(),
             paper_theme: Default::default(),
             padding: Self::default_padding(),
@@ -64,6 +67,7 @@ widget_component! {
             height,
             variant,
             use_main_color,
+            alignment_override,
             transform,
             paper_theme,
             padding,
@@ -92,6 +96,7 @@ widget_component! {
             height,
             variant,
             use_main_color,
+            alignment_override,
             transform,
         }).with(ContentBoxItemLayout {
             margin: padding,

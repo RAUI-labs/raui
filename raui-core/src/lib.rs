@@ -1,5 +1,3 @@
-pub extern crate typetag;
-
 pub mod application;
 pub mod messenger;
 #[macro_use]
@@ -35,7 +33,6 @@ pub mod prelude {
         renderer::*,
         signals::*,
         state::*,
-        typetag,
         widget::*,
         widget::{
             component::*,

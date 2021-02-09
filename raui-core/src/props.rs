@@ -168,7 +168,7 @@ impl From<&Self> for Props {
 #[macro_export]
 macro_rules! implement_props_data {
     ($type_name:ty, $tag_name:literal) => {
-        #[$crate::typetag::serde(name = $tag_name)]
+        #[typetag::serde(name = $tag_name)]
         impl $crate::props::PropsData for $type_name
         where
             Self: Clone,

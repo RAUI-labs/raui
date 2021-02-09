@@ -16,6 +16,7 @@ pub struct ImageBoxFrame {
     pub source: Rect,
     pub destination: Rect,
     pub frame_only: bool,
+    pub frame_keep_aspect_ratio: bool,
 }
 
 impl From<Scalar> for ImageBoxFrame {
@@ -24,6 +25,7 @@ impl From<Scalar> for ImageBoxFrame {
             source: v.into(),
             destination: v.into(),
             frame_only: false,
+            frame_keep_aspect_ratio: false,
         }
     }
 }
@@ -34,6 +36,7 @@ impl From<(Scalar, bool)> for ImageBoxFrame {
             source: v.into(),
             destination: v.into(),
             frame_only: fo,
+            frame_keep_aspect_ratio: false,
         }
     }
 }

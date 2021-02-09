@@ -116,7 +116,7 @@ impl LayoutEngine<()> for () {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum CoordsMappingScaling {
     None,
     Fit(Vec2),
