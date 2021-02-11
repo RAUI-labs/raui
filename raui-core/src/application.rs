@@ -1,5 +1,5 @@
 use crate::{
-    animator::{AnimationUpdate, Animator, AnimatorState},
+    animator::{AnimationUpdate, Animator, AnimatorStates},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{Message, MessageSender, Messages, Messenger},
@@ -64,7 +64,7 @@ pub struct Application {
     layout: Layout,
     states: HashMap<WidgetId, StateData>,
     state_changes: HashMap<WidgetId, StateData>,
-    animators: HashMap<WidgetId, AnimatorState>,
+    animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
     unmount_closures: HashMap<WidgetId, Vec<FnWidgetUnmount>>,
@@ -907,7 +907,7 @@ impl Application {
             None => Messages::new(),
         };
         let mut life_cycle = WidgetLifeCycle::default();
-        let default_animator_state = AnimatorState::default();
+        let default_animator_state = AnimatorStates::default();
         let (new_node, mounted) = match states.get(&id) {
             Some(state) => {
                 let state = State::new(state, StateUpdate::new(state_sender.clone()));
@@ -996,15 +996,12 @@ impl Application {
         if !unmount.is_empty() {
             self.unmount_closures.insert(id.clone(), unmount);
         }
-        while let Ok(data) = animation_receiver.try_recv() {
-            match data {
-                Some(data) => {
-                    self.animators
-                        .insert(id.to_owned(), AnimatorState::new(data));
-                }
-                None => {
-                    self.animators.remove(&id);
-                }
+        while let Ok((name, data)) = animation_receiver.try_recv() {
+            if let Some(states) = self.animators.get_mut(&id) {
+                states.change(name, data);
+            } else if let Some(data) = data {
+                self.animators
+                    .insert(id.to_owned(), AnimatorStates::new(name, data));
             }
         }
         let new_node = self.process_node(

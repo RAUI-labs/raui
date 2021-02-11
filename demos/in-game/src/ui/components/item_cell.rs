@@ -38,7 +38,7 @@ widget_hook! {
             for msg in context.messenger.messages {
                 if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
                     if msg.action == ButtonAction::TriggerStart {
-                        drop(context.animator.change(Some(Animation::Value(AnimatedValue {
+                        drop(context.animator.change("", Some(Animation::Value(AnimatedValue {
                             name: "click".to_owned(),
                             duration: 0.15,
                         }))));
@@ -104,7 +104,7 @@ widget_component! {
                 })
             }
         } else {
-            let scale = lerp(1.0, 1.5, (animator.value_progress_or_zero("click") * PI).sin());
+            let scale = lerp(1.0, 1.5, (animator.value_progress_or_zero("", "click") * PI).sin());
             let image_props = Props::new(ImageBoxProps {
                 content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
                     horizontal_alignment: 0.5,

@@ -11,7 +11,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxFrame {
     pub source: Rect,
     pub destination: Rect,

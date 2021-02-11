@@ -8,15 +8,15 @@ pub enum AnimationError {
 }
 
 #[derive(Clone)]
-pub struct AnimationUpdate(Sender<Option<Animation>>);
+pub struct AnimationUpdate(Sender<(String, Option<Animation>)>);
 
 impl AnimationUpdate {
-    pub fn new(sender: Sender<Option<Animation>>) -> Self {
+    pub fn new(sender: Sender<(String, Option<Animation>)>) -> Self {
         Self(sender)
     }
 
-    pub fn change(&self, data: Option<Animation>) -> Result<(), AnimationError> {
-        if self.0.send(data).is_err() {
+    pub fn change(&self, name: &str, data: Option<Animation>) -> Result<(), AnimationError> {
+        if self.0.send((name.to_owned(), data)).is_err() {
             Err(AnimationError::CouldNotWriteData)
         } else {
             Ok(())
@@ -25,40 +25,116 @@ impl AnimationUpdate {
 }
 
 pub struct Animator<'a> {
-    state: &'a AnimatorState,
+    states: &'a AnimatorStates,
     update: AnimationUpdate,
 }
 
 impl<'a> Animator<'a> {
     #[inline]
-    pub fn new(state: &'a AnimatorState, update: AnimationUpdate) -> Self {
-        Self { state, update }
+    pub fn new(states: &'a AnimatorStates, update: AnimationUpdate) -> Self {
+        Self { states, update }
     }
 
     #[inline]
-    pub fn change(&self, data: Option<Animation>) -> Result<(), AnimationError> {
-        self.update.change(data)
+    pub fn change(&self, name: &str, data: Option<Animation>) -> Result<(), AnimationError> {
+        self.update.change(name, data)
     }
 
     /// (progress factor, time, duration)
     #[inline]
-    pub fn value(&self, name: &str) -> Option<(Scalar, Scalar, Scalar)> {
-        self.state.value(name)
+    pub fn value(&self, id: &str, name: &str) -> Option<(Scalar, Scalar, Scalar)> {
+        self.states.value(id, name)
     }
 
     #[inline]
-    pub fn value_progress(&self, name: &str) -> Option<Scalar> {
-        self.value(name).map(|v| v.0)
+    pub fn value_progress(&self, id: &str, name: &str) -> Option<Scalar> {
+        self.value(id, name).map(|v| v.0)
     }
 
     #[inline]
-    pub fn value_progress_or(&self, name: &str, v: Scalar) -> Scalar {
-        self.value_progress(name).unwrap_or(v)
+    pub fn value_progress_or(&self, id: &str, name: &str, v: Scalar) -> Scalar {
+        self.value_progress(id, name).unwrap_or(v)
     }
 
     #[inline]
-    pub fn value_progress_or_zero(&self, name: &str) -> Scalar {
-        self.value_progress(name).unwrap_or(0.0)
+    pub fn value_progress_or_zero(&self, id: &str, name: &str) -> Scalar {
+        self.value_progress(id, name).unwrap_or(0.0)
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct AnimatorStates(pub HashMap<String, AnimatorState>);
+
+impl AnimatorStates {
+    pub fn new(name: String, animation: Animation) -> Self {
+        let mut result = HashMap::with_capacity(1);
+        result.insert(name, AnimatorState::new(animation));
+        Self(result)
+    }
+
+    pub fn in_progress(&self) -> bool {
+        self.0.values().any(|s| s.in_progress())
+    }
+
+    #[inline]
+    pub fn is_done(&self) -> bool {
+        !self.in_progress()
+    }
+
+    /// (progress factor, time, duration)
+    #[inline]
+    pub fn value(&self, id: &str, name: &str) -> Option<(Scalar, Scalar, Scalar)> {
+        if let Some(state) = self.0.get(id) {
+            state.value(name)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn value_progress(&self, id: &str, name: &str) -> Option<Scalar> {
+        if let Some(state) = self.0.get(id) {
+            state.value_progress(name)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn value_progress_or(&self, id: &str, name: &str, v: Scalar) -> Scalar {
+        if let Some(state) = self.0.get(id) {
+            state.value_progress_or(name, v)
+        } else {
+            v
+        }
+    }
+
+    #[inline]
+    pub fn value_progress_or_zero(&self, id: &str, name: &str) -> Scalar {
+        if let Some(state) = self.0.get(id) {
+            state.value_progress_or_zero(name)
+        } else {
+            0.0
+        }
+    }
+
+    pub fn change(&mut self, name: String, animation: Option<Animation>) {
+        if let Some(animation) = animation {
+            self.0.insert(name, AnimatorState::new(animation));
+        } else {
+            self.0.remove(&name);
+        }
+    }
+
+    pub fn process(
+        &mut self,
+        delta_time: Scalar,
+        owner: &WidgetId,
+        message_sender: &MessageSender,
+    ) {
+        for state in self.0.values_mut() {
+            state.process(delta_time, owner, message_sender);
+        }
     }
 }
 
@@ -103,7 +179,7 @@ impl AnimatorState {
 
     #[inline]
     pub fn value_progress(&self, name: &str) -> Option<Scalar> {
-        self.value(name).map(|v| v.0)
+        self.sheet.get(name).map(|p| p.cached_progress)
     }
 
     #[inline]
