@@ -1,25 +1,25 @@
-use std::{any::Any, sync::mpsc::Sender};
+use crate::props::{Props, PropsData, PropsError};
+use std::sync::mpsc::Sender;
 
+#[derive(Debug, Clone)]
 pub enum StateError {
-    CouldNotReadData,
+    Props(PropsError),
     CouldNotWriteData,
 }
 
-pub type StateData = Box<dyn Any + Send + Sync>;
-
 #[derive(Clone)]
-pub struct StateUpdate(Sender<StateData>);
+pub struct StateUpdate(Sender<Props>);
 
 impl StateUpdate {
-    pub fn new(sender: Sender<StateData>) -> Self {
+    pub fn new(sender: Sender<Props>) -> Self {
         Self(sender)
     }
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>
     where
-        T: 'static + Send + Sync,
+        T: Into<Props>,
     {
-        if self.0.send(Box::new(data)).is_err() {
+        if self.0.send(data.into()).is_err() {
             Err(StateError::CouldNotWriteData)
         } else {
             Ok(())
@@ -28,67 +28,70 @@ impl StateUpdate {
 }
 
 pub struct State<'a> {
-    data: &'a StateData,
+    data: &'a Props,
     update: StateUpdate,
 }
 
 impl<'a> State<'a> {
-    pub fn new(data: &'a StateData, update: StateUpdate) -> Self {
+    pub fn new(data: &'a Props, update: StateUpdate) -> Self {
         Self { data, update }
+    }
+
+    pub fn has<T>(&self) -> bool
+    where
+        T: 'static + PropsData,
+    {
+        self.data.has::<T>()
     }
 
     pub fn read<T>(&self) -> Result<&'a T, StateError>
     where
-        T: 'static,
+        T: 'static + PropsData,
     {
-        if let Some(data) = self.data.downcast_ref::<T>() {
-            Ok(data)
-        } else {
-            Err(StateError::CouldNotReadData)
+        match self.data.read() {
+            Ok(v) => Ok(v),
+            Err(e) => Err(StateError::Props(e)),
         }
     }
 
-    pub fn map_or_default<T, R, F>(&self, mut f: F) -> R
+    pub fn map_or_default<T, R, F>(&self, f: F) -> R
     where
-        T: 'static,
+        T: 'static + PropsData,
         R: Default,
         F: FnMut(&T) -> R,
     {
-        match self.read() {
-            Ok(data) => f(data),
-            Err(_) => R::default(),
-        }
+        self.data.map_or_default(f)
     }
 
-    pub fn map_or_else<T, R, F, E>(&self, mut f: F, mut e: E) -> R
+    pub fn map_or_else<T, R, F, E>(&self, f: F, e: E) -> R
     where
-        T: 'static,
+        T: 'static + PropsData,
         F: FnMut(&T) -> R,
         E: FnMut() -> R,
     {
-        match self.read() {
-            Ok(data) => f(data),
-            Err(_) => e(),
-        }
+        self.data.map_or_else(f, e)
     }
 
     pub fn read_cloned<T>(&self) -> Result<T, StateError>
     where
-        T: 'static + Clone,
+        T: 'static + PropsData + Clone,
     {
-        self.read::<T>().map(|v| v.clone())
+        match self.data.read_cloned() {
+            Ok(v) => Ok(v),
+            Err(e) => Err(StateError::Props(e)),
+        }
     }
 
     pub fn read_cloned_or_default<T>(&self) -> T
     where
-        T: 'static + Clone + Default,
+        T: 'static + PropsData + Clone + Default,
     {
-        self.read_cloned().unwrap_or_default()
+        self.data.read_cloned_or_default()
     }
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>
     where
-        T: 'static + Send + Sync,
+        T: 'static + PropsData + Send + Sync,
     {
         self.update().write(data)
     }

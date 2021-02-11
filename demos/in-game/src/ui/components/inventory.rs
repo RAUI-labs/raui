@@ -3,12 +3,14 @@ use crate::ui::components::item_cell::{
 };
 use raui_core::prelude::*;
 use raui_material::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct InventoryState {
     pub index: usize,
     pub count: usize,
 }
+implement_props_data!(InventoryState, "InventoryState");
 
 impl Default for InventoryState {
     fn default() -> Self {

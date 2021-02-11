@@ -131,10 +131,11 @@ fn test_hello_world() {
         }
     }
 
-    #[derive(Debug, Default, Copy, Clone)]
+    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct ButtonState {
         pub pressed: bool,
     }
+    implement_props_data!(ButtonState, "ButtonState");
 
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     enum ButtonAction {

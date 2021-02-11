@@ -1,12 +1,14 @@
 use crate::ui::components::app::{AppMessage, AppSharedProps, ThemeModeProps};
 use raui_core::prelude::*;
 use raui_material::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppBarState {
     pub creating_task: bool,
     pub new_task_name: String,
 }
+implement_props_data!(AppBarState, "AppBarState");
 
 widget_hook! {
     use_app_bar(life_cycle) {

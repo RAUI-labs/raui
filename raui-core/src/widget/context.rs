@@ -3,7 +3,7 @@ use crate::{
     messenger::{MessageSender, Messenger},
     props::Props,
     signals::SignalSender,
-    state::{State, StateData},
+    state::State,
     widget::{node::WidgetNode, WidgetId, WidgetLifeCycle},
 };
 use std::collections::HashMap;
@@ -63,7 +63,7 @@ pub struct WidgetMountOrChangeContext<'a> {
 
 pub struct WidgetUnmountContext<'a> {
     pub id: &'a WidgetId,
-    pub state: &'a StateData,
+    pub state: &'a Props,
     pub messenger: &'a MessageSender,
     pub signals: SignalSender,
 }

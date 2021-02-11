@@ -29,6 +29,7 @@ pub struct AppState {
     pub theme: ThemeMode,
     pub tasks: Vec<TaskProps>,
 }
+implement_props_data!(AppState, "AppState");
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps {

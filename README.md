@@ -122,14 +122,16 @@ widget_component! {
 }
 ```
 This may bring up a question: _**"If i use only functions and no objects to tell how to visualize UI, how do i keep some data between each render run?"**_.
-For that you use _states_. State is a data that is stored between each processing call as long as given widget is alive (that means: as long as widget id stays the same between two processing calls, to make sure your widget stays the same, you use keys - if no key is assigned, system will generate one for your widget but that will make it possible to die at any time if for example number of widget children changes in your common parent, your widget will change its id when key wasn't assigned).
+For that you use _states_. State is a data that is stored between each processing calls as long as given widget is alive (that means: as long as widget id stays the same between two processing calls, to make sure your widget stays the same, you use keys - if no key is assigned, system will generate one for your widget but that will make it possible to die at any time if for example number of widget children changes in your common parent, your widget will change its id when key wasn't assigned).
 Some additional notes: While you use _properties_ to send information down the tree and _states_ to store widget data between processing cals, you can communicate with another widgets and host application using messages and signals!
 More than that, you can use hooks to listen for widget life cycle and perform actions there.
+It's worth noting that state uses _properties_ to hold its data, so by that you can for example attach multiple hooks that each of them uses different data type as widget state, this opens the doors to be very creative when combining different hooks that operate on the same widget.
 ```rust
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 struct ButtonState {
     pub pressed: bool,
 }
+implement_props_data!(ButtonState, "ButtonState");
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum ButtonAction {

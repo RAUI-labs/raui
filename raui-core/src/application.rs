@@ -6,7 +6,7 @@ use crate::{
     props::{Props, PropsData, PropsDef},
     renderer::Renderer,
     signals::{Signal, SignalSender},
-    state::{State, StateData, StateUpdate},
+    state::{State, StateUpdate},
     widget::{
         component::{WidgetComponent, WidgetComponentDef},
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
@@ -62,8 +62,8 @@ pub struct Application {
     tree: WidgetNode,
     rendered_tree: WidgetUnit,
     layout: Layout,
-    states: HashMap<WidgetId, StateData>,
-    state_changes: HashMap<WidgetId, StateData>,
+    states: HashMap<WidgetId, Props>,
+    state_changes: HashMap<WidgetId, Props>,
     animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
@@ -824,10 +824,10 @@ impl Application {
     fn process_node<'a>(
         &mut self,
         node: WidgetNode,
-        states: &'a HashMap<WidgetId, StateData>,
+        states: &'a HashMap<WidgetId, Props>,
         path: Vec<String>,
         messages: &mut HashMap<WidgetId, Messages>,
-        new_states: &mut HashMap<WidgetId, StateData>,
+        new_states: &mut HashMap<WidgetId, Props>,
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
         master_shared_props: Option<Props>,
@@ -866,10 +866,10 @@ impl Application {
     fn process_node_component<'a>(
         &mut self,
         component: WidgetComponent,
-        states: &'a HashMap<WidgetId, StateData>,
+        states: &'a HashMap<WidgetId, Props>,
         mut path: Vec<String>,
         messages: &mut HashMap<WidgetId, Messages>,
-        new_states: &mut HashMap<WidgetId, StateData>,
+        new_states: &mut HashMap<WidgetId, Props>,
         used_ids: &mut HashSet<WidgetId>,
         possible_key: String,
         master_shared_props: Option<Props>,
@@ -926,7 +926,7 @@ impl Application {
                 ((processor)(context), false)
             }
             None => {
-                let state_data = Box::new(()) as StateData;
+                let state_data = Props::default();
                 let state = State::new(&state_data, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
@@ -1026,10 +1026,10 @@ impl Application {
     fn process_node_unit<'a>(
         &mut self,
         mut unit: WidgetUnitNode,
-        states: &'a HashMap<WidgetId, StateData>,
+        states: &'a HashMap<WidgetId, Props>,
         path: Vec<String>,
         messages: &mut HashMap<WidgetId, Messages>,
-        new_states: &mut HashMap<WidgetId, StateData>,
+        new_states: &mut HashMap<WidgetId, Props>,
         used_ids: &mut HashSet<WidgetId>,
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,

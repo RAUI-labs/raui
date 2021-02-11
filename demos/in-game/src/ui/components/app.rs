@@ -18,10 +18,11 @@ implement_props_data!(AppProps, "AppProps");
 pub struct AppSharedProps(pub WidgetId);
 implement_props_data!(AppSharedProps, "AppSharedProps");
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct AppState {
     pub popup_index: Option<usize>,
 }
+implement_props_data!(AppState, "AppState");
 
 #[derive(Debug, Clone)]
 pub enum AppMessage {
