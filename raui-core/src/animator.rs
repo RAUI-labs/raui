@@ -36,6 +36,11 @@ impl<'a> Animator<'a> {
     }
 
     #[inline]
+    pub fn has(&self, id: &str) -> bool {
+        self.states.has(id)
+    }
+
+    #[inline]
     pub fn change(&self, name: &str, data: Option<Animation>) -> Result<(), AnimationError> {
         self.update.change(name, data)
     }
@@ -79,6 +84,11 @@ impl AnimatorStates {
     #[inline]
     pub fn is_done(&self) -> bool {
         !self.in_progress()
+    }
+
+    #[inline]
+    pub fn has(&self, id: &str) -> bool {
+        self.0.contains_key(id)
     }
 
     /// (progress factor, time, duration)
@@ -294,4 +304,4 @@ pub struct AnimatedValue {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct AnimationMessage(String);
+pub struct AnimationMessage(pub String);
