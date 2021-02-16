@@ -218,8 +218,7 @@ impl AnimatorState {
                     0.0
                 };
             }
-            let messages = std::mem::take(&mut self.messages);
-            self.messages = messages
+            self.messages = std::mem::take(&mut self.messages)
                 .into_iter()
                 .filter(|(time, message)| {
                     if *time <= self.time {
@@ -305,3 +304,47 @@ pub struct AnimatedValue {
 
 #[derive(Debug, Default, Clone)]
 pub struct AnimationMessage(pub String);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{str::FromStr, sync::mpsc::channel};
+
+    #[test]
+    fn test_animator() {
+        let animation = Animation::Sequence(vec![
+            Animation::Value(AnimatedValue {
+                name: "fade-in".to_owned(),
+                duration: 0.2,
+            }),
+            Animation::Value(AnimatedValue {
+                name: "delay".to_owned(),
+                duration: 0.6,
+            }),
+            Animation::Value(AnimatedValue {
+                name: "fade-out".to_owned(),
+                duration: 0.2,
+            }),
+            Animation::Message("next".to_owned()),
+        ]);
+        println!("Animation: {:#?}", animation);
+        let mut states = AnimatorStates::new("".to_owned(), animation);
+        println!("States 0: {:#?}", states);
+        let id = WidgetId::from_str("type:/widget").unwrap();
+        let (sender, receiver) = channel();
+        let sender = MessageSender::new(sender);
+        states.process(0.5, &id, &sender);
+        println!("States 1: {:#?}", states);
+        states.process(0.6, &id, &sender);
+        println!("States 2: {:#?}", states);
+        println!(
+            "Message: {:#?}",
+            receiver
+                .try_recv()
+                .unwrap()
+                .1
+                .downcast_ref::<AnimationMessage>()
+                .unwrap()
+        );
+    }
+}

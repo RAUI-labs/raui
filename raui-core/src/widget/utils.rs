@@ -13,12 +13,48 @@ pub struct Vec2 {
     pub y: Scalar,
 }
 
+impl From<Scalar> for Vec2 {
+    fn from(v: Scalar) -> Self {
+        Self { x: v, y: v }
+    }
+}
+
+impl From<(Scalar, Scalar)> for Vec2 {
+    fn from((x, y): (Scalar, Scalar)) -> Self {
+        Self { x, y }
+    }
+}
+
+impl From<[Scalar; 2]> for Vec2 {
+    fn from([x, y]: [Scalar; 2]) -> Self {
+        Self { x, y }
+    }
+}
+
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IntVec2 {
     #[serde(default)]
     pub x: Integer,
     #[serde(default)]
     pub y: Integer,
+}
+
+impl From<Integer> for IntVec2 {
+    fn from(v: Integer) -> Self {
+        Self { x: v, y: v }
+    }
+}
+
+impl From<(Integer, Integer)> for IntVec2 {
+    fn from((x, y): (Integer, Integer)) -> Self {
+        Self { x, y }
+    }
+}
+
+impl From<[Integer; 2]> for IntVec2 {
+    fn from([x, y]: [Integer; 2]) -> Self {
+        Self { x, y }
+    }
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
@@ -51,6 +87,39 @@ impl From<(Scalar, Scalar)> for Rect {
             right: w,
             top: 0.0,
             bottom: h,
+        }
+    }
+}
+
+impl From<[Scalar; 2]> for Rect {
+    fn from([w, h]: [Scalar; 2]) -> Self {
+        Self {
+            left: 0.0,
+            right: w,
+            top: 0.0,
+            bottom: h,
+        }
+    }
+}
+
+impl From<(Scalar, Scalar, Scalar, Scalar)> for Rect {
+    fn from((left, right, top, bottom): (Scalar, Scalar, Scalar, Scalar)) -> Self {
+        Self {
+            left,
+            right,
+            top,
+            bottom,
+        }
+    }
+}
+
+impl From<[Scalar; 4]> for Rect {
+    fn from([left, right, top, bottom]: [Scalar; 4]) -> Self {
+        Self {
+            left,
+            right,
+            top,
+            bottom,
         }
     }
 }

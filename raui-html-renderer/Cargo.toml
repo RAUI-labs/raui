@@ -1,6 +1,6 @@
 [package]
 name = "raui-html-renderer"
-version = "0.20.1"
+version = "0.20.2"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for simple HTML static webpages"

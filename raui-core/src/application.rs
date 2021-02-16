@@ -627,6 +627,11 @@ impl Application {
     }
 
     #[inline]
+    pub fn has_layout_widget(&self, id: &WidgetId) -> bool {
+        self.layout.items.keys().any(|k| k == id)
+    }
+
+    #[inline]
     pub fn apply(&mut self, tree: WidgetNode) {
         self.tree = tree;
         self.dirty = true;
