@@ -12,17 +12,17 @@ use serde::{Deserialize, Serialize};
 pub struct AppProps {
     pub texts: Vec<String>,
 }
-implement_props_data!(AppProps, "AppProps");
+implement_props_data!(AppProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps(pub WidgetId);
-implement_props_data!(AppSharedProps, "AppSharedProps");
+implement_props_data!(AppSharedProps);
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct AppState {
     pub popup_index: Option<usize>,
 }
-implement_props_data!(AppState, "AppState");
+implement_props_data!(AppState);
 
 #[derive(Debug, Clone)]
 pub enum AppMessage {
@@ -56,7 +56,7 @@ widget_hook! {
 widget_component! {
     pub app(id, key, props, state) [use_app] {
         let shared_props = Props::new(AppSharedProps(id.to_owned())).with(new_theme());
-        let minimap_props = ContentBoxItemLayout {
+        let miniregister_props = ContentBoxItemLayout {
             anchors: Rect {
                 left: 1.0,
                 right: 1.0,
@@ -127,7 +127,7 @@ widget_component! {
         };
 
         widget!{(#{key} content_box: {props.clone()} | {shared_props} [
-            (#{"minimap"} minimap: {minimap_props})
+            (#{"minimap"} minimap: {miniregister_props})
             (#{"inventory"} inventory: {inventory_props})
             {popup}
         ])}

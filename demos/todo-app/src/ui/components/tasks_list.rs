@@ -10,7 +10,7 @@ pub struct TaskProps {
     #[serde(default)]
     pub name: String,
 }
-implement_props_data!(TaskProps, "TaskProps");
+implement_props_data!(TaskProps);
 
 impl TaskProps {
     pub fn new(name: &str) -> Self {
@@ -25,7 +25,7 @@ impl TaskProps {
 pub struct TasksProps {
     pub tasks: Vec<TaskProps>,
 }
-implement_props_data!(TasksProps, "TasksProps");
+implement_props_data!(TasksProps);
 
 widget_hook! {
     use_task(life_cycle) {

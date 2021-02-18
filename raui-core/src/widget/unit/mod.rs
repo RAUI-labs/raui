@@ -10,12 +10,12 @@ use crate::{
     widget::{
         node::WidgetNode,
         unit::{
-            content::{ContentBox, ContentBoxNode, ContentBoxNodeDef},
-            flex::{FlexBox, FlexBoxNode, FlexBoxNodeDef},
-            grid::{GridBox, GridBoxNode, GridBoxNodeDef},
-            image::{ImageBox, ImageBoxNode, ImageBoxNodeDef},
-            size::{SizeBox, SizeBoxNode, SizeBoxNodeDef},
-            text::{TextBox, TextBoxNode, TextBoxNodeDef},
+            content::{ContentBox, ContentBoxNode, ContentBoxNodePrefab},
+            flex::{FlexBox, FlexBoxNode, FlexBoxNodePrefab},
+            grid::{GridBox, GridBoxNode, GridBoxNodePrefab},
+            image::{ImageBox, ImageBoxNode, ImageBoxNodePrefab},
+            size::{SizeBox, SizeBoxNode, SizeBoxNodePrefab},
+            text::{TextBox, TextBoxNode, TextBoxNodePrefab},
         },
         WidgetId,
     },
@@ -32,7 +32,7 @@ pub struct WidgetUnitInspectionNode {
 pub trait WidgetUnitData {
     fn id(&self) -> &WidgetId;
 
-    fn get_children<'a>(&'a self) -> Vec<&'a WidgetUnit> {
+    fn get_children(&self) -> Vec<&WidgetUnit> {
         vec![]
     }
 }
@@ -203,23 +203,6 @@ impl From<()> for WidgetUnitNode {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum WidgetUnitNodeDef {
-    None,
-    ContentBox(ContentBoxNodeDef),
-    FlexBox(FlexBoxNodeDef),
-    GridBox(GridBoxNodeDef),
-    SizeBox(SizeBoxNodeDef),
-    ImageBox(ImageBoxNodeDef),
-    TextBox(TextBoxNodeDef),
-}
-
-impl Default for WidgetUnitNodeDef {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
 macro_rules! implement_from_unit {
     { $( $type_name:ident => $variant_name:ident ),+ $(,)? } => {
         $(
@@ -239,4 +222,21 @@ implement_from_unit! {
     SizeBoxNode => SizeBox,
     ImageBoxNode => ImageBox,
     TextBoxNode => TextBox,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) enum WidgetUnitNodePrefab {
+    None,
+    ContentBox(ContentBoxNodePrefab),
+    FlexBox(FlexBoxNodePrefab),
+    GridBox(GridBoxNodePrefab),
+    SizeBox(SizeBoxNodePrefab),
+    ImageBox(ImageBoxNodePrefab),
+    TextBox(TextBoxNodePrefab),
+}
+
+impl Default for WidgetUnitNodePrefab {
+    fn default() -> Self {
+        Self::None
+    }
 }

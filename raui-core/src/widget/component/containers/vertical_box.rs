@@ -18,7 +18,7 @@ pub struct VerticalBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(VerticalBoxProps, "VerticalBoxProps");
+implement_props_data!(VerticalBoxProps);
 
 widget_component! {
     pub vertical_box(key, props, listed_slots) {

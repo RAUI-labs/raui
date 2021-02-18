@@ -9,9 +9,10 @@ pub struct PaperProps {
     #[serde(default)]
     pub variant: String,
 }
-implement_props_data!(PaperProps, "PaperProps");
+implement_props_data!(PaperProps);
 
 impl PaperProps {
+    #[allow(clippy::unnecessary_wraps)]
     fn default_frame() -> Option<ImageBoxFrame> {
         Some(2.0.into())
     }

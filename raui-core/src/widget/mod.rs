@@ -21,7 +21,7 @@ use std::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct WidgetIdDef(pub String);
+pub struct WidgetIdDef(pub String);
 
 #[derive(Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(try_from = "WidgetIdDef")]
@@ -197,71 +197,71 @@ impl WidgetLifeCycle {
 }
 
 pub fn setup(app: &mut Application) {
-    app.map_props::<()>("()");
-    app.map_props::<i8>("i8");
-    app.map_props::<i16>("i16");
-    app.map_props::<i32>("i32");
-    app.map_props::<i64>("i64");
-    app.map_props::<i128>("i128");
-    app.map_props::<u8>("u8");
-    app.map_props::<u16>("u16");
-    app.map_props::<u32>("u32");
-    app.map_props::<u64>("u64");
-    app.map_props::<u128>("u128");
-    app.map_props::<f32>("f32");
-    app.map_props::<f64>("f64");
-    app.map_props::<bool>("bool");
-    app.map_props::<String>("String");
-    app.map_props::<unit::content::ContentBoxItemLayout>("ContentBoxItemLayout");
-    app.map_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
-    app.map_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
-    app.map_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
-    app.map_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
-    app.map_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
-    app.map_props::<component::containers::horizontal_box::HorizontalBoxProps>(
+    app.register_props::<()>("()");
+    app.register_props::<i8>("i8");
+    app.register_props::<i16>("i16");
+    app.register_props::<i32>("i32");
+    app.register_props::<i64>("i64");
+    app.register_props::<i128>("i128");
+    app.register_props::<u8>("u8");
+    app.register_props::<u16>("u16");
+    app.register_props::<u32>("u32");
+    app.register_props::<u64>("u64");
+    app.register_props::<u128>("u128");
+    app.register_props::<f32>("f32");
+    app.register_props::<f64>("f64");
+    app.register_props::<bool>("bool");
+    app.register_props::<String>("String");
+    app.register_props::<unit::content::ContentBoxItemLayout>("ContentBoxItemLayout");
+    app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
+    app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
+    app.register_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
+    app.register_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
+    app.register_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
+    app.register_props::<component::containers::horizontal_box::HorizontalBoxProps>(
         "HorizontalBoxProps",
     );
-    app.map_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
-    app.map_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
-    app.map_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
-    app.map_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
-    app.map_props::<component::containers::wrap_box::WrapBoxProps>("WrapBoxProps");
-    app.map_props::<component::image_box::ImageBoxProps>("ImageBoxProps");
-    app.map_props::<component::space_box::SpaceBoxProps>("SpaceBoxProps");
-    app.map_props::<component::text_box::TextBoxProps>("TextBoxProps");
-    app.map_props::<component::interactive::button::ButtonProps>("ButtonProps");
-    app.map_props::<component::interactive::input_field::InputFieldProps>("InputFieldProps");
+    app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
+    app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
+    app.register_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
+    app.register_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
+    app.register_props::<component::containers::wrap_box::WrapBoxProps>("WrapBoxProps");
+    app.register_props::<component::image_box::ImageBoxProps>("ImageBoxProps");
+    app.register_props::<component::space_box::SpaceBoxProps>("SpaceBoxProps");
+    app.register_props::<component::text_box::TextBoxProps>("TextBoxProps");
+    app.register_props::<component::interactive::button::ButtonProps>("ButtonProps");
+    app.register_props::<component::interactive::input_field::InputFieldProps>("InputFieldProps");
 
-    app.map_component(
+    app.register_component(
         "content_box",
         component::containers::content_box::content_box,
     );
-    app.map_component("flex_box", component::containers::flex_box::flex_box);
-    app.map_component("grid_box", component::containers::grid_box::grid_box);
-    app.map_component(
+    app.register_component("flex_box", component::containers::flex_box::flex_box);
+    app.register_component("grid_box", component::containers::grid_box::grid_box);
+    app.register_component(
         "horizontal_box",
         component::containers::horizontal_box::horizontal_box,
     );
-    app.map_component("size_box", component::containers::size_box::size_box);
-    app.map_component("switch_box", component::containers::switch_box::switch_box);
-    app.map_component(
+    app.register_component("size_box", component::containers::size_box::size_box);
+    app.register_component("switch_box", component::containers::switch_box::switch_box);
+    app.register_component(
         "variant_box",
         component::containers::variant_box::variant_box,
     );
-    app.map_component(
+    app.register_component(
         "vertical_box",
         component::containers::vertical_box::vertical_box,
     );
-    app.map_component("wrap_box", component::containers::wrap_box::wrap_box);
-    app.map_component("image_box", component::image_box::image_box);
-    app.map_component("space_box", component::space_box::space_box);
-    app.map_component("text_box", component::text_box::text_box);
-    app.map_component("button", component::interactive::button::button);
-    app.map_component(
+    app.register_component("wrap_box", component::containers::wrap_box::wrap_box);
+    app.register_component("image_box", component::image_box::image_box);
+    app.register_component("space_box", component::space_box::space_box);
+    app.register_component("text_box", component::text_box::text_box);
+    app.register_component("button", component::interactive::button::button);
+    app.register_component(
         "input_field",
         component::interactive::input_field::input_field,
     );
-    app.map_component(
+    app.register_component(
         "input_field_content",
         component::interactive::input_field::input_field_content,
     );

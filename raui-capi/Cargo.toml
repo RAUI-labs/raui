@@ -1,6 +1,6 @@
 [package]
 name = "raui-capi"
-version = "0.20.2"
+version = "0.21.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI bindings for C language"
@@ -11,7 +11,7 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.20" }
+raui-core = { path = "../raui-core", version = "0.21" }
 lazy_static = "1.4"
 libc = "0.2"
 

@@ -5,19 +5,19 @@ pub mod space_box;
 pub mod text_box;
 
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         FnWidget,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct WidgetAlpha(pub Scalar);
-implement_props_data!(WidgetAlpha, "WidgetAlpha");
+implement_props_data!(WidgetAlpha);
 
 impl Default for WidgetAlpha {
     fn default() -> Self {
@@ -83,18 +83,18 @@ impl TryFrom<WidgetNode> for WidgetComponent {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WidgetComponentDef {
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub(crate) struct WidgetComponentPrefab {
     #[serde(default)]
     pub type_name: String,
     #[serde(default)]
     pub key: Option<String>,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
-    pub shared_props: Option<PropsDef>,
+    pub shared_props: Option<PrefabValue>,
     #[serde(default)]
-    pub listed_slots: Vec<WidgetNodeDef>,
+    pub listed_slots: Vec<WidgetNodePrefab>,
     #[serde(default)]
-    pub named_slots: HashMap<String, WidgetNodeDef>,
+    pub named_slots: HashMap<String, WidgetNodePrefab>,
 }

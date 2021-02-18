@@ -20,7 +20,7 @@ pub struct ButtonSettingsProps {
     #[serde(default)]
     pub notify: Option<WidgetId>,
 }
-implement_props_data!(ButtonSettingsProps, "ButtonSettingsProps");
+implement_props_data!(ButtonSettingsProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ButtonProps {
@@ -33,7 +33,7 @@ pub struct ButtonProps {
     #[serde(default)]
     pub text: Vec<TextChange>,
 }
-implement_props_data!(ButtonProps, "ButtonProps");
+implement_props_data!(ButtonProps);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextChange {

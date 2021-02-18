@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
         node::WidgetNode,
         unit::WidgetUnitData,
         utils::{Color, Rect, Transform},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom};
@@ -210,11 +210,11 @@ impl Into<WidgetNode> for ImageBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ImageBoxNodeDef {
+pub(crate) struct ImageBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
     pub width: ImageBoxSizeValue,
     #[serde(default)]

@@ -100,12 +100,12 @@ fn test_hello_world() {
     struct AppProps {
         pub index: usize,
     }
-    implement_props_data!(AppProps, "AppProps");
+    implement_props_data!(AppProps);
 
-    let v = Box::new(AppProps { index: 42 }) as Box<dyn PropsData>;
-    let s = serde_json::to_string(&v).unwrap();
-    println!("* SERIALIZED APP PROPS: {}", &s);
-    let d = serde_json::from_str::<Box<dyn PropsData>>(&s).unwrap();
+    let v = AppProps { index: 42 };
+    let s = v.to_prefab().unwrap();
+    println!("* SERIALIZED APP PROPS: {:?}", s);
+    let d = AppProps::from_prefab(s).unwrap();
     println!("* DESERIALIZED APP PROPS: {:?}", d);
 
     // convenient macro that produces widget component processing function.
@@ -135,7 +135,7 @@ fn test_hello_world() {
     struct ButtonState {
         pub pressed: bool,
     }
-    implement_props_data!(ButtonState, "ButtonState");
+    implement_props_data!(ButtonState);
 
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     enum ButtonAction {
@@ -315,11 +315,9 @@ fn test_hello_world() {
         ..Default::default()
     };
     let c = widget! { (image_box: {p})};
-    let s = application.node_to_serializable(c).unwrap();
-    let s = serde_yaml::to_string(&s).unwrap();
-    println!("* SERIALIZED COMPONENT: {}", s);
-    let d = serde_yaml::from_str::<WidgetNodeDef>(&s).unwrap();
-    let d = application.node_from_serializable(d).unwrap();
+    let s = application.serialize_node(&c).unwrap();
+    println!("* SERIALIZED COMPONENT: {:#?}", s);
+    let d = application.deserialize_node(s).unwrap();
     println!("* DESERIALIZED COMPONENT: {:#?}", d);
 
     let p = ContentBoxItemLayout {
@@ -332,11 +330,9 @@ fn test_hello_world() {
         ..Default::default()
     };
     let c = widget! { (image_box: {p})};
-    let s = application.node_to_serializable(c).unwrap();
-    let s = serde_yaml::to_value(&s).unwrap();
+    let s = application.serialize_node(&c).unwrap();
     println!("* SERIALIZED COMPONENT VALUE: {:#?}", s);
-    let d = serde_yaml::from_value::<WidgetNodeDef>(s).unwrap();
-    let d = application.node_from_serializable(d).unwrap();
+    let d = application.deserialize_node(s).unwrap();
     println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
 }
 

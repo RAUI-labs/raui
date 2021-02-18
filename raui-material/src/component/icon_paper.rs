@@ -21,7 +21,7 @@ pub struct IconPaperProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(IconPaperProps, "IconPaperProps");
+implement_props_data!(IconPaperProps);
 
 widget_component! {
     pub icon_paper(key, props, shared_props) {

@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         unit::{WidgetUnit, WidgetUnitData},
         utils::{Rect, Transform, Vec2},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -24,7 +24,7 @@ pub struct ContentBoxItemLayout {
     #[serde(default)]
     pub depth: Scalar,
 }
-implement_props_data!(ContentBoxItemLayout, "ContentBoxItemLayout");
+implement_props_data!(ContentBoxItemLayout);
 
 impl ContentBoxItemLayout {
     fn default_anchors() -> Rect {
@@ -76,14 +76,6 @@ pub struct ContentBoxItemNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ContentBoxItemNodeDef {
-    #[serde(default)]
-    pub slot: WidgetNodeDef,
-    #[serde(default)]
-    pub layout: ContentBoxItemLayout,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ContentBox {
     #[serde(default)]
     pub id: WidgetId,
@@ -100,7 +92,7 @@ impl WidgetUnitData for ContentBox {
         &self.id
     }
 
-    fn get_children<'a>(&'a self) -> Vec<&'a WidgetUnit> {
+    fn get_children(&self) -> Vec<&WidgetUnit> {
         self.items.iter().map(|item| &item.slot).collect()
     }
 }
@@ -155,15 +147,23 @@ impl Into<WidgetNode> for ContentBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ContentBoxNodeDef {
+pub(crate) struct ContentBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
-    pub items: Vec<ContentBoxItemNodeDef>,
+    pub items: Vec<ContentBoxItemNodePrefab>,
     #[serde(default)]
     pub clipping: bool,
     #[serde(default)]
     pub transform: Transform,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub(crate) struct ContentBoxItemNodePrefab {
+    #[serde(default)]
+    pub slot: WidgetNodePrefab,
+    #[serde(default)]
+    pub layout: ContentBoxItemLayout,
 }

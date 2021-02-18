@@ -8,6 +8,5 @@ publish = false
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 ggez = "0.5"
-raui-core = { version = "0.20", path = "../../raui-core" }
-raui-ggez-renderer = { version = "0.20", path = "../../raui-ggez-renderer" }
-typetag = "0.1"
+raui-core = { version = "0.21", path = "../../raui-core" }
+raui-ggez-renderer = { version = "0.21", path = "../../raui-ggez-renderer" }

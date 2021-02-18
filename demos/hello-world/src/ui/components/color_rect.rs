@@ -6,7 +6,7 @@ pub struct ColorRectProps {
     #[serde(default)]
     pub color: Color,
 }
-implement_props_data!(ColorRectProps, "ColorRectProps");
+implement_props_data!(ColorRectProps);
 
 widget_component! {
     pub color_rect(key, props) {

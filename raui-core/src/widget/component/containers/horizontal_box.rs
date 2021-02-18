@@ -18,7 +18,7 @@ pub struct HorizontalBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(HorizontalBoxProps, "HorizontalBoxProps");
+implement_props_data!(HorizontalBoxProps);
 
 widget_component! {
     pub horizontal_box(key, props, listed_slots) {

@@ -3,31 +3,31 @@ use crate::{
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{Message, MessageSender, Messages, Messenger},
-    props::{Props, PropsData, PropsDef},
+    props::{Props, PropsData, PropsRegistry},
     renderer::Renderer,
     signals::{Signal, SignalSender},
     state::{State, StateUpdate},
     widget::{
-        component::{WidgetComponent, WidgetComponentDef},
+        component::{WidgetComponent, WidgetComponentPrefab},
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         unit::{
             content::{
-                ContentBoxItemNode, ContentBoxItemNodeDef, ContentBoxNode, ContentBoxNodeDef,
+                ContentBoxItemNode, ContentBoxItemNodePrefab, ContentBoxNode, ContentBoxNodePrefab,
             },
-            flex::{FlexBoxItemNode, FlexBoxItemNodeDef, FlexBoxNode, FlexBoxNodeDef},
-            grid::{GridBoxItemNode, GridBoxItemNodeDef, GridBoxNode, GridBoxNodeDef},
-            image::{ImageBoxNode, ImageBoxNodeDef},
-            size::{SizeBoxNode, SizeBoxNodeDef},
-            text::{TextBoxNode, TextBoxNodeDef},
-            WidgetUnit, WidgetUnitNode, WidgetUnitNodeDef,
+            flex::{FlexBoxItemNode, FlexBoxItemNodePrefab, FlexBoxNode, FlexBoxNodePrefab},
+            grid::{GridBoxItemNode, GridBoxItemNodePrefab, GridBoxNode, GridBoxNodePrefab},
+            image::{ImageBoxNode, ImageBoxNodePrefab},
+            size::{SizeBoxNode, SizeBoxNodePrefab},
+            text::{TextBoxNode, TextBoxNodePrefab},
+            WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
         },
         FnWidget, FnWidgetUnmount, WidgetId, WidgetLifeCycle,
     },
-    Scalar,
+    Prefab, PrefabError, PrefabValue, Scalar,
 };
 use std::{
-    any::{Any, TypeId},
+    any::Any,
     collections::{HashMap, HashSet},
     convert::TryInto,
     sync::mpsc::{channel, Sender},
@@ -35,9 +35,14 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub enum ApplicationError {
-    PropsMappingByTypeNotFound(TypeId),
-    PropsMappingByNameNotFound(String),
+    Prefab(PrefabError),
     ComponentMappingNotFound(String),
+}
+
+impl From<PrefabError> for ApplicationError {
+    fn from(error: PrefabError) -> Self {
+        Self::Prefab(error)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -57,8 +62,7 @@ impl Default for InvalidationCause {
 
 pub struct Application {
     component_mappings: HashMap<String, FnWidget>,
-    props_mappings: HashMap<TypeId, String>,
-    props_mappings_table: HashMap<String, TypeId>,
+    props_registry: PropsRegistry,
     tree: WidgetNode,
     rendered_tree: WidgetUnit,
     layout: Layout,
@@ -85,8 +89,7 @@ impl Application {
     pub fn new() -> Self {
         Self {
             component_mappings: Default::default(),
-            props_mappings: Default::default(),
-            props_mappings_table: Default::default(),
+            props_registry: Default::default(),
             tree: Default::default(),
             rendered_tree: Default::default(),
             layout: Default::default(),
@@ -112,483 +115,47 @@ impl Application {
     }
 
     #[inline]
-    pub fn map_component(&mut self, type_name: &str, processor: FnWidget) {
+    pub fn register_component(&mut self, type_name: &str, processor: FnWidget) {
         self.component_mappings
             .insert(type_name.to_owned(), processor);
     }
 
     #[inline]
-    pub fn unmap_component(&mut self, type_name: &str) {
+    pub fn unregister_component(&mut self, type_name: &str) {
         self.component_mappings.remove(type_name);
     }
 
     #[inline]
-    pub fn map_props<T>(&mut self, type_name: &str)
+    pub fn register_props<T>(&mut self, name: &str)
     where
-        T: 'static + PropsData,
+        T: 'static + Prefab + PropsData,
     {
-        let t = TypeId::of::<T>();
-        self.props_mappings.insert(t, type_name.to_owned());
-        self.props_mappings_table.insert(type_name.to_owned(), t);
+        self.props_registry.register_factory::<T>(name);
     }
 
     #[inline]
-    pub fn unmap_props<T>(&mut self)
-    where
-        T: 'static + PropsData,
-    {
-        if let Some(name) = self.props_mappings.remove(&TypeId::of::<T>()) {
-            self.props_mappings_table.remove(&name);
-        }
+    pub fn unregister_factory(&mut self, name: &str) {
+        self.props_registry.unregister_factory(name);
     }
 
-    pub fn props_to_serializable(&self, props: Props) -> Result<PropsDef, ApplicationError> {
-        let props = props
-            .into_inner()
-            .into_iter()
-            .map(|(k, v)| match self.props_mappings.get(&k) {
-                Some(name) => Ok((name.to_owned(), v)),
-                None => Err(ApplicationError::PropsMappingByTypeNotFound(k)),
-            })
-            .collect::<Result<HashMap<_, _>, _>>()?;
-        Ok(PropsDef(props))
+    #[inline]
+    pub fn serialize_props(&self, props: &Props) -> Result<PrefabValue, PrefabError> {
+        self.props_registry.serialize(props)
     }
 
-    pub fn node_to_serializable(
-        &self,
-        node: WidgetNode,
-    ) -> Result<WidgetNodeDef, ApplicationError> {
-        Ok(match node {
-            WidgetNode::None => WidgetNodeDef::None,
-            WidgetNode::Component(v) => {
-                WidgetNodeDef::Component(self.component_to_serializable(v)?)
-            }
-            WidgetNode::Unit(v) => WidgetNodeDef::Unit(self.unit_to_serializable(v)?),
-        })
+    #[inline]
+    pub fn deserialize_props(&self, data: PrefabValue) -> Result<Props, PrefabError> {
+        self.props_registry.deserialize(data)
     }
 
-    pub fn component_to_serializable(
-        &self,
-        component: WidgetComponent,
-    ) -> Result<WidgetComponentDef, ApplicationError> {
-        let WidgetComponent {
-            type_name,
-            key,
-            props,
-            shared_props,
-            listed_slots,
-            named_slots,
-            ..
-        } = component;
-        if self.component_mappings.get(&type_name).is_none() {
-            return Err(ApplicationError::ComponentMappingNotFound(type_name));
-        }
-        let props = self.props_to_serializable(props)?;
-        let shared_props = match shared_props {
-            Some(props) => Some(self.props_to_serializable(props)?),
-            None => None,
-        };
-        let listed_slots = listed_slots
-            .into_iter()
-            .map(|node| self.node_to_serializable(node))
-            .collect::<Result<Vec<_>, _>>()?;
-        let named_slots = named_slots
-            .into_iter()
-            .map(|(key, node)| self.node_to_serializable(node).map(|node| (key, node)))
-            .collect::<Result<HashMap<_, _>, _>>()?;
-        Ok(WidgetComponentDef {
-            type_name,
-            key,
-            props,
-            shared_props,
-            listed_slots,
-            named_slots,
-        })
+    #[inline]
+    pub fn serialize_node(&self, data: &WidgetNode) -> Result<PrefabValue, ApplicationError> {
+        Ok(self.node_to_prefab(data)?.to_prefab()?)
     }
 
-    pub fn unit_to_serializable(
-        &self,
-        unit: WidgetUnitNode,
-    ) -> Result<WidgetUnitNodeDef, ApplicationError> {
-        Ok(match unit {
-            WidgetUnitNode::None => WidgetUnitNodeDef::None,
-            WidgetUnitNode::ContentBox(v) => {
-                let ContentBoxNode {
-                    id,
-                    props,
-                    items,
-                    clipping,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let ContentBoxItemNode { slot, layout } = item;
-                        self.node_to_serializable(slot)
-                            .map(|slot| ContentBoxItemNodeDef { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNodeDef::ContentBox(ContentBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    clipping,
-                    transform,
-                })
-            }
-            WidgetUnitNode::FlexBox(v) => {
-                let FlexBoxNode {
-                    id,
-                    props,
-                    items,
-                    direction,
-                    separation,
-                    wrap,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let FlexBoxItemNode { slot, layout } = item;
-                        self.node_to_serializable(slot)
-                            .map(|slot| FlexBoxItemNodeDef { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNodeDef::FlexBox(FlexBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    direction,
-                    separation,
-                    wrap,
-                    transform,
-                })
-            }
-            WidgetUnitNode::GridBox(v) => {
-                let GridBoxNode {
-                    id,
-                    props,
-                    items,
-                    cols,
-                    rows,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let GridBoxItemNode { slot, layout } = item;
-                        self.node_to_serializable(slot)
-                            .map(|slot| GridBoxItemNodeDef { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNodeDef::GridBox(GridBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    cols,
-                    rows,
-                    transform,
-                })
-            }
-            WidgetUnitNode::SizeBox(v) => {
-                let SizeBoxNode {
-                    id,
-                    props,
-                    slot,
-                    width,
-                    height,
-                    margin,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                let slot = Box::new(self.node_to_serializable(*slot)?);
-                WidgetUnitNodeDef::SizeBox(SizeBoxNodeDef {
-                    id,
-                    props,
-                    slot,
-                    width,
-                    height,
-                    margin,
-                    transform,
-                })
-            }
-            WidgetUnitNode::ImageBox(v) => {
-                let ImageBoxNode {
-                    id,
-                    props,
-                    width,
-                    height,
-                    content_keep_aspect_ratio,
-                    material,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                WidgetUnitNodeDef::ImageBox(ImageBoxNodeDef {
-                    id,
-                    props,
-                    width,
-                    height,
-                    content_keep_aspect_ratio,
-                    material,
-                    transform,
-                })
-            }
-            WidgetUnitNode::TextBox(v) => {
-                let TextBoxNode {
-                    id,
-                    props,
-                    text,
-                    width,
-                    height,
-                    alignment,
-                    direction,
-                    font,
-                    color,
-                    transform,
-                } = v;
-                let props = self.props_to_serializable(props)?;
-                WidgetUnitNodeDef::TextBox(TextBoxNodeDef {
-                    id,
-                    props,
-                    text,
-                    width,
-                    height,
-                    alignment,
-                    direction,
-                    font,
-                    color,
-                    transform,
-                })
-            }
-        })
-    }
-
-    pub fn props_from_serializable(&self, props: PropsDef) -> Result<Props, ApplicationError> {
-        let props = props
-            .0
-            .into_iter()
-            .map(|(k, v)| match self.props_mappings_table.get(&k) {
-                Some(typeid) => Ok((*typeid, v)),
-                None => Err(ApplicationError::PropsMappingByNameNotFound(k)),
-            })
-            .collect::<Result<HashMap<_, _>, _>>()?;
-        Ok(Props::from_raw(props))
-    }
-
-    pub fn node_from_serializable(
-        &self,
-        node: WidgetNodeDef,
-    ) -> Result<WidgetNode, ApplicationError> {
-        Ok(match node {
-            WidgetNodeDef::None => WidgetNode::None,
-            WidgetNodeDef::Component(v) => {
-                WidgetNode::Component(self.component_from_serializable(v)?)
-            }
-            WidgetNodeDef::Unit(v) => WidgetNode::Unit(self.unit_from_serializable(v)?),
-        })
-    }
-
-    pub fn component_from_serializable(
-        &self,
-        component: WidgetComponentDef,
-    ) -> Result<WidgetComponent, ApplicationError> {
-        let WidgetComponentDef {
-            type_name,
-            key,
-            props,
-            shared_props,
-            listed_slots,
-            named_slots,
-        } = component;
-        let processor = match self.component_mappings.get(&type_name) {
-            Some(processor) => *processor,
-            None => return Err(ApplicationError::ComponentMappingNotFound(type_name)),
-        };
-        let props = self.props_from_serializable(props)?;
-        let shared_props = match shared_props {
-            Some(props) => Some(self.props_from_serializable(props)?),
-            None => None,
-        };
-        let listed_slots = listed_slots
-            .into_iter()
-            .map(|node| self.node_from_serializable(node))
-            .collect::<Result<Vec<_>, _>>()?;
-        let named_slots = named_slots
-            .into_iter()
-            .map(|(key, node)| self.node_from_serializable(node).map(|node| (key, node)))
-            .collect::<Result<HashMap<_, _>, _>>()?;
-        Ok(WidgetComponent {
-            processor,
-            type_name,
-            key,
-            props,
-            shared_props,
-            listed_slots,
-            named_slots,
-        })
-    }
-
-    pub fn unit_from_serializable(
-        &self,
-        unit: WidgetUnitNodeDef,
-    ) -> Result<WidgetUnitNode, ApplicationError> {
-        Ok(match unit {
-            WidgetUnitNodeDef::None => WidgetUnitNode::None,
-            WidgetUnitNodeDef::ContentBox(v) => {
-                let ContentBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    clipping,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let ContentBoxItemNodeDef { slot, layout } = item;
-                        self.node_from_serializable(slot)
-                            .map(|slot| ContentBoxItemNode { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNode::ContentBox(ContentBoxNode {
-                    id,
-                    props,
-                    items,
-                    clipping,
-                    transform,
-                })
-            }
-            WidgetUnitNodeDef::FlexBox(v) => {
-                let FlexBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    direction,
-                    separation,
-                    wrap,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let FlexBoxItemNodeDef { slot, layout } = item;
-                        self.node_from_serializable(slot)
-                            .map(|slot| FlexBoxItemNode { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNode::FlexBox(FlexBoxNode {
-                    id,
-                    props,
-                    items,
-                    direction,
-                    separation,
-                    wrap,
-                    transform,
-                })
-            }
-            WidgetUnitNodeDef::GridBox(v) => {
-                let GridBoxNodeDef {
-                    id,
-                    props,
-                    items,
-                    cols,
-                    rows,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                let items = items
-                    .into_iter()
-                    .map(|item| {
-                        let GridBoxItemNodeDef { slot, layout } = item;
-                        self.node_from_serializable(slot)
-                            .map(|slot| GridBoxItemNode { slot, layout })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                WidgetUnitNode::GridBox(GridBoxNode {
-                    id,
-                    props,
-                    items,
-                    cols,
-                    rows,
-                    transform,
-                })
-            }
-            WidgetUnitNodeDef::SizeBox(v) => {
-                let SizeBoxNodeDef {
-                    id,
-                    props,
-                    slot,
-                    width,
-                    height,
-                    margin,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                let slot = Box::new(self.node_from_serializable(*slot)?);
-                WidgetUnitNode::SizeBox(SizeBoxNode {
-                    id,
-                    props,
-                    slot,
-                    width,
-                    height,
-                    margin,
-                    transform,
-                })
-            }
-            WidgetUnitNodeDef::ImageBox(v) => {
-                let ImageBoxNodeDef {
-                    id,
-                    props,
-                    width,
-                    height,
-                    content_keep_aspect_ratio,
-                    material,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                WidgetUnitNode::ImageBox(ImageBoxNode {
-                    id,
-                    props,
-                    width,
-                    height,
-                    content_keep_aspect_ratio,
-                    material,
-                    transform,
-                })
-            }
-            WidgetUnitNodeDef::TextBox(v) => {
-                let TextBoxNodeDef {
-                    id,
-                    props,
-                    text,
-                    width,
-                    height,
-                    alignment,
-                    direction,
-                    font,
-                    color,
-                    transform,
-                } = v;
-                let props = self.props_from_serializable(props)?;
-                WidgetUnitNode::TextBox(TextBoxNode {
-                    id,
-                    props,
-                    text,
-                    width,
-                    height,
-                    alignment,
-                    direction,
-                    font,
-                    color,
-                    transform,
-                })
-            }
-        })
+    #[inline]
+    pub fn deserialize_node(&self, data: PrefabValue) -> Result<WidgetNode, ApplicationError> {
+        self.node_from_prefab(WidgetNodePrefab::from_prefab(data)?)
     }
 
     #[inline]
@@ -1128,5 +695,376 @@ impl Application {
             _ => {}
         }
         unit.into()
+    }
+
+    fn node_to_prefab(&self, data: &WidgetNode) -> Result<WidgetNodePrefab, ApplicationError> {
+        Ok(match data {
+            WidgetNode::None => WidgetNodePrefab::None,
+            WidgetNode::Component(data) => {
+                WidgetNodePrefab::Component(self.component_to_prefab(data)?)
+            }
+            WidgetNode::Unit(data) => WidgetNodePrefab::Unit(self.unit_to_prefab(data)?),
+        })
+    }
+
+    fn component_to_prefab(
+        &self,
+        data: &WidgetComponent,
+    ) -> Result<WidgetComponentPrefab, ApplicationError> {
+        if self.component_mappings.contains_key(&data.type_name) {
+            Ok(WidgetComponentPrefab {
+                type_name: data.type_name.to_owned(),
+                key: data.key.clone(),
+                props: self.props_registry.serialize(&data.props)?,
+                shared_props: match &data.shared_props {
+                    Some(p) => Some(self.props_registry.serialize(p)?),
+                    None => None,
+                },
+                listed_slots: data
+                    .listed_slots
+                    .iter()
+                    .map(|v| self.node_to_prefab(v))
+                    .collect::<Result<_, _>>()?,
+                named_slots: data
+                    .named_slots
+                    .iter()
+                    .map(|(k, v)| Ok((k.to_owned(), self.node_to_prefab(v)?)))
+                    .collect::<Result<_, ApplicationError>>()?,
+            })
+        } else {
+            Err(ApplicationError::ComponentMappingNotFound(
+                data.type_name.to_owned(),
+            ))
+        }
+    }
+
+    fn unit_to_prefab(
+        &self,
+        data: &WidgetUnitNode,
+    ) -> Result<WidgetUnitNodePrefab, ApplicationError> {
+        Ok(match data {
+            WidgetUnitNode::None => WidgetUnitNodePrefab::None,
+            WidgetUnitNode::ContentBox(data) => {
+                WidgetUnitNodePrefab::ContentBox(self.content_box_to_prefab(data)?)
+            }
+            WidgetUnitNode::FlexBox(data) => {
+                WidgetUnitNodePrefab::FlexBox(self.flex_box_to_prefab(data)?)
+            }
+            WidgetUnitNode::GridBox(data) => {
+                WidgetUnitNodePrefab::GridBox(self.grid_box_to_prefab(data)?)
+            }
+            WidgetUnitNode::SizeBox(data) => {
+                WidgetUnitNodePrefab::SizeBox(self.size_box_to_prefab(data)?)
+            }
+            WidgetUnitNode::ImageBox(data) => {
+                WidgetUnitNodePrefab::ImageBox(self.image_box_to_prefab(data)?)
+            }
+            WidgetUnitNode::TextBox(data) => {
+                WidgetUnitNodePrefab::TextBox(self.text_box_to_prefab(data)?)
+            }
+        })
+    }
+
+    fn content_box_to_prefab(
+        &self,
+        data: &ContentBoxNode,
+    ) -> Result<ContentBoxNodePrefab, ApplicationError> {
+        Ok(ContentBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            items: data
+                .items
+                .iter()
+                .map(|v| {
+                    Ok(ContentBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&v.slot)?,
+                        layout: v.layout.clone(),
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            clipping: data.clipping,
+            transform: data.transform,
+        })
+    }
+
+    fn flex_box_to_prefab(
+        &self,
+        data: &FlexBoxNode,
+    ) -> Result<FlexBoxNodePrefab, ApplicationError> {
+        Ok(FlexBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            items: data
+                .items
+                .iter()
+                .map(|v| {
+                    Ok(FlexBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&v.slot)?,
+                        layout: v.layout.clone(),
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            direction: data.direction,
+            separation: data.separation,
+            wrap: data.wrap,
+            transform: data.transform,
+        })
+    }
+
+    fn grid_box_to_prefab(
+        &self,
+        data: &GridBoxNode,
+    ) -> Result<GridBoxNodePrefab, ApplicationError> {
+        Ok(GridBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            items: data
+                .items
+                .iter()
+                .map(|v| {
+                    Ok(GridBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&v.slot)?,
+                        layout: v.layout.clone(),
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            cols: data.cols,
+            rows: data.rows,
+            transform: data.transform,
+        })
+    }
+
+    fn size_box_to_prefab(
+        &self,
+        data: &SizeBoxNode,
+    ) -> Result<SizeBoxNodePrefab, ApplicationError> {
+        Ok(SizeBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            slot: Box::new(self.node_to_prefab(&data.slot)?),
+            width: data.width,
+            height: data.height,
+            margin: data.margin,
+            transform: data.transform,
+        })
+    }
+
+    fn image_box_to_prefab(
+        &self,
+        data: &ImageBoxNode,
+    ) -> Result<ImageBoxNodePrefab, ApplicationError> {
+        Ok(ImageBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            width: data.width,
+            height: data.height,
+            content_keep_aspect_ratio: data.content_keep_aspect_ratio,
+            material: data.material.clone(),
+            transform: data.transform,
+        })
+    }
+
+    fn text_box_to_prefab(
+        &self,
+        data: &TextBoxNode,
+    ) -> Result<TextBoxNodePrefab, ApplicationError> {
+        Ok(TextBoxNodePrefab {
+            id: data.id.to_owned(),
+            props: self.props_registry.serialize(&data.props)?,
+            text: data.text.clone(),
+            width: data.width,
+            height: data.height,
+            alignment: data.alignment,
+            direction: data.direction,
+            font: data.font.clone(),
+            color: data.color,
+            transform: data.transform,
+        })
+    }
+
+    fn node_from_prefab(&self, data: WidgetNodePrefab) -> Result<WidgetNode, ApplicationError> {
+        Ok(match data {
+            WidgetNodePrefab::None => WidgetNode::None,
+            WidgetNodePrefab::Component(data) => {
+                WidgetNode::Component(self.component_from_prefab(data)?)
+            }
+            WidgetNodePrefab::Unit(data) => WidgetNode::Unit(self.unit_from_prefab(data)?),
+        })
+    }
+
+    fn component_from_prefab(
+        &self,
+        data: WidgetComponentPrefab,
+    ) -> Result<WidgetComponent, ApplicationError> {
+        if let Some(processor) = self.component_mappings.get(&data.type_name) {
+            Ok(WidgetComponent {
+                processor: *processor,
+                type_name: data.type_name,
+                key: data.key,
+                props: self.deserialize_props(data.props)?,
+                shared_props: match data.shared_props {
+                    Some(p) => Some(self.deserialize_props(p)?),
+                    None => None,
+                },
+                listed_slots: data
+                    .listed_slots
+                    .into_iter()
+                    .map(|v| self.node_from_prefab(v))
+                    .collect::<Result<_, ApplicationError>>()?,
+                named_slots: data
+                    .named_slots
+                    .into_iter()
+                    .map(|(k, v)| Ok((k, self.node_from_prefab(v)?)))
+                    .collect::<Result<_, ApplicationError>>()?,
+            })
+        } else {
+            Err(ApplicationError::ComponentMappingNotFound(
+                data.type_name.clone(),
+            ))
+        }
+    }
+
+    fn unit_from_prefab(
+        &self,
+        data: WidgetUnitNodePrefab,
+    ) -> Result<WidgetUnitNode, ApplicationError> {
+        Ok(match data {
+            WidgetUnitNodePrefab::None => WidgetUnitNode::None,
+            WidgetUnitNodePrefab::ContentBox(data) => {
+                WidgetUnitNode::ContentBox(self.content_box_from_prefab(data)?)
+            }
+            WidgetUnitNodePrefab::FlexBox(data) => {
+                WidgetUnitNode::FlexBox(self.flex_box_from_prefab(data)?)
+            }
+            WidgetUnitNodePrefab::GridBox(data) => {
+                WidgetUnitNode::GridBox(self.grid_box_from_prefab(data)?)
+            }
+            WidgetUnitNodePrefab::SizeBox(data) => {
+                WidgetUnitNode::SizeBox(self.size_box_from_prefab(data)?)
+            }
+            WidgetUnitNodePrefab::ImageBox(data) => {
+                WidgetUnitNode::ImageBox(self.image_box_from_prefab(data)?)
+            }
+            WidgetUnitNodePrefab::TextBox(data) => {
+                WidgetUnitNode::TextBox(self.text_box_from_prefab(data)?)
+            }
+        })
+    }
+
+    fn content_box_from_prefab(
+        &self,
+        data: ContentBoxNodePrefab,
+    ) -> Result<ContentBoxNode, ApplicationError> {
+        Ok(ContentBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            items: data
+                .items
+                .into_iter()
+                .map(|v| {
+                    Ok(ContentBoxItemNode {
+                        slot: self.node_from_prefab(v.slot)?,
+                        layout: v.layout,
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            clipping: data.clipping,
+            transform: data.transform,
+        })
+    }
+
+    fn flex_box_from_prefab(
+        &self,
+        data: FlexBoxNodePrefab,
+    ) -> Result<FlexBoxNode, ApplicationError> {
+        Ok(FlexBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            items: data
+                .items
+                .into_iter()
+                .map(|v| {
+                    Ok(FlexBoxItemNode {
+                        slot: self.node_from_prefab(v.slot)?,
+                        layout: v.layout,
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            direction: data.direction,
+            separation: data.separation,
+            wrap: data.wrap,
+            transform: data.transform,
+        })
+    }
+
+    fn grid_box_from_prefab(
+        &self,
+        data: GridBoxNodePrefab,
+    ) -> Result<GridBoxNode, ApplicationError> {
+        Ok(GridBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            items: data
+                .items
+                .into_iter()
+                .map(|v| {
+                    Ok(GridBoxItemNode {
+                        slot: self.node_from_prefab(v.slot)?,
+                        layout: v.layout,
+                    })
+                })
+                .collect::<Result<_, ApplicationError>>()?,
+            cols: data.cols,
+            rows: data.rows,
+            transform: data.transform,
+        })
+    }
+
+    fn size_box_from_prefab(
+        &self,
+        data: SizeBoxNodePrefab,
+    ) -> Result<SizeBoxNode, ApplicationError> {
+        Ok(SizeBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            slot: Box::new(self.node_from_prefab(*data.slot)?),
+            width: data.width,
+            height: data.height,
+            margin: data.margin,
+            transform: data.transform,
+        })
+    }
+
+    fn image_box_from_prefab(
+        &self,
+        data: ImageBoxNodePrefab,
+    ) -> Result<ImageBoxNode, ApplicationError> {
+        Ok(ImageBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            width: data.width,
+            height: data.height,
+            content_keep_aspect_ratio: data.content_keep_aspect_ratio,
+            material: data.material,
+            transform: data.transform,
+        })
+    }
+
+    fn text_box_from_prefab(
+        &self,
+        data: TextBoxNodePrefab,
+    ) -> Result<TextBoxNode, ApplicationError> {
+        Ok(TextBoxNode {
+            id: data.id,
+            props: self.props_registry.deserialize(data.props)?,
+            text: data.text,
+            width: data.width,
+            height: data.height,
+            alignment: data.alignment,
+            direction: data.direction,
+            font: data.font,
+            color: data.color,
+            transform: data.transform,
+        })
     }
 }

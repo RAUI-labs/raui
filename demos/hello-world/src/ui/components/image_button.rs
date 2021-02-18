@@ -9,7 +9,7 @@ pub struct ImageButtonProps {
     #[serde(default)]
     pub horizontal_alignment: Scalar,
 }
-implement_props_data!(ImageButtonProps, "ImageButtonProps");
+implement_props_data!(ImageButtonProps);
 
 widget_component! {
     pub image_button(key, props) {

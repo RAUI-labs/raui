@@ -10,7 +10,7 @@ pub struct PopupProps {
     #[serde(default)]
     pub text: String,
 }
-implement_props_data!(PopupProps, "PopupProps");
+implement_props_data!(PopupProps);
 
 widget_hook! {
     use_popup(life_cycle) {

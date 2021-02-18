@@ -19,7 +19,7 @@ pub struct FlexBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(FlexBoxProps, "FlexBoxProps");
+implement_props_data!(FlexBoxProps);
 
 widget_component! {
     pub flex_box(id, props, listed_slots) {

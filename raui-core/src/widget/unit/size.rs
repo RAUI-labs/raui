@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         unit::{WidgetUnit, WidgetUnitData},
         utils::{Rect, Transform},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -45,7 +45,7 @@ impl WidgetUnitData for SizeBox {
         &self.id
     }
 
-    fn get_children<'a>(&'a self) -> Vec<&'a WidgetUnit> {
+    fn get_children(&self) -> Vec<&WidgetUnit> {
         vec![&self.slot]
     }
 }
@@ -102,13 +102,13 @@ impl Into<WidgetNode> for SizeBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct SizeBoxNodeDef {
+pub(crate) struct SizeBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
-    pub slot: Box<WidgetNodeDef>,
+    pub slot: Box<WidgetNodePrefab>,
     #[serde(default)]
     pub width: SizeBoxSizeValue,
     #[serde(default)]

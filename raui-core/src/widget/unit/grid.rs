@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         unit::{WidgetUnit, WidgetUnitData},
         utils::{IntRect, Rect, Transform},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -22,7 +22,7 @@ pub struct GridBoxItemLayout {
     #[serde(default)]
     pub vertical_align: Scalar,
 }
-implement_props_data!(GridBoxItemLayout, "GridBoxItemLayout");
+implement_props_data!(GridBoxItemLayout);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GridBoxItem {
@@ -51,14 +51,6 @@ pub struct GridBoxItemNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct GridBoxItemNodeDef {
-    #[serde(default)]
-    pub slot: WidgetNodeDef,
-    #[serde(default)]
-    pub layout: GridBoxItemLayout,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GridBox {
     #[serde(default)]
     pub id: WidgetId,
@@ -77,7 +69,7 @@ impl WidgetUnitData for GridBox {
         &self.id
     }
 
-    fn get_children<'a>(&'a self) -> Vec<&'a WidgetUnit> {
+    fn get_children(&self) -> Vec<&WidgetUnit> {
         self.items.iter().map(|item| &item.slot).collect()
     }
 }
@@ -135,17 +127,25 @@ impl Into<WidgetNode> for GridBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct GridBoxNodeDef {
+pub(crate) struct GridBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
-    pub items: Vec<GridBoxItemNodeDef>,
+    pub items: Vec<GridBoxItemNodePrefab>,
     #[serde(default)]
     pub cols: usize,
     #[serde(default)]
     pub rows: usize,
     #[serde(default)]
     pub transform: Transform,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub(crate) struct GridBoxItemNodePrefab {
+    #[serde(default)]
+    pub slot: WidgetNodePrefab,
+    #[serde(default)]
+    pub layout: GridBoxItemLayout,
 }

@@ -14,23 +14,23 @@ pub struct ItemCellProps {
     #[serde(default)]
     pub thin: bool,
 }
-implement_props_data!(ItemCellProps, "ItemCellProps");
+implement_props_data!(ItemCellProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemData {
     pub index: usize,
 }
-implement_props_data!(ItemData, "ItemData");
+implement_props_data!(ItemData);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemCellsProps {
     pub items: Vec<ItemCellProps>,
 }
-implement_props_data!(ItemCellsProps, "ItemCellsProps");
+implement_props_data!(ItemCellsProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct OwningInventoryProps(pub WidgetId);
-implement_props_data!(OwningInventoryProps, "OwningInventoryProps");
+implement_props_data!(OwningInventoryProps);
 
 widget_hook! {
     use_item_cell(life_cycle) {

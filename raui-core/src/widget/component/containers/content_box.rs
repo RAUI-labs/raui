@@ -15,7 +15,7 @@ pub struct ContentBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(ContentBoxProps, "ContentBoxProps");
+implement_props_data!(ContentBoxProps);
 
 widget_component! {
     pub content_box(id, props, listed_slots) {

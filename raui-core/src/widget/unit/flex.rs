@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
-        node::{WidgetNode, WidgetNodeDef},
+        node::{WidgetNode, WidgetNodePrefab},
         unit::{WidgetUnit, WidgetUnitData},
         utils::{Rect, Transform},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -26,7 +26,7 @@ pub struct FlexBoxItemLayout {
     #[serde(default)]
     pub align: Scalar,
 }
-implement_props_data!(FlexBoxItemLayout, "FlexBoxItemLayout");
+implement_props_data!(FlexBoxItemLayout);
 
 impl FlexBoxItemLayout {
     fn default_fill() -> Scalar {
@@ -78,14 +78,6 @@ impl TryFrom<FlexBoxItemNode> for FlexBoxItem {
 #[derive(Debug, Default, Clone)]
 pub struct FlexBoxItemNode {
     pub slot: WidgetNode,
-    pub layout: FlexBoxItemLayout,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct FlexBoxItemNodeDef {
-    #[serde(default)]
-    pub slot: WidgetNodeDef,
-    #[serde(default)]
     pub layout: FlexBoxItemLayout,
 }
 
@@ -142,7 +134,7 @@ impl WidgetUnitData for FlexBox {
         &self.id
     }
 
-    fn get_children<'a>(&'a self) -> Vec<&'a WidgetUnit> {
+    fn get_children(&self) -> Vec<&WidgetUnit> {
         self.items.iter().map(|item| &item.slot).collect()
     }
 }
@@ -203,13 +195,13 @@ impl Into<WidgetNode> for FlexBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct FlexBoxNodeDef {
+pub(crate) struct FlexBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
-    pub items: Vec<FlexBoxItemNodeDef>,
+    pub items: Vec<FlexBoxItemNodePrefab>,
     #[serde(default)]
     pub direction: FlexBoxDirection,
     #[serde(default)]
@@ -218,4 +210,12 @@ pub struct FlexBoxNodeDef {
     pub wrap: bool,
     #[serde(default)]
     pub transform: Transform,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub(crate) struct FlexBoxItemNodePrefab {
+    #[serde(default)]
+    pub slot: WidgetNodePrefab,
+    #[serde(default)]
+    pub layout: FlexBoxItemLayout,
 }

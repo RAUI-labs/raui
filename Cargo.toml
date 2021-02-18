@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.20.2"
+version = "0.21.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
@@ -34,43 +34,41 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.20" }
+raui-core = { path = "./raui-core", version = "0.21" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dependencies.raui-yaml-renderer]
 path = "./raui-yaml-renderer"
-version = "0.20"
+version = "0.21"
 optional = true
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_yaml = "0.8"
-typetag = "0.1"
 
 [workspace]
 members = [

@@ -11,7 +11,7 @@ pub struct SwitchPaperProps {
     #[serde(default)]
     pub size_level: usize,
 }
-implement_props_data!(SwitchPaperProps, "SwitchPaperProps");
+implement_props_data!(SwitchPaperProps);
 
 widget_component! {
     pub switch_paper(key, props, shared_props) {

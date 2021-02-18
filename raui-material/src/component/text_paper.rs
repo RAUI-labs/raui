@@ -19,7 +19,7 @@ pub struct TextPaperProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(TextPaperProps, "TextPaperProps");
+implement_props_data!(TextPaperProps);
 
 widget_component! {
     pub text_paper(key, props, shared_props) {

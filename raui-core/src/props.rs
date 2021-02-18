@@ -1,8 +1,77 @@
+use crate::{Prefab, PrefabError, PrefabValue};
 use serde::{Deserialize, Serialize};
 use std::{
     any::{type_name, Any, TypeId},
     collections::HashMap,
 };
+
+type PropsSerializeFactory = Box<dyn Fn(&dyn PropsData) -> Result<PrefabValue, PrefabError>>;
+type PropsDeserializeFactory = Box<dyn Fn(PrefabValue, &mut Props) -> Result<(), PrefabError>>;
+
+#[derive(Default)]
+pub struct PropsRegistry {
+    type_mapping: HashMap<TypeId, String>,
+    factories: HashMap<String, (PropsSerializeFactory, PropsDeserializeFactory)>,
+}
+
+impl PropsRegistry {
+    pub fn register_factory<T>(&mut self, name: &str)
+    where
+        T: 'static + Prefab + PropsData,
+    {
+        let s: PropsSerializeFactory = Box::new(move |data| {
+            if let Some(data) = data.as_any().downcast_ref::<T>() {
+                data.to_prefab()
+            } else {
+                Err(PrefabError::CouldNotSerialize(
+                    "Could not downcast to concrete type!".to_owned(),
+                ))
+            }
+        });
+        let d: PropsDeserializeFactory = Box::new(move |data, props| {
+            props.write(T::from_prefab(data)?);
+            Ok(())
+        });
+        self.factories.insert(name.to_owned(), (s, d));
+        self.type_mapping.insert(TypeId::of::<T>(), name.to_owned());
+    }
+
+    pub fn unregister_factory(&mut self, name: &str) {
+        self.factories.remove(name);
+    }
+
+    pub fn serialize(&self, props: &Props) -> Result<PrefabValue, PrefabError> {
+        let mut group = PropsGroupPrefab::default();
+        for (t, p) in &props.0 {
+            if let Some(name) = self.type_mapping.get(t) {
+                if let Some(factory) = self.factories.get(name) {
+                    group.data.insert(name.to_owned(), (factory.0)(p.as_ref())?);
+                }
+            } else {
+                return Err(PrefabError::CouldNotSerialize(
+                    "No type mapping found!".to_owned(),
+                ));
+            }
+        }
+        group.to_prefab()
+    }
+
+    pub fn deserialize(&self, data: PrefabValue) -> Result<Props, PrefabError> {
+        let data = PropsGroupPrefab::from_prefab(data)?;
+        let mut props = Props::default();
+        for (key, value) in data.data {
+            if let Some(factory) = self.factories.get(&key) {
+                (factory.1)(value, &mut props)?;
+            } else {
+                return Err(PrefabError::CouldNotDeserialize(format!(
+                    "Could not find properties factory: {:?}",
+                    key
+                )));
+            }
+        }
+        Ok(props)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum PropsError {
@@ -10,7 +79,42 @@ pub enum PropsError {
     HasNoDataOfType(String),
 }
 
-#[typetag::serde(tag = "type", content = "value")]
+impl Prefab for PrefabValue {}
+
+impl PropsData for PrefabValue
+where
+    Self: Clone,
+{
+    fn clone_props(&self) -> Box<dyn PropsData> {
+        Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct PropsGroupPrefab {
+    #[serde(default)]
+    pub data: HashMap<String, PrefabValue>,
+}
+
+impl Prefab for PropsGroupPrefab {}
+
+impl PropsData for PropsGroupPrefab
+where
+    Self: Clone,
+{
+    fn clone_props(&self) -> Box<dyn PropsData> {
+        Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
 pub trait PropsData: std::fmt::Debug + Send + Sync {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
@@ -22,17 +126,10 @@ impl Clone for Box<dyn PropsData> {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct PropsDef(pub HashMap<String, Box<dyn PropsData>>);
-
 #[derive(Debug, Default, Clone)]
 pub struct Props(HashMap<TypeId, Box<dyn PropsData>>);
 
 impl Props {
-    pub(crate) fn from_raw(map: HashMap<TypeId, Box<dyn PropsData>>) -> Self {
-        Self(map)
-    }
-
     pub fn new<T>(data: T) -> Self
     where
         T: 'static + PropsData,
@@ -167,8 +264,7 @@ impl From<&Self> for Props {
 
 #[macro_export]
 macro_rules! implement_props_data {
-    ($type_name:ty, $tag_name:literal) => {
-        #[typetag::serde(name = $tag_name)]
+    ($type_name:ty) => {
         impl $crate::props::PropsData for $type_name
         where
             Self: Clone,
@@ -181,21 +277,23 @@ macro_rules! implement_props_data {
                 self
             }
         }
+
+        impl $crate::Prefab for $type_name {}
     };
 }
 
-implement_props_data!((), "()");
-implement_props_data!(i8, "i8");
-implement_props_data!(i16, "i16");
-implement_props_data!(i32, "i32");
-implement_props_data!(i64, "i64");
-implement_props_data!(i128, "i128");
-implement_props_data!(u8, "u8");
-implement_props_data!(u16, "u16");
-implement_props_data!(u32, "u32");
-implement_props_data!(u64, "u64");
-implement_props_data!(u128, "u128");
-implement_props_data!(f32, "f32");
-implement_props_data!(f64, "f64");
-implement_props_data!(bool, "bool");
-implement_props_data!(String, "String");
+implement_props_data!(());
+implement_props_data!(i8);
+implement_props_data!(i16);
+implement_props_data!(i32);
+implement_props_data!(i64);
+implement_props_data!(i128);
+implement_props_data!(u8);
+implement_props_data!(u16);
+implement_props_data!(u32);
+implement_props_data!(u64);
+implement_props_data!(u128);
+implement_props_data!(f32);
+implement_props_data!(f64);
+implement_props_data!(bool);
+implement_props_data!(String);

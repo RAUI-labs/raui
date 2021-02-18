@@ -8,7 +8,7 @@ pub struct AppBarState {
     pub creating_task: bool,
     pub new_task_name: String,
 }
-implement_props_data!(AppBarState, "AppBarState");
+implement_props_data!(AppBarState);
 
 widget_hook! {
     use_app_bar(life_cycle) {

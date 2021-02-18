@@ -16,7 +16,7 @@ pub enum ThemeMode {
 }
 
 pub type ThemeModeProps = ThemeMode;
-implement_props_data!(ThemeModeProps, "ThemeModeProps");
+implement_props_data!(ThemeModeProps);
 
 impl Default for ThemeMode {
     fn default() -> Self {
@@ -29,13 +29,13 @@ pub struct AppState {
     pub theme: ThemeMode,
     pub tasks: Vec<TaskProps>,
 }
-implement_props_data!(AppState, "AppState");
+implement_props_data!(AppState);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps {
     pub id: WidgetId,
 }
-implement_props_data!(AppSharedProps, "AppSharedProps");
+implement_props_data!(AppSharedProps);
 
 #[derive(Debug, Clone)]
 pub enum AppMessage {

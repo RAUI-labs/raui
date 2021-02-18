@@ -276,24 +276,20 @@ application.interact(&mapping, &mut interactions);
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
-**NOTE: RAUI uses `typetag` crate for solving properties, you need to add it as a dependency along with raui crate!**
 ```toml
 [dependencies]
 raui = { version = "*", features = ["all"] }
-typetag = "*"
 ```
 
 - `raui-core` - Core module that contains all RAUI essential logic.
   ```toml
   [dependencies]
   raui-core = "*"
-  typetag = "*"
   ```
 - `raui-material` - Material Library module that contains themeable Material components for RAUI (`material` feature).
   ```toml
   [dependencies]
   raui-material = "*"
-  typetag = "*"
   ```
 - `raui-binary-renderer` - Renders RAUI widget tree into binary format (`binary` feature).
   ```toml

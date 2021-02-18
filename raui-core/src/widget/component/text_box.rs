@@ -30,7 +30,7 @@ pub struct TextBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(TextBoxProps, "TextBoxProps");
+implement_props_data!(TextBoxProps);
 
 widget_component! {
     pub text_box(id, props, shared_props) {

@@ -17,7 +17,7 @@ pub struct GridBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(GridBoxProps, "GridBoxProps");
+implement_props_data!(GridBoxProps);
 
 widget_component! {
     pub grid_box(id, props, listed_slots) {

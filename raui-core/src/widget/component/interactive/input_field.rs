@@ -14,7 +14,7 @@ pub struct InputFieldProps {
     pub cursor_position: usize,
     pub allow_new_line: bool,
 }
-implement_props_data!(InputFieldProps, "InputFieldProps");
+implement_props_data!(InputFieldProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct InputFieldMessage {

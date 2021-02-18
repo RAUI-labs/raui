@@ -6,7 +6,7 @@ pub struct VariantBoxProps {
     #[serde(default)]
     pub variant_name: Option<String>,
 }
-implement_props_data!(VariantBoxProps, "VariantBoxProps");
+implement_props_data!(VariantBoxProps);
 
 widget_component! {
     pub variant_box(props, named_slots) {

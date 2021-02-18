@@ -1,9 +1,10 @@
 use crate::{
     props::Props,
     widget::{
-        component::{WidgetComponent, WidgetComponentDef},
-        unit::{WidgetUnitNode, WidgetUnitNodeDef},
+        component::{WidgetComponent, WidgetComponentPrefab},
+        unit::{WidgetUnitNode, WidgetUnitNodePrefab},
     },
+    Prefab,
 };
 use serde::{Deserialize, Serialize};
 
@@ -110,16 +111,17 @@ impl From<WidgetUnitNode> for Box<WidgetNode> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum WidgetNodeDef {
+pub(crate) enum WidgetNodePrefab {
     None,
-    Component(WidgetComponentDef),
-    Unit(WidgetUnitNodeDef),
+    Component(WidgetComponentPrefab),
+    Unit(WidgetUnitNodePrefab),
 }
 
-impl Default for WidgetNodeDef {
+impl Default for WidgetNodePrefab {
     fn default() -> Self {
         Self::None
     }
 }
+
+impl Prefab for WidgetNodePrefab {}

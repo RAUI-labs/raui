@@ -19,7 +19,7 @@ pub struct SizeBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(SizeBoxProps, "SizeBoxProps");
+implement_props_data!(SizeBoxProps);
 
 widget_component! {
     pub size_box(id, props, named_slots) {

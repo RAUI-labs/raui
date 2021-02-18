@@ -10,7 +10,7 @@ pub struct WrapBoxProps {
     #[serde(default)]
     pub margin: Rect,
 }
-implement_props_data!(WrapBoxProps, "WrapBoxProps");
+implement_props_data!(WrapBoxProps);
 
 widget_component! {
     pub wrap_box(id, props, named_slots) {

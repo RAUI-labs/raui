@@ -150,7 +150,7 @@ impl HtmlRenderer {
         W: Write,
     {
         let styles = Self::stringify_styles_attr(styles)?;
-        let attribs = Self::stringify_attribs(attribs)?;
+        let attribs = Self::stringify_attribs(attribs);
         self.write_line(
             &format!(r#"<{} {} {}/>"#, name, styles, attribs),
             writer,
@@ -188,7 +188,7 @@ impl HtmlRenderer {
         W: Write,
     {
         let styles = Self::stringify_styles_attr(styles)?;
-        let attribs = Self::stringify_attribs(attribs)?;
+        let attribs = Self::stringify_attribs(attribs);
         self.write_line(
             &format!(r#"<{} {} {}>"#, name, styles, attribs),
             writer,
@@ -218,12 +218,12 @@ impl HtmlRenderer {
         Ok(result)
     }
 
-    fn stringify_attribs(attribs: &Attribs) -> Result<String, Error> {
-        Ok(attribs
+    fn stringify_attribs(attribs: &Attribs) -> String {
+        attribs
             .iter()
             .map(|(k, v)| format!(r#"{}="{}""#, k, v))
             .collect::<Vec<String>>()
-            .join(" "))
+            .join(" ")
     }
 
     fn write_document<W>(&self, writer: &mut W, tree: &WidgetUnit) -> Result<(), Error>

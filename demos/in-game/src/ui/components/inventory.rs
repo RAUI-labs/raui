@@ -10,7 +10,7 @@ pub struct InventoryState {
     pub index: usize,
     pub count: usize,
 }
-implement_props_data!(InventoryState, "InventoryState");
+implement_props_data!(InventoryState);
 
 impl Default for InventoryState {
     fn default() -> Self {

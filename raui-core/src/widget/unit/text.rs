@@ -1,12 +1,12 @@
 use crate::{
-    props::{Props, PropsDef},
+    props::Props,
     widget::{
         node::WidgetNode,
         unit::WidgetUnitData,
         utils::{Color, Transform},
         WidgetId,
     },
-    Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -165,11 +165,11 @@ impl Into<WidgetNode> for TextBoxNode {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct TextBoxNodeDef {
+pub(crate) struct TextBoxNodePrefab {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
-    pub props: PropsDef,
+    pub props: PrefabValue,
     #[serde(default)]
     pub text: String,
     #[serde(default)]

@@ -12,7 +12,7 @@ pub struct SpaceBoxProps {
     #[serde(default)]
     pub height: Scalar,
 }
-implement_props_data!(SpaceBoxProps, "SpaceBoxProps");
+implement_props_data!(SpaceBoxProps);
 
 widget_component! {
     pub space_box(id, props) {

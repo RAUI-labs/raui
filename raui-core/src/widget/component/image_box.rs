@@ -22,7 +22,7 @@ pub struct ImageBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(ImageBoxProps, "ImageBoxProps");
+implement_props_data!(ImageBoxProps);
 
 widget_component! {
     pub image_box(id, props, shared_props) {

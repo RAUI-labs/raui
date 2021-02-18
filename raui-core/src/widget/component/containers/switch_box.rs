@@ -17,7 +17,7 @@ pub struct SwitchBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(SwitchBoxProps, "SwitchBoxProps");
+implement_props_data!(SwitchBoxProps);
 
 widget_component! {
     pub switch_box(id, props, listed_slots) {
