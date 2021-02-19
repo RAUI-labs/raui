@@ -223,15 +223,23 @@ impl Default for Color {
 
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Transform {
+    /// Rectangle center of mass. Values in range: <0;1>
     #[serde(default)]
     pub pivot: Vec2,
+    /// Translation in rectangle fraction units. Values in range: <0;1>
+    #[serde(default)]
+    pub align: Vec2,
+    /// Translation in regular units.
     #[serde(default)]
     pub translation: Vec2,
+    /// Rotation in radian angle units.
     #[serde(default)]
     pub rotation: Scalar,
+    /// Scale in regular units.
     #[serde(default)]
     pub scale: Vec2,
-    // {angle X, angle Y}
+    /// Skewing in radian angle units.
+    /// {angle X, angle Y}
     #[serde(default)]
     pub skew: Vec2,
 }
@@ -240,6 +248,7 @@ impl Default for Transform {
     fn default() -> Self {
         Self {
             pivot: Default::default(),
+            align: Default::default(),
             translation: Default::default(),
             rotation: Default::default(),
             scale: Self::default_scale(),
