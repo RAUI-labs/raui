@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppProps {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub texts: Vec<String>,
 }
 implement_props_data!(AppProps);

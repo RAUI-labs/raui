@@ -18,6 +18,7 @@ pub struct ButtonSettingsProps {
     #[serde(default)]
     pub disabled: bool,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub notify: Option<WidgetId>,
 }
 implement_props_data!(ButtonSettingsProps);
@@ -31,6 +32,7 @@ pub struct ButtonProps {
     #[serde(default)]
     pub context: bool,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub text: Vec<TextChange>,
 }
 implement_props_data!(ButtonProps);

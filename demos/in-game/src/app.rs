@@ -15,8 +15,10 @@ use std::{collections::HashMap, fs::read_to_string};
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 struct AssetsManifest {
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub fonts: HashMap<String, String>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub images: HashMap<String, String>,
 }
 

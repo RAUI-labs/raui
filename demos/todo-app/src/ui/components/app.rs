@@ -26,7 +26,10 @@ impl Default for ThemeMode {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppState {
+    #[serde(default)]
     pub theme: ThemeMode,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tasks: Vec<TaskProps>,
 }
 implement_props_data!(AppState);

@@ -1,6 +1,6 @@
 [package]
 name = "raui-yaml-renderer"
-version = "0.21.1"
+version = "0.21.2"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for YAML format"

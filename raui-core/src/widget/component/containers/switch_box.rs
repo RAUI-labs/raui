@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct SwitchBoxProps {
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub active_index: Option<usize>,
     #[serde(default)]
     pub clipping: bool,

@@ -9,6 +9,8 @@ use std::str::FromStr;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct RonRenderer {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pretty: Option<PrettyConfig>,
 }
 

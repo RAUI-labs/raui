@@ -134,9 +134,13 @@ impl Default for CoordsMappingScaling {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CoordsMapping {
+    #[serde(default)]
     scale: Scalar,
+    #[serde(default)]
     offset: Vec2,
+    #[serde(default)]
     real_area: Rect,
+    #[serde(default)]
     virtual_area: Rect,
 }
 

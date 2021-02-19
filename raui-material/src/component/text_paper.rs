@@ -15,6 +15,7 @@ pub struct TextPaperProps {
     #[serde(default)]
     pub use_main_color: bool,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub alignment_override: Option<TextBoxAlignment>,
     #[serde(default)]
     pub transform: Transform,

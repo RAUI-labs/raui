@@ -113,14 +113,19 @@ pub struct ThemeProps {
     #[serde(default)]
     pub background_colors: ThemeColorsBundle,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub content_backgrounds: HashMap<String, ThemedImageMaterial>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub button_backgrounds: HashMap<String, ThemedButtonMaterial>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub icons_level_sizes: Vec<Scalar>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub text_variants: HashMap<String, ThemedTextMaterial>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub switch_variants: HashMap<String, ThemedSwitchMaterial>,
 }
 implement_props_data!(ThemeProps);

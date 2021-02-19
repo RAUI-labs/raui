@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct VariantBoxProps {
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub variant_name: Option<String>,
 }
 implement_props_data!(VariantBoxProps);

@@ -68,7 +68,11 @@ impl<'a> Animator<'a> {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct AnimatorStates(pub HashMap<String, AnimatorState>);
+pub struct AnimatorStates(
+    #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub HashMap<String, AnimatorState>,
+);
 
 impl AnimatorStates {
     pub fn new(name: String, animation: Animation) -> Self {
@@ -150,9 +154,15 @@ impl AnimatorStates {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AnimatorState {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     sheet: HashMap<String, AnimationPhase>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     messages: Vec<(Scalar, String)>,
+    #[serde(default)]
     time: Scalar,
+    #[serde(default)]
     duration: Scalar,
 }
 
@@ -275,9 +285,13 @@ impl AnimatorState {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 struct AnimationPhase {
+    #[serde(default)]
     pub start: Scalar,
+    #[serde(default)]
     pub duration: Scalar,
+    #[serde(default)]
     pub cached_time: Scalar,
+    #[serde(default)]
     pub cached_progress: Scalar,
 }
 
@@ -298,7 +312,9 @@ impl Default for Animation {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AnimatedValue {
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub duration: Scalar,
 }
 

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaperProps {
     #[serde(default = "PaperProps::default_frame")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub frame: Option<ImageBoxFrame>,
     #[serde(default)]
     pub variant: String,

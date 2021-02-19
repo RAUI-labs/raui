@@ -59,7 +59,11 @@ impl PropsRegistry {
     }
 
     pub fn deserialize(&self, data: PrefabValue) -> Result<Props, PrefabError> {
-        let data = PropsGroupPrefab::from_prefab(data)?;
+        let data = if data.is_null() {
+            PropsGroupPrefab::default()
+        } else {
+            PropsGroupPrefab::from_prefab(data)?
+        };
         let mut props = Props::default();
         for (key, value) in data.data {
             if let Some(factory) = self.factories.get(&key) {
@@ -99,6 +103,7 @@ where
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PropsGroupPrefab {
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub data: HashMap<String, PrefabValue>,
 }
 

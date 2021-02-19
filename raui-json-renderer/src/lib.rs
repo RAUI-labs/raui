@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct JsonRenderer {
+    #[serde(default)]
     pub pretty: bool,
 }
 

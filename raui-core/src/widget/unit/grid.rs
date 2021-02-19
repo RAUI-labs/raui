@@ -55,6 +55,7 @@ pub struct GridBox {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<GridBoxItem>,
     #[serde(default)]
     pub cols: usize,
@@ -133,6 +134,7 @@ pub(crate) struct GridBoxNodePrefab {
     #[serde(default)]
     pub props: PrefabValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<GridBoxItemNodePrefab>,
     #[serde(default)]
     pub cols: usize,

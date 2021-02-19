@@ -23,6 +23,8 @@ impl TaskProps {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct TasksProps {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tasks: Vec<TaskProps>,
 }
 implement_props_data!(TasksProps);

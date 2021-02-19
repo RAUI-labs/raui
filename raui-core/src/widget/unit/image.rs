@@ -13,9 +13,13 @@ use std::{collections::HashMap, convert::TryFrom};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxFrame {
+    #[serde(default)]
     pub source: Rect,
+    #[serde(default)]
     pub destination: Rect,
+    #[serde(default)]
     pub frame_only: bool,
+    #[serde(default)]
     pub frame_keep_aspect_ratio: bool,
 }
 
@@ -66,6 +70,7 @@ pub struct ImageBoxImage {
     #[serde(default)]
     pub id: String,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_rect: Option<Rect>,
     #[serde(default)]
     pub scaling: ImageBoxImageScaling,
@@ -100,6 +105,7 @@ pub struct ImageBoxProcedural {
     #[serde(default)]
     pub id: String,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub parameters: HashMap<String, Scalar>,
 }
 
@@ -145,6 +151,7 @@ pub struct ImageBox {
     #[serde(default)]
     pub height: ImageBoxSizeValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,
@@ -220,6 +227,7 @@ pub(crate) struct ImageBoxNodePrefab {
     #[serde(default)]
     pub height: ImageBoxSizeValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,

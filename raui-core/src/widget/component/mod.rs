@@ -88,13 +88,17 @@ pub(crate) struct WidgetComponentPrefab {
     #[serde(default)]
     pub type_name: String,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
     #[serde(default)]
     pub props: PrefabValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub shared_props: Option<PrefabValue>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub listed_slots: Vec<WidgetNodePrefab>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub named_slots: HashMap<String, WidgetNodePrefab>,
 }

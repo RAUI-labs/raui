@@ -25,7 +25,10 @@ use std::convert::TryFrom;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct WidgetUnitInspectionNode {
+    #[serde(default)]
     pub id: WidgetId,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<WidgetUnitInspectionNode>,
 }
 

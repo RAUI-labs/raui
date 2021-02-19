@@ -24,6 +24,8 @@ implement_props_data!(ItemData);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemCellsProps {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<ItemCellProps>,
 }
 implement_props_data!(ItemCellsProps);

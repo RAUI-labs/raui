@@ -16,6 +16,7 @@ pub struct ImageBoxProps {
     #[serde(default)]
     pub height: ImageBoxSizeValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content_keep_aspect_ratio: Option<ImageBoxAspectRatio>,
     #[serde(default)]
     pub material: ImageBoxMaterial,

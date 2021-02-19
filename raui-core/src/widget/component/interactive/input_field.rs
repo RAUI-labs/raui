@@ -10,8 +10,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct InputFieldProps {
+    #[serde(default)]
     pub text: String,
+    #[serde(default)]
     pub cursor_position: usize,
+    #[serde(default)]
     pub allow_new_line: bool,
 }
 implement_props_data!(InputFieldProps);

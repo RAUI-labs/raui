@@ -7,6 +7,7 @@ pub struct IconImage {
     #[serde(default)]
     pub id: String,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub source_rect: Option<Rect>,
     #[serde(default)]
     pub scaling: ImageBoxImageScaling,

@@ -33,14 +33,14 @@ pub trait Prefab: Serialize + DeserializeOwned {
     fn from_prefab(data: PrefabValue) -> Result<Self, PrefabError> {
         match serde_yaml::from_value(data) {
             Ok(result) => Ok(result),
-            Err(error) => Err(PrefabError::CouldNotSerialize(error.to_string())),
+            Err(error) => Err(PrefabError::CouldNotDeserialize(error.to_string())),
         }
     }
 
     fn to_prefab(&self) -> Result<PrefabValue, PrefabError> {
         match serde_yaml::to_value(self) {
             Ok(result) => Ok(result),
-            Err(error) => Err(PrefabError::CouldNotDeserialize(error.to_string())),
+            Err(error) => Err(PrefabError::CouldNotSerialize(error.to_string())),
         }
     }
 }

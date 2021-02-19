@@ -14,6 +14,7 @@ use std::convert::TryFrom;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlexBoxItemLayout {
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub basis: Option<Scalar>,
     #[serde(default = "FlexBoxItemLayout::default_fill")]
     pub fill: Scalar,
@@ -118,6 +119,7 @@ pub struct FlexBox {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<FlexBoxItem>,
     #[serde(default)]
     pub direction: FlexBoxDirection,
@@ -201,6 +203,7 @@ pub(crate) struct FlexBoxNodePrefab {
     #[serde(default)]
     pub props: PrefabValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<FlexBoxItemNodePrefab>,
     #[serde(default)]
     pub direction: FlexBoxDirection,

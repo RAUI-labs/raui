@@ -80,6 +80,7 @@ pub struct ContentBox {
     #[serde(default)]
     pub id: WidgetId,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<ContentBoxItem>,
     #[serde(default)]
     pub clipping: bool,
@@ -153,6 +154,7 @@ pub(crate) struct ContentBoxNodePrefab {
     #[serde(default)]
     pub props: PrefabValue,
     #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<ContentBoxItemNodePrefab>,
     #[serde(default)]
     pub clipping: bool,

@@ -110,6 +110,7 @@ fn test_hello_world() {
 
     #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct AppProps {
+        #[serde(default)]
         pub index: usize,
     }
     implement_props_data!(AppProps);
@@ -145,6 +146,7 @@ fn test_hello_world() {
 
     #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct ButtonState {
+        #[serde(default)]
         pub pressed: bool,
     }
     implement_props_data!(ButtonState);
@@ -274,6 +276,7 @@ fn test_hello_world() {
 
     let mut application = Application::new();
     application.setup(setup);
+    application.register_component("app", app);
     let tree = widget! {
         (app {
             // <named slot name> = ( <widget to put in a slot> )
@@ -344,6 +347,21 @@ fn test_hello_world() {
     let c = widget! { (image_box: {p})};
     let s = application.serialize_node(&c).unwrap();
     println!("* SERIALIZED COMPONENT VALUE: {:#?}", s);
+    let d = application.deserialize_node(s).unwrap();
+    println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
+
+    let s = serde_yaml::from_str::<serde_yaml::Value>(
+        r#"
+    Component:
+        type_name: app
+        key: app
+    "#,
+    )
+    .unwrap();
+    println!(
+        "* SERIALIZED COMPONENT VALUE: {}",
+        serde_yaml::to_string(&s).unwrap()
+    );
     let d = application.deserialize_node(s).unwrap();
     println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
 }
