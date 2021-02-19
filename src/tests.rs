@@ -4,6 +4,18 @@ use crate::prelude::*;
 use std::str::FromStr;
 
 #[test]
+fn test_app_threadsafe() {
+    fn foo<T>()
+    where
+        T: Send + Sync,
+    {
+        println!("* {} is threadsafe!", std::any::type_name::<T>());
+    }
+
+    foo::<Application>();
+}
+
+#[test]
 fn test_macro() {
     fn app(_context: WidgetContext) -> WidgetNode {
         widget! {()}

@@ -5,8 +5,10 @@ use std::{
     collections::HashMap,
 };
 
-type PropsSerializeFactory = Box<dyn Fn(&dyn PropsData) -> Result<PrefabValue, PrefabError>>;
-type PropsDeserializeFactory = Box<dyn Fn(PrefabValue, &mut Props) -> Result<(), PrefabError>>;
+type PropsSerializeFactory =
+    Box<dyn Fn(&dyn PropsData) -> Result<PrefabValue, PrefabError> + Send + Sync>;
+type PropsDeserializeFactory =
+    Box<dyn Fn(PrefabValue, &mut Props) -> Result<(), PrefabError> + Send + Sync>;
 
 #[derive(Default)]
 pub struct PropsRegistry {
