@@ -452,6 +452,7 @@ impl Application {
             processor,
             type_name,
             key,
+            idref,
             props,
             shared_props,
             listed_slots,
@@ -472,6 +473,9 @@ impl Application {
         path.push(key.clone());
         let id = WidgetId::new(type_name, path.clone());
         used_ids.insert(id.clone());
+        if let Some(mut idref) = idref {
+            idref.write(id.to_owned());
+        }
         let (state_sender, state_receiver) = channel();
         let (animation_sender, animation_receiver) = channel();
         let messages_list = match messages.remove(&id) {
@@ -901,6 +905,7 @@ impl Application {
                 processor: *processor,
                 type_name: data.type_name,
                 key: data.key,
+                idref: Default::default(),
                 props: self.deserialize_props(data.props)?,
                 shared_props: match data.shared_props {
                     Some(p) => Some(self.deserialize_props(p)?),

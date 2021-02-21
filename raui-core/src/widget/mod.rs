@@ -18,6 +18,7 @@ use std::{
     hash::{Hash, Hasher},
     ops::Deref,
     str::FromStr,
+    sync::{Arc, RwLock},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,6 +156,45 @@ impl Into<WidgetIdDef> for WidgetId {
     }
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct WidgetRefDef(pub Option<WidgetId>);
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(from = "WidgetRefDef")]
+#[serde(into = "WidgetRefDef")]
+pub struct WidgetRef(#[serde(skip)] Arc<RwLock<Option<WidgetId>>>);
+
+impl WidgetRef {
+    pub(crate) fn write(&mut self, id: WidgetId) {
+        if let Ok(mut data) = self.0.write() {
+            *data = Some(id);
+        }
+    }
+
+    pub fn read(&self) -> Option<WidgetId> {
+        if let Ok(data) = self.0.read() {
+            data.clone()
+        } else {
+            None
+        }
+    }
+}
+
+impl From<WidgetRefDef> for WidgetRef {
+    fn from(data: WidgetRefDef) -> Self {
+        WidgetRef(Arc::new(RwLock::new(data.0)))
+    }
+}
+
+impl Into<WidgetRefDef> for WidgetRef {
+    fn into(self) -> WidgetRefDef {
+        match self.0.read() {
+            Ok(data) => WidgetRefDef(data.clone()),
+            Err(_) => Default::default(),
+        }
+    }
+}
+
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
 pub type FnWidgetMountOrChange = fn(WidgetMountOrChangeContext);
 pub type FnWidgetUnmount = fn(WidgetUnmountContext);
@@ -282,6 +322,9 @@ macro_rules! widget {
             $(
                 #{ $key:expr }
             )?
+            $(
+                | { $idref:expr }
+            )?
             $type_id:path
             $(
                 : {$props:expr}
@@ -310,6 +353,12 @@ macro_rules! widget {
             let mut key = None;
             $(
                 key = Some($key.to_string());
+            )?
+            #[allow(unused_assignments)]
+            #[allow(unused_mut)]
+            let mut idref = None;
+            $(
+                idref = Some($crate::widget::WidgetRef::from($idref));
             )?
             let processor = $type_id;
             let type_name = stringify!($type_id).to_owned();
@@ -353,6 +402,7 @@ macro_rules! widget {
                 processor,
                 type_name,
                 key,
+                idref,
                 props,
                 shared_props,
                 named_slots,

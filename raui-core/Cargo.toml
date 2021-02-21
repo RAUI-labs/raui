@@ -1,6 +1,6 @@
 [package]
 name = "raui-core"
-version = "0.21.3"
+version = "0.22.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"

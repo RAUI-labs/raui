@@ -8,7 +8,7 @@ use crate::{
     props::Props,
     widget::{
         node::{WidgetNode, WidgetNodePrefab},
-        FnWidget,
+        FnWidget, WidgetRef,
     },
     PrefabValue, Scalar,
 };
@@ -36,6 +36,7 @@ pub struct WidgetComponent {
     pub processor: FnWidget,
     pub type_name: String,
     pub key: Option<String>,
+    pub idref: Option<WidgetRef>,
     pub props: Props,
     pub shared_props: Option<Props>,
     pub listed_slots: Vec<WidgetNode>,

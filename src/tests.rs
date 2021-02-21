@@ -4,7 +4,7 @@ use crate::prelude::*;
 use std::str::FromStr;
 
 #[test]
-fn test_app_threadsafe() {
+fn test_threadsafe() {
     fn foo<T>()
     where
         T: Send + Sync,
@@ -13,6 +13,7 @@ fn test_app_threadsafe() {
     }
 
     foo::<Application>();
+    foo::<WidgetRef>();
 }
 
 #[test]
@@ -576,4 +577,95 @@ fn test_components() {
     if application.layout(&mapping, &mut layout_engine).is_ok() {
         println!("* LAYOUT:\n{:#?}", application.layout_data());
     }
+}
+
+#[test]
+fn test_refs() {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+    struct AppState {
+        test_ref: WidgetRef,
+    }
+    implement_props_data!(AppState);
+
+    widget_hook! {
+        use_test(life_cycle) {
+            life_cycle.change(|context| {
+                for msg in context.messenger.messages {
+                    if msg.downcast_ref::<()>().is_some() {
+                        println!("Test got message");
+                        drop(context.signals.write(()));
+                    }
+                }
+            });
+        }
+    }
+
+    widget_component! {
+        test(key) [use_test] {
+            println!("Render test: {:?}", key);
+            widget!{()}
+        }
+    }
+
+    widget_hook! {
+        use_app(life_cycle) {
+            life_cycle.mount(|context| {
+                println!("Register app");
+                drop(context.state.write(AppState::default()));
+                drop(context.signals.write(true));
+            });
+
+            life_cycle.change(|context| {
+                for msg in context.messenger.messages {
+                    if msg.downcast_ref::<()>().is_some() {
+                        println!("App got message");
+                        let state = context.state.read_cloned_or_default::<AppState>();
+                        if let Some(id) = state.test_ref.read() {
+                            println!("App send message to: {:?}", id);
+                            context.messenger.write(id, ());
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    widget_component! {
+        app(key, state) [use_app] {
+            println!("Render app: {:?}", key);
+            let state = state.read_cloned_or_default::<AppState>();
+
+            widget! {
+                (#{key} | {state.test_ref} test)
+            }
+        }
+    }
+
+    let mut appid = WidgetId::default();
+    let mut application = Application::new();
+    application.apply(widget! { (#{"app"} app) });
+    println!("* Process");
+    application.forced_process();
+    for (id, msg) in application.signals() {
+        if let Some(msg) = msg.downcast_ref::<bool>() {
+            if *msg {
+                println!("Registered app: {:?}", id);
+                appid = id.to_owned();
+            }
+        }
+    }
+    println!("* Process");
+    application.forced_process();
+    println!("* Send message to app");
+    application.send_message(&appid, ());
+    println!("* Process");
+    application.forced_process();
+    println!("* Process");
+    application.forced_process();
+    assert!(application
+        .signals()
+        .iter()
+        .any(|(_, msg)| msg.downcast_ref::<()>().is_some()));
 }
