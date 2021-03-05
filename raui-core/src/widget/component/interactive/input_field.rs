@@ -1,122 +1,207 @@
 use crate::{
     unpack_named_slots, widget,
     widget::{
-        component::interactive::button::{button, ButtonProps, ButtonSettingsProps, TextChange},
-        WidgetId,
+        component::interactive::{
+            button::{use_button, ButtonProps},
+            navigation::{use_nav_item, use_nav_text_input, NavSignal, NavTextChange},
+        },
+        unit::area::AreaBoxNode,
+        WidgetId, WidgetIdOrRef,
     },
     widget_component, widget_hook,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct InputFieldProps {
-    #[serde(default)]
-    pub text: String,
-    #[serde(default)]
-    pub cursor_position: usize,
-    #[serde(default)]
-    pub allow_new_line: bool,
+fn is_false(v: &bool) -> bool {
+    !*v
 }
-implement_props_data!(InputFieldProps);
+
+fn is_zero(v: &usize) -> bool {
+    *v == 0
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct InputFieldMessage {
+pub struct TextInputProps {
     #[serde(default)]
+    #[serde(skip_serializing_if = "is_false")]
+    pub focused: bool,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero")]
+    pub cursor_position: usize,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_false")]
+    pub allow_new_line: bool,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub text: String,
+}
+implement_props_data!(TextInputProps);
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct TextInputNotifyProps(
+    #[serde(default)]
+    #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
+    pub WidgetIdOrRef,
+);
+implement_props_data!(TextInputNotifyProps);
+
+#[derive(Debug, Clone)]
+pub struct TextInputNotifyMessage {
     pub sender: WidgetId,
-    #[serde(default)]
-    pub data: InputFieldProps,
+    pub state: TextInputProps,
+}
+implement_message_data!(TextInputNotifyMessage);
+
+widget_hook! {
+    pub use_text_input_notified_state(life_cycle) {
+        life_cycle.change(|context| {
+            for msg in context.messenger.messages {
+                if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
+                    drop(context.state.write_with(msg.state.to_owned()));
+                }
+            }
+        });
+    }
 }
 
 widget_hook! {
-    use_input_field(life_cycle) {
+    pub use_text_input(life_cycle) [use_nav_text_input] {
         life_cycle.mount(|context| {
-            let props = context.props.read_cloned_or_default::<InputFieldProps>();
-            drop(context.state.write(props));
+            let mut data = context.props.read_cloned_or_default::<TextInputProps>();
+            data.focused = false;
+            if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
+                if let Some(to) = notify.0.read() {
+                    context.messenger.write(to, TextInputNotifyMessage {
+                        sender: context.id.to_owned(),
+                        state: data.to_owned(),
+                    });
+                }
+            }
+            drop(context.state.write_with(data));
         });
 
         life_cycle.change(|context| {
-            let ButtonSettingsProps { disabled, notify } = context.props.read_cloned_or_default();
-            let props = context.props.read_cloned_or_default::<ButtonProps>();
-            let mut data = match context.state.read::<InputFieldProps>() {
-                Ok(state) => state.clone(),
-                Err(_) => InputFieldProps::default(),
-            };
-            if !disabled && !props.text.is_empty() {
-                for change in &props.text {
-                    match change {
-                        TextChange::InsertCharacter(c) => {
-                            if !c.is_control() {
-                                data.cursor_position = data.cursor_position.min(data.text.len());
-                                data.text.insert(data.cursor_position, *c);
-                                data.cursor_position += 1;
+            let mut data = context.state.read_cloned_or_default::<TextInputProps>();
+            let mut dirty = false;
+            for msg in context.messenger.messages {
+                if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+                    match msg {
+                        NavSignal::FocusTextInput(idref) => {
+                            data.focused = idref.is_some();
+                            dirty = true;
+                        }
+                        NavSignal::TextChange(change) => if data.focused {
+                            match change {
+                                NavTextChange::InsertCharacter(c) => if !c.is_control() {
+                                    data.cursor_position = data.cursor_position.min(data.text.len());
+                                    data.text.insert(data.cursor_position, *c);
+                                    data.cursor_position += 1;
+                                }
+                                NavTextChange::MoveCursorLeft => if data.cursor_position > 0 {
+                                    data.cursor_position -= 1;
+                                }
+                                NavTextChange::MoveCursorRight => {
+                                    if data.cursor_position < data.text.len() {
+                                        data.cursor_position += 1;
+                                    }
+                                }
+                                NavTextChange::MoveCursorStart => data.cursor_position = 0,
+                                NavTextChange::MoveCursorEnd => {
+                                    data.cursor_position = data.text.len();
+                                }
+                                NavTextChange::DeleteLeft => {
+                                    if data.cursor_position > 0 && data.cursor_position <= data.text.len() {
+                                        data.cursor_position -= 1;
+                                        data.text.remove(data.cursor_position);
+                                    }
+                                }
+                                NavTextChange::DeleteRight => {
+                                    if data.cursor_position < data.text.len() {
+                                        data.text.remove(data.cursor_position);
+                                    }
+                                }
+                                NavTextChange::NewLine => if data.allow_new_line {
+                                    data.cursor_position = data.cursor_position.min(data.text.len());
+                                    data.text.insert(data.cursor_position, '\n');
+                                    data.cursor_position += 1;
+                                }
                             }
-                        }
-                        TextChange::MoveCursorLeft => if data.cursor_position > 0 {
-                            data.cursor_position -= 1;
-                        }
-                        TextChange::MoveCursorRight => if data.cursor_position < data.text.len() {
-                            data.cursor_position += 1;
-                        }
-                        TextChange::MoveCursorStart => data.cursor_position = 0,
-                        TextChange::MoveCursorEnd => data.cursor_position = data.text.len(),
-                        TextChange::DeleteLeft => {
-                            if data.cursor_position > 0 && data.cursor_position <= data.text.len() {
-                                data.cursor_position -= 1;
-                                data.text.remove(data.cursor_position);
-                            }
-                        }
-                        TextChange::DeleteRight => if data.cursor_position < data.text.len() {
-                            data.text.remove(data.cursor_position);
-                        }
-                        TextChange::NewLine => if data.allow_new_line {
                             data.cursor_position = data.cursor_position.min(data.text.len());
-                            data.text.insert(data.cursor_position, '\n');
-                            data.cursor_position += 1;
+                            dirty = true;
                         }
+                        _ => {}
                     }
-                    data.cursor_position = data.cursor_position.min(data.text.len());
                 }
-                if let Some(notify) = notify {
-                    context.messenger.write(notify, InputFieldMessage {
-                        sender: context.id.to_owned(),
-                        data: data.clone(),
-                    });
+            }
+            if dirty {
+                if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
+                    if let Some(to) = notify.0.read() {
+                        context.messenger.write(to, TextInputNotifyMessage {
+                            sender: context.id.to_owned(),
+                            state: data.to_owned(),
+                        });
+                    }
                 }
-                drop(context.state.write(data));
+                drop(context.state.write_with(data));
+            }
+        });
+    }
+}
+
+widget_hook! {
+    pub use_input_field(life_cycle) [use_button, use_text_input] {
+        life_cycle.change(|context| {
+            let focused = context.state.map_or_default::<TextInputProps, _, _>(|s| s.focused);
+            for msg in context.messenger.messages {
+                if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+                    match msg {
+                        NavSignal::Accept(true) => if !focused {
+                            context.signals.write(NavSignal::FocusTextInput(
+                                context.id.to_owned().into()
+                            ));
+                        }
+                        NavSignal::Cancel(true) => if focused {
+                            context.signals.write(NavSignal::FocusTextInput(().into()));
+                        }
+                        _ => {}
+                    }
+                }
             }
         });
     }
 }
 
 widget_component! {
-    pub input_field_content(props, state, named_slots) [use_input_field] {
+    pub text_input(id, state, named_slots) [use_nav_item, use_text_input] {
         unpack_named_slots!(named_slots => content);
-        if let Some(content_props) = content.props_mut() {
-            if let Ok(s) = state.read::<InputFieldProps>() {
-                content_props.write(s.clone());
-            };
-            if let Ok(p) = props.read::<ButtonProps>() {
-                content_props.write(p.clone());
-            };
-            if let Ok(p) = props.read::<ButtonSettingsProps>() {
-                content_props.write(p.clone());
-            };
+
+        if let Some(p) = content.props_mut() {
+            p.write(state.read_cloned_or_default::<TextInputProps>());
         }
 
-        content
+        widget! {{{
+            AreaBoxNode {
+                id: id.to_owned(),
+                slot: Box::new(content),
+            }
+        }}}
     }
 }
 
 widget_component! {
-    pub input_field(key, props, named_slots) {
+    pub input_field(id, state, named_slots) [use_nav_item, use_input_field] {
         unpack_named_slots!(named_slots => content);
 
-        widget! {
-            (#{key} button: {props.clone()} {
-                content = (input_field_content: {props.clone()} {
-                    content = {content}
-                })
-            })
+        if let Some(p) = content.props_mut() {
+            p.write(state.read_cloned_or_default::<ButtonProps>());
+            p.write(state.read_cloned_or_default::<TextInputProps>());
         }
+
+        widget! {{{
+            AreaBoxNode {
+                id: id.to_owned(),
+                slot: Box::new(content),
+            }
+        }}}
     }
 }

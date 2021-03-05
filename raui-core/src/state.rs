@@ -93,7 +93,50 @@ impl<'a> State<'a> {
     where
         T: 'static + PropsData + Send + Sync,
     {
-        self.update().write(data)
+        self.update.write(data)
+    }
+
+    pub fn write_with<T>(&self, data: T) -> Result<(), StateError>
+    where
+        T: 'static + PropsData + Send + Sync,
+    {
+        self.update.write(self.data.to_owned().with(data))
+    }
+
+    pub fn write_without<T>(&self) -> Result<(), StateError>
+    where
+        T: 'static + PropsData + Send + Sync,
+    {
+        self.update.write(self.data.to_owned().without::<T>())
+    }
+
+    pub fn mutate<T, F>(&self, mut f: F) -> Result<(), StateError>
+    where
+        T: 'static + PropsData + Send + Sync,
+        F: FnMut(&T) -> T,
+    {
+        match self.read() {
+            Ok(data) => {
+                let data = f(data);
+                self.write(data)
+            }
+            Err(error) => Err(error),
+        }
+    }
+
+    pub fn mutate_cloned<T, F>(&self, mut f: F) -> Result<(), StateError>
+    where
+        T: 'static + PropsData + Send + Sync + Clone,
+        F: FnMut(&mut T),
+    {
+        match self.read::<T>() {
+            Ok(data) => {
+                let mut data = data.clone();
+                f(&mut data);
+                self.write(data)
+            }
+            Err(error) => Err(error),
+        }
     }
 
     pub fn update(&self) -> &StateUpdate {

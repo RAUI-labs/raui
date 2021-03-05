@@ -265,6 +265,11 @@ impl HtmlRenderer {
     {
         match tree {
             WidgetUnit::None => {}
+            WidgetUnit::AreaBox(AreaBox { slot, .. }) => {
+                node!(self: div [writer] level={level} {
+                    self.write_node(writer, slot, level)?;
+                } (writer, level));
+            }
             WidgetUnit::ContentBox(ContentBox { items, .. }) => {
                 node!(self: div [writer] level={level} {
                     for item in items {

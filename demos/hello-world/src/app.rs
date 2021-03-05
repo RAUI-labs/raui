@@ -39,7 +39,8 @@ impl App {
             })
         };
         ui.apply(tree);
-        let ui_interactions = GgezInteractionsEngine::with_capacity(32, 1024);
+        let mut ui_interactions = GgezInteractionsEngine::with_capacity(1024, 32, 32, 32, 16);
+        ui_interactions.engine.deselect_when_no_button_found = true;
         Self {
             ui,
             ui_interactions,
@@ -68,6 +69,7 @@ impl EventHandler for App {
         self.ui
             .interact(&mut self.ui_interactions)
             .expect("Could not interact with UI");
+        self.ui.consume_signals();
         Ok(())
     }
 
@@ -75,14 +77,21 @@ impl EventHandler for App {
         self.ui_interactions.text_input_event(character);
     }
 
-    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, keymods: KeyMods, _: bool) {
-        if keycode == KeyCode::Escape {
-            ggez::event::quit(ctx);
-        }
-        self.ui_interactions.key_down_event(keycode);
+    fn key_down_event(&mut self, _: &mut Context, keycode: KeyCode, keymods: KeyMods, _: bool) {
+        self.ui_interactions.key_down_event(keycode, keymods);
         if keycode == KeyCode::P && keymods.contains(KeyMods::CTRL) {
             println!("LAYOUT: {:#?}", self.ui.layout_data());
+            if keymods.contains(KeyMods::SHIFT) {
+                println!("INTERACTIONS: {:#?}", self.ui_interactions);
+            }
         }
+    }
+
+    fn key_up_event(&mut self, ctx: &mut Context, keycode: KeyCode, _: KeyMods) {
+        if keycode == KeyCode::Q && self.ui_interactions.engine.focused_text_input().is_none() {
+            ggez::event::quit(ctx);
+        }
+        self.ui_interactions.key_up_event(keycode);
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

@@ -157,6 +157,7 @@ fn test_hello_world() {
         Pressed,
         Released,
     }
+    implement_message_data!(ButtonAction);
 
     widget_hook! {
         use_empty(life_cycle) {
@@ -193,7 +194,7 @@ fn test_hello_world() {
             life_cycle.change(|context| {
                 println!("* BUTTON CHANGED: {}", context.id.key());
                 for msg in context.messenger.messages {
-                    if let Some(msg) = msg.downcast_ref::<ButtonAction>() {
+                    if let Some(msg) = msg.as_any().downcast_ref::<ButtonAction>() {
                         let pressed = match msg {
                             ButtonAction::Pressed => true,
                             ButtonAction::Released => false,
@@ -216,7 +217,7 @@ fn test_hello_world() {
             println!("* PROCESS BUTTON: {}", key);
 
             widget!{
-                (#{key} text: {props})
+                (#{key} text: {props.clone()})
             }
         }
     }
@@ -593,7 +594,7 @@ fn test_refs() {
         use_test(life_cycle) {
             life_cycle.change(|context| {
                 for msg in context.messenger.messages {
-                    if msg.downcast_ref::<()>().is_some() {
+                    if msg.as_any().downcast_ref::<()>().is_some() {
                         println!("Test got message");
                         drop(context.signals.write(()));
                     }
@@ -619,7 +620,7 @@ fn test_refs() {
 
             life_cycle.change(|context| {
                 for msg in context.messenger.messages {
-                    if msg.downcast_ref::<()>().is_some() {
+                    if msg.as_any().downcast_ref::<()>().is_some() {
                         println!("App got message");
                         let state = context.state.read_cloned_or_default::<AppState>();
                         if let Some(id) = state.test_ref.read() {
@@ -649,7 +650,7 @@ fn test_refs() {
     println!("* Process");
     application.forced_process();
     for (id, msg) in application.signals() {
-        if let Some(msg) = msg.downcast_ref::<bool>() {
+        if let Some(msg) = msg.as_any().downcast_ref::<bool>() {
             if *msg {
                 println!("Registered app: {:?}", id);
                 appid = id.to_owned();
@@ -667,5 +668,5 @@ fn test_refs() {
     assert!(application
         .signals()
         .iter()
-        .any(|(_, msg)| msg.downcast_ref::<()>().is_some()));
+        .any(|(_, msg)| msg.as_any().downcast_ref::<()>().is_some()));
 }

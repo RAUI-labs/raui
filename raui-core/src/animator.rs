@@ -320,6 +320,7 @@ pub struct AnimatedValue {
 
 #[derive(Debug, Default, Clone)]
 pub struct AnimationMessage(pub String);
+implement_message_data!(AnimationMessage);
 
 #[cfg(test)]
 mod tests {
@@ -359,6 +360,7 @@ mod tests {
                 .try_recv()
                 .unwrap()
                 .1
+                .as_any()
                 .downcast_ref::<AnimationMessage>()
                 .unwrap()
         );

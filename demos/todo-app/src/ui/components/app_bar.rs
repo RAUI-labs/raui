@@ -18,8 +18,8 @@ widget_hook! {
 
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
-                    if msg.action == ButtonAction::TriggerStart {
+                if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                    if msg.trigger_start() {
                         match msg.sender.key() {
                             "theme" => {
                                 let id = context
@@ -59,11 +59,10 @@ widget_hook! {
                             _ => {}
                         }
                     }
-                }
-                if let Some(msg) = msg.downcast_ref::<InputFieldMessage>() {
+                } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
                     drop(context.state.write(AppBarState {
                         creating_task: true,
-                        new_task_name: msg.data.text.to_owned(),
+                        new_task_name: msg.state.text.to_owned(),
                     }));
                 }
             }
@@ -100,21 +99,18 @@ widget_component! {
                 bottom: 6.0,
             },
             ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(SizeBoxProps {
-            width: SizeBoxSizeValue::Fill,
-            height: SizeBoxSizeValue::Fill,
-            ..Default::default()
-        });
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()))
+        .with(TextInputNotifyProps(id.to_owned().into()));
         let theme_props = Props::new(FlexBoxItemLayout {
             fill: 0.0,
             grow: 0.0,
             shrink: 0.0,
             align: 0.5,
             ..Default::default()
-        }).with(IconPaperProps {
+        })
+        .with(IconPaperProps {
             image: IconImage {
                 id: if theme_mode == ThemeModeProps::Dark {
                     "icon-light-mode".to_owned()
@@ -125,53 +121,55 @@ widget_component! {
             },
             size_level: 2,
             ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(ThemedWidgetProps {
+        })
+        .with(ThemedWidgetProps {
             color: ThemeColor::Secondary,
             variant: ThemeVariant::ContentOnly,
-        });
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()));
         let save_props = Props::new(FlexBoxItemLayout {
             fill: 0.0,
             grow: 0.0,
             shrink: 0.0,
             align: 0.5,
             ..Default::default()
-        }).with(IconPaperProps {
+        })
+        .with(IconPaperProps {
             image: IconImage {
                 id: "icon-save".to_owned(),
                 ..Default::default()
             },
             size_level: 2,
             ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(ThemedWidgetProps {
+        })
+        .with(ThemedWidgetProps {
             color: ThemeColor::Secondary,
             variant: ThemeVariant::ContentOnly,
-        });
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()));
         let create_props = Props::new(FlexBoxItemLayout {
             fill: 0.0,
             grow: 0.0,
             shrink: 0.0,
             align: 0.5,
             ..Default::default()
-        }).with(IconPaperProps {
+        })
+        .with(IconPaperProps {
             image: IconImage {
                 id: "icon-add".to_owned(),
                 ..Default::default()
             },
             size_level: 2,
             ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(ThemedWidgetProps {
+        })
+        .with(ThemedWidgetProps {
             color: ThemeColor::Secondary,
             variant: ThemeVariant::ContentOnly,
-        });
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()));
         let creating_task = match state.read::<AppBarState>() {
             Ok(state) => state.creating_task,
             Err(_) => false,

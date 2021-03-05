@@ -5,9 +5,9 @@ use crate::ui::components::{
 use raui_core::prelude::*;
 
 widget_component! {
-    pub content(key, props) {
+    pub content(key, props, shared_props) {
         let props0 = Props::new(ImageButtonProps {
-            id: "cat".to_owned(),
+            image: "cat".to_owned(),
             horizontal_alignment: 1.0,
         })
         .with(GridBoxItemLayout {
@@ -23,10 +23,6 @@ widget_component! {
                 top: 8.0,
                 bottom: 8.0,
             },
-            ..Default::default()
-        }).with(SizeBoxProps {
-            width: SizeBoxSizeValue::Fill,
-            height: SizeBoxSizeValue::Fill,
             ..Default::default()
         });
 
@@ -50,7 +46,7 @@ widget_component! {
         });
 
         let props2 = Props::new(ImageButtonProps {
-            id: "cats".to_owned(),
+            image: "cats".to_owned(),
             horizontal_alignment: 0.5,
         })
         .with(GridBoxItemLayout {
@@ -66,10 +62,6 @@ widget_component! {
                 top: 8.0,
                 bottom: 8.0,
             },
-            ..Default::default()
-        }).with(SizeBoxProps {
-            width: SizeBoxSizeValue::Fill,
-            height: SizeBoxSizeValue::Fill,
             ..Default::default()
         });
 

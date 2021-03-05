@@ -38,8 +38,8 @@ widget_hook! {
     use_item_cell(life_cycle) {
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
-                    if msg.action == ButtonAction::TriggerStart {
+                if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                    if msg.trigger_start() {
                         drop(context.animator.change("", Some(Animation::Value(AnimatedValue {
                             name: "click".to_owned(),
                             duration: 0.15,
@@ -79,7 +79,10 @@ widget_hook! {
 widget_component! {
     pub item_cell(id, key, props, animator) [use_item_cell] {
         let ItemCellProps { image, thin } = props.read_cloned_or_default();
-        let button_props = props.clone().with(SizeBoxProps {
+        let button_props = props.clone()
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()));
+        let size_props = SizeBoxProps {
             width: SizeBoxSizeValue::Exact(if thin { 18.0 } else { 24.0 }),
             height: SizeBoxSizeValue::Exact(24.0),
             margin: Rect {
@@ -89,10 +92,7 @@ widget_component! {
                 bottom: 2.0,
             },
             .. Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        });
+        };
         let panel_props = props.clone().with(PaperProps {
             variant: "cell".to_owned(),
             frame: None,
@@ -102,7 +102,9 @@ widget_component! {
         if image.is_empty() {
             widget! {
                 (#{key} button: {button_props} {
-                    content = (#{"panel"} component: {panel_props})
+                    content = (#{"resize"} size_box: {size_props} {
+                        content = (#{"panel"} component: {panel_props})
+                    })
                 })
             }
         } else {
@@ -134,9 +136,11 @@ widget_component! {
 
             widget! {
                 (#{key} button: {button_props} {
-                    content = (#{"panel"} component: {panel_props} [
-                        (#{"icon"} image_box: {image_props})
-                    ])
+                    content = (#{"resize"} size_box: {size_props} {
+                        content = (#{"panel"} component: {panel_props} [
+                            (#{"icon"} image_box: {image_props})
+                        ])
+                    })
                 })
             }
         }

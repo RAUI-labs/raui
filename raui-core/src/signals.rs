@@ -1,7 +1,10 @@
-use crate::widget::WidgetId;
-use std::{any::Any, sync::mpsc::Sender};
+use crate::{
+    messenger::{Message, MessageData},
+    widget::WidgetId,
+};
+use std::sync::mpsc::Sender;
 
-pub type Signal = (WidgetId, Box<dyn Any + Send + Sync>);
+pub type Signal = (WidgetId, Box<dyn MessageData>);
 
 #[derive(Clone)]
 pub struct SignalSender {
@@ -16,20 +19,20 @@ impl SignalSender {
 
     pub fn write<T>(&self, message: T) -> bool
     where
-        T: 'static + Any + Send + Sync,
+        T: 'static + MessageData,
     {
         self.sender
             .send((self.id.clone(), Box::new(message)))
             .is_ok()
     }
 
-    pub fn write_raw(&self, message: Box<dyn Any + Send + Sync>) -> bool {
+    pub fn write_raw(&self, message: Message) -> bool {
         self.sender.send((self.id.clone(), message)).is_ok()
     }
 
     pub fn write_raw_all<I>(&self, messages: I)
     where
-        I: IntoIterator<Item = Box<dyn Any + Send + Sync>>,
+        I: IntoIterator<Item = Message>,
     {
         for data in messages {
             drop(self.sender.send((self.id.clone(), data)));

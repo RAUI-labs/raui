@@ -16,8 +16,8 @@ widget_hook! {
     use_popup(life_cycle) {
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
-                    if msg.action == ButtonAction::TriggerStart {
+                if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                    if msg.trigger_start() {
                         let id = context
                             .shared_props
                             .read_cloned_or_default::<AppSharedProps>()
@@ -33,18 +33,12 @@ widget_hook! {
 widget_component! {
     pub popup(id, key, props) [use_popup] {
         let PopupProps { index, text } = props.read_cloned_or_default::<PopupProps>();
-        let button_props = Props::new(SizeBoxProps {
-            width: SizeBoxSizeValue::Fill,
-            height: SizeBoxSizeValue::Fill,
-            ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        });
+        let button_props = Props::new(NavItemActive).with(ButtonNotifyProps(id.to_owned().into()));
         let panel_props = props.clone().with(PaperProps {
             frame: None,
             ..Default::default()
-        }).with(VerticalBoxProps {
+        })
+        .with(VerticalBoxProps {
             separation: 10.0,
             ..Default::default()
         });
@@ -56,7 +50,8 @@ widget_component! {
                 ..Default::default()
             }),
             ..Default::default()
-        }).with(FlexBoxItemLayout {
+        })
+        .with(FlexBoxItemLayout {
             grow: 0.0,
             shrink: 0.0,
             fill: 1.0,

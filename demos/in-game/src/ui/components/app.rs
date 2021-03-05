@@ -31,12 +31,13 @@ pub enum AppMessage {
     ShowPopup(usize),
     ClosePopup,
 }
+implement_message_data!(AppMessage);
 
 widget_hook! {
     use_app(life_cycle) {
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<AppMessage>() {
+                if let Some(msg) = msg.as_any().downcast_ref::<AppMessage>() {
                     match msg {
                         AppMessage::ShowPopup(index) => {
                             drop(context.state.write(AppState {
@@ -56,9 +57,9 @@ widget_hook! {
 }
 
 widget_component! {
-    pub app(id, key, props, state) [use_app] {
+    pub app(id, key, props, state) [use_nav_container_active, use_app] {
         let shared_props = Props::new(AppSharedProps(id.to_owned())).with(new_theme());
-        let miniregister_props = ContentBoxItemLayout {
+        let minimap_props = ContentBoxItemLayout {
             anchors: Rect {
                 left: 1.0,
                 right: 1.0,
@@ -129,7 +130,7 @@ widget_component! {
         };
 
         widget!{(#{key} content_box: {props.clone()} | {shared_props} [
-            (#{"minimap"} minimap: {miniregister_props})
+            (#{"minimap"} minimap: {minimap_props})
             (#{"inventory"} inventory: {inventory_props})
             {popup}
         ])}

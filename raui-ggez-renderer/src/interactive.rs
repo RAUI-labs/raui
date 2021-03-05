@@ -1,5 +1,8 @@
 use ggez::{
-    input::{keyboard::KeyCode, mouse},
+    input::{
+        keyboard::{KeyCode, KeyMods},
+        mouse,
+    },
     Context,
 };
 use raui_core::{
@@ -11,11 +14,14 @@ use raui_core::{
         InteractionsEngine,
     },
     layout::CoordsMapping,
-    widget::{component::interactive::button::TextChange, utils::Vec2},
+    widget::{
+        component::interactive::navigation::{NavSignal, NavTextChange},
+        utils::Vec2,
+    },
     Scalar,
 };
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct GgezInteractionsEngine {
     pub engine: DefaultInteractionsEngine,
     pointer_position: (Scalar, Scalar),
@@ -28,9 +34,21 @@ impl GgezInteractionsEngine {
         Self::default()
     }
 
-    pub fn with_capacity(buttons: usize, interactions_queue: usize) -> Self {
+    pub fn with_capacity(
+        interactions_queue: usize,
+        containers: usize,
+        buttons: usize,
+        text_inputs: usize,
+        selected_chain: usize,
+    ) -> Self {
         Self {
-            engine: DefaultInteractionsEngine::with_capacity(buttons, interactions_queue),
+            engine: DefaultInteractionsEngine::with_capacity(
+                interactions_queue,
+                containers,
+                buttons,
+                text_inputs,
+                selected_chain,
+            ),
             ..Default::default()
         }
     }
@@ -84,35 +102,113 @@ impl GgezInteractionsEngine {
     }
 
     pub fn text_input_event(&mut self, character: char) {
-        self.engine
-            .interact(Interaction::TextChange(TextChange::InsertCharacter(
-                character,
-            )));
+        if self.engine.focused_text_input().is_some() {
+            self.engine
+                .interact(Interaction::Navigate(NavSignal::TextChange(
+                    NavTextChange::InsertCharacter(character),
+                )));
+        }
     }
 
-    pub fn key_down_event(&mut self, keycode: KeyCode) {
+    pub fn key_down_event(&mut self, keycode: KeyCode, keymods: KeyMods) {
+        if self.engine.focused_text_input().is_some() {
+            match keycode {
+                KeyCode::Left => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::MoveCursorLeft,
+                        )))
+                }
+                KeyCode::Right => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::MoveCursorRight,
+                        )))
+                }
+                KeyCode::Home => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::MoveCursorStart,
+                        )))
+                }
+                KeyCode::End => self
+                    .engine
+                    .interact(Interaction::Navigate(NavSignal::TextChange(
+                        NavTextChange::MoveCursorEnd,
+                    ))),
+                KeyCode::Back => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::DeleteLeft,
+                        )))
+                }
+                KeyCode::Delete => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::DeleteRight,
+                        )))
+                }
+                KeyCode::Return | KeyCode::NumpadEnter => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::TextChange(
+                            NavTextChange::NewLine,
+                        )))
+                }
+                KeyCode::Escape => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::FocusTextInput(().into())));
+                }
+                _ => {}
+            }
+        } else {
+            match keycode {
+                KeyCode::Up | KeyCode::W => {
+                    self.engine.interact(Interaction::Navigate(NavSignal::Up))
+                }
+                KeyCode::Down | KeyCode::S => {
+                    self.engine.interact(Interaction::Navigate(NavSignal::Down))
+                }
+                KeyCode::Left | KeyCode::A => {
+                    if keymods.contains(KeyMods::SHIFT) {
+                        self.engine.interact(Interaction::Navigate(NavSignal::Prev));
+                    } else {
+                        self.engine.interact(Interaction::Navigate(NavSignal::Left));
+                    }
+                }
+                KeyCode::Right | KeyCode::D => {
+                    if keymods.contains(KeyMods::SHIFT) {
+                        self.engine.interact(Interaction::Navigate(NavSignal::Next));
+                    } else {
+                        self.engine
+                            .interact(Interaction::Navigate(NavSignal::Right));
+                    }
+                }
+                KeyCode::Return | KeyCode::NumpadEnter | KeyCode::Space => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::Accept(true)));
+                }
+                KeyCode::Escape => {
+                    self.engine
+                        .interact(Interaction::Navigate(NavSignal::Cancel(true)));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    pub fn key_up_event(&mut self, keycode: KeyCode) {
+        if self.engine.focused_text_input().is_some() {
+            return;
+        }
         match keycode {
-            KeyCode::Left => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::MoveCursorLeft)),
-            KeyCode::Right => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::MoveCursorRight)),
-            KeyCode::Home => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::MoveCursorStart)),
-            KeyCode::End => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::MoveCursorEnd)),
-            KeyCode::Back => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::DeleteLeft)),
-            KeyCode::Delete => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::DeleteRight)),
-            KeyCode::Return | KeyCode::NumpadEnter => self
-                .engine
-                .interact(Interaction::TextChange(TextChange::NewLine)),
+            KeyCode::Return | KeyCode::NumpadEnter | KeyCode::Space => {
+                self.engine
+                    .interact(Interaction::Navigate(NavSignal::Accept(false)));
+            }
+            KeyCode::Escape => {
+                self.engine
+                    .interact(Interaction::Navigate(NavSignal::Cancel(false)));
+            }
             _ => {}
         }
     }

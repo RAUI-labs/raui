@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 pub trait LayoutEngine<E> {
-    fn layout(&mut self, register_props: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, E>;
+    fn layout(&mut self, mapping: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, E>;
 }
 
 #[derive(Default, Clone)]

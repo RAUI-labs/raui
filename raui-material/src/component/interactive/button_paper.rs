@@ -5,7 +5,7 @@ use crate::{
 use raui_core::prelude::*;
 
 widget_component! {
-    pub button_paper_content(key, props, shared_props, named_slots) {
+    button_paper_content(id, key, props, shared_props, named_slots) {
         unpack_named_slots!(named_slots => content);
 
         let button_props = props.read_cloned_or_default::<ButtonProps>();
@@ -141,6 +141,7 @@ widget_component! {
 widget_component! {
     pub button_paper(key, props, named_slots) {
         unpack_named_slots!(named_slots => content);
+
         widget! {
             (#{key} button: {props.clone()} {
                 content = (#{"content"} button_paper_content: {props.clone()} {

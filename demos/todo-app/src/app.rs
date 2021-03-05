@@ -29,6 +29,7 @@ pub enum AppSignal {
     Ready(WidgetId),
     Save(AppState),
 }
+implement_message_data!(AppSignal);
 
 pub struct App {
     ui: UI,
@@ -43,7 +44,8 @@ impl App {
         ui.setup(setup);
         ui.setup(setup_material);
         ui.apply(widget! { (#{"app"} app) });
-        let ui_interactions = GgezInteractionsEngine::with_capacity(32, 1024);
+        let mut ui_interactions = GgezInteractionsEngine::with_capacity(1024, 32, 32, 32, 16);
+        ui_interactions.engine.deselect_when_no_button_found = true;
         Self {
             ui,
             ui_interactions,
@@ -108,9 +110,9 @@ impl EventHandler for App {
         self.ui
             .interact(&mut self.ui_interactions)
             .expect("Could not interact with UI");
-        for (_, data) in self.ui.consume_signals() {
-            if let Some(signal) = data.downcast_ref::<AppSignal>() {
-                match signal {
+        for (_, msg) in self.ui.consume_signals() {
+            if let Some(msg) = msg.as_any().downcast_ref::<AppSignal>() {
+                match msg {
                     AppSignal::Ready(id) => self.load(id),
                     AppSignal::Save(state) => Self::save(state),
                 }
@@ -124,12 +126,15 @@ impl EventHandler for App {
     }
 
     fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, keymods: KeyMods, _: bool) {
-        if keycode == KeyCode::Escape {
+        if keycode == KeyCode::Q && self.ui_interactions.engine.focused_text_input().is_none() {
             ggez::event::quit(ctx);
         }
-        self.ui_interactions.key_down_event(keycode);
+        self.ui_interactions.key_down_event(keycode, keymods);
         if keycode == KeyCode::P && keymods.contains(KeyMods::CTRL) {
             println!("LAYOUT: {:#?}", self.ui.layout_data());
+            if keymods.contains(KeyMods::SHIFT) {
+                println!("INTERACTIONS: {:#?}", self.ui_interactions);
+            }
         }
     }
 

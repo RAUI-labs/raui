@@ -2,6 +2,7 @@ use crate::{
     layout::{CoordsMapping, Layout, LayoutEngine, LayoutItem, LayoutNode},
     widget::{
         unit::{
+            area::AreaBox,
             content::ContentBox,
             flex::FlexBox,
             grid::GridBox,
@@ -23,13 +24,33 @@ pub struct DefaultLayoutEngine;
 impl DefaultLayoutEngine {
     pub fn layout_node(size_available: Vec2, unit: &WidgetUnit) -> Option<LayoutNode> {
         match unit {
+            WidgetUnit::None => None,
+            WidgetUnit::AreaBox(b) => Some(Self::layout_area_box(size_available, b)),
             WidgetUnit::ContentBox(b) => Some(Self::layout_content_box(size_available, b)),
             WidgetUnit::FlexBox(b) => Some(Self::layout_flex_box(size_available, b)),
             WidgetUnit::GridBox(b) => Self::layout_grid_box(size_available, b),
             WidgetUnit::SizeBox(b) => Some(Self::layout_size_box(size_available, b)),
             WidgetUnit::ImageBox(b) => Some(Self::layout_image_box(size_available, b)),
             WidgetUnit::TextBox(b) => Some(Self::layout_text_box(size_available, b)),
-            _ => None,
+        }
+    }
+
+    pub fn layout_area_box(size_available: Vec2, unit: &AreaBox) -> LayoutNode {
+        let children = if let Some(child) = Self::layout_node(size_available, &unit.slot) {
+            vec![child]
+        } else {
+            vec![]
+        };
+        let local_space = Rect {
+            left: 0.0,
+            right: size_available.x,
+            top: 0.0,
+            bottom: size_available.y,
+        };
+        LayoutNode {
+            id: unit.id.to_owned(),
+            local_space,
+            children,
         }
     }
 
@@ -569,6 +590,7 @@ impl DefaultLayoutEngine {
     fn calc_unit_min_width(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
             WidgetUnit::None => 0.0,
+            WidgetUnit::AreaBox(b) => Self::calc_unit_min_width(size_available, &b.slot),
             WidgetUnit::ContentBox(b) => Self::calc_content_box_min_width(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_width(size_available, b),
             WidgetUnit::GridBox(b) => Self::calc_grid_box_min_width(size_available, b),
@@ -706,6 +728,7 @@ impl DefaultLayoutEngine {
     fn calc_unit_min_height(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
             WidgetUnit::None => 0.0,
+            WidgetUnit::AreaBox(b) => Self::calc_unit_min_height(size_available, &b.slot),
             WidgetUnit::ContentBox(b) => Self::calc_content_box_min_height(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_height(size_available, b),
             WidgetUnit::GridBox(b) => Self::calc_grid_box_min_height(size_available, b),

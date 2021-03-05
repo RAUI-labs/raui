@@ -1,10 +1,14 @@
 use crate::{
     widget,
     widget::{
+        component::interactive::navigation::{
+            use_nav_container_active, use_nav_item, use_nav_list_active, NavContainerActive,
+            NavItemActive, NavListActive, NavListJumpProps,
+        },
         unit::content::{ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
-    widget_component,
+    widget_component, widget_hook,
 };
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +23,32 @@ pub struct SwitchBoxProps {
     pub transform: Transform,
 }
 implement_props_data!(SwitchBoxProps);
+
+widget_hook! {
+    use_nav_switch_box(props) {
+        let mut jump = props.read_cloned_or_default::<NavListJumpProps>();
+        jump.tabs = true;
+        props.write(jump);
+    }
+}
+
+widget_component! {
+    pub nav_switch_box(key, props, listed_slots) [
+        use_nav_switch_box,
+        use_nav_container_active,
+        use_nav_list_active,
+        use_nav_item,
+    ] {
+        let props = props.clone()
+            .without::<NavContainerActive>()
+            .without::<NavListActive>()
+            .without::<NavItemActive>();
+
+        widget!{
+            (#{key} switch_box: {props} |[listed_slots]|)
+        }
+    }
+}
 
 widget_component! {
     pub switch_box(id, props, listed_slots) {

@@ -102,6 +102,25 @@ impl WidgetId {
         self.hash(&mut hasher);
         hasher.finish()
     }
+
+    pub fn common_parts<'a>(a: &'a Self, b: &'a Self) -> impl Iterator<Item = &'a str> {
+        a.parts()
+            .zip(b.parts())
+            .take_while(|(a, b)| a == b)
+            .map(|(a, _)| a)
+    }
+
+    pub fn common_path(a: &Self, b: &Self) -> String {
+        let mut result = String::with_capacity(a.path().len().max(b.path().len()));
+        for (a, b) in a.parts().zip(b.parts()) {
+            if a != b {
+                break;
+            }
+            result.push('/');
+            result.push_str(a);
+        }
+        return result;
+    }
 }
 
 impl Deref for WidgetId {
@@ -195,37 +214,95 @@ impl Into<WidgetRefDef> for WidgetRef {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum WidgetIdOrRef {
+    None,
+    Id(WidgetId),
+    Ref(WidgetRef),
+}
+
+impl WidgetIdOrRef {
+    #[inline]
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    #[inline]
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+
+    pub fn read(&self) -> Option<WidgetId> {
+        match self {
+            Self::None => None,
+            Self::Id(id) => Some(id.to_owned()),
+            Self::Ref(idref) => idref.read(),
+        }
+    }
+}
+
+impl Default for WidgetIdOrRef {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl From<()> for WidgetIdOrRef {
+    fn from(_: ()) -> Self {
+        Self::None
+    }
+}
+
+impl From<WidgetId> for WidgetIdOrRef {
+    fn from(v: WidgetId) -> Self {
+        Self::Id(v)
+    }
+}
+
+impl From<WidgetRef> for WidgetIdOrRef {
+    fn from(v: WidgetRef) -> Self {
+        Self::Ref(v)
+    }
+}
+
 pub type FnWidget = fn(WidgetContext) -> WidgetNode;
-pub type FnWidgetMountOrChange = fn(WidgetMountOrChangeContext);
-pub type FnWidgetUnmount = fn(WidgetUnmountContext);
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
-    mount: Vec<FnWidgetMountOrChange>,
-    change: Vec<FnWidgetMountOrChange>,
-    unmount: Vec<FnWidgetUnmount>,
+    mount: Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+    change: Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+    unmount: Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>,
 }
 
 impl WidgetLifeCycle {
-    pub fn mount(&mut self, f: fn(WidgetMountOrChangeContext)) {
-        self.mount.push(f);
+    pub fn mount<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(WidgetMountOrChangeContext) + Send + Sync,
+    {
+        self.mount.push(Box::new(f));
     }
 
-    pub fn change(&mut self, f: fn(WidgetMountOrChangeContext)) {
-        self.change.push(f);
+    pub fn change<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(WidgetMountOrChangeContext) + Send + Sync,
+    {
+        self.change.push(Box::new(f));
     }
 
-    pub fn unmount(&mut self, f: fn(WidgetUnmountContext)) {
-        self.unmount.push(f);
+    pub fn unmount<F>(&mut self, f: F)
+    where
+        F: 'static + FnMut(WidgetUnmountContext) + Send + Sync,
+    {
+        self.unmount.push(Box::new(f));
     }
 
     #[allow(clippy::type_complexity)]
     pub fn unwrap(
         self,
     ) -> (
-        Vec<FnWidgetMountOrChange>,
-        Vec<FnWidgetMountOrChange>,
-        Vec<FnWidgetUnmount>,
+        Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+        Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+        Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>,
     ) {
         let Self {
             mount,
@@ -270,7 +347,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::space_box::SpaceBoxProps>("SpaceBoxProps");
     app.register_props::<component::text_box::TextBoxProps>("TextBoxProps");
     app.register_props::<component::interactive::button::ButtonProps>("ButtonProps");
-    app.register_props::<component::interactive::input_field::InputFieldProps>("InputFieldProps");
+    app.register_props::<component::interactive::input_field::TextInputProps>("TextInputProps");
 
     app.register_component(
         "content_box",
@@ -298,12 +375,12 @@ pub fn setup(app: &mut Application) {
     app.register_component("text_box", component::text_box::text_box);
     app.register_component("button", component::interactive::button::button);
     app.register_component(
-        "input_field",
-        component::interactive::input_field::input_field,
+        "text_input",
+        component::interactive::input_field::text_input,
     );
     app.register_component(
-        "input_field_content",
-        component::interactive::input_field::input_field_content,
+        "input_field",
+        component::interactive::input_field::input_field,
     );
 }
 
@@ -467,7 +544,8 @@ macro_rules! widget_component {
     {
         $vis:vis $name:ident
         $( ( $( $param:ident ),+ ) )?
-        $([ $( $hook:path ),+ $(,)? ])?
+        $([ $( $hook_pre:path ),+ $(,)? ])?
+        $(|[ $( $hook_post:path ),+ $(,)? ])?
         $code:block
     } => {
         #[allow(unused_mut)]
@@ -477,11 +555,11 @@ macro_rules! widget_component {
             {
                 $(
                     $(
-                        context.use_hook($hook);
-                    ),+
+                        context.use_hook($hook_pre);
+                    )+
                 )?
             }
-            {
+            let result = {
                 $(
                     #[allow(unused_mut)]
                     let $crate::widget::context::WidgetContext {
@@ -489,7 +567,15 @@ macro_rules! widget_component {
                     } = context;
                 )?
                 $code
+            };
+            {
+                $(
+                    $(
+                        context.use_hook($hook_post);
+                    )+
+                )?
             }
+            result
         }
     };
 }
@@ -499,7 +585,8 @@ macro_rules! widget_hook {
     {
         $vis:vis $name:ident
         $( ( $( $param:ident ),+ ) )?
-        $([ $( $hook:path ),+ $(,)? ])?
+        $([ $( $hook_pre:path ),+ $(,)? ])?
+        $(|[ $( $hook_post:path ),+ $(,)? ])?
         $code:block
     } => {
         #[allow(unused_mut)]
@@ -509,8 +596,8 @@ macro_rules! widget_hook {
             {
                 $(
                     $(
-                        context.use_hook($hook);
-                    ),+
+                        context.use_hook($hook_pre);
+                    )+
                 )?
             }
             {
@@ -521,6 +608,13 @@ macro_rules! widget_hook {
                     } = context;
                 )?
                 $code
+            }
+            {
+                $(
+                    $(
+                        context.use_hook($hook_post);
+                    )+
+                )?
             }
         }
     };

@@ -15,7 +15,7 @@ widget_component! {
         };
 
         widget!{
-            (#{key} vertical_box: {props} [
+            (#{key} nav_vertical_box: {props} [
                 {title}
                 {content}
             ])

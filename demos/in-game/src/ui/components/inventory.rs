@@ -23,12 +23,13 @@ pub enum InventoryMessage {
     Prev,
     Next,
 }
+implement_message_data!(InventoryMessage);
 
 widget_hook! {
     use_inventory(life_cycle) {
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<InventoryMessage>() {
+                if let Some(msg) = msg.as_any().downcast_ref::<InventoryMessage>() {
                     match msg {
                         InventoryMessage::Prev => {
                             let mut data = match context.state.read::<InventoryState>() {

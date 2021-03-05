@@ -5,15 +5,74 @@ pub mod space_box;
 pub mod text_box;
 
 use crate::{
+    messenger::Message,
     props::Props,
     widget::{
         node::{WidgetNode, WidgetNodePrefab},
-        FnWidget, WidgetRef,
+        FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
-    PrefabValue, Scalar,
+    widget_hook, PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom};
+use std::{any::TypeId, collections::HashMap, convert::TryFrom};
+
+fn is_false(v: &bool) -> bool {
+    !*v
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct MessageForwardProps {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
+    pub to: WidgetIdOrRef,
+    #[serde(default)]
+    #[serde(skip)]
+    pub types: Vec<TypeId>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_false")]
+    pub no_wrap: bool,
+}
+implement_props_data!(MessageForwardProps);
+
+#[derive(Debug, Clone)]
+pub struct ForwardedMessage {
+    pub sender: WidgetId,
+    pub data: Message,
+}
+implement_message_data!(ForwardedMessage);
+
+widget_hook! {
+    pub use_message_forward(life_cycle) {
+        life_cycle.change(|context| {
+            let (id, no_wrap, types) = match context.props.read::<MessageForwardProps>() {
+                Ok(forward) => match forward.to.read() {
+                    Some(id) => (id, forward.no_wrap, &forward.types),
+                    _ => return,
+                },
+                _ => match context.shared_props.read::<MessageForwardProps>() {
+                    Ok(forward) => match forward.to.read() {
+                        Some(id) => (id, forward.no_wrap, &forward.types),
+                        _ => return,
+                    },
+                    _ => return,
+                },
+            };
+            for msg in context.messenger.messages {
+                let t = msg.as_any().type_id();
+                if types.contains(&t) {
+                    if no_wrap {
+                        context.messenger.write_raw(id.to_owned(), msg.clone_message());
+                    } else {
+                        context.messenger.write(id.to_owned(), ForwardedMessage {
+                            sender: context.id.to_owned(),
+                            data: msg.clone_message(),
+                        });
+                    }
+                }
+            }
+        });
+    }
+}
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct WidgetAlpha(pub Scalar);

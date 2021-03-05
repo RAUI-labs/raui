@@ -20,6 +20,8 @@ pub struct TextFieldPaperProps {
     pub variant: String,
     #[serde(default)]
     pub use_main_color: bool,
+    #[serde(default = "TextFieldPaperProps::default_inactive_alpha")]
+    pub inactive_alpha: Scalar,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alignment_override: Option<TextBoxAlignment>,
@@ -33,6 +35,10 @@ pub struct TextFieldPaperProps {
 implement_props_data!(TextFieldPaperProps);
 
 impl TextFieldPaperProps {
+    fn default_inactive_alpha() -> Scalar {
+        0.75
+    }
+
     fn default_padding() -> Rect {
         Rect {
             left: 4.0,
@@ -51,6 +57,7 @@ impl Default for TextFieldPaperProps {
             height: Default::default(),
             variant: Default::default(),
             use_main_color: Default::default(),
+            inactive_alpha: Self::default_inactive_alpha(),
             alignment_override: Default::default(),
             transform: Default::default(),
             paper_theme: Default::default(),
@@ -60,24 +67,24 @@ impl Default for TextFieldPaperProps {
 }
 
 widget_component! {
-    text_field_content(key, props) {
-        let ButtonProps { selected, .. } = props.read_cloned_or_default();
+    text_field_paper_content(key, props) {
         let TextFieldPaperProps {
             hint,
             width,
             height,
             variant,
             use_main_color,
+            inactive_alpha,
             alignment_override,
             transform,
             paper_theme,
             padding,
         } = props.read_cloned_or_default();
-        let InputFieldProps { text, cursor_position, .. } = props.read_cloned_or_default();
+        let TextInputProps { text, cursor_position, focused, .. } = props.read_cloned_or_default();
         let text = text.trim();
         let text = if text.is_empty() {
             hint
-        } else if selected {
+        } else if focused {
             if cursor_position < text.len() {
                 format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
             } else {
@@ -91,7 +98,7 @@ widget_component! {
             variant: paper_variant,
             ..Default::default()
         }).with(paper_theme);
-        let props = props.clone().with(TextPaperProps {
+        let text_props = props.clone().with(TextPaperProps {
             text,
             width,
             height,
@@ -103,10 +110,11 @@ widget_component! {
             margin: padding,
             ..Default::default()
         });
+        let alpha = if focused { 1.0 } else { inactive_alpha };
 
         widget! {
             (#{key} paper: {paper_props} [
-                (#{key} text_paper: {props})
+                (#{"text"} text_paper: {text_props} | {WidgetAlpha(alpha)})
             ])
         }
     }
@@ -116,7 +124,7 @@ widget_component! {
     pub text_field_paper(key, props) {
         widget! {
             (#{key} input_field: {props.clone()} {
-                content = (#{"text"} text_field_content: {props.clone()})
+                content = (#{"content"} text_field_paper_content: {props.clone()})
             })
         }
     }

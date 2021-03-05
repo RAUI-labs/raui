@@ -33,8 +33,8 @@ widget_hook! {
     use_task(life_cycle) {
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<ButtonMessage>() {
-                    if msg.action == ButtonAction::TriggerStart {
+                if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                    if msg.trigger_start() {
                         match msg.sender.key() {
                             "checkbox" => {
                                 // TODO: figure out better to pass index to the message.
@@ -76,14 +76,15 @@ widget_component! {
             shrink: 0.0,
             align: 0.5,
             ..Default::default()
-        }).with(SwitchPaperProps {
+        })
+        .with(SwitchPaperProps {
             on: data.done,
             variant: "checkbox".to_owned(),
             size_level: 2,
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(ThemedWidgetProps {
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()))
+        .with(ThemedWidgetProps {
             color: ThemeColor::Primary,
             variant: ThemeVariant::ContentOnly,
         });
@@ -92,7 +93,8 @@ widget_component! {
             height: TextBoxSizeValue::Exact(24.0),
             variant: "title".to_owned(),
             ..Default::default()
-        }).with(FlexBoxItemLayout {
+        })
+        .with(FlexBoxItemLayout {
             align: 0.5,
             ..Default::default()
         });
@@ -102,24 +104,26 @@ widget_component! {
             shrink: 0.0,
             align: 0.5,
             ..Default::default()
-        }).with(IconPaperProps {
+        })
+        .with(IconPaperProps {
             image: IconImage {
                 id: "icon-delete".to_owned(),
                 ..Default::default()
             },
             size_level: 2,
             ..Default::default()
-        }).with(ButtonSettingsProps {
-            notify: Some(id.to_owned()),
-            ..Default::default()
-        }).with(ThemedWidgetProps {
+        })
+        .with(NavItemActive)
+        .with(ButtonNotifyProps(id.to_owned().into()))
+        .with(ThemedWidgetProps {
             color: ThemeColor::Primary,
             variant: ThemeVariant::ContentOnly,
         });
         let list_props = Props::new(HorizontalBoxProps {
             separation: 10.0,
             ..Default::default()
-        }).with(ContentBoxItemLayout {
+        })
+        .with(ContentBoxItemLayout {
             margin: Rect {
                 left: 10.0,
                 right: 0.0,

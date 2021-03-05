@@ -241,8 +241,8 @@ if application.layout(&mapping, &mut DefaultLayoutEngine).is_ok() {
 _**TODO**_
 
 RAUI allows you to ease and automate interactions with UI by use of Interactions Engine - this is just a struct that implements `perform_interactions` method with reference to Application, and all you should do there is to send user input related messages to widgets.
-There is `DefaultInteractionsEngine` that covers button and input field actions sent from mouse (or any single pointer), keyboard and gamepad.
-RAUI integrations that use these devices should make use of this struct composed in them and call its `interact` metgod with information about what input change was made.
+There is `DefaultInteractionsEngine` that covers widget navigation, button and input field - actions sent from input devices such as mouse (or any single pointer), keyboard and gamepad. When it comes to UI navigation you can send raw `NavSignal` messages to the default interactions engine and despite being able to select/unselect widgets at will, you have typical navigation actions available: up, down, left, right, previous tab/screen, next tab/screen, also being able to focus text inputs and send text input changes to focused input widget. All interactive widget components that are provided by RAUI handle all `NavSignal` actions in their hooks, so all user has to do is to just activate navigation features for them (using `NavItemActive` unit props).
+RAUI integrations that want to just use use default interactions engine should make use of this struct composed in them and call its `interact` method with information about what input change was made.
 There is an example of that feature covered in GGEZ integration crate (`GgezInteractionsEngine` struct).
 
 **NOTE: Interactions engines should use layout for pointer events so make sure that you rebuild layout before you perform interactions!**

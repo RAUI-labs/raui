@@ -11,8 +11,8 @@ use std::collections::HashMap;
 pub struct WidgetContext<'a> {
     pub id: &'a WidgetId,
     pub key: &'a str,
-    pub props: &'a Props,
-    pub shared_props: &'a Props,
+    pub props: &'a mut Props,
+    pub shared_props: &'a mut Props,
     pub state: State<'a>,
     pub animator: &'a AnimatorStates,
     pub life_cycle: &'a mut WidgetLifeCycle,

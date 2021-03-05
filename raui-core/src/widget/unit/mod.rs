@@ -1,3 +1,4 @@
+pub mod area;
 pub mod content;
 pub mod flex;
 pub mod grid;
@@ -10,6 +11,7 @@ use crate::{
     widget::{
         node::WidgetNode,
         unit::{
+            area::{AreaBox, AreaBoxNode, AreaBoxNodePrefab},
             content::{ContentBox, ContentBoxNode, ContentBoxNodePrefab},
             flex::{FlexBox, FlexBoxNode, FlexBoxNodePrefab},
             grid::{GridBox, GridBoxNode, GridBoxNodePrefab},
@@ -43,6 +45,7 @@ pub trait WidgetUnitData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WidgetUnit {
     None,
+    AreaBox(AreaBox),
     ContentBox(ContentBox),
     FlexBox(FlexBox),
     GridBox(GridBox),
@@ -69,6 +72,7 @@ impl WidgetUnit {
     pub fn as_data(&self) -> Option<&dyn WidgetUnitData> {
         match self {
             Self::None => None,
+            Self::AreaBox(v) => Some(v as &dyn WidgetUnitData),
             Self::ContentBox(v) => Some(v as &dyn WidgetUnitData),
             Self::FlexBox(v) => Some(v as &dyn WidgetUnitData),
             Self::GridBox(v) => Some(v as &dyn WidgetUnitData),
@@ -100,6 +104,7 @@ impl TryFrom<WidgetUnitNode> for WidgetUnit {
     fn try_from(node: WidgetUnitNode) -> Result<Self, Self::Error> {
         match node {
             WidgetUnitNode::None => Ok(Self::None),
+            WidgetUnitNode::AreaBox(n) => Ok(WidgetUnit::AreaBox(AreaBox::try_from(n)?)),
             WidgetUnitNode::ContentBox(n) => Ok(WidgetUnit::ContentBox(ContentBox::try_from(n)?)),
             WidgetUnitNode::FlexBox(n) => Ok(WidgetUnit::FlexBox(FlexBox::try_from(n)?)),
             WidgetUnitNode::GridBox(n) => Ok(WidgetUnit::GridBox(GridBox::try_from(n)?)),
@@ -125,6 +130,7 @@ impl TryFrom<WidgetNode> for WidgetUnit {
 #[derive(Debug, Clone)]
 pub enum WidgetUnitNode {
     None,
+    AreaBox(AreaBoxNode),
     ContentBox(ContentBoxNode),
     FlexBox(FlexBoxNode),
     GridBox(GridBoxNode),
@@ -150,25 +156,25 @@ impl WidgetUnitNode {
 
     pub fn props(&self) -> Option<&Props> {
         match self {
+            Self::None | Self::AreaBox(_) => None,
             Self::ContentBox(v) => Some(&v.props),
             Self::FlexBox(v) => Some(&v.props),
             Self::GridBox(v) => Some(&v.props),
             Self::SizeBox(v) => Some(&v.props),
             Self::ImageBox(v) => Some(&v.props),
             Self::TextBox(v) => Some(&v.props),
-            _ => None,
         }
     }
 
     pub fn props_mut(&mut self) -> Option<&mut Props> {
         match self {
+            Self::None | Self::AreaBox(_) => None,
             Self::ContentBox(v) => Some(&mut v.props),
             Self::FlexBox(v) => Some(&mut v.props),
             Self::GridBox(v) => Some(&mut v.props),
             Self::SizeBox(v) => Some(&mut v.props),
             Self::ImageBox(v) => Some(&mut v.props),
             Self::TextBox(v) => Some(&mut v.props),
-            _ => None,
         }
     }
 
@@ -177,7 +183,7 @@ impl WidgetUnitNode {
         F: FnMut(Props) -> Props,
     {
         match self {
-            Self::None => {}
+            Self::None | Self::AreaBox(_) => {}
             Self::ContentBox(v) => v.remap_props(f),
             Self::FlexBox(v) => v.remap_props(f),
             Self::GridBox(v) => v.remap_props(f),
@@ -219,6 +225,7 @@ macro_rules! implement_from_unit {
 }
 
 implement_from_unit! {
+    AreaBoxNode => AreaBox,
     ContentBoxNode => ContentBox,
     FlexBoxNode => FlexBox,
     GridBoxNode => GridBox,
@@ -230,6 +237,7 @@ implement_from_unit! {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum WidgetUnitNodePrefab {
     None,
+    AreaBox(AreaBoxNodePrefab),
     ContentBox(ContentBoxNodePrefab),
     FlexBox(FlexBoxNodePrefab),
     GridBox(GridBoxNodePrefab),

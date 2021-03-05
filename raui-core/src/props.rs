@@ -133,7 +133,7 @@ impl Clone for Box<dyn PropsData> {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct Props(HashMap<TypeId, Box<dyn PropsData>>);
 
 impl Props {
@@ -227,6 +227,35 @@ impl Props {
             .insert(TypeId::of::<T>(), Box::new(data) as Box<dyn PropsData>);
     }
 
+    pub fn mutate<T, F>(&mut self, mut f: F)
+    where
+        T: 'static + PropsData,
+        F: FnMut(&T) -> T,
+    {
+        match self.read() {
+            Ok(data) => {
+                let data = f(data);
+                self.write(data);
+            }
+            _ => {}
+        }
+    }
+
+    pub fn mutate_cloned<T, F>(&mut self, mut f: F)
+    where
+        T: 'static + PropsData + Clone,
+        F: FnMut(&mut T),
+    {
+        match self.read::<T>() {
+            Ok(data) => {
+                let mut data = data.clone();
+                f(&mut data);
+                self.write(data);
+            }
+            _ => {}
+        }
+    }
+
     pub fn with<T>(mut self, data: T) -> Self
     where
         T: 'static + PropsData,
@@ -249,8 +278,19 @@ impl Props {
         Self(result)
     }
 
+    pub fn merge_from(&mut self, other: Self) {
+        self.0.extend(other.into_inner());
+    }
+
     pub(crate) fn into_inner(self) -> HashMap<TypeId, Box<dyn PropsData>> {
         self.0
+    }
+}
+
+impl std::fmt::Debug for Props {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Props ")?;
+        f.debug_set().entries(self.0.values()).finish()
     }
 }
 

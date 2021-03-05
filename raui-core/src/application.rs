@@ -2,7 +2,7 @@ use crate::{
     animator::{AnimationUpdate, Animator, AnimatorStates},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
-    messenger::{Message, MessageSender, Messages, Messenger},
+    messenger::{Message, MessageData, MessageSender, Messages, Messenger},
     props::{Props, PropsData, PropsRegistry},
     renderer::Renderer,
     signals::{Signal, SignalSender},
@@ -12,6 +12,7 @@ use crate::{
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
         node::{WidgetNode, WidgetNodePrefab},
         unit::{
+            area::{AreaBoxNode, AreaBoxNodePrefab},
             content::{
                 ContentBoxItemNode, ContentBoxItemNodePrefab, ContentBoxNode, ContentBoxNodePrefab,
             },
@@ -22,12 +23,11 @@ use crate::{
             text::{TextBoxNode, TextBoxNodePrefab},
             WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
         },
-        FnWidget, FnWidgetUnmount, WidgetId, WidgetLifeCycle,
+        FnWidget, WidgetId, WidgetLifeCycle,
     },
     Prefab, PrefabError, PrefabValue, Scalar,
 };
 use std::{
-    any::Any,
     collections::{HashMap, HashSet},
     convert::TryInto,
     sync::mpsc::{channel, Sender},
@@ -71,7 +71,7 @@ pub struct Application {
     animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
-    unmount_closures: HashMap<WidgetId, Vec<FnWidgetUnmount>>,
+    unmount_closures: HashMap<WidgetId, Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>>,
     dirty: bool,
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
@@ -265,7 +265,7 @@ impl Application {
     #[inline]
     pub fn send_message<T>(&mut self, id: &WidgetId, data: T)
     where
-        T: 'static + Any + Send + Sync,
+        T: 'static + MessageData,
     {
         self.send_message_raw(id, Box::new(data));
     }
@@ -287,6 +287,37 @@ impl Application {
     #[inline]
     pub fn consume_signals(&mut self) -> Vec<Signal> {
         std::mem::take(&mut self.signals)
+    }
+
+    #[inline]
+    pub fn state_read(&self, id: &WidgetId) -> Option<&Props> {
+        self.states.get(id)
+    }
+
+    #[inline]
+    pub fn state_write(&mut self, id: &WidgetId, data: Props) {
+        if self.states.contains_key(id) {
+            self.state_changes.insert(id.to_owned(), data);
+        }
+    }
+
+    pub fn state_mutate<F>(&mut self, id: &WidgetId, mut f: F)
+    where
+        F: FnMut(&Props) -> Props,
+    {
+        if let Some(state) = self.states.get(id) {
+            self.state_changes.insert(id.to_owned(), f(state));
+        }
+    }
+
+    pub fn state_mutate_cloned<F>(&mut self, id: &WidgetId, mut f: F)
+    where
+        F: FnMut(&mut Props),
+    {
+        if let Some(mut state) = self.states.get(id).cloned() {
+            f(&mut state);
+            self.state_changes.insert(id.to_owned(), state);
+        }
     }
 
     #[inline]
@@ -352,7 +383,7 @@ impl Application {
                     true
                 } else {
                     if let Some(closures) = self.unmount_closures.remove(id) {
-                        for closure in closures {
+                        for mut closure in closures {
                             let messenger = &message_sender;
                             let signals = SignalSender::new(id.clone(), signal_sender.clone());
                             let context = WidgetUnmountContext {
@@ -453,12 +484,12 @@ impl Application {
             type_name,
             key,
             idref,
-            props,
+            mut props,
             shared_props,
             listed_slots,
             named_slots,
         } = component;
-        let shared_props = match (master_shared_props, shared_props) {
+        let mut shared_props = match (master_shared_props, shared_props) {
             (Some(master_shared_props), Some(shared_props)) => {
                 master_shared_props.merge(shared_props)
             }
@@ -491,8 +522,8 @@ impl Application {
                 let context = WidgetContext {
                     id: &id,
                     key: &key,
-                    props: &props,
-                    shared_props: &shared_props,
+                    props: &mut props,
+                    shared_props: &mut shared_props,
                     state,
                     animator,
                     life_cycle: &mut life_cycle,
@@ -508,8 +539,8 @@ impl Application {
                 let context = WidgetContext {
                     id: &id,
                     key: &key,
-                    props: &props,
-                    shared_props: &shared_props,
+                    props: &mut props,
+                    shared_props: &mut shared_props,
                     state,
                     animator,
                     life_cycle: &mut life_cycle,
@@ -525,7 +556,7 @@ impl Application {
         if mounted {
             if !mount.is_empty() {
                 if let Some(state) = new_states.get(&id) {
-                    for closure in mount {
+                    for mut closure in mount {
                         let state = State::new(state, StateUpdate::new(state_sender.clone()));
                         let messenger = Messenger::new(message_sender.clone(), &messages_list);
                         let signals = SignalSender::new(id.clone(), signal_sender.clone());
@@ -548,7 +579,7 @@ impl Application {
             }
         } else if !change.is_empty() {
             if let Some(state) = states.get(&id) {
-                for closure in change {
+                for mut closure in change {
                     let state = State::new(state, StateUpdate::new(state_sender.clone()));
                     let messenger = Messenger::new(message_sender.clone(), &messages_list);
                     let signals = SignalSender::new(id.clone(), signal_sender.clone());
@@ -612,6 +643,21 @@ impl Application {
         signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         match &mut unit {
+            WidgetUnitNode::AreaBox(unit) => {
+                let slot = *std::mem::take(&mut unit.slot);
+                unit.slot = Box::new(self.process_node(
+                    slot,
+                    states,
+                    path,
+                    messages,
+                    new_states,
+                    used_ids,
+                    ".".to_owned(),
+                    master_shared_props,
+                    message_sender,
+                    signal_sender,
+                ));
+            }
             WidgetUnitNode::ContentBox(unit) => {
                 let items = std::mem::replace(&mut unit.items, Vec::new());
                 unit.items = items
@@ -690,7 +736,7 @@ impl Application {
                     messages,
                     new_states,
                     used_ids,
-                    "0".to_owned(),
+                    ".".to_owned(),
                     master_shared_props,
                     message_sender,
                     signal_sender,
@@ -748,6 +794,9 @@ impl Application {
     ) -> Result<WidgetUnitNodePrefab, ApplicationError> {
         Ok(match data {
             WidgetUnitNode::None => WidgetUnitNodePrefab::None,
+            WidgetUnitNode::AreaBox(data) => {
+                WidgetUnitNodePrefab::AreaBox(self.area_box_to_prefab(data)?)
+            }
             WidgetUnitNode::ContentBox(data) => {
                 WidgetUnitNodePrefab::ContentBox(self.content_box_to_prefab(data)?)
             }
@@ -766,6 +815,16 @@ impl Application {
             WidgetUnitNode::TextBox(data) => {
                 WidgetUnitNodePrefab::TextBox(self.text_box_to_prefab(data)?)
             }
+        })
+    }
+
+    fn area_box_to_prefab(
+        &self,
+        data: &AreaBoxNode,
+    ) -> Result<AreaBoxNodePrefab, ApplicationError> {
+        Ok(AreaBoxNodePrefab {
+            id: data.id.to_owned(),
+            slot: Box::new(self.node_to_prefab(&data.slot)?),
         })
     }
 
@@ -935,6 +994,9 @@ impl Application {
     ) -> Result<WidgetUnitNode, ApplicationError> {
         Ok(match data {
             WidgetUnitNodePrefab::None => WidgetUnitNode::None,
+            WidgetUnitNodePrefab::AreaBox(data) => {
+                WidgetUnitNode::AreaBox(self.area_box_from_prefab(data)?)
+            }
             WidgetUnitNodePrefab::ContentBox(data) => {
                 WidgetUnitNode::ContentBox(self.content_box_from_prefab(data)?)
             }
@@ -953,6 +1015,16 @@ impl Application {
             WidgetUnitNodePrefab::TextBox(data) => {
                 WidgetUnitNode::TextBox(self.text_box_from_prefab(data)?)
             }
+        })
+    }
+
+    fn area_box_from_prefab(
+        &self,
+        data: AreaBoxNodePrefab,
+    ) -> Result<AreaBoxNode, ApplicationError> {
+        Ok(AreaBoxNode {
+            id: data.id,
+            slot: Box::new(self.node_from_prefab(*data.slot)?),
         })
     }
 

@@ -1,7 +1,18 @@
 use crate::widget::WidgetId;
 use std::{any::Any, sync::mpsc::Sender};
 
-pub type Message = Box<dyn Any + Send + Sync>;
+pub trait MessageData: std::fmt::Debug + Send + Sync {
+    fn clone_message(&self) -> Box<dyn MessageData>;
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl Clone for Box<dyn MessageData> {
+    fn clone(&self) -> Self {
+        self.clone_message()
+    }
+}
+
+pub type Message = Box<dyn MessageData>;
 pub type Messages = Vec<Message>;
 
 #[derive(Clone)]
@@ -14,7 +25,7 @@ impl MessageSender {
 
     pub fn write<T>(&self, id: WidgetId, message: T) -> bool
     where
-        T: 'static + Any + Send + Sync,
+        T: 'static + MessageData,
     {
         self.0.send((id, Box::new(message))).is_ok()
     }
@@ -45,7 +56,7 @@ impl<'a> Messenger<'a> {
 
     pub fn write<T>(&self, id: WidgetId, message: T) -> bool
     where
-        T: 'static + Send + Sync,
+        T: 'static + MessageData,
     {
         self.sender.write(id, message)
     }
@@ -61,3 +72,37 @@ impl<'a> Messenger<'a> {
         self.sender.write_raw_all(messages);
     }
 }
+
+#[macro_export]
+macro_rules! implement_message_data {
+    ($type_name:ty) => {
+        impl $crate::messenger::MessageData for $type_name
+        where
+            Self: Clone,
+        {
+            fn clone_message(&self) -> Box<dyn $crate::messenger::MessageData> {
+                Box::new(self.clone())
+            }
+
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
+    };
+}
+
+implement_message_data!(());
+implement_message_data!(i8);
+implement_message_data!(i16);
+implement_message_data!(i32);
+implement_message_data!(i64);
+implement_message_data!(i128);
+implement_message_data!(u8);
+implement_message_data!(u16);
+implement_message_data!(u32);
+implement_message_data!(u64);
+implement_message_data!(u128);
+implement_message_data!(f32);
+implement_message_data!(f64);
+implement_message_data!(bool);
+implement_message_data!(String);

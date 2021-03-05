@@ -49,6 +49,7 @@ impl<'a> GgezRenderer<'a> {
     ) -> Result<(), Error> {
         match unit {
             WidgetUnit::None => Ok(()),
+            WidgetUnit::AreaBox(unit) => self.render_node(&unit.slot, mapping, layout),
             WidgetUnit::ContentBox(unit) => {
                 let mut items = unit
                     .items

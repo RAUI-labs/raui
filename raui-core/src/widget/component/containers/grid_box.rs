@@ -1,6 +1,9 @@
 use crate::{
     widget,
     widget::{
+        component::interactive::navigation::{
+            use_nav_container_active, use_nav_item, NavContainerActive, NavItemActive,
+        },
         unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
         utils::Transform,
     },
@@ -18,6 +21,21 @@ pub struct GridBoxProps {
     pub transform: Transform,
 }
 implement_props_data!(GridBoxProps);
+
+widget_component! {
+    pub nav_grid_box(key, props, listed_slots) [
+        use_nav_container_active,
+        use_nav_item,
+    ] {
+        let props = props.clone()
+            .without::<NavContainerActive>()
+            .without::<NavItemActive>();
+
+        widget!{
+            (#{key} grid_box: {props} |[listed_slots]|)
+        }
+    }
+}
 
 widget_component! {
     pub grid_box(id, props, listed_slots) {

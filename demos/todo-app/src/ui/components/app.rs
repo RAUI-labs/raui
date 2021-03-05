@@ -36,6 +36,7 @@ implement_props_data!(AppState);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps {
+    #[serde(default)]
     pub id: WidgetId,
 }
 implement_props_data!(AppSharedProps);
@@ -49,6 +50,7 @@ pub enum AppMessage {
     Save,
     Load(AppState),
 }
+implement_message_data!(AppMessage);
 
 fn new_theme(theme: ThemeMode) -> ThemeProps {
     let mut theme = match theme {
@@ -82,7 +84,7 @@ fn new_theme(theme: ThemeMode) -> ThemeProps {
 }
 
 widget_hook! {
-    use_app(life_cycle) {
+    use_app(props, life_cycle) {
         life_cycle.mount(|context| {
             drop(context.state.write(AppState::default()));
             context.signals.write(AppSignal::Ready(context.id.to_owned()));
@@ -90,7 +92,7 @@ widget_hook! {
 
         life_cycle.change(|context| {
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.downcast_ref::<AppMessage>() {
+                if let Some(msg) = msg.as_any().downcast_ref::<AppMessage>() {
                     match msg {
                         AppMessage::ToggleTheme => {
                             let mut data = match context.state.read::<AppState>() {
@@ -145,7 +147,7 @@ widget_hook! {
 }
 
 widget_component! {
-    pub app(id, key, props, state) [use_app] {
+    pub app(id, key, props, state) [use_nav_container_active, use_app] {
         let (theme_mode, tasks) = state.map_or_default::<AppState, _, _>(|s| {
             (s.theme, s.tasks.clone())
         });
@@ -162,7 +164,8 @@ widget_component! {
             grow: 0.0,
             shrink: 0.0,
             ..Default::default()
-        }).with(TasksProps {
+        })
+        .with(TasksProps {
             tasks,
         });
         let props = props.clone().with(ContentBoxItemLayout {
@@ -173,7 +176,8 @@ widget_component! {
                 bottom: 32.0,
             },
             ..Default::default()
-        }).with(VerticalBoxProps {
+        })
+        .with(VerticalBoxProps {
             separation: 10.0,
             ..Default::default()
         });
