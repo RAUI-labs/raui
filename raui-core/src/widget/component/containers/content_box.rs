@@ -2,7 +2,8 @@ use crate::{
     widget,
     widget::{
         component::interactive::navigation::{
-            use_nav_container_active, use_nav_item, NavContainerActive, NavItemActive,
+            use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
+            NavContainerActive, NavItemActive, NavJumpActive,
         },
         unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
@@ -21,9 +22,14 @@ pub struct ContentBoxProps {
 implement_props_data!(ContentBoxProps);
 
 widget_component! {
-    pub nav_content_box(key, props, listed_slots) [use_nav_container_active, use_nav_item] {
+    pub nav_content_box(key, props, listed_slots) [
+        use_nav_container_active,
+        use_nav_jump_direction_active,
+        use_nav_item,
+    ] {
         let props = props.clone()
             .without::<NavContainerActive>()
+            .without::<NavJumpActive>()
             .without::<NavItemActive>();
 
         widget!{

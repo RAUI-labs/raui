@@ -3,8 +3,9 @@ use crate::{
     interactive::InteractionsEngine,
     messenger::MessageData,
     widget::{
-        component::interactive::navigation::{NavListJump, NavSignal, NavType},
+        component::interactive::navigation::{NavDirection, NavJump, NavSignal, NavType},
         unit::WidgetUnit,
+        utils::Vec2,
         WidgetId,
     },
     Scalar,
@@ -67,12 +68,13 @@ impl DefaultInteractionsEngineResult {
 pub struct DefaultInteractionsEngine {
     pub deselect_when_no_button_found: bool,
     interactions_queue: VecDeque<Interaction>,
-    containers: HashMap<WidgetId, Vec<WidgetId>>,
+    containers: HashMap<WidgetId, HashSet<WidgetId>>,
     items_owners: HashMap<WidgetId, WidgetId>,
     buttons: HashSet<WidgetId>,
     text_inputs: HashSet<WidgetId>,
     selected_chain: Vec<WidgetId>,
     focused_text_input: Option<WidgetId>,
+    sorted_items_ids: Vec<WidgetId>,
 }
 
 impl DefaultInteractionsEngine {
@@ -96,6 +98,7 @@ impl DefaultInteractionsEngine {
             text_inputs: HashSet::with_capacity(text_inputs),
             selected_chain: Vec::with_capacity(selected_chain),
             focused_text_input: None,
+            sorted_items_ids: vec![],
         }
     }
 
@@ -136,6 +139,47 @@ impl DefaultInteractionsEngine {
         if put_unselect {
             self.interactions_queue
                 .push_back(Interaction::Navigate(NavSignal::Unselect));
+        }
+    }
+
+    fn cache_sorted_items_ids(&mut self, app: &Application) {
+        self.sorted_items_ids = Vec::with_capacity(self.items_owners.len());
+        self.cache_sorted_items_ids_inner(app.rendered_tree());
+    }
+
+    fn cache_sorted_items_ids_inner(&mut self, unit: &WidgetUnit) {
+        if let Some(data) = unit.as_data() {
+            self.sorted_items_ids.push(data.id().to_owned());
+        }
+        match unit {
+            WidgetUnit::AreaBox(unit) => {
+                self.cache_sorted_items_ids_inner(&unit.slot);
+            }
+            WidgetUnit::ContentBox(unit) => {
+                for item in &unit.items {
+                    self.cache_sorted_items_ids_inner(&item.slot);
+                }
+            }
+            WidgetUnit::FlexBox(unit) => {
+                if unit.direction.is_order_ascending() {
+                    for item in &unit.items {
+                        self.cache_sorted_items_ids_inner(&item.slot);
+                    }
+                } else {
+                    for item in unit.items.iter().rev() {
+                        self.cache_sorted_items_ids_inner(&item.slot);
+                    }
+                }
+            }
+            WidgetUnit::GridBox(unit) => {
+                for item in &unit.items {
+                    self.cache_sorted_items_ids_inner(&item.slot);
+                }
+            }
+            WidgetUnit::SizeBox(unit) => {
+                self.cache_sorted_items_ids_inner(&unit.slot);
+            }
+            _ => {}
         }
     }
 
@@ -252,72 +296,239 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn list_jump(&mut self, app: &mut Application, id: &WidgetId, data: NavListJump) {
+    fn get_item_point(app: &Application, id: &WidgetId) -> Option<Vec2> {
+        if let Some(layout) = app.layout_data().items.get(id) {
+            let x = (layout.ui_space.left + layout.ui_space.right) * 0.5;
+            let y = (layout.ui_space.top + layout.ui_space.bottom) * 0.5;
+            Some(Vec2 { x, y })
+        } else {
+            None
+        }
+    }
+
+    fn find_item_closest_to_point(
+        app: &Application,
+        point: Vec2,
+        items: &HashSet<WidgetId>,
+    ) -> Option<WidgetId> {
+        items
+            .iter()
+            .filter_map(|id| {
+                Self::get_item_point(app, id).map(|p| {
+                    let dx = p.x - point.x;
+                    let dy = p.y - point.y;
+                    (id, dx * dx + dy * dy)
+                })
+            })
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .map(|m| m.0.to_owned())
+    }
+
+    fn find_item_closest_to_direction(
+        app: &Application,
+        point: Vec2,
+        direction: NavDirection,
+        items: &HashSet<WidgetId>,
+    ) -> Option<WidgetId> {
+        let dir = match direction {
+            NavDirection::Up => Vec2 { x: 0.0, y: -1.0 },
+            NavDirection::Down => Vec2 { x: 0.0, y: 1.0 },
+            NavDirection::Left => Vec2 { x: -1.0, y: 0.0 },
+            NavDirection::Right => Vec2 { x: 1.0, y: 0.0 },
+            _ => return None,
+        };
+        items
+            .iter()
+            .filter_map(|id| {
+                Self::get_item_point(app, id).map(|p| {
+                    let dx = p.x - point.x;
+                    let dy = p.y - point.y;
+                    let dot = dx * dir.x + dy * dir.y;
+                    let len = (dx * dx + dy * dy).sqrt();
+                    let f = if len > 0.0 { dot / len } else { dot };
+                    (id, f)
+                })
+            })
+            .filter(|m| m.1 > 1.0e-6)
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .map(|m| m.0.to_owned())
+    }
+
+    fn find_first_item(&self, items: &HashSet<WidgetId>) -> Option<WidgetId> {
+        self.sorted_items_ids
+            .iter()
+            .find(|id| items.contains(id))
+            .cloned()
+    }
+
+    fn find_last_item(&self, items: &HashSet<WidgetId>) -> Option<WidgetId> {
+        self.sorted_items_ids
+            .iter()
+            .rev()
+            .find(|id| items.contains(id))
+            .cloned()
+    }
+
+    fn find_prev_item(&self, id: &WidgetId, items: &HashSet<WidgetId>) -> Option<WidgetId> {
+        let mut found = false;
+        self.sorted_items_ids
+            .iter()
+            .rev()
+            .find(|i| {
+                if found {
+                    if items.contains(i) {
+                        return true;
+                    }
+                } else if i == &id {
+                    found = true;
+                }
+                false
+            })
+            .cloned()
+    }
+
+    fn find_next_item(&self, id: &WidgetId, items: &HashSet<WidgetId>) -> Option<WidgetId> {
+        let mut found = false;
+        self.sorted_items_ids
+            .iter()
+            .find(|i| {
+                if found {
+                    if items.contains(i) {
+                        return true;
+                    }
+                } else if i == &id {
+                    found = true;
+                }
+                false
+            })
+            .cloned()
+    }
+
+    fn jump(&mut self, app: &mut Application, id: &WidgetId, data: NavJump) {
         if let Some(items) = self.containers.get(id) {
             match data {
-                NavListJump::First => {
-                    if let Some(id) = items.first().cloned() {
+                NavJump::First => {
+                    if let Some(id) = self.find_first_item(items) {
                         self.select_item(app, Some(id));
                     }
                 }
-                NavListJump::Last => {
-                    if let Some(id) = items.last().cloned() {
+                NavJump::Last => {
+                    if let Some(id) = self.find_last_item(items) {
                         self.select_item(app, Some(id));
                     }
                 }
-                NavListJump::StepLoop(mut steps) => {
-                    if self.selected_chain.is_empty() {
-                        if steps < 0 {
-                            if let Some(id) = items.last().cloned() {
-                                self.select_item(app, Some(id));
-                            }
-                        } else if steps > 0 {
-                            if let Some(id) = items.first().cloned() {
-                                self.select_item(app, Some(id));
-                            }
-                        }
-                    } else if let Some(mut index) =
-                        items.iter().position(|id| self.selected_chain.contains(id))
-                    {
-                        while steps < 0 {
-                            steps += items.len() as isize;
-                        }
-                        index = (index + steps as usize) % items.len();
-                        let id = items[index].to_owned();
-                        self.select_item(app, Some(id));
-                    }
-                }
-                NavListJump::StepEscape(steps, idref) => {
-                    if self.selected_chain.is_empty() {
-                        if let Some(id) = idref.read() {
+                NavJump::TopLeft => {
+                    if let Some(layout) = app.layout_data().items.get(id) {
+                        let point = Vec2 {
+                            x: layout.ui_space.left,
+                            y: layout.ui_space.top,
+                        };
+                        if let Some(id) = Self::find_item_closest_to_point(app, point, items) {
                             self.select_item(app, Some(id));
                         }
-                    } else if let Some(index) =
-                        items.iter().position(|id| self.selected_chain.contains(id))
-                    {
-                        if steps < 0 {
-                            let steps = steps.abs() as usize;
-                            if steps > index {
-                                if let Some(id) = idref.read() {
-                                    self.select_item(app, Some(id));
-                                }
-                            } else {
-                                let id = items[index - steps].to_owned();
-                                self.select_item(app, Some(id));
-                            }
-                        } else if steps > 0 {
-                            let steps = steps as usize;
-                            if index + steps >= items.len() {
-                                if let Some(id) = idref.read() {
-                                    self.select_item(app, Some(id));
-                                }
-                            } else {
-                                let id = items[index + steps].to_owned();
+                    }
+                }
+                NavJump::TopRight => {
+                    if let Some(layout) = app.layout_data().items.get(id) {
+                        let point = Vec2 {
+                            x: layout.ui_space.right,
+                            y: layout.ui_space.top,
+                        };
+                        if let Some(id) = Self::find_item_closest_to_point(app, point, items) {
+                            self.select_item(app, Some(id));
+                        }
+                    }
+                }
+                NavJump::BottomLeft => {
+                    if let Some(layout) = app.layout_data().items.get(id) {
+                        let point = Vec2 {
+                            x: layout.ui_space.left,
+                            y: layout.ui_space.bottom,
+                        };
+                        if let Some(id) = Self::find_item_closest_to_point(app, point, items) {
+                            self.select_item(app, Some(id));
+                        }
+                    }
+                }
+                NavJump::BottomRight => {
+                    if let Some(layout) = app.layout_data().items.get(id) {
+                        let point = Vec2 {
+                            x: layout.ui_space.right,
+                            y: layout.ui_space.bottom,
+                        };
+                        if let Some(id) = Self::find_item_closest_to_point(app, point, items) {
+                            self.select_item(app, Some(id));
+                        }
+                    }
+                }
+                NavJump::Loop(direction) => match direction {
+                    NavDirection::Up
+                    | NavDirection::Down
+                    | NavDirection::Left
+                    | NavDirection::Right => {
+                        if let Some(point) = Self::get_item_point(app, id) {
+                            if let Some(id) =
+                                Self::find_item_closest_to_direction(app, point, direction, items)
+                            {
                                 self.select_item(app, Some(id));
                             }
                         }
                     }
-                }
+                    NavDirection::Prev => {
+                        if let Some(id) = self.selected_chain.last() {
+                            if let Some(id) = self.find_prev_item(id, items) {
+                                self.select_item(app, Some(id));
+                            } else if let Some(id) = self.find_last_item(items) {
+                                self.select_item(app, Some(id));
+                            }
+                        }
+                    }
+                    NavDirection::Next => {
+                        if let Some(id) = self.selected_chain.last() {
+                            if let Some(id) = self.find_next_item(id, items) {
+                                self.select_item(app, Some(id));
+                            } else if let Some(id) = self.find_first_item(items) {
+                                self.select_item(app, Some(id));
+                            }
+                        }
+                    }
+                    _ => {}
+                },
+                NavJump::Escape(direction, idref) => match direction {
+                    NavDirection::Up
+                    | NavDirection::Down
+                    | NavDirection::Left
+                    | NavDirection::Right => {
+                        if let Some(point) = Self::get_item_point(app, id) {
+                            if let Some(id) =
+                                Self::find_item_closest_to_direction(app, point, direction, items)
+                            {
+                                self.select_item(app, Some(id));
+                            } else if let Some(id) = idref.read() {
+                                self.select_item(app, Some(id));
+                            }
+                        }
+                    }
+                    NavDirection::Prev => {
+                        if let Some(id) = self.selected_chain.last() {
+                            if let Some(id) = self.find_prev_item(id, items) {
+                                self.select_item(app, Some(id));
+                            } else if let Some(id) = idref.read() {
+                                self.select_item(app, Some(id));
+                            }
+                        }
+                    }
+                    NavDirection::Next => {
+                        if let Some(id) = self.selected_chain.last() {
+                            if let Some(id) = self.find_next_item(id, items) {
+                                self.select_item(app, Some(id));
+                            } else if let Some(id) = idref.read() {
+                                self.select_item(app, Some(id));
+                            }
+                        }
+                    }
+                    _ => {}
+                },
             }
         }
     }
@@ -444,7 +655,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
         app: &mut Application,
     ) -> Result<DefaultInteractionsEngineResult, ()> {
         let mut to_select = None;
-        let mut to_list_jump = HashMap::new();
+        let mut to_jump = HashMap::new();
         let mut to_focus = None;
         let mut to_send_axis = vec![];
         let mut to_send_custom = vec![];
@@ -462,10 +673,8 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                                 .filter(|(k, _)| id.path().starts_with(k.path()))
                                 .max_by(|(a, _), (b, _)| a.depth().cmp(&b.depth()))
                             {
-                                if let Some(index) = items.iter().position(|i| i == id) {
-                                    items.remove(index);
-                                }
-                                items.push(id.to_owned());
+                                items.remove(id);
+                                items.insert(id.to_owned());
                                 self.items_owners.insert(id.to_owned(), key.to_owned());
                             }
                         }
@@ -487,9 +696,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         NavType::Item => {
                             if let Some(key) = self.items_owners.remove(id) {
                                 if let Some(items) = self.containers.get_mut(&key) {
-                                    if let Some(index) = items.iter().position(|i| i == id) {
-                                        items.remove(index);
-                                    }
+                                    items.remove(&key);
                                 }
                             }
                         }
@@ -507,8 +714,8 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     },
                     NavSignal::Select(idref) => to_select = Some(idref.to_owned()),
                     NavSignal::Unselect => to_select = Some(().into()),
-                    NavSignal::ListJump(data) => {
-                        to_list_jump.insert(id.to_owned(), data.to_owned());
+                    NavSignal::Jump(data) => {
+                        to_jump.insert(id.to_owned(), data.to_owned());
                     }
                     NavSignal::FocusTextInput(idref) => to_focus = Some(idref.to_owned()),
                     NavSignal::Axis(name, value) => to_send_axis.push((name.to_owned(), *value)),
@@ -522,8 +729,11 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
         if let Some(idref) = to_select {
             self.select_item(app, idref.read());
         }
-        for (id, data) in to_list_jump {
-            self.list_jump(app, &id, data);
+        if !to_jump.is_empty() {
+            self.cache_sorted_items_ids(app);
+        }
+        for (id, data) in to_jump {
+            self.jump(app, &id, data);
         }
         if let Some(idref) = to_focus {
             self.focus_text_input(app, idref.read());
@@ -587,13 +797,25 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         }
                     }
                 }
-                Interaction::PointerDown(button, _, _) => {
-                    let action = match button {
-                        PointerButton::Trigger => NavSignal::Accept(true),
-                        PointerButton::Context => NavSignal::Context(true),
-                    };
-                    if self.send_to_selected_button(app, action) {
-                        result.captured_pointer_action = true;
+                Interaction::PointerDown(button, x, y) => {
+                    let found = self.find_button(app, x, y);
+                    if found.is_some() {
+                        self.select_item(app, found);
+                        result.captured_pointer_location = true;
+                        let action = match button {
+                            PointerButton::Trigger => NavSignal::Accept(true),
+                            PointerButton::Context => NavSignal::Context(true),
+                        };
+                        if self.send_to_selected_button(app, action) {
+                            result.captured_pointer_action = true;
+                        }
+                    } else {
+                        if self.deselect_when_no_button_found {
+                            self.select_item(app, None);
+                        }
+                        if self.does_hover_widget(app, x, y) {
+                            result.captured_pointer_location = true;
+                        }
                     }
                 }
                 Interaction::PointerUp(button, _, _) => {

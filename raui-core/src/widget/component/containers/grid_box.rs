@@ -2,7 +2,8 @@ use crate::{
     widget,
     widget::{
         component::interactive::navigation::{
-            use_nav_container_active, use_nav_item, NavContainerActive, NavItemActive,
+            use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
+            NavContainerActive, NavItemActive, NavJumpActive,
         },
         unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
         utils::Transform,
@@ -25,10 +26,12 @@ implement_props_data!(GridBoxProps);
 widget_component! {
     pub nav_grid_box(key, props, listed_slots) [
         use_nav_container_active,
+        use_nav_jump_direction_active,
         use_nav_item,
     ] {
         let props = props.clone()
             .without::<NavContainerActive>()
+            .without::<NavJumpActive>()
             .without::<NavItemActive>();
 
         widget!{

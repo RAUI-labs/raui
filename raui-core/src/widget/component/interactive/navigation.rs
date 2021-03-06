@@ -1,21 +1,35 @@
 use crate::{widget::WidgetIdOrRef, widget_hook, Scalar};
 use serde::{Deserialize, Serialize};
 
-fn is_false(v: &bool) -> bool {
-    !*v
-}
-
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NavItemActive;
 implement_props_data!(NavItemActive);
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NavContainerActive;
 implement_props_data!(NavContainerActive);
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-pub struct NavListActive;
-implement_props_data!(NavListActive);
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NavJumpActive(#[serde(default)] pub NavJumpMode);
+implement_props_data!(NavJumpActive);
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NavJumpLooped;
+implement_props_data!(NavJumpLooped);
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum NavJumpMode {
+    Direction,
+    StepHorizontal,
+    StepVertical,
+    StepPages,
+}
+
+impl Default for NavJumpMode {
+    fn default() -> Self {
+        Self::Direction
+    }
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct NavJumpMapProps {
@@ -40,39 +54,33 @@ pub struct NavJumpMapProps {
 }
 implement_props_data!(NavJumpMapProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct NavListJumpProps {
-    #[serde(default)]
-    pub direction: NavListDirection,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_false")]
-    pub looping: bool,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_false")]
-    pub tabs: bool,
-}
-implement_props_data!(NavListJumpProps);
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum NavListDirection {
-    HorizontalLeftToRight,
-    HorizontalRightToLeft,
-    VerticalTopToBottom,
-    VerticalBottomToTop,
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum NavDirection {
+    None,
+    Up,
+    Down,
+    Left,
+    Right,
+    Prev,
+    Next,
 }
 
-impl Default for NavListDirection {
+impl Default for NavDirection {
     fn default() -> Self {
-        Self::HorizontalLeftToRight
+        Self::None
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum NavListJump {
+pub enum NavJump {
     First,
     Last,
-    StepLoop(isize),
-    StepEscape(isize, WidgetIdOrRef),
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+    Loop(NavDirection),
+    Escape(NavDirection, WidgetIdOrRef),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,7 +119,7 @@ pub enum NavSignal {
     Right,
     Prev,
     Next,
-    ListJump(NavListJump),
+    Jump(NavJump),
     FocusTextInput(WidgetIdOrRef),
     TextChange(NavTextChange),
     Axis(String, Scalar),
@@ -146,7 +154,11 @@ widget_hook! {
 }
 
 widget_hook! {
-    pub use_nav_jump_map(life_cycle) {
+    pub use_nav_jump_map(props, life_cycle) {
+        if !props.has::<NavJumpActive>() {
+            return;
+        }
+
         life_cycle.change(|context| {
             let jump = match context.props.read::<NavJumpMapProps>() {
                 Ok(jump) => jump,
@@ -194,140 +206,126 @@ widget_hook! {
 }
 
 widget_hook! {
-    pub use_nav_list(props, life_cycle) {
-        macro_rules! jump {
-            ($context:expr, $list:expr, $jump:expr, $backward:path, $forward:path, $dir:ident) => {
-                match $list.direction {
-                    $backward => {
-                        if $list.looping {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepLoop(-1)
-                            ));
-                        } else {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepEscape(-1, $jump.$dir.to_owned())
-                            ));
-                        }
-                    }
-                    $forward => {
-                        if $list.looping {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepLoop(1)
-                            ));
-                        } else {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepEscape(1, $jump.$dir.to_owned())
-                            ));
-                        }
-                    }
-                    _ => {
-                        if $jump.$dir.is_some() {
-                            $context.signals.write(NavSignal::Select($jump.$dir.to_owned()));
-                        }
-                    }
-                }
-            }
-        }
-
-        macro_rules! jump_tab {
-            ($context:expr, $list:expr, $jump:expr, $step:expr, $dir:ident) => {
-                match $list.direction {
-                    NavListDirection::HorizontalLeftToRight | NavListDirection::VerticalTopToBottom => {
-                        if $list.looping {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepLoop($step)
-                            ));
-                        } else {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepEscape($step, $jump.$dir.to_owned())
-                            ));
-                        }
-                    }
-                    NavListDirection::HorizontalRightToLeft | NavListDirection::VerticalBottomToTop => {
-                        if $list.looping {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepLoop(- $step)
-                            ));
-                        } else {
-                            $context.signals.write(NavSignal::ListJump(
-                                NavListJump::StepEscape(- $step, $jump.$dir.to_owned())
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-
-        if !props.has::<NavListActive>() {
-            return;
-        }
-
+    pub use_nav_jump(life_cycle) {
         life_cycle.change(|context| {
-            let list = match context.props.read::<NavListJumpProps>() {
-                Ok(list) => list,
-                _ => return,
+            let mode = match context.props.read::<NavJumpActive>() {
+                Ok(data) => data.0,
+                Err(_) => return,
             };
+            let looped = context.props.has::<NavJumpLooped>();
             let jump = context.props.read_cloned_or_default::<NavJumpMapProps>();
             for msg in context.messenger.messages {
                 if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
-                    match msg {
-                        NavSignal::Up => if !list.tabs {
-                            jump!(
-                                context,
-                                list,
-                                jump,
-                                NavListDirection::VerticalTopToBottom,
-                                NavListDirection::VerticalBottomToTop,
-                                up
-                            )
-                        },
-                        NavSignal::Down => if !list.tabs {
-                            jump!(
-                                context,
-                                list,
-                                jump,
-                                NavListDirection::VerticalBottomToTop,
-                                NavListDirection::VerticalTopToBottom,
-                                down
-                            )
-                        },
-                        NavSignal::Left => if !list.tabs {
-                            jump!(
-                                context,
-                                list,
-                                jump,
-                                NavListDirection::HorizontalLeftToRight,
-                                NavListDirection::HorizontalRightToLeft,
-                                left
-                            )
-                        },
-                        NavSignal::Right => if !list.tabs {
-                            jump!(
-                                context,
-                                list,
-                                jump,
-                                NavListDirection::HorizontalRightToLeft,
-                                NavListDirection::HorizontalLeftToRight,
-                                right
-                            )
-                        },
-                        NavSignal::Prev => if list.tabs {
-                            jump_tab!(
-                                context,
-                                list,
-                                jump,
-                                -1,
-                                prev
-                            )
+                    match (mode, msg) {
+                        (NavJumpMode::Direction, NavSignal::Up) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Up)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Up, jump.up.to_owned())
+                                ));
+                            }
                         }
-                        NavSignal::Next => if list.tabs {
-                            jump_tab!(
-                                context,
-                                list,
-                                jump,
-                                1,
-                                next
-                            )
+                        (NavJumpMode::Direction, NavSignal::Down) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Down)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Down, jump.down.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::Direction, NavSignal::Left) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Left)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Left, jump.left.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::Direction, NavSignal::Right) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Right)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Right, jump.right.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepHorizontal, NavSignal::Left) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Prev)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Prev, jump.left.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepHorizontal, NavSignal::Right) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Next)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Next, jump.right.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepVertical, NavSignal::Up) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Prev)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Prev, jump.up.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepVertical, NavSignal::Down) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Next)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Next, jump.down.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepPages, NavSignal::Prev) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Prev)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Prev, jump.prev.to_owned())
+                                ));
+                            }
+                        }
+                        (NavJumpMode::StepPages, NavSignal::Next) => {
+                            if looped {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Loop(NavDirection::Next)
+                                ));
+                            } else {
+                                context.signals.write(NavSignal::Jump(
+                                    NavJump::Escape(NavDirection::Next, jump.next.to_owned())
+                                ));
+                            }
                         }
                         _ => {}
                     }
@@ -338,8 +336,26 @@ widget_hook! {
 }
 
 widget_hook! {
-    pub use_nav_list_active(props) |[use_nav_list] {
-        props.write(NavListActive);
+    pub use_nav_jump_direction_active(props) |[use_nav_jump] {
+        props.write(NavJumpActive(NavJumpMode::Direction));
+    }
+}
+
+widget_hook! {
+    pub use_nav_jump_horizontal_step_active(props) |[use_nav_jump] {
+        props.write(NavJumpActive(NavJumpMode::StepHorizontal));
+    }
+}
+
+widget_hook! {
+    pub use_nav_jump_vertical_step_active(props) |[use_nav_jump] {
+        props.write(NavJumpActive(NavJumpMode::StepVertical));
+    }
+}
+
+widget_hook! {
+    pub use_nav_jump_step_pages_active(props) |[use_nav_jump] {
+        props.write(NavJumpActive(NavJumpMode::StepPages));
     }
 }
 

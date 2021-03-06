@@ -9,10 +9,11 @@ widget_component! {
             shrink: 0.0,
             ..Default::default()
         }));
-        let props = VerticalBoxProps {
+        let props = Props::new(VerticalBoxProps {
             separation: 16.0,
             ..Default::default()
-        };
+        })
+        .with(NavJumpLooped);
 
         widget!{
             (#{key} nav_vertical_box: {props} [
