@@ -343,6 +343,7 @@ Things that now are done:
 - [x] Create TODO app as an example.
 - [x] Create In-Game app as an example.
 - [x] Create renderer for Oxygengine game engine.
-- [x] Add complex navigation system
-- [x] Create scroll box widget
-- [x] Add "immediate mode UI" builder to give alternative to macros-based declarative mode UI building (with zero overhead, it is an equivalent to declarative macros used by default, immediate mode and declarative mode widgets can talk to each other without a hassle)
+- [x] Add complex navigation system.
+- [x] Create scroll box widget.
+- [x] Add "immediate mode UI" builder to give alternative to macros-based declarative mode UI building (with zero overhead, it is an equivalent to declarative macros used by default, immediate mode and declarative mode widgets can talk to each other without a hassle).
+- [x] Add data binding property type to easily mutate data from outside of the application.

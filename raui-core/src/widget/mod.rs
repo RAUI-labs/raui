@@ -334,14 +334,18 @@ pub fn setup(app: &mut Application) {
     app.register_props::<f64>("f64");
     app.register_props::<bool>("bool");
     app.register_props::<String>("String");
-    app.register_props::<unit::content::ContentBoxItemLayout>("ContentBoxItemLayout");
-    app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
-    app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
     app.register_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
     app.register_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
     app.register_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
     app.register_props::<component::containers::horizontal_box::HorizontalBoxProps>(
         "HorizontalBoxProps",
+    );
+    app.register_props::<component::containers::scroll_box::ScrollBoxOwner>("ScrollBoxOwner");
+    app.register_props::<component::containers::scroll_box::SideScrollbarsProps>(
+        "SideScrollbarsProps",
+    );
+    app.register_props::<component::containers::scroll_box::SideScrollbarsState>(
+        "SideScrollbarsState",
     );
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
@@ -349,26 +353,81 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
     app.register_props::<component::containers::wrap_box::WrapBoxProps>("WrapBoxProps");
     app.register_props::<component::image_box::ImageBoxProps>("ImageBoxProps");
+    app.register_props::<component::interactive::button::ButtonProps>("ButtonProps");
+    app.register_props::<component::interactive::button::ButtonNotifyProps>("ButtonNotifyProps");
+    app.register_props::<component::interactive::input_field::TextInputProps>("TextInputProps");
+    app.register_props::<component::interactive::input_field::TextInputNotifyProps>(
+        "TextInputNotifyProps",
+    );
+    app.register_props::<component::interactive::navigation::NavItemActive>("NavItemActive");
+    app.register_props::<component::interactive::navigation::NavButtonTrackingActive>(
+        "NavButtonTrackingActive",
+    );
+    app.register_props::<component::interactive::navigation::NavContainerActive>(
+        "NavContainerActive",
+    );
+    app.register_props::<component::interactive::navigation::NavJumpLooped>("NavJumpLooped");
+    app.register_props::<component::interactive::navigation::NavJumpMapProps>("NavJumpMapProps");
+    app.register_props::<component::interactive::scroll_view::ScrollViewState>("ScrollViewState");
+    app.register_props::<component::interactive::scroll_view::ScrollViewRange>("ScrollViewRange");
+    app.register_props::<component::interactive::scroll_view::ScrollViewNotifyProps>(
+        "ScrollViewNotifyProps",
+    );
+    app.register_props::<component::MessageForwardProps>("MessageForwardProps");
+    app.register_props::<component::WidgetAlpha>("WidgetAlpha");
     app.register_props::<component::space_box::SpaceBoxProps>("SpaceBoxProps");
     app.register_props::<component::text_box::TextBoxProps>("TextBoxProps");
-    app.register_props::<component::interactive::button::ButtonProps>("ButtonProps");
-    app.register_props::<component::interactive::input_field::TextInputProps>("TextInputProps");
+    app.register_props::<unit::content::ContentBoxItemLayout>("ContentBoxItemLayout");
+    app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
+    app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
 
+    app.register_component(
+        "nav_content_box",
+        component::containers::content_box::nav_content_box,
+    );
     app.register_component(
         "content_box",
         component::containers::content_box::content_box,
     );
+    app.register_component(
+        "nav_flex_box",
+        component::containers::flex_box::nav_flex_box,
+    );
     app.register_component("flex_box", component::containers::flex_box::flex_box);
+    app.register_component(
+        "nav_grid_box",
+        component::containers::grid_box::nav_grid_box,
+    );
     app.register_component("grid_box", component::containers::grid_box::grid_box);
+    app.register_component(
+        "nav_horizontal_box",
+        component::containers::horizontal_box::nav_horizontal_box,
+    );
     app.register_component(
         "horizontal_box",
         component::containers::horizontal_box::horizontal_box,
     );
+    app.register_component(
+        "nav_scroll_box",
+        component::containers::scroll_box::nav_scroll_box,
+    );
+    app.register_component(
+        "nav_scroll_box_side_scrollbars",
+        component::containers::scroll_box::nav_scroll_box_side_scrollbars,
+    );
     app.register_component("size_box", component::containers::size_box::size_box);
+    app.register_component(
+        "nav_switch_box",
+        component::containers::switch_box::nav_switch_box,
+    );
     app.register_component("switch_box", component::containers::switch_box::switch_box);
     app.register_component(
         "variant_box",
         component::containers::variant_box::variant_box,
+    );
+    app.register_component(
+        "nav_vertical_box",
+        component::containers::vertical_box::nav_vertical_box,
     );
     app.register_component(
         "vertical_box",
@@ -376,8 +435,6 @@ pub fn setup(app: &mut Application) {
     );
     app.register_component("wrap_box", component::containers::wrap_box::wrap_box);
     app.register_component("image_box", component::image_box::image_box);
-    app.register_component("space_box", component::space_box::space_box);
-    app.register_component("text_box", component::text_box::text_box);
     app.register_component("button", component::interactive::button::button);
     app.register_component(
         "text_input",
@@ -387,6 +444,8 @@ pub fn setup(app: &mut Application) {
         "input_field",
         component::interactive::input_field::input_field,
     );
+    app.register_component("space_box", component::space_box::space_box);
+    app.register_component("text_box", component::text_box::text_box);
 }
 
 #[macro_export]
