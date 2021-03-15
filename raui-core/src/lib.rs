@@ -8,6 +8,7 @@ pub mod state;
 #[macro_use]
 pub mod widget;
 pub mod animator;
+pub mod data_binding;
 pub mod interactive;
 pub mod layout;
 pub mod signals;
@@ -50,6 +51,7 @@ pub mod prelude {
     pub use crate::{
         animator::*,
         application::*,
+        data_binding::*,
         interactive::default_interactions_engine::*,
         interactive::*,
         layout::default_layout_engine::*,

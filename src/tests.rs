@@ -14,6 +14,8 @@ fn test_threadsafe() {
 
     foo::<Application>();
     foo::<WidgetRef>();
+    foo::<WidgetIdOrRef>();
+    foo::<DataBinding<()>>();
 }
 
 #[test]
