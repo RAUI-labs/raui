@@ -6,7 +6,7 @@ pub mod text_box;
 
 use crate::{
     messenger::Message,
-    props::Props,
+    props::{Props, PropsData},
     widget::{
         node::{WidgetNode, WidgetNodePrefab},
         FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
@@ -123,6 +123,71 @@ pub struct WidgetComponent {
 }
 
 impl WidgetComponent {
+    pub fn new(processor: FnWidget, type_name: &str) -> Self {
+        Self {
+            processor,
+            type_name: type_name.to_owned(),
+            key: None,
+            idref: None,
+            props: Props::default(),
+            shared_props: None,
+            listed_slots: Vec::new(),
+            named_slots: HashMap::new(),
+        }
+    }
+
+    pub fn key<T>(mut self, v: T) -> Self
+    where
+        T: ToString,
+    {
+        self.key = Some(v.to_string());
+        self
+    }
+
+    pub fn idref<T>(mut self, v: T) -> Self
+    where
+        T: Into<WidgetRef>,
+    {
+        self.idref = Some(v.into());
+        self
+    }
+
+    pub fn props<T>(mut self, v: T) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        self.props.write(v);
+        self
+    }
+
+    pub fn shared_props<T>(mut self, v: T) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        if let Some(props) = &mut self.shared_props {
+            props.write(v);
+        } else {
+            self.shared_props = Some(Props::new(v));
+        }
+        self
+    }
+
+    pub fn listed_slot<T>(mut self, v: T) -> Self
+    where
+        T: Into<WidgetNode>,
+    {
+        self.listed_slots.push(v.into());
+        self
+    }
+
+    pub fn named_slot<T>(mut self, k: &str, v: T) -> Self
+    where
+        T: Into<WidgetNode>,
+    {
+        self.named_slots.insert(k.to_owned(), v.into());
+        self
+    }
+
     pub fn remap_props<F>(&mut self, mut f: F)
     where
         F: FnMut(Props) -> Props,

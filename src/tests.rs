@@ -803,3 +803,50 @@ fn test_scroll_box() {
         |_, _| {},
     );
 }
+
+#[test]
+fn test_immediate_mode() {
+    fn use_app(context: &mut WidgetContext) {
+        context.use_hook(use_nav_container);
+    }
+
+    fn app(mut context: WidgetContext) -> WidgetNode {
+        context.use_hook(use_app);
+
+        let title = context.named_slots.remove("title").unwrap_or_default();
+        let content = context.named_slots.remove("content").unwrap_or_default();
+
+        make_widget!(content_box)
+            .key(&context.key)
+            .listed_slot(title)
+            .listed_slot(content)
+            .into()
+    }
+
+    fn make_app(key: &str) -> WidgetComponent {
+        make_widget!(app).key(key)
+    }
+
+    fn make_text_box(key: &str, text: &str) -> WidgetComponent {
+        make_widget!(text_box).key(key).props(TextBoxProps {
+            text: text.to_owned(),
+            ..Default::default()
+        })
+    }
+
+    fn make_button(key: &str, text: &str) -> WidgetComponent {
+        make_widget!(button)
+            .key(key)
+            .props(NavItemActive)
+            .named_slot("content", make_text_box("text", text))
+    }
+
+    let mut application = Application::new();
+    application.apply(
+        make_app("app")
+            .props(NavContainerActive)
+            .named_slot("title", make_text_box("text", "Hello, World!"))
+            .named_slot("content", make_button("button", "Click me!"))
+            .into(),
+    );
+}

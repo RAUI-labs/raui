@@ -390,6 +390,15 @@ pub fn setup(app: &mut Application) {
 }
 
 #[macro_export]
+macro_rules! make_widget {
+    ($type_id:path) => {{
+        let processor = $type_id;
+        let type_name = stringify!($type_id);
+        $crate::widget::component::WidgetComponent::new(processor, type_name)
+    }};
+}
+
+#[macro_export]
 macro_rules! widget {
     {()} => ($crate::widget::node::WidgetNode::None);
     {[]} => ($crate::widget::node::WidgetNode::Unit(Default::default()));
