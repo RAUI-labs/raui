@@ -219,6 +219,14 @@ impl Props {
         self.read_cloned().unwrap_or_default()
     }
 
+    pub fn read_cloned_or_else<T, F>(&self, mut f: F) -> T
+    where
+        T: 'static + PropsData + Clone + Default,
+        F: FnMut() -> T,
+    {
+        self.read_cloned().unwrap_or_else(|_| f())
+    }
+
     pub fn write<T>(&mut self, data: T)
     where
         T: 'static + PropsData,
@@ -232,12 +240,9 @@ impl Props {
         T: 'static + PropsData,
         F: FnMut(&T) -> T,
     {
-        match self.read() {
-            Ok(data) => {
-                let data = f(data);
-                self.write(data);
-            }
-            _ => {}
+        if let Ok(data) = self.read() {
+            let data = f(data);
+            self.write(data);
         }
     }
 
@@ -246,13 +251,10 @@ impl Props {
         T: 'static + PropsData + Clone,
         F: FnMut(&mut T),
     {
-        match self.read::<T>() {
-            Ok(data) => {
-                let mut data = data.clone();
-                f(&mut data);
-                self.write(data);
-            }
-            _ => {}
+        if let Ok(data) = self.read::<T>() {
+            let mut data = data.clone();
+            f(&mut data);
+            self.write(data);
         }
     }
 

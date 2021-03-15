@@ -1,10 +1,12 @@
 use crate::{
+    messenger::MessageData,
     unpack_named_slots, widget,
     widget::{
         component::interactive::{
             button::{use_button, ButtonProps},
             navigation::{use_nav_item, use_nav_text_input, NavSignal, NavTextChange},
         },
+        context::WidgetMountOrChangeContext,
         unit::area::AreaBoxNode,
         WidgetId, WidgetIdOrRef,
     },
@@ -66,17 +68,24 @@ widget_hook! {
 
 widget_hook! {
     pub use_text_input(life_cycle) [use_nav_text_input] {
+        fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
+        where
+            T: 'static + MessageData,
+        {
+            if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
+                if let Some(to) = notify.0.read() {
+                    context.messenger.write(to, data);
+                }
+            }
+        }
+
         life_cycle.mount(|context| {
             let mut data = context.props.read_cloned_or_default::<TextInputProps>();
             data.focused = false;
-            if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
-                if let Some(to) = notify.0.read() {
-                    context.messenger.write(to, TextInputNotifyMessage {
-                        sender: context.id.to_owned(),
-                        state: data.to_owned(),
-                    });
-                }
-            }
+            notify(&context, TextInputNotifyMessage {
+                sender: context.id.to_owned(),
+                state: data.to_owned(),
+            });
             drop(context.state.write_with(data));
         });
 
@@ -134,14 +143,10 @@ widget_hook! {
                 }
             }
             if dirty {
-                if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
-                    if let Some(to) = notify.0.read() {
-                        context.messenger.write(to, TextInputNotifyMessage {
-                            sender: context.id.to_owned(),
-                            state: data.to_owned(),
-                        });
-                    }
-                }
+                notify(&context, TextInputNotifyMessage {
+                    sender: context.id.to_owned(),
+                    state: data.to_owned(),
+                });
                 drop(context.state.write_with(data));
             }
         });

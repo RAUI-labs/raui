@@ -119,7 +119,7 @@ impl WidgetId {
             result.push('/');
             result.push_str(a);
         }
-        return result;
+        result
     }
 }
 
@@ -222,6 +222,11 @@ pub enum WidgetIdOrRef {
 }
 
 impl WidgetIdOrRef {
+    #[inline]
+    pub fn new_ref() -> Self {
+        Self::Ref(WidgetRef::default())
+    }
+
     #[inline]
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)

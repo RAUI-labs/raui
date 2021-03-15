@@ -71,6 +71,7 @@ pub struct Application {
     animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
+    #[allow(clippy::type_complexity)]
     unmount_closures: HashMap<WidgetId, Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>>,
     dirty: bool,
     render_changed: bool,
@@ -659,7 +660,7 @@ impl Application {
                 ));
             }
             WidgetUnitNode::ContentBox(unit) => {
-                let items = std::mem::replace(&mut unit.items, Vec::new());
+                let items = std::mem::take(&mut unit.items);
                 unit.items = items
                     .into_iter()
                     .enumerate()
@@ -682,7 +683,7 @@ impl Application {
                     .collect::<Vec<_>>();
             }
             WidgetUnitNode::FlexBox(unit) => {
-                let items = std::mem::replace(&mut unit.items, Vec::new());
+                let items = std::mem::take(&mut unit.items);
                 unit.items = items
                     .into_iter()
                     .enumerate()
@@ -705,7 +706,7 @@ impl Application {
                     .collect::<Vec<_>>();
             }
             WidgetUnitNode::GridBox(unit) => {
-                let items = std::mem::replace(&mut unit.items, Vec::new());
+                let items = std::mem::take(&mut unit.items);
                 unit.items = items
                     .into_iter()
                     .enumerate()

@@ -45,7 +45,8 @@ impl App {
             texts: (0..=18).map(|_| markov.generate(20)).collect::<Vec<_>>(),
         };
         ui.apply(widget! { (#{"app"} app: {props}) });
-        let mut ui_interactions = GgezInteractionsEngine::with_capacity(1024, 32, 32, 32, 16);
+        let mut ui_interactions =
+            GgezInteractionsEngine::with_capacity(0, 1024, 32, 32, 32, 32, 16);
         ui_interactions.engine.deselect_when_no_button_found = true;
         Self {
             ui,

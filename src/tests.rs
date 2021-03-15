@@ -176,7 +176,7 @@ fn test_hello_world() {
     }
 
     // you use life cycle hooks for storing closures that will be called when widget will be
-    // mounted/changed/unmounted. they exists for you to be able to resuse some common logic across
+    // mounted/changed/unmounted. they exists for you to be able to reuse some common logic across
     // multiple components. each closure provides arguments such as:
     // - widget id
     // - widget state
@@ -669,4 +669,137 @@ fn test_refs() {
         .signals()
         .iter()
         .any(|(_, msg)| msg.as_any().downcast_ref::<()>().is_some()));
+}
+
+#[test]
+fn test_scroll_box() {
+    fn run<F>(
+        application: &mut Application,
+        mapping: &CoordsMapping,
+        layout_engine: &mut DefaultLayoutEngine,
+        interactions: &mut DefaultInteractionsEngine,
+        actions: &[Option<Interaction>],
+        mut f: F,
+    ) where
+        F: FnMut(WidgetId, Message),
+    {
+        for action in actions.iter() {
+            println!("* Process");
+            application.forced_process();
+            application
+                .layout(mapping, layout_engine)
+                .expect("Failed layouting");
+            if let Some(action) = action {
+                println!("* Interact: {:?}", action);
+                interactions.interact(action.to_owned());
+            }
+            application
+                .interact(interactions)
+                .expect("Failed integration");
+            println!("* Read signals");
+            for (id, msg) in application.consume_signals() {
+                println!("* Signal: {:?} -> {:?}", id, msg);
+                f(id, msg);
+            }
+        }
+    }
+
+    let mut layout_engine = DefaultLayoutEngine::default();
+    let mapping = CoordsMapping::new(Rect {
+        left: 0.0,
+        right: 100.0,
+        top: 0.0,
+        bottom: 100.0,
+    });
+
+    widget_hook! {
+        use_app(life_cycle) {
+            life_cycle.change(|context| {
+                for msg in context.messenger.messages {
+                    println!("* App message: {:#?}", msg);
+                }
+            });
+        }
+    }
+
+    widget_component! {
+        app(id, key) [use_nav_container, use_app] {
+            let scroll_props = Props::new(NavContainerActive)
+                .with(NavItemActive)
+                .with(ScrollViewNotifyProps(id.to_owned().into()))
+                .with(ScrollViewRange::default());
+            let size_props = SizeBoxProps {
+                width: SizeBoxSizeValue::Exact(200.0),
+                height: SizeBoxSizeValue::Exact(200.0),
+                ..Default::default()
+            };
+
+            widget! {
+                (#{key} nav_scroll_box: {scroll_props} {
+                    content = (#{"button"} button: {NavItemActive} {
+                        content = (#{"size"} size_box: {size_props})
+                    })
+                    scrollbars = (#{"scrollbars"} nav_scroll_box_side_scrollbars)
+                })
+            }
+        }
+    }
+
+    let mut button = WidgetId::default();
+    let mut application = Application::new();
+    let mut interactions = DefaultInteractionsEngine::default();
+    interactions.deselect_when_no_button_found = true;
+    application.apply(widget! { (#{"app"} app: {NavContainerActive}) });
+
+    run(
+        &mut application,
+        &mapping,
+        &mut layout_engine,
+        &mut interactions,
+        &[None],
+        |id, msg| {
+            if let Some(NavSignal::Register(NavType::Button(_))) = msg.as_any().downcast_ref() {
+                println!("* Button registered: {:?}", id);
+                button = id.to_owned();
+            }
+        },
+    );
+
+    run(
+        &mut application,
+        &mapping,
+        &mut layout_engine,
+        &mut interactions,
+        &[
+            None,
+            None,
+            None,
+            Some(Interaction::Navigate(NavSignal::Select(
+                button.to_owned().into(),
+            ))),
+            Some(Interaction::Navigate(NavSignal::Jump(NavJump::Scroll(
+                NavScroll::Factor(Vec2 { x: 2.0, y: 2.0 }, false),
+            )))),
+            Some(Interaction::Navigate(NavSignal::Jump(NavJump::Scroll(
+                NavScroll::Units(Vec2 { x: -50.0, y: -50.0 }, true),
+            )))),
+            Some(Interaction::Navigate(NavSignal::Jump(NavJump::Scroll(
+                NavScroll::Widget(button.into(), Vec2 { x: 0.5, y: 0.5 }),
+            )))),
+            Some(Interaction::PointerDown(
+                PointerButton::Trigger,
+                Vec2 { x: 95.0, y: 0.0 },
+            )),
+            Some(Interaction::PointerMove(Vec2 { x: 95.0, y: 45.0 })),
+            Some(Interaction::PointerMove(Vec2 { x: 95.0, y: 90.0 })),
+            Some(Interaction::PointerUp(
+                PointerButton::Trigger,
+                Vec2 { x: 95.0, y: 90.0 },
+            )),
+            None,
+            None,
+            None,
+        ],
+        |_, _| {},
+    );
 }

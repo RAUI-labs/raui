@@ -36,16 +36,18 @@ impl DefaultLayoutEngine {
     }
 
     pub fn layout_area_box(size_available: Vec2, unit: &AreaBox) -> LayoutNode {
-        let children = if let Some(child) = Self::layout_node(size_available, &unit.slot) {
-            vec![child]
+        let (children, w, h) = if let Some(child) = Self::layout_node(size_available, &unit.slot) {
+            let w = child.local_space.width();
+            let h = child.local_space.height();
+            (vec![child], w, h)
         } else {
-            vec![]
+            (vec![], 0.0, 0.0)
         };
         let local_space = Rect {
             left: 0.0,
-            right: size_available.x,
+            right: w,
             top: 0.0,
-            bottom: size_available.y,
+            bottom: h,
         };
         LayoutNode {
             id: unit.id.to_owned(),
@@ -153,7 +155,7 @@ impl DefaultLayoutEngine {
                     };
                 if !line.is_empty() && main + local_main > main_available {
                     main += line.len().saturating_sub(1) as Scalar * unit.separation;
-                    lines.push((main, cross, grow, std::mem::replace(&mut line, vec![])));
+                    lines.push((main, cross, grow, std::mem::take(&mut line)));
                     main = 0.0;
                     cross = 0.0;
                     grow = 0.0;
@@ -865,7 +867,12 @@ impl DefaultLayoutEngine {
         result
     }
 
-    fn unpack_node(ui_space: Rect, node: LayoutNode, items: &mut HashMap<WidgetId, LayoutItem>) {
+    fn unpack_node(
+        parent: Option<&WidgetId>,
+        ui_space: Rect,
+        node: LayoutNode,
+        items: &mut HashMap<WidgetId, LayoutItem>,
+    ) {
         let LayoutNode {
             id,
             local_space,
@@ -878,13 +885,14 @@ impl DefaultLayoutEngine {
             bottom: local_space.bottom + ui_space.top,
         };
         for node in children {
-            Self::unpack_node(ui_space, node, items);
+            Self::unpack_node(Some(&id), ui_space, node, items);
         }
         items.insert(
             id,
             LayoutItem {
                 local_space,
                 ui_space,
+                parent: parent.cloned(),
             },
         );
     }
@@ -895,7 +903,7 @@ impl LayoutEngine<()> for DefaultLayoutEngine {
         let ui_space = mapping.virtual_area();
         if let Some(root) = Self::layout_node(ui_space.size(), tree) {
             let mut items = HashMap::with_capacity(root.count());
-            Self::unpack_node(ui_space, root, &mut items);
+            Self::unpack_node(None, ui_space, root, &mut items);
             Ok(Layout { ui_space, items })
         } else {
             Ok(Layout {

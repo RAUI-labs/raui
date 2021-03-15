@@ -74,6 +74,26 @@ widget_hook! {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ResizeListenerSignal {
+    Register,
+    Unregister,
+    Change,
+}
+implement_message_data!(ResizeListenerSignal);
+
+widget_hook! {
+    pub use_resize_listener(life_cycle) {
+        life_cycle.mount(|context| {
+            context.signals.write(ResizeListenerSignal::Register);
+        });
+
+        life_cycle.unmount(|context| {
+            context.signals.write(ResizeListenerSignal::Unregister);
+        });
+    }
+}
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct WidgetAlpha(pub Scalar);
 implement_props_data!(WidgetAlpha);

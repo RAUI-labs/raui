@@ -18,13 +18,12 @@ use raui_core::{
         component::interactive::navigation::{NavSignal, NavTextChange},
         utils::Vec2,
     },
-    Scalar,
 };
 
 #[derive(Debug, Default)]
 pub struct GgezInteractionsEngine {
     pub engine: DefaultInteractionsEngine,
-    pointer_position: (Scalar, Scalar),
+    pointer_position: Vec2,
     trigger_button: bool,
     trigger_context: bool,
 }
@@ -35,18 +34,22 @@ impl GgezInteractionsEngine {
     }
 
     pub fn with_capacity(
+        resize_listeners: usize,
         interactions_queue: usize,
         containers: usize,
         buttons: usize,
         text_inputs: usize,
+        scroll_views: usize,
         selected_chain: usize,
     ) -> Self {
         Self {
             engine: DefaultInteractionsEngine::with_capacity(
+                resize_listeners,
                 interactions_queue,
                 containers,
                 buttons,
                 text_inputs,
+                scroll_views,
                 selected_chain,
             ),
             ..Default::default()
@@ -55,47 +58,35 @@ impl GgezInteractionsEngine {
 
     pub fn update(&mut self, ctx: &mut Context, mapping: &CoordsMapping) {
         let mouse_pos = mouse::position(ctx);
-        if (mouse_pos.x - self.pointer_position.0).abs() > 1.0e-6
-            || (mouse_pos.y - self.pointer_position.1).abs() > 1.0e-6
+        let mouse_pos = mapping.real_to_virtual_vec2(Vec2 {
+            x: mouse_pos.x,
+            y: mouse_pos.y,
+        });
+        if (mouse_pos.x - self.pointer_position.x).abs() > 1.0e-6
+            || (mouse_pos.y - self.pointer_position.y).abs() > 1.0e-6
         {
-            let Vec2 { x, y } = mapping.real_to_virtual_vec2(Vec2 {
-                x: mouse_pos.x,
-                y: mouse_pos.y,
-            });
-            self.engine.interact(Interaction::PointerMove(x, y));
-            self.pointer_position = (mouse_pos.x, mouse_pos.y);
+            self.engine.interact(Interaction::PointerMove(mouse_pos));
+            self.pointer_position = mouse_pos;
         }
         let mouse_trigger = mouse::button_pressed(ctx, mouse::MouseButton::Left);
         let mouse_context = mouse::button_pressed(ctx, mouse::MouseButton::Right);
         if self.trigger_button != mouse_trigger {
             if mouse_trigger {
-                self.engine.interact(Interaction::PointerDown(
-                    PointerButton::Trigger,
-                    mouse_pos.x,
-                    mouse_pos.y,
-                ));
+                self.engine
+                    .interact(Interaction::PointerDown(PointerButton::Trigger, mouse_pos));
             } else {
-                self.engine.interact(Interaction::PointerUp(
-                    PointerButton::Trigger,
-                    mouse_pos.x,
-                    mouse_pos.y,
-                ));
+                self.engine
+                    .interact(Interaction::PointerUp(PointerButton::Trigger, mouse_pos));
             }
             self.trigger_button = mouse_trigger;
         }
         if self.trigger_context != mouse_context {
             if mouse_context {
-                self.engine.interact(Interaction::PointerDown(
-                    PointerButton::Context,
-                    mouse_pos.x,
-                    mouse_pos.y,
-                ));
+                self.engine
+                    .interact(Interaction::PointerDown(PointerButton::Context, mouse_pos));
             } else {
-                self.engine.interact(Interaction::PointerUp(
-                    PointerButton::Context,
-                    mouse_pos.x,
-                    mouse_pos.y,
-                ));
+                self.engine
+                    .interact(Interaction::PointerUp(PointerButton::Context, mouse_pos));
             }
             self.trigger_context = mouse_context;
         }

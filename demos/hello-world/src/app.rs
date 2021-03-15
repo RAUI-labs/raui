@@ -39,7 +39,8 @@ impl App {
             })
         };
         ui.apply(tree);
-        let mut ui_interactions = GgezInteractionsEngine::with_capacity(1024, 32, 32, 32, 16);
+        let mut ui_interactions =
+            GgezInteractionsEngine::with_capacity(0, 1024, 32, 32, 32, 32, 16);
         ui_interactions.engine.deselect_when_no_button_found = true;
         Self {
             ui,

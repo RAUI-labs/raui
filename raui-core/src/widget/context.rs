@@ -22,11 +22,11 @@ pub struct WidgetContext<'a> {
 
 impl<'a> WidgetContext<'a> {
     pub fn take_named_slots(&mut self) -> HashMap<String, WidgetNode> {
-        std::mem::replace(&mut self.named_slots, HashMap::new())
+        std::mem::take(&mut self.named_slots)
     }
 
     pub fn take_listed_slots(&mut self) -> Vec<WidgetNode> {
-        std::mem::replace(&mut self.listed_slots, vec![])
+        std::mem::take(&mut self.listed_slots)
     }
 
     pub fn use_hook<F>(&mut self, mut f: F) -> &mut Self

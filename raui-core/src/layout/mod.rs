@@ -49,6 +49,34 @@ impl<'a> std::fmt::Debug for LayoutSortedItems<'a> {
 }
 
 impl Layout {
+    pub fn find(&self, mut path: &str) -> Option<&LayoutItem> {
+        loop {
+            if let Some(item) =
+                self.items
+                    .iter()
+                    .find_map(|(k, v)| if k.path() == path { Some(v) } else { None })
+            {
+                return Some(item);
+            } else if let Some(index) = path.rfind('/') {
+                path = &path[0..index];
+            } else {
+                break;
+            }
+        }
+        None
+    }
+
+    pub fn find_or_ui_space(&self, path: &str) -> LayoutItem {
+        match self.find(path) {
+            Some(item) => item.to_owned(),
+            None => LayoutItem {
+                local_space: self.ui_space,
+                ui_space: self.ui_space,
+                parent: None,
+            },
+        }
+    }
+
     pub fn virtual_to_real(&self, mapping: &CoordsMapping) -> Self {
         Self {
             ui_space: mapping.virtual_to_real_rect(self.ui_space),
@@ -70,6 +98,25 @@ impl Layout {
                 .collect::<HashMap<_, _>>(),
         }
     }
+
+    pub fn rect_relative_to(&self, id: &WidgetId, to: &WidgetId) -> Option<Rect> {
+        if !id.path().starts_with(to.path()) {
+            return None;
+        }
+        let mut item = self.items.get(id)?;
+        let mut result = item.local_space;
+        while let Some(parent) = &item.parent {
+            if parent == to {
+                return Some(result);
+            }
+            item = self.items.get(parent)?;
+            result.left += item.local_space.left;
+            result.right += item.local_space.left;
+            result.top += item.local_space.top;
+            result.bottom += item.local_space.top;
+        }
+        Some(result)
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -85,10 +132,11 @@ impl LayoutNode {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct LayoutItem {
     pub local_space: Rect,
     pub ui_space: Rect,
+    pub parent: Option<WidgetId>,
 }
 
 impl LayoutItem {
@@ -96,6 +144,7 @@ impl LayoutItem {
         Self {
             local_space: mapping.virtual_to_real_rect(self.local_space),
             ui_space: mapping.virtual_to_real_rect(self.ui_space),
+            parent: self.parent.to_owned(),
         }
     }
 
@@ -103,6 +152,7 @@ impl LayoutItem {
         Self {
             local_space: mapping.real_to_virtual_rect(self.local_space),
             ui_space: mapping.real_to_virtual_rect(self.ui_space),
+            parent: self.parent.to_owned(),
         }
     }
 }

@@ -37,6 +37,11 @@ impl<'a> State<'a> {
         Self { data, update }
     }
 
+    #[inline]
+    pub fn data(&self) -> &Props {
+        self.data
+    }
+
     pub fn has<T>(&self) -> bool
     where
         T: 'static + PropsData,
@@ -87,6 +92,14 @@ impl<'a> State<'a> {
         T: 'static + PropsData + Clone + Default,
     {
         self.data.read_cloned_or_default()
+    }
+
+    pub fn read_cloned_or_else<T, F>(&self, f: F) -> T
+    where
+        T: 'static + PropsData + Clone + Default,
+        F: FnMut() -> T,
+    {
+        self.data.read_cloned_or_else(f)
     }
 
     pub fn write<T>(&self, data: T) -> Result<(), StateError>

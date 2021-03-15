@@ -5,6 +5,7 @@ use crate::{
         component::interactive::navigation::{use_nav_button, use_nav_item, NavSignal},
         context::WidgetMountOrChangeContext,
         unit::area::AreaBoxNode,
+        utils::Vec2,
         WidgetId, WidgetIdOrRef,
     },
     widget_component, widget_hook,
@@ -13,6 +14,10 @@ use serde::{Deserialize, Serialize};
 
 fn is_false(v: &bool) -> bool {
     !*v
+}
+
+fn is_zero(v: &Vec2) -> bool {
+    v.x.abs() < 1.0e-6 && v.y.abs() < 1.0e-6
 }
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
@@ -26,6 +31,9 @@ pub struct ButtonProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub context: bool,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero")]
+    pub pointer: Vec2,
 }
 implement_props_data!(ButtonProps);
 
@@ -54,6 +62,10 @@ impl ButtonNotifyMessage {
         self.prev.selected && !self.state.selected
     }
 
+    pub fn select_changed(&self) -> bool {
+        self.prev.selected != self.state.selected
+    }
+
     pub fn trigger_start(&self) -> bool {
         !self.prev.trigger && self.state.trigger
     }
@@ -62,12 +74,20 @@ impl ButtonNotifyMessage {
         self.prev.trigger && !self.state.trigger
     }
 
+    pub fn trigger_changed(&self) -> bool {
+        self.prev.trigger != self.state.trigger
+    }
+
     pub fn context_start(&self) -> bool {
         !self.prev.context && self.state.context
     }
 
     pub fn context_stop(&self) -> bool {
         self.prev.context && !self.state.context
+    }
+
+    pub fn context_changed(&self) -> bool {
+        self.prev.context != self.state.context
     }
 }
 
@@ -107,7 +127,7 @@ widget_hook! {
 
         life_cycle.change(|context| {
             let mut data = context.state.read_cloned_or_default::<ButtonProps>();
-            let prev = data.clone();
+            let prev = data;
             let mut dirty = false;
             for msg in context.messenger.messages {
                 if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
@@ -127,6 +147,17 @@ widget_hook! {
                         NavSignal::Context(v) => {
                             data.context = *v;
                             dirty = true;
+                        }
+                        NavSignal::Axis(n, v) => match n.as_str() {
+                            "pointer-x" => {
+                                data.pointer.x = *v;
+                                dirty = true;
+                            }
+                            "pointer-y" => {
+                                data.pointer.y = *v;
+                                dirty = true;
+                            }
+                            _ => {}
                         }
                         _ => {}
                     }

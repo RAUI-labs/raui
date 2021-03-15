@@ -64,12 +64,12 @@ pub mod prelude {
             component::*,
             component::{
                 containers::{
-                    content_box::*, flex_box::*, grid_box::*, horizontal_box::*, size_box::*,
-                    switch_box::*, variant_box::*, vertical_box::*, wrap_box::*,
+                    content_box::*, flex_box::*, grid_box::*, horizontal_box::*, scroll_box::*,
+                    size_box::*, switch_box::*, variant_box::*, vertical_box::*, wrap_box::*,
                 },
                 image_box::*,
                 interactive::*,
-                interactive::{button::*, input_field::*, navigation::*},
+                interactive::{button::*, input_field::*, navigation::*, scroll_view::*},
                 space_box::*,
                 text_box::*,
             },

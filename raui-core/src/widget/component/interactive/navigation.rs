@@ -1,9 +1,16 @@
-use crate::{widget::WidgetIdOrRef, widget_hook, Scalar};
+use crate::{
+    widget::{utils::Vec2, WidgetIdOrRef},
+    widget_hook, Scalar,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NavItemActive;
 implement_props_data!(NavItemActive);
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NavButtonTrackingActive;
+implement_props_data!(NavButtonTrackingActive);
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NavContainerActive;
@@ -16,6 +23,41 @@ implement_props_data!(NavJumpActive);
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NavJumpLooped;
 implement_props_data!(NavJumpLooped);
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum NavType {
+    Container,
+    Item,
+    /// (track pointer)
+    Button(bool),
+    TextInput,
+    ScrollView,
+    ScrollViewContent,
+}
+
+#[derive(Debug, Clone)]
+pub enum NavSignal {
+    None,
+    Register(NavType),
+    Unregister(NavType),
+    Select(WidgetIdOrRef),
+    Unselect,
+    Accept(bool),
+    Context(bool),
+    Cancel(bool),
+    Up,
+    Down,
+    Left,
+    Right,
+    Prev,
+    Next,
+    Jump(NavJump),
+    FocusTextInput(WidgetIdOrRef),
+    TextChange(NavTextChange),
+    Axis(String, Scalar),
+    Custom(WidgetIdOrRef, String),
+}
+implement_message_data!(NavSignal);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NavJumpMode {
@@ -79,8 +121,10 @@ pub enum NavJump {
     TopRight,
     BottomLeft,
     BottomRight,
+    MiddleCenter,
     Loop(NavDirection),
     Escape(NavDirection, WidgetIdOrRef),
+    Scroll(NavScroll),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -95,37 +139,21 @@ pub enum NavTextChange {
     NewLine,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum NavType {
-    Container,
-    Item,
-    Button,
-    TextInput,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum NavScroll {
+    /// (factor location, relative)
+    Factor(Vec2, bool),
+    /// (scroll view id or ref, factor location, relative)
+    DirectFactor(WidgetIdOrRef, Vec2, bool),
+    /// (local space units location, relative)
+    Units(Vec2, bool),
+    /// (scroll view id or ref, local space units location, relative)
+    DirectUnits(WidgetIdOrRef, Vec2, bool),
+    /// (id or ref, widget local space anchor point)
+    Widget(WidgetIdOrRef, Vec2),
+    /// (factor, content to container ratio, relative)
+    Change(Vec2, Vec2, bool),
 }
-
-#[derive(Debug, Clone)]
-pub enum NavSignal {
-    None,
-    Register(NavType),
-    Unregister(NavType),
-    Select(WidgetIdOrRef),
-    Unselect,
-    Accept(bool),
-    Context(bool),
-    Cancel(bool),
-    Up,
-    Down,
-    Left,
-    Right,
-    Prev,
-    Next,
-    Jump(NavJump),
-    FocusTextInput(WidgetIdOrRef),
-    TextChange(NavTextChange),
-    Axis(String, Scalar),
-    Custom(WidgetIdOrRef, String),
-}
-implement_message_data!(NavSignal);
 
 impl Default for NavSignal {
     fn default() -> Self {
@@ -382,12 +410,19 @@ widget_hook! {
 widget_hook! {
     pub use_nav_button(life_cycle) {
         life_cycle.mount(|context| {
-            context.signals.write(NavSignal::Register(NavType::Button));
+            let tracked = context.props.has::<NavButtonTrackingActive>();
+            context.signals.write(NavSignal::Register(NavType::Button(tracked)));
         });
 
         life_cycle.unmount(|context| {
-            context.signals.write(NavSignal::Unregister(NavType::Button));
+            context.signals.write(NavSignal::Unregister(NavType::Button(false)));
         });
+    }
+}
+
+widget_hook! {
+    pub use_nav_button_tracking_active(props) |[use_nav_button] {
+        props.write(NavButtonTrackingActive);
     }
 }
 
@@ -399,6 +434,30 @@ widget_hook! {
 
         life_cycle.unmount(|context| {
             context.signals.write(NavSignal::Unregister(NavType::TextInput));
+        });
+    }
+}
+
+widget_hook! {
+    pub use_nav_scroll_view(life_cycle) {
+        life_cycle.mount(|context| {
+            context.signals.write(NavSignal::Register(NavType::ScrollView));
+        });
+
+        life_cycle.unmount(|context| {
+            context.signals.write(NavSignal::Unregister(NavType::ScrollView));
+        });
+    }
+}
+
+widget_hook! {
+    pub use_nav_scroll_view_content(life_cycle) {
+        life_cycle.mount(|context| {
+            context.signals.write(NavSignal::Register(NavType::ScrollViewContent));
+        });
+
+        life_cycle.unmount(|context| {
+            context.signals.write(NavSignal::Unregister(NavType::ScrollViewContent));
         });
     }
 }

@@ -20,6 +20,7 @@ widget_component! {
             selected,
             trigger,
             context,
+            ..
         } = state.read_cloned_or_default();
         let scale = if trigger || context {
             Vec2 {
