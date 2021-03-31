@@ -121,9 +121,9 @@ impl GridBoxNode {
     }
 }
 
-impl Into<WidgetNode> for GridBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<GridBoxNode> for WidgetNode {
+    fn from(data: GridBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

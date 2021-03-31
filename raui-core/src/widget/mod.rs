@@ -24,6 +24,12 @@ use std::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WidgetIdDef(pub String);
 
+impl From<WidgetId> for WidgetIdDef {
+    fn from(data: WidgetId) -> Self {
+        Self(data.to_string())
+    }
+}
+
 #[derive(Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(try_from = "WidgetIdDef")]
 #[serde(into = "WidgetIdDef")]
@@ -169,14 +175,17 @@ impl TryFrom<WidgetIdDef> for WidgetId {
     }
 }
 
-impl Into<WidgetIdDef> for WidgetId {
-    fn into(self) -> WidgetIdDef {
-        WidgetIdDef(self.to_string())
-    }
-}
-
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct WidgetRefDef(pub Option<WidgetId>);
+
+impl From<WidgetRef> for WidgetRefDef {
+    fn from(data: WidgetRef) -> Self {
+        match data.0.read() {
+            Ok(data) => Self(data.clone()),
+            Err(_) => Default::default(),
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(from = "WidgetRefDef")]
@@ -202,15 +211,6 @@ impl WidgetRef {
 impl From<WidgetRefDef> for WidgetRef {
     fn from(data: WidgetRefDef) -> Self {
         WidgetRef(Arc::new(RwLock::new(data.0)))
-    }
-}
-
-impl Into<WidgetRefDef> for WidgetRef {
-    fn into(self) -> WidgetRefDef {
-        match self.0.read() {
-            Ok(data) => WidgetRefDef(data.clone()),
-            Err(_) => Default::default(),
-        }
     }
 }
 

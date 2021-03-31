@@ -1,6 +1,6 @@
 [package]
 name = "raui-ron-renderer"
-version = "0.27.1"
+version = "0.28.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for RON format"
@@ -11,6 +11,6 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.27" }
+raui-core = { path = "../raui-core", version = "0.28" }
 serde = { version = "1", features = ["derive"] }
 ron = "0.6"

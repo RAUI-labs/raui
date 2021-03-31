@@ -141,9 +141,9 @@ impl ContentBoxNode {
     }
 }
 
-impl Into<WidgetNode> for ContentBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<ContentBoxNode> for WidgetNode {
+    fn from(data: ContentBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

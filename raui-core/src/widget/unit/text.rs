@@ -158,9 +158,9 @@ impl TextBoxNode {
     }
 }
 
-impl Into<WidgetNode> for TextBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<TextBoxNode> for WidgetNode {
+    fn from(data: TextBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

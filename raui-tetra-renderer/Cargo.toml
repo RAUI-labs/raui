@@ -1,0 +1,21 @@
+[package]
+name = "raui-tetra-renderer"
+version = "0.28.0"
+authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
+edition = "2018"
+description = "RAUI renderer for Tetra game engine"
+readme = "../README.md"
+license = "MIT"
+repository = "https://github.com/PsichiX/raui"
+keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
+categories = ["gui", "rendering::graphics-api"]
+
+[dependencies]
+raui-core = { path = "../raui-core", version = "0.28" }
+serde = { version = "1", features = ["derive"] }
+tetra = "0.6"
+
+[dependencies.raui-tesselate-renderer]
+path = "../raui-tesselate-renderer"
+version = "0.28"
+features = ["index32"]

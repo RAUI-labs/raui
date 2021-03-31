@@ -190,9 +190,9 @@ impl FlexBoxNode {
     }
 }
 
-impl Into<WidgetNode> for FlexBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<FlexBoxNode> for WidgetNode {
+    fn from(data: FlexBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

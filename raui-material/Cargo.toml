@@ -1,6 +1,6 @@
 [package]
 name = "raui-material"
-version = "0.27.1"
+version = "0.28.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Material components library for RAUI"
@@ -10,6 +10,10 @@ repository = "https://github.com/PsichiX/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
+[features]
+scalar64 = ["raui-core/scalar64"]
+integer64 = ["raui-core/integer64"]
+
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.27" }
+raui-core = { path = "../raui-core", version = "0.28" }
 serde = { version = "1", features = ["derive"] }

@@ -243,7 +243,7 @@ _**TODO**_
 RAUI allows you to ease and automate interactions with UI by use of Interactions Engine - this is just a struct that implements `perform_interactions` method with reference to Application, and all you should do there is to send user input related messages to widgets.
 There is `DefaultInteractionsEngine` that covers widget navigation, button and input field - actions sent from input devices such as mouse (or any single pointer), keyboard and gamepad. When it comes to UI navigation you can send raw `NavSignal` messages to the default interactions engine and despite being able to select/unselect widgets at will, you have typical navigation actions available: up, down, left, right, previous tab/screen, next tab/screen, also being able to focus text inputs and send text input changes to focused input widget. All interactive widget components that are provided by RAUI handle all `NavSignal` actions in their hooks, so all user has to do is to just activate navigation features for them (using `NavItemActive` unit props).
 RAUI integrations that want to just use use default interactions engine should make use of this struct composed in them and call its `interact` method with information about what input change was made.
-There is an example of that feature covered in GGEZ integration crate (`GgezInteractionsEngine` struct).
+There is an example of that feature covered in Tetra integration crate (`TetraInteractionsEngine` struct).
 
 **NOTE: Interactions engines should use layout for pointer events so make sure that you rebuild layout before you perform interactions!**
 ```rust
@@ -264,15 +264,15 @@ application.interact(&mapping, &mut interactions);
 ```
 
 ## Media
-- [`RAUI + GGEZ In-Game`](https://github.com/PsichiX/raui/tree/master/demos/in-game)
-  An example of an In-Game integration of RAUI with custom Material theme, using GGEZ as a renderer.
+- [`RAUI + Tetra In-Game`](https://github.com/PsichiX/raui/tree/master/demos/in-game)
+  An example of an In-Game integration of RAUI with custom Material theme, using Tetra as a renderer.
 
-  ![RAUI + GGEZ In-Game](https://github.com/PsichiX/raui/blob/master/media/raui-ggez-in-game-material-ui.gif?raw=true)
+  ![RAUI + Tetra In-Game](https://github.com/PsichiX/raui/blob/master/media/raui-tetra-in-game-material-ui.gif?raw=true)
 
-- [`RAUI + GGEZ todo app`](https://github.com/PsichiX/raui/tree/master/demos/todo-app)
-  An example of TODO app with GGEZ renderer and dark theme Material component library.
+- [`RAUI + Tetra todo app`](https://github.com/PsichiX/raui/tree/master/demos/todo-app)
+  An example of TODO app with Tetra renderer and dark theme Material component library.
 
-  ![RAUI + GGEZ todo app](https://github.com/PsichiX/raui/blob/master/media/raui-ggez-todo-app-material-ui.gif?raw=true)
+  ![RAUI + Tetra todo app](https://github.com/PsichiX/raui/blob/master/media/raui-tetra-todo-app-material-ui.gif?raw=true)
 
 ## Installation
 There is a main `raui` crate that contains all of the project sub-crates to allow easy access to all features needed at any time, each enabled using Cargo `feature` flags (by default only `raui-core` subcrate is enabled).
@@ -290,6 +290,11 @@ raui = { version = "*", features = ["all"] }
   ```toml
   [dependencies]
   raui-material = "*"
+  ```
+- `raui-tesselate-renderer` - Renders RAUI widget tree into Vertex + Index + Batch buffers (`tesselate` feature).
+  ```toml
+  [dependencies]
+  raui-tesselate-renderer = "*"
   ```
 - `raui-binary-renderer` - Renders RAUI widget tree into binary format (`binary` feature).
   ```toml
@@ -316,7 +321,13 @@ raui = { version = "*", features = ["all"] }
   [dependencies]
   raui-yaml-renderer = "*"
   ```
+- `raui-tetra-renderer` - Renders RAUI widget tree with Tetra renderer.
+  ```toml
+  [dependencies]
+  raui-tetra-renderer = "*"
+  ```
 - `raui-ggez-renderer` - Renders RAUI widget tree with GGEZ renderer.
+  NOTE: Author of GGEZ crate is looking for new maintainer - until that happen, new updates are on hold.
   ```toml
   [dependencies]
   raui-ggez-renderer = "*"
@@ -336,7 +347,7 @@ RAUI is still in early development phase, so prepare for these changes until v1.
 Things that now are done:
 - [x] Add suport for layouting.
 - [x] Add suport for interactions (user input).
-- [x] Create renderer for at least one popular Rust graphics engine.
+- [x] Create renderer for GGEZ game framework.
 - [x] Create basic user components.
 - [x] Create basic Hello World example application.
 - [x] Decouple shared props from props (don't merge them, put shared props in context).
@@ -347,3 +358,5 @@ Things that now are done:
 - [x] Create scroll box widget.
 - [x] Add "immediate mode UI" builder to give alternative to macros-based declarative mode UI building (with zero overhead, it is an equivalent to declarative macros used by default, immediate mode and declarative mode widgets can talk to each other without a hassle).
 - [x] Add data binding property type to easily mutate data from outside of the application.
+- [x] Create tesselation renderer that produces Vertex + Index + Batch buffers ready for mesh renderers.
+- [x] Create renderer for Tetra game framework.

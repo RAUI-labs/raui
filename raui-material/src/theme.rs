@@ -144,7 +144,7 @@ pub fn new_dark_theme() -> ThemeProps {
         color_from_rgba(64, 64, 64, 1.0),
         color_from_rgba(255, 98, 86, 1.0),
         color_from_rgba(0, 196, 228, 1.0),
-        color_from_rgba(4, 4, 4, 1.0),
+        color_from_rgba(32, 32, 32, 1.0),
     )
 }
 

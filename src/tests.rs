@@ -830,7 +830,7 @@ fn test_immediate_mode() {
     }
 
     fn make_text_box(key: &str, text: &str) -> WidgetComponent {
-        make_widget!(text_box).key(key).props(TextBoxProps {
+        make_widget!(text_box).key(key).with_props(TextBoxProps {
             text: text.to_owned(),
             ..Default::default()
         })
@@ -839,16 +839,126 @@ fn test_immediate_mode() {
     fn make_button(key: &str, text: &str) -> WidgetComponent {
         make_widget!(button)
             .key(key)
-            .props(NavItemActive)
+            .with_props(NavItemActive)
             .named_slot("content", make_text_box("text", text))
     }
 
     let mut application = Application::new();
     application.apply(
         make_app("app")
-            .props(NavContainerActive)
+            .with_props(NavContainerActive)
             .named_slot("title", make_text_box("text", "Hello, World!"))
             .named_slot("content", make_button("button", "Click me!"))
             .into(),
     );
+}
+
+#[test]
+#[cfg(feature = "tesselate")]
+fn test_tesselation() {
+    let mut application = Application::new();
+    let mut layout_engine = DefaultLayoutEngine::default();
+    let mut renderer = TesselateRenderer::<()>::default();
+    let mapping = CoordsMapping::new(Rect {
+        left: 0.0,
+        right: 100.0,
+        top: 0.0,
+        bottom: 100.0,
+    });
+    application.apply(
+        make_widget!(grid_box)
+            .props(GridBoxProps {
+                cols: 2,
+                rows: 2,
+                ..Default::default()
+            })
+            .listed_slot(
+                make_widget!(image_box)
+                    .props(ImageBoxProps {
+                        material: ImageBoxMaterial::Color(ImageBoxColor {
+                            color: Color {
+                                r: 0.25,
+                                g: 0.5,
+                                b: 0.75,
+                                a: 1.0,
+                            },
+                            scaling: ImageBoxImageScaling::Frame((10.0, true).into()),
+                        }),
+                        ..Default::default()
+                    })
+                    .props(GridBoxItemLayout {
+                        space_occupancy: IntRect {
+                            left: 1,
+                            right: 2,
+                            top: 0,
+                            bottom: 1,
+                        },
+                        ..Default::default()
+                    }),
+            )
+            .listed_slot(
+                make_widget!(image_box)
+                    .props(ImageBoxProps {
+                        material: ImageBoxMaterial::Image(ImageBoxImage {
+                            id: "ass".to_owned(),
+                            ..Default::default()
+                        }),
+                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                            horizontal_alignment: 0.0,
+                            vertical_alignment: 0.5,
+                        }),
+                        ..Default::default()
+                    })
+                    .props(GridBoxItemLayout {
+                        space_occupancy: IntRect {
+                            left: 0,
+                            right: 1,
+                            top: 0,
+                            bottom: 1,
+                        },
+                        ..Default::default()
+                    }),
+            )
+            .listed_slot(
+                make_widget!(image_box)
+                    .props(ImageBoxProps {
+                        material: ImageBoxMaterial::Image(ImageBoxImage {
+                            id: "ass".to_owned(),
+                            ..Default::default()
+                        }),
+                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                            horizontal_alignment: 1.0,
+                            vertical_alignment: 0.5,
+                        }),
+                        ..Default::default()
+                    })
+                    .props(GridBoxItemLayout {
+                        space_occupancy: IntRect {
+                            left: 0,
+                            right: 2,
+                            top: 1,
+                            bottom: 2,
+                        },
+                        ..Default::default()
+                    }),
+            )
+            .listed_slot(make_widget!(text_box).props(TextBoxProps {
+                text: "hello".to_owned(),
+                font: TextBoxFont {
+                    name: "font".to_owned(),
+                    size: 16.0,
+                },
+                ..Default::default()
+            }))
+            .into(),
+    );
+    application.forced_process();
+    application
+        .layout(&mapping, &mut layout_engine)
+        .expect("Failed layouting");
+    let tesselation = application
+        .render(&mapping, &mut renderer)
+        .expect("Cannot tesselate UI tree!")
+        .optimized_batches();
+    println!("* Tesselation: {:#?}", tesselation);
 }

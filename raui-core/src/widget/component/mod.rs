@@ -152,7 +152,7 @@ impl WidgetComponent {
         self
     }
 
-    pub fn props<T>(mut self, v: T) -> Self
+    pub fn with_props<T>(mut self, v: T) -> Self
     where
         T: 'static + PropsData,
     {
@@ -160,7 +160,13 @@ impl WidgetComponent {
         self
     }
 
-    pub fn shared_props<T>(mut self, v: T) -> Self
+    pub fn merge_props(mut self, v: Props) -> Self {
+        let props = std::mem::take(&mut self.props);
+        self.props = props.merge(v);
+        self
+    }
+
+    pub fn with_shared_props<T>(mut self, v: T) -> Self
     where
         T: 'static + PropsData,
     {
@@ -168,6 +174,15 @@ impl WidgetComponent {
             props.write(v);
         } else {
             self.shared_props = Some(Props::new(v));
+        }
+        self
+    }
+
+    pub fn merge_shared_props(mut self, v: Props) -> Self {
+        if let Some(props) = self.shared_props.take() {
+            self.shared_props = Some(props.merge(v));
+        } else {
+            self.shared_props = Some(v);
         }
         self
     }

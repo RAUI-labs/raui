@@ -42,9 +42,9 @@ pub struct AreaBoxNode {
     pub slot: Box<WidgetNode>,
 }
 
-impl Into<WidgetNode> for AreaBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<AreaBoxNode> for WidgetNode {
+    fn from(data: AreaBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

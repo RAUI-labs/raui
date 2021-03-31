@@ -23,7 +23,7 @@ widget_component! {
             alignment: TextBoxAlignment::Center,
             font: TextBoxFont {
                 name: "verdana".to_owned(),
-                size: 48.0,
+                size: 32.0,
             },
             color: if trigger {
                 Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }

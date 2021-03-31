@@ -95,9 +95,9 @@ impl SizeBoxNode {
     }
 }
 
-impl Into<WidgetNode> for SizeBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<SizeBoxNode> for WidgetNode {
+    fn from(data: SizeBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 

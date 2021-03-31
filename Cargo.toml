@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.27.1"
+version = "0.28.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
@@ -16,13 +16,22 @@ exclude = [
 ]
 
 [features]
-scalar64 = ["raui-core/scalar64"]
-integer64 = ["raui-core/integer64"]
+scalar64 = [
+  "raui-core/scalar64",
+  "raui-material/scalar64",
+  "raui-tesselate-renderer/scalar64",
+]
+integer64 = [
+  "raui-core/integer64",
+  "raui-material/integer64",
+  "raui-tesselate-renderer/integer64",
+]
 material = ["raui-material"]
 binary = ["raui-binary-renderer"]
 html = ["raui-html-renderer"]
 json = ["raui-json-renderer"]
 ron = ["raui-ron-renderer"]
+tesselate = ["raui-tesselate-renderer"]
 yaml = ["raui-yaml-renderer"]
 all = [
   "material",
@@ -30,40 +39,46 @@ all = [
   "html",
   "json",
   "ron",
+  "tesselate",
   "yaml",
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.27" }
+raui-core = { path = "./raui-core", version = "0.28" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.27"
+version = "0.28"
 optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.27"
+version = "0.28"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.27"
+version = "0.28"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.27"
+version = "0.28"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.27"
+version = "0.28"
+optional = true
+
+[dependencies.raui-tesselate-renderer]
+path = "./raui-tesselate-renderer"
+version = "0.28"
 optional = true
 
 [dependencies.raui-yaml-renderer]
 path = "./raui-yaml-renderer"
-version = "0.27"
+version = "0.28"
 optional = true
 
 [dev-dependencies]
@@ -81,6 +96,8 @@ members = [
   "raui-json-renderer",
   "raui-material",
   "raui-ron-renderer",
+  "raui-tesselate-renderer",
+  "raui-tetra-renderer",
   "raui-yaml-renderer",
   "demos/hello-world",
   "demos/todo-app",

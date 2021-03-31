@@ -26,6 +26,10 @@ pub mod renderer {
     pub mod ron {
         pub use raui_ron_renderer::*;
     }
+    #[cfg(feature = "tesselate")]
+    pub mod tesselate {
+        pub use raui_tesselate_renderer::*;
+    }
     #[cfg(feature = "yaml")]
     pub mod yaml {
         pub use raui_yaml_renderer::*;
@@ -42,6 +46,8 @@ pub mod prelude {
     pub use raui_json_renderer::*;
     #[cfg(feature = "ron")]
     pub use raui_ron_renderer::*;
+    #[cfg(feature = "tesselate")]
+    pub use raui_tesselate_renderer::prelude::*;
     #[cfg(feature = "yaml")]
     pub use raui_yaml_renderer::*;
 }

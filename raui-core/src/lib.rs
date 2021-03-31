@@ -18,9 +18,9 @@ pub type Scalar = f64;
 #[cfg(not(feature = "scalar64"))]
 pub type Scalar = f32;
 #[cfg(feature = "integer64")]
-pub type Integer = i32;
-#[cfg(not(feature = "integer64"))]
 pub type Integer = i64;
+#[cfg(not(feature = "integer64"))]
+pub type Integer = i32;
 
 use serde::{de::DeserializeOwned, Serialize};
 pub use serde_yaml::{Number as PrefabNumber, Value as PrefabValue};

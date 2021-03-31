@@ -210,9 +210,9 @@ impl ImageBoxNode {
     }
 }
 
-impl Into<WidgetNode> for ImageBoxNode {
-    fn into(self) -> WidgetNode {
-        WidgetNode::Unit(self.into())
+impl From<ImageBoxNode> for WidgetNode {
+    fn from(data: ImageBoxNode) -> Self {
+        Self::Unit(data.into())
     }
 }
 
