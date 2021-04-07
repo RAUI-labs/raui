@@ -15,21 +15,6 @@ pub trait LayoutEngine<E> {
     fn layout(&mut self, mapping: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, E>;
 }
 
-#[derive(Default, Clone)]
-pub struct Layout {
-    pub ui_space: Rect,
-    pub items: HashMap<WidgetId, LayoutItem>,
-}
-
-impl std::fmt::Debug for Layout {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Layout")
-            .field("ui_space", &self.ui_space)
-            .field("items", &LayoutSortedItems::new(&self.items))
-            .finish()
-    }
-}
-
 struct LayoutSortedItems<'a>(Vec<(&'a WidgetId, &'a LayoutItem)>);
 
 impl<'a> LayoutSortedItems<'a> {
@@ -44,6 +29,21 @@ impl<'a> std::fmt::Debug for LayoutSortedItems<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_map()
             .entries(self.0.iter().map(|&(k, v)| (k, v)))
+            .finish()
+    }
+}
+
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub struct Layout {
+    pub ui_space: Rect,
+    pub items: HashMap<WidgetId, LayoutItem>,
+}
+
+impl std::fmt::Debug for Layout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Layout")
+            .field("ui_space", &self.ui_space)
+            .field("items", &LayoutSortedItems::new(&self.items))
             .finish()
     }
 }
@@ -119,7 +119,7 @@ impl Layout {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct LayoutNode {
     pub id: WidgetId,
     pub local_space: Rect,
@@ -132,7 +132,7 @@ impl LayoutNode {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct LayoutItem {
     pub local_space: Rect,
     pub ui_space: Rect,

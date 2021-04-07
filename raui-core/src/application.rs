@@ -135,7 +135,7 @@ impl Application {
     }
 
     #[inline]
-    pub fn unregister_factory(&mut self, name: &str) {
+    pub fn unregister_props(&mut self, name: &str) {
         self.props_registry.unregister_factory(name);
     }
 

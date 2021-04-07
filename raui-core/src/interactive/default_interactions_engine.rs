@@ -926,7 +926,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                             if let Some((key, items)) = self
                                 .containers
                                 .iter_mut()
-                                .filter(|(k, _)| id.path().starts_with(k.path()))
+                                .filter(|(k, _)| k.path() != id.path() && id.path().starts_with(k.path()))
                                 .max_by(|(a, _), (b, _)| a.depth().cmp(&b.depth()))
                             {
                                 items.remove(id);
