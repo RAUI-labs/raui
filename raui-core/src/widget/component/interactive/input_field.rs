@@ -188,6 +188,7 @@ widget_component! {
             AreaBoxNode {
                 id: id.to_owned(),
                 slot: Box::new(content),
+                ..Default::default()
             }
         }}}
     }
@@ -206,6 +207,7 @@ widget_component! {
             AreaBoxNode {
                 id: id.to_owned(),
                 slot: Box::new(content),
+                ..Default::default()
             }
         }}}
     }

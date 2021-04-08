@@ -826,6 +826,7 @@ impl Application {
         Ok(AreaBoxNodePrefab {
             id: data.id.to_owned(),
             slot: Box::new(self.node_to_prefab(&data.slot)?),
+            renderer_effect: data.renderer_effect.to_owned(),
         })
     }
 
@@ -1026,6 +1027,7 @@ impl Application {
         Ok(AreaBoxNode {
             id: data.id,
             slot: Box::new(self.node_from_prefab(*data.slot)?),
+            renderer_effect: data.renderer_effect,
         })
     }
 
