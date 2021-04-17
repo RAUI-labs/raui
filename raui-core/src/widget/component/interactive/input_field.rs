@@ -1,6 +1,6 @@
 use crate::{
     messenger::MessageData,
-    unpack_named_slots, widget,
+    widget,
     widget::{
         component::interactive::{
             button::{use_button, ButtonProps},
@@ -176,10 +176,9 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub text_input(id, state, named_slots) [use_nav_item, use_text_input] {
-        unpack_named_slots!(named_slots => content);
-
+widget_component!(
+    #[pre(use_nav_item, use_text_input)]
+    pub fn text_input(id: Id, state: State, (content,): NamedSlots) {
         if let Some(p) = content.props_mut() {
             p.write(state.read_cloned_or_default::<TextInputProps>());
         }
@@ -192,12 +191,11 @@ widget_component! {
             }
         }}}
     }
-}
+);
 
-widget_component! {
-    pub input_field(id, state, named_slots) [use_nav_item, use_input_field] {
-        unpack_named_slots!(named_slots => content);
-
+widget_component!(
+    #[pre(use_nav_item, use_input_field)]
+    pub fn input_field(id: Id, state: State, (content,): NamedSlots) {
         if let Some(p) = content.props_mut() {
             p.write(state.read_cloned_or_default::<ButtonProps>());
             p.write(state.read_cloned_or_default::<TextInputProps>());
@@ -211,4 +209,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

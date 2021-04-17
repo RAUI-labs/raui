@@ -28,8 +28,8 @@ impl Default for PaperProps {
     }
 }
 
-widget_component! {
-    pub paper(key, props, shared_props, listed_slots) {
+widget_component!(
+    pub fn paper(key: Key, props: Props, shared_props: SharedProps, listed_slots: ListedSlots) {
         let paper_props = props.read_cloned_or_default::<PaperProps>();
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
 
@@ -43,9 +43,8 @@ widget_component! {
                         .cloned()
                         .unwrap_or_default()
                 });
-                let background_colors = shared_props.map_or_default::<ThemeProps, _, _>(|props| {
-                    props.background_colors.clone()
-                });
+                let background_colors = shared_props
+                    .map_or_default::<ThemeProps, _, _>(|props| props.background_colors.clone());
                 let image = match content_background {
                     ThemedImageMaterial::Color => {
                         let color = match themed_props.color {
@@ -61,23 +60,20 @@ widget_component! {
                             ..Default::default()
                         }
                     }
-                    ThemedImageMaterial::Image(material) => {
-                        ImageBoxProps {
-                            material: ImageBoxMaterial::Image(material),
-                            ..Default::default()
-                        }
-                    }
-                    ThemedImageMaterial::Procedural(material) => {
-                        ImageBoxProps {
-                            material: ImageBoxMaterial::Procedural(material),
-                            ..Default::default()
-                        }
-                    }
+                    ThemedImageMaterial::Image(material) => ImageBoxProps {
+                        material: ImageBoxMaterial::Image(material),
+                        ..Default::default()
+                    },
+                    ThemedImageMaterial::Procedural(material) => ImageBoxProps {
+                        material: ImageBoxMaterial::Procedural(material),
+                        ..Default::default()
+                    },
                 };
                 let props = Props::new(ContentBoxItemLayout {
                     depth: Scalar::NEG_INFINITY,
                     ..Default::default()
-                }).with(image);
+                })
+                .with(image);
                 let background = widget! {
                     (#{"background"} image_box: {props})
                 };
@@ -90,7 +86,8 @@ widget_component! {
                     let props = Props::new(ContentBoxItemLayout {
                         depth: Scalar::NEG_INFINITY,
                         ..Default::default()
-                    }).with(ImageBoxProps {
+                    })
+                    .with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
                             scaling: ImageBoxImageScaling::Frame(frame),
@@ -109,12 +106,13 @@ widget_component! {
                         .chain(listed_slots.into_iter())
                         .collect::<Vec<_>>()
                 }
-            },
+            }
             ThemeVariant::Outline => {
                 if let Some(frame) = paper_props.frame {
-                    let background_colors = shared_props.map_or_default::<ThemeProps, _, _>(|props| {
-                        props.background_colors.clone()
-                    });
+                    let background_colors =
+                        shared_props.map_or_default::<ThemeProps, _, _>(|props| {
+                            props.background_colors.clone()
+                        });
                     let color = match themed_props.color {
                         ThemeColor::Default => background_colors.main.default.dark,
                         ThemeColor::Primary => background_colors.main.primary.dark,
@@ -123,7 +121,8 @@ widget_component! {
                     let props = Props::new(ContentBoxItemLayout {
                         depth: Scalar::NEG_INFINITY,
                         ..Default::default()
-                    }).with(ImageBoxProps {
+                    })
+                    .with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
                             scaling: ImageBoxImageScaling::Frame(frame),
@@ -139,11 +138,11 @@ widget_component! {
                 } else {
                     listed_slots
                 }
-            },
+            }
         };
 
         widget! {
             (#{key} content_box: {props.clone()} |[ items ]|)
         }
     }
-}
+);

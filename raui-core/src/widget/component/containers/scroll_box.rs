@@ -1,6 +1,6 @@
 use crate::{
     props::Props,
-    unpack_named_slots, widget,
+    widget,
     widget::{
         component::{
             containers::content_box::content_box,
@@ -75,16 +75,15 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    nav_scroll_box_content(id, named_slots) [
+widget_component!(
+    #[pre(
         use_resize_listener,
         use_nav_item_active,
         use_nav_container_active,
         use_nav_scroll_view_content,
-        use_nav_scroll_box_content,
-    ] {
-        unpack_named_slots!(named_slots => content);
-
+        use_nav_scroll_box_content
+    )]
+    fn nav_scroll_box_content(id: Id, (content,): NamedSlots) {
         widget! {{{
             AreaBoxNode {
                 id: id.to_owned(),
@@ -93,7 +92,7 @@ widget_component! {
             }
         }}}
     }
-}
+);
 
 widget_hook! {
     use_nav_scroll_box(life_cycle) {
@@ -111,16 +110,21 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub nav_scroll_box(id, key, props, state, named_slots) [
+widget_component!(
+    #[pre(
         use_resize_listener,
         use_nav_item,
         use_nav_container_active,
         use_scroll_view,
-        use_nav_scroll_box,
-    ] {
-        unpack_named_slots!(named_slots => {content, scrollbars});
-
+        use_nav_scroll_box
+    )]
+    pub fn nav_scroll_box(
+        id: Id,
+        key: Key,
+        state: State,
+        props: Props,
+        (content, scrollbars): NamedSlots,
+    ) {
         let scroll_props = state.read_cloned_or_default::<ScrollViewState>();
         let content_props = Props::new(ContentBoxItemLayout {
             align: scroll_props.value,
@@ -141,7 +145,7 @@ widget_component! {
             ])
         }
     }
-}
+);
 
 widget_hook! {
     use_nav_scroll_box_side_scrollbars(life_cycle) {
@@ -181,12 +185,13 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub nav_scroll_box_side_scrollbars(id, key, props) [
+widget_component!(
+    #[pre(
         use_nav_item_active,
         use_nav_container_active,
-        use_nav_scroll_box_side_scrollbars,
-    ] {
+        use_nav_scroll_box_side_scrollbars
+    )]
+    pub fn nav_scroll_box_side_scrollbars(id: Id, key: Key, props: Props) {
         let view_props = props.read_cloned_or_default::<ScrollViewState>();
         let SideScrollbarsProps {
             size,
@@ -195,24 +200,24 @@ widget_component! {
         } = props.read_cloned_or_default();
         let hbar = if view_props.size_factor.x > 1.0 {
             let props = Props::new(ButtonNotifyProps(id.to_owned().into()))
-            .with(NavItemActive)
-            .with(NavButtonTrackingActive)
-            .with(ContentBoxItemLayout {
-                anchors: Rect {
-                    left: 0.0,
-                    right: 1.0,
-                    top: 1.0,
-                    bottom: 1.0,
-                },
-                margin: Rect {
-                    left: 0.0,
-                    right: size,
-                    top: -size,
-                    bottom: 0.0,
-                },
-                align: Vec2 { x: 0.0, y: 1.0 },
-                ..Default::default()
-            });
+                .with(NavItemActive)
+                .with(NavButtonTrackingActive)
+                .with(ContentBoxItemLayout {
+                    anchors: Rect {
+                        left: 0.0,
+                        right: 1.0,
+                        top: 1.0,
+                        bottom: 1.0,
+                    },
+                    margin: Rect {
+                        left: 0.0,
+                        right: size,
+                        top: -size,
+                        bottom: 0.0,
+                    },
+                    align: Vec2 { x: 0.0, y: 1.0 },
+                    ..Default::default()
+                });
             let front_props = ImageBoxProps {
                 material: front_material.clone(),
                 ..Default::default()
@@ -223,9 +228,9 @@ widget_component! {
                     ..Default::default()
                 };
 
-                widget!{ (#{"back"} image_box: {props}) }
+                widget! { (#{"back"} image_box: {props}) }
             } else {
-                widget!{()}
+                widget! {()}
             };
 
             widget! {
@@ -237,37 +242,37 @@ widget_component! {
                 })
             }
         } else {
-            widget!{()}
+            widget! {()}
         };
         let vbar = if view_props.size_factor.y > 1.0 {
             let props = Props::new(ButtonNotifyProps(id.to_owned().into()))
-            .with(NavItemActive)
-            .with(NavButtonTrackingActive)
-            .with(ContentBoxItemLayout {
-                anchors: Rect {
-                    left: 1.0,
-                    right: 1.0,
-                    top: 0.0,
-                    bottom: 1.0,
-                },
-                margin: Rect {
-                    left: -size,
-                    right: 0.0,
-                    top: 0.0,
-                    bottom: size,
-                },
-                align: Vec2 { x: 1.0, y: 0.0 },
-                ..Default::default()
-            });
+                .with(NavItemActive)
+                .with(NavButtonTrackingActive)
+                .with(ContentBoxItemLayout {
+                    anchors: Rect {
+                        left: 1.0,
+                        right: 1.0,
+                        top: 0.0,
+                        bottom: 1.0,
+                    },
+                    margin: Rect {
+                        left: -size,
+                        right: 0.0,
+                        top: 0.0,
+                        bottom: size,
+                    },
+                    align: Vec2 { x: 1.0, y: 0.0 },
+                    ..Default::default()
+                });
             let back = if let Some(material) = back_material {
                 let props = ImageBoxProps {
                     material,
                     ..Default::default()
                 };
 
-                widget!{ (#{"back"} image_box: {props}) }
+                widget! { (#{"back"} image_box: {props}) }
             } else {
-                widget!{()}
+                widget! {()}
             };
             let front_props = ImageBoxProps {
                 material: front_material,
@@ -283,7 +288,7 @@ widget_component! {
                 })
             }
         } else {
-            widget!{()}
+            widget! {()}
         };
 
         widget! {
@@ -293,4 +298,4 @@ widget_component! {
             ])
         }
     }
-}
+);

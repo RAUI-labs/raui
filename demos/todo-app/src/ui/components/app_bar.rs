@@ -71,7 +71,8 @@ widget_hook! {
 }
 
 widget_component! {
-    pub app_bar(id, key, props, shared_props, state) [use_app_bar] {
+    #[pre(use_app_bar)]
+    pub fn app_bar(id: Id, key: Key, props: Props, shared_props: SharedProps, state: State) {
         let theme_mode = shared_props.read_cloned_or_default::<ThemeModeProps>();
         let props = props.clone().with(VerticalBoxProps {
             separation: 10.0,

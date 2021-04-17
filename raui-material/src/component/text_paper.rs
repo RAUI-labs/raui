@@ -22,8 +22,8 @@ pub struct TextPaperProps {
 }
 implement_props_data!(TextPaperProps);
 
-widget_component! {
-    pub text_paper(key, props, shared_props) {
+widget_component!(
+    pub fn text_paper(key: Key, props: Props, shared_props: SharedProps) {
         let TextPaperProps {
             text,
             width,
@@ -50,19 +50,21 @@ widget_component! {
             alignment = alignment_override;
         }
         let color = match shared_props.read::<ThemeProps>() {
-            Ok(props) => if use_main_color {
-                match themed_props.color {
-                    ThemeColor::Default => props.active_colors.main.default.main,
-                    ThemeColor::Primary => props.active_colors.main.primary.main,
-                    ThemeColor::Secondary => props.active_colors.main.secondary.main,
+            Ok(props) => {
+                if use_main_color {
+                    match themed_props.color {
+                        ThemeColor::Default => props.active_colors.main.default.main,
+                        ThemeColor::Primary => props.active_colors.main.primary.main,
+                        ThemeColor::Secondary => props.active_colors.main.secondary.main,
+                    }
+                } else {
+                    match themed_props.color {
+                        ThemeColor::Default => props.active_colors.contrast.default.main,
+                        ThemeColor::Primary => props.active_colors.contrast.primary.main,
+                        ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
+                    }
                 }
-            } else {
-                match themed_props.color {
-                    ThemeColor::Default => props.active_colors.contrast.default.main,
-                    ThemeColor::Primary => props.active_colors.contrast.primary.main,
-                    ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
-                }
-            },
+            }
             Err(_) => Default::default(),
         };
         let props = TextBoxProps {
@@ -80,4 +82,4 @@ widget_component! {
             (#{key} text_box: {props})
         }
     }
-}
+);

@@ -1,5 +1,5 @@
 use crate::{
-    unpack_named_slots, widget,
+    widget,
     widget::{unit::size::SizeBoxNode, utils::Rect},
     widget_component,
 };
@@ -12,13 +12,12 @@ pub struct WrapBoxProps {
 }
 implement_props_data!(WrapBoxProps);
 
-widget_component! {
-    pub wrap_box(id, props, named_slots) {
-        unpack_named_slots!(named_slots => content);
+widget_component!(
+    pub fn wrap_box(id: Id, props: Props, (content,): NamedSlots) {
         let WrapBoxProps { margin } = props.read_cloned_or_default();
 
         widget! {{{
-            SizeBoxNode {
+                SizeBoxNode {
                 id: id.to_owned(),
                 props: props.clone(),
                 slot: Box::new(content),
@@ -27,4 +26,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

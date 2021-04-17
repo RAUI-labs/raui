@@ -8,8 +8,8 @@ pub struct ColorRectProps {
 }
 implement_props_data!(ColorRectProps);
 
-widget_component! {
-    pub color_rect(key, props) {
+widget_component!(
+    pub fn color_rect(key: Key, props: Props) {
         let color = props.read_cloned_or_default::<ColorRectProps>().color;
         let props = props.clone().with(ImageBoxProps {
             material: ImageBoxMaterial::Color(ImageBoxColor {
@@ -23,4 +23,4 @@ widget_component! {
             (#{key} image_box: {props})
         }
     }
-}
+);

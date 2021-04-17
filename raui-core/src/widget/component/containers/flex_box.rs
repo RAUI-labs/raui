@@ -25,42 +25,40 @@ pub struct FlexBoxProps {
 }
 implement_props_data!(FlexBoxProps);
 
-widget_component! {
-    pub nav_flex_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump,
-        use_nav_item,
-    ] {
-        let props = props.clone()
+widget_component!(
+    #[pre(use_nav_container_active, use_nav_jump, use_nav_item)]
+    pub fn nav_flex_box(key: Key, props: Props, listed_slots: ListedSlots) {
+        let props = props
+            .clone()
             .without::<NavContainerActive>()
             .without::<NavJumpActive>()
             .without::<NavItemActive>();
 
-        widget!{
+        widget! {
             (#{key} flex_box: {props} |[listed_slots]|)
         }
     }
-}
+);
 
-widget_component! {
-    pub flex_box(id, props, listed_slots) {
+widget_component!(
+    pub fn flex_box(id: Id, props: Props, listed_slots: ListedSlots) {
         let FlexBoxProps {
             direction,
             separation,
             wrap,
             transform,
         } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().filter_map(|slot| {
-            if let Some(props) = slot.props() {
-                let layout = props.read_cloned_or_default::<FlexBoxItemLayout>();
-                Some(FlexBoxItemNode {
-                    slot,
-                    layout,
-                })
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
+        let items = listed_slots
+            .into_iter()
+            .filter_map(|slot| {
+                if let Some(props) = slot.props() {
+                    let layout = props.read_cloned_or_default::<FlexBoxItemLayout>();
+                    Some(FlexBoxItemNode { slot, layout })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         widget! {{{
             FlexBoxNode {
@@ -74,4 +72,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

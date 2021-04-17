@@ -32,8 +32,8 @@ pub struct TextBoxProps {
 }
 implement_props_data!(TextBoxProps);
 
-widget_component! {
-    pub text_box(id, props, shared_props) {
+widget_component!(
+    pub fn text_box(id: Id, props: Props, shared_props: SharedProps) {
         let TextBoxProps {
             width,
             height,
@@ -62,4 +62,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

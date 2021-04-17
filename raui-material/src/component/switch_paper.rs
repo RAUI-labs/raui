@@ -13,9 +13,13 @@ pub struct SwitchPaperProps {
 }
 implement_props_data!(SwitchPaperProps);
 
-widget_component! {
-    pub switch_paper(key, props, shared_props) {
-        let SwitchPaperProps { on, variant, size_level } = props.read_cloned_or_default();
+widget_component!(
+    pub fn switch_paper(key: Key, props: Props, shared_props: SharedProps) {
+        let SwitchPaperProps {
+            on,
+            variant,
+            size_level,
+        } = props.read_cloned_or_default();
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
         let color = match shared_props.read::<ThemeProps>() {
             Ok(props) => match themed_props.color {
@@ -27,7 +31,11 @@ widget_component! {
         };
         let (size, material) = match shared_props.read::<ThemeProps>() {
             Ok(props) => {
-                let size = props.icons_level_sizes.get(size_level).copied().unwrap_or(24.0);
+                let size = props
+                    .icons_level_sizes
+                    .get(size_level)
+                    .copied()
+                    .unwrap_or(24.0);
                 let material = if let Some(material) = props.switch_variants.get(&variant) {
                     if on {
                         material.on.clone()
@@ -63,7 +71,7 @@ widget_component! {
                     height: ImageBoxSizeValue::Exact(size),
                     ..Default::default()
                 }
-            },
+            }
             ThemedImageMaterial::Procedural(data) => ImageBoxProps {
                 material: ImageBoxMaterial::Procedural(data),
                 width: ImageBoxSizeValue::Exact(size),
@@ -75,4 +83,4 @@ widget_component! {
             (#{key} image_box: {image})
         }
     }
-}
+);

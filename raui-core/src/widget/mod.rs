@@ -583,42 +583,15 @@ macro_rules! destruct {
 }
 
 #[macro_export]
-macro_rules! unpack_named_slots {
-    ($map:expr => $name:ident) => {
-        #[allow(unused_mut)]
-        let mut $name = {
-            let mut map = $map;
-            match map.remove(stringify!($name)) {
-                Some(widget) => widget,
-                None => $crate::widget::node::WidgetNode::None,
-            }
-        };
-    };
-    ($map:expr => { $($name:ident),+ }) => {
-        #[allow(unused_mut)]
-        let ( $( mut $name ),+ ) = {
-            let mut map = $map;
-            (
-                $(
-                    {
-                        match map.remove(stringify!($name)) {
-                            Some(widget) => widget,
-                            None => $crate::widget::node::WidgetNode::None,
-                        }
-                    }
-                ),+
-            )
-        };
-    };
-}
-
-#[macro_export]
 macro_rules! widget_component {
     {
-        $vis:vis $name:ident
-        $( ( $( $param:ident ),+ ) )?
-        $([ $( $hook_pre:path ),+ $(,)? ])?
-        $(|[ $( $hook_post:path ),+ $(,)? ])?
+        $( #[pre( $( $hook_pre:ident ),+ )] )?
+        $( #[post( $( $hook_post:ident ),+ )] )?
+
+        $vis:vis fn $name:ident (
+            $($( $( ( $( $param_destructure:ident ),+ $(,)? ) )? $( $param_ident:ident )? : $param_type:tt ),+ )? $(,)?
+        )
+
         $code:block
     } => {
         #[allow(unused_mut)]
@@ -634,13 +607,25 @@ macro_rules! widget_component {
             }
             let result = {
                 $(
-                    #[allow(unused_mut)]
-                    let $crate::widget::context::WidgetContext {
-                        $( mut $param ),+ , ..
-                    } = context;
+                    $(
+                        widget_component!(
+                            @param context,
+
+                            $(
+                                ( $( $param_destructure ),* )
+                            )?,
+
+                            $(
+                                $param_ident
+                            )?,
+
+                            $param_type
+                        );
+                    )?
                 )?
                 $code
             };
+
             {
                 $(
                     $(
@@ -648,8 +633,105 @@ macro_rules! widget_component {
                     )+
                 )?
             }
+
             result
         }
+    };
+    {
+        @param $context:ident,
+        , $param_ident:ident , $param_type:tt
+    } => {
+        widget_component!(@widget_param_type_map $context $param_ident $param_type);
+    };
+    {
+        @param $context:ident,
+        ( $( $param_destructure:ident ),* ) , , NamedSlots
+    } => {
+        let $crate::widget::context::WidgetContext {
+            mut named_slots,
+            ..
+        } = $context;
+
+        $(
+            let mut $param_destructure = {
+                match named_slots.remove(stringify!($param_destructure)) {
+                    Some(widget) => widget,
+                    None => $crate::widget::node::WidgetNode::None,
+                }
+            };
+        )*
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident ListedSlots
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            listed_slots: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident Key
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            key: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident NamedSlots
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            named_slots: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident Props
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            props: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident Id
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            id: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident State
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            state: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident SharedProps
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            shared_props: mut $ident,
+            ..
+        } = $context;
+    };
+    {
+        @widget_param_type_map $context:ident $ident:ident Animator
+    } => {
+        #[allow(unused_mut)]
+        let $crate::widget::context::WidgetContext {
+            animator: mut $ident,
+            ..
+        } = $context;
     };
 }
 

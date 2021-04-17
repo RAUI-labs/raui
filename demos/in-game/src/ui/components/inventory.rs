@@ -57,8 +57,9 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub inventory(id, key, props, shared_props, state) [use_inventory] {
+widget_component!(
+    #[pre(use_inventory)]
+    pub fn inventory(id: Id, key: Key, props: Props, shared_props: SharedProps, state: State) {
         let ItemCellsProps { items } = props.read_cloned_or_default();
         let data = match state.read::<InventoryState>() {
             Ok(data) => *data,
@@ -67,7 +68,8 @@ widget_component! {
         let list_props = Props::new(PaperProps {
             frame: None,
             ..Default::default()
-        }).with(ContentBoxItemLayout {
+        })
+        .with(ContentBoxItemLayout {
             margin: Rect {
                 left: 5.0,
                 right: 5.0,
@@ -83,7 +85,11 @@ widget_component! {
                 grow: 0.0,
                 shrink: 0.0,
                 ..Default::default()
-            }).with(ItemCellProps { image: "icon-prev".to_owned(), thin: true });
+            })
+            .with(ItemCellProps {
+                image: "icon-prev".to_owned(),
+                thin: true,
+            });
             widget! {
                 (#{"prev"} item_cell: {item_props})
             }
@@ -94,9 +100,11 @@ widget_component! {
                 grow: 0.0,
                 shrink: 0.0,
                 ..Default::default()
-            }).with(ItemData {
+            })
+            .with(ItemData {
                 index: data.index + i,
-            }).with(item);
+            })
+            .with(item);
             children.push(widget! {
                 (#{i} item_cell: {item_props})
             });
@@ -106,7 +114,11 @@ widget_component! {
                 grow: 0.0,
                 shrink: 0.0,
                 ..Default::default()
-            }).with(ItemCellProps { image: "icon-next".to_owned(), thin: true });
+            })
+            .with(ItemCellProps {
+                image: "icon-next".to_owned(),
+                thin: true,
+            });
             widget! {
                 (#{"next"} item_cell: {item_props})
             }
@@ -118,4 +130,4 @@ widget_component! {
             })
         }
     }
-}
+);

@@ -1,8 +1,8 @@
 use raui_core::prelude::*;
 use raui_material::prelude::*;
 
-widget_component! {
-    pub minimap(key, props) {
+widget_component!(
+    pub fn minimap(key: Key, props: Props) {
         let size_props = props.clone().with(SizeBoxProps {
             width: SizeBoxSizeValue::Exact(64.0),
             height: SizeBoxSizeValue::Exact(64.0),
@@ -24,7 +24,8 @@ widget_component! {
                 ..Default::default()
             }),
             ..Default::default()
-        }).with(ContentBoxItemLayout {
+        })
+        .with(ContentBoxItemLayout {
             margin: Rect {
                 left: 7.0,
                 right: 6.0,
@@ -42,4 +43,4 @@ widget_component! {
             })
         }
     }
-}
+);

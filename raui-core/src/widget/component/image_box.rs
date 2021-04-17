@@ -25,8 +25,8 @@ pub struct ImageBoxProps {
 }
 implement_props_data!(ImageBoxProps);
 
-widget_component! {
-    pub image_box(id, props, shared_props) {
+widget_component!(
+    pub fn image_box(id: Id, props: Props, shared_props: SharedProps) {
         let ImageBoxProps {
             width,
             height,
@@ -57,4 +57,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

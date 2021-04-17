@@ -24,8 +24,8 @@ pub struct IconPaperProps {
 }
 implement_props_data!(IconPaperProps);
 
-widget_component! {
-    pub icon_paper(key, props, shared_props) {
+widget_component!(
+    pub fn icon_paper(key: Key, props: Props, shared_props: SharedProps) {
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
         let tint = match shared_props.read::<ThemeProps>() {
             Ok(props) => match themed_props.color {
@@ -44,7 +44,11 @@ widget_component! {
                 .unwrap_or(24.0),
             Err(_) => 24.0,
         };
-        let IconImage {id, source_rect, scaling } = icon_props.image;
+        let IconImage {
+            id,
+            source_rect,
+            scaling,
+        } = icon_props.image;
         let image = ImageBoxImage {
             id,
             source_rect,
@@ -66,4 +70,4 @@ widget_component! {
             (#{key} image_box: {props})
         }
     }
-}
+);

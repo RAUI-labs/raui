@@ -4,10 +4,14 @@ use crate::{
 };
 use raui_core::prelude::*;
 
-widget_component! {
-    button_paper_content(id, key, props, shared_props, named_slots) {
-        unpack_named_slots!(named_slots => content);
-
+widget_component!(
+    fn button_paper_content(
+        id: Id,
+        key: Key,
+        props: Props,
+        shared_props: SharedProps,
+        (content,): NamedSlots,
+    ) {
         let button_props = props.read_cloned_or_default::<ButtonProps>();
         let paper_props = props.read_cloned_or_default::<PaperProps>();
         let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
@@ -15,34 +19,32 @@ widget_component! {
         let items = match themed_props.variant {
             ThemeVariant::ContentOnly => vec![content],
             ThemeVariant::Filled => {
-                let button_background = shared_props
-                    .map_or_default::<ThemeProps, _, _>(|props| {
-                        if button_props.trigger || button_props.context {
-                            props
-                                .button_backgrounds
-                                .get(&paper_props.variant)
-                                .cloned()
-                                .unwrap_or_default()
-                                .trigger
-                        } else if button_props.selected {
-                            props
-                                .button_backgrounds
-                                .get(&paper_props.variant)
-                                .cloned()
-                                .unwrap_or_default()
-                                .selected
-                        } else {
-                            props
-                                .button_backgrounds
-                                .get(&paper_props.variant)
-                                .cloned()
-                                .unwrap_or_default()
-                                .default
-                        }
-                    });
-                let button_colors = shared_props.map_or_default::<ThemeProps, _, _>(|props| {
-                    props.active_colors.clone()
+                let button_background = shared_props.map_or_default::<ThemeProps, _, _>(|props| {
+                    if button_props.trigger || button_props.context {
+                        props
+                            .button_backgrounds
+                            .get(&paper_props.variant)
+                            .cloned()
+                            .unwrap_or_default()
+                            .trigger
+                    } else if button_props.selected {
+                        props
+                            .button_backgrounds
+                            .get(&paper_props.variant)
+                            .cloned()
+                            .unwrap_or_default()
+                            .selected
+                    } else {
+                        props
+                            .button_backgrounds
+                            .get(&paper_props.variant)
+                            .cloned()
+                            .unwrap_or_default()
+                            .default
+                    }
                 });
+                let button_colors = shared_props
+                    .map_or_default::<ThemeProps, _, _>(|props| props.active_colors.clone());
                 let image = match button_background {
                     ThemedImageMaterial::Color => {
                         let color = match themed_props.color {
@@ -58,23 +60,20 @@ widget_component! {
                             ..Default::default()
                         }
                     }
-                    ThemedImageMaterial::Image(material) => {
-                        ImageBoxProps {
-                            material: ImageBoxMaterial::Image(material),
-                            ..Default::default()
-                        }
-                    }
-                    ThemedImageMaterial::Procedural(material) => {
-                        ImageBoxProps {
-                            material: ImageBoxMaterial::Procedural(material),
-                            ..Default::default()
-                        }
-                    }
+                    ThemedImageMaterial::Image(material) => ImageBoxProps {
+                        material: ImageBoxMaterial::Image(material),
+                        ..Default::default()
+                    },
+                    ThemedImageMaterial::Procedural(material) => ImageBoxProps {
+                        material: ImageBoxMaterial::Procedural(material),
+                        ..Default::default()
+                    },
                 };
                 let props = Props::new(ContentBoxItemLayout {
                     depth: Scalar::NEG_INFINITY,
                     ..Default::default()
-                }).with(image);
+                })
+                .with(image);
                 let background = widget! {
                     (#{"background"} image_box: {props})
                 };
@@ -87,7 +86,8 @@ widget_component! {
                     let props = Props::new(ContentBoxItemLayout {
                         depth: Scalar::NEG_INFINITY,
                         ..Default::default()
-                    }).with(ImageBoxProps {
+                    })
+                    .with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
                             scaling: ImageBoxImageScaling::Frame(frame),
@@ -101,12 +101,11 @@ widget_component! {
                 } else {
                     vec![background, content]
                 }
-            },
+            }
             ThemeVariant::Outline => {
                 if let Some(frame) = paper_props.frame {
-                    let button_colors = shared_props.map_or_default::<ThemeProps, _, _>(|props| {
-                        props.active_colors.clone()
-                    });
+                    let button_colors = shared_props
+                        .map_or_default::<ThemeProps, _, _>(|props| props.active_colors.clone());
                     let color = match themed_props.color {
                         ThemeColor::Default => button_colors.main.default.dark,
                         ThemeColor::Primary => button_colors.main.primary.dark,
@@ -115,7 +114,8 @@ widget_component! {
                     let props = Props::new(ContentBoxItemLayout {
                         depth: Scalar::NEG_INFINITY,
                         ..Default::default()
-                    }).with(ImageBoxProps {
+                    })
+                    .with(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color,
                             scaling: ImageBoxImageScaling::Frame(frame),
@@ -129,19 +129,17 @@ widget_component! {
                 } else {
                     vec![content]
                 }
-            },
+            }
         };
 
         widget! {
             (#{key} content_box: {props.clone()} |[ items ]|)
         }
     }
-}
+);
 
-widget_component! {
-    pub button_paper(key, props, named_slots) {
-        unpack_named_slots!(named_slots => content);
-
+widget_component!(
+    pub fn button_paper(key: Key, props: Props, (content,): NamedSlots) {
         widget! {
             (#{key} button: {props.clone()} {
                 content = (#{"content"} button_paper_content: {props.clone()} {
@@ -150,4 +148,4 @@ widget_component! {
             })
         }
     }
-}
+);

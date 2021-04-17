@@ -1,10 +1,13 @@
-use crate::{Scalar, widget::{
-    node::{WidgetNode, WidgetNodePrefab},
-    unit::{WidgetUnit, WidgetUnitData},
-    WidgetId,
-}};
+use crate::{
+    widget::{
+        node::{WidgetNode, WidgetNodePrefab},
+        unit::{WidgetUnit, WidgetUnitData},
+        WidgetId,
+    },
+    Scalar,
+};
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom};
+use std::convert::TryFrom;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AreaBoxRendererEffect {

@@ -23,37 +23,39 @@ pub struct GridBoxProps {
 }
 implement_props_data!(GridBoxProps);
 
-widget_component! {
-    pub nav_grid_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump_direction_active,
-        use_nav_item,
-    ] {
-        let props = props.clone()
+widget_component!(
+    #[pre(use_nav_container_active, use_nav_jump_direction_active, use_nav_item)]
+    pub fn nav_grid_box(key: Key, props: Props, listed_slots: ListedSlots) {
+        let props = props
+            .clone()
             .without::<NavContainerActive>()
             .without::<NavJumpActive>()
             .without::<NavItemActive>();
 
-        widget!{
+        widget! {
             (#{key} grid_box: {props} |[listed_slots]|)
         }
     }
-}
+);
 
-widget_component! {
-    pub grid_box(id, props, listed_slots) {
-        let GridBoxProps { cols, rows, transform } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().filter_map(|slot| {
-            if let Some(props) = slot.props() {
-                let layout = props.read_cloned_or_default::<GridBoxItemLayout>();
-                Some(GridBoxItemNode {
-                    slot,
-                    layout,
-                })
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
+widget_component!(
+    pub fn grid_box(id: Id, props: Props, listed_slots: ListedSlots) {
+        let GridBoxProps {
+            cols,
+            rows,
+            transform,
+        } = props.read_cloned_or_default();
+        let items = listed_slots
+            .into_iter()
+            .filter_map(|slot| {
+                if let Some(props) = slot.props() {
+                    let layout = props.read_cloned_or_default::<GridBoxItemLayout>();
+                    Some(GridBoxItemNode { slot, layout })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         widget! {{{
             GridBoxNode {
@@ -66,4 +68,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

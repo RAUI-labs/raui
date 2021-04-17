@@ -1,6 +1,6 @@
 use crate::{
     messenger::MessageData,
-    unpack_named_slots, widget,
+    widget,
     widget::{
         component::interactive::navigation::{use_nav_button, use_nav_item, NavSignal},
         context::WidgetMountOrChangeContext,
@@ -175,10 +175,9 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub button(id, state, named_slots) [use_nav_item, use_button] {
-        unpack_named_slots!(named_slots => content);
-
+widget_component!(
+    #[pre(use_nav_item, use_button)]
+    pub fn button(id: Id, state: State, (content,): NamedSlots) {
         if let Some(p) = content.props_mut() {
             p.write(state.read_cloned_or_default::<ButtonProps>());
         }
@@ -191,4 +190,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

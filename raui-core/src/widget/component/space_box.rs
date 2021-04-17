@@ -14,8 +14,8 @@ pub struct SpaceBoxProps {
 }
 implement_props_data!(SpaceBoxProps);
 
-widget_component! {
-    pub space_box(id, props) {
+widget_component!(
+    pub fn space_box(id: Id, props: Props) {
         let SpaceBoxProps { width, height } = props.read_cloned_or_default();
 
         widget! {{{
@@ -28,4 +28,4 @@ widget_component! {
             }
         }}}
     }
-}
+);

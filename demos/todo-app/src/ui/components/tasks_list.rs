@@ -67,8 +67,9 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub task(id, key, props) [use_task] {
+widget_component!(
+    #[pre(use_task)]
+    pub fn task(id: Id, key: Key, props: Props) {
         let data = props.read_cloned_or_default::<TaskProps>();
         let checkbox_props = Props::new(FlexBoxItemLayout {
             fill: 0.0,
@@ -141,14 +142,18 @@ widget_component! {
             ])
         }
     }
-}
+);
 
-widget_component! {
-    pub tasks_list(key, props) {
+widget_component!(
+    pub fn tasks_list(key: Key, props: Props) {
         let TasksProps { tasks } = props.read_cloned_or_default();
-        let tasks = tasks.into_iter().enumerate().map(|(i, item)| {
-            widget! { (#{i} task: {item}) }
-        }).collect::<Vec<_>>();
+        let tasks = tasks
+            .into_iter()
+            .enumerate()
+            .map(|(i, item)| {
+                widget! { (#{i} task: {item}) }
+            })
+            .collect::<Vec<_>>();
         let props = props.clone().with(VerticalBoxProps {
             separation: 10.0,
             ..Default::default()
@@ -158,4 +163,4 @@ widget_component! {
             (#{key} vertical_box: {props} |[ tasks ]|)
         }
     }
-}
+);

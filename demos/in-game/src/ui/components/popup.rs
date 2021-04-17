@@ -30,21 +30,24 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub popup(id, key, props) [use_popup] {
+widget_component!(
+    #[pre(use_popup)]
+    pub fn popup(id: Id, key: Key, props: Props) {
         let PopupProps { index, text } = props.read_cloned_or_default::<PopupProps>();
         let button_props = Props::new(NavItemActive).with(ButtonNotifyProps(id.to_owned().into()));
-        let panel_props = props.clone().with(PaperProps {
-            frame: None,
-            ..Default::default()
-        })
-        .with(VerticalBoxProps {
-            separation: 10.0,
-            ..Default::default()
-        });
+        let panel_props = props
+            .clone()
+            .with(PaperProps {
+                frame: None,
+                ..Default::default()
+            })
+            .with(VerticalBoxProps {
+                separation: 10.0,
+                ..Default::default()
+            });
         let image_props = Props::new(ImageBoxProps {
-            width: ImageBoxSizeValue::Exact(48.0),
-            height: ImageBoxSizeValue::Exact(48.0),
+            width: ImageBoxSizeValue::Exact(70.0),
+            height: ImageBoxSizeValue::Exact(70.0),
             material: ImageBoxMaterial::Image(ImageBoxImage {
                 id: format!("icon-{}", index),
                 ..Default::default()
@@ -75,4 +78,4 @@ widget_component! {
             })
         }
     }
-}
+);

@@ -147,7 +147,8 @@ widget_hook! {
 }
 
 widget_component! {
-    pub app(id, key, props, state) [use_nav_container_active, use_app] {
+    #[pre(use_nav_container_active, use_app)]
+    pub fn app(id: Id, key: Key, props: Props, state: State) {
         let (theme_mode, tasks) = state.map_or_default::<AppState, _, _>(|s| {
             (s.theme, s.tasks.clone())
         });

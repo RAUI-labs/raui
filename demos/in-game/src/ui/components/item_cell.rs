@@ -76,12 +76,14 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub item_cell(id, key, props, animator) [use_item_cell] {
+widget_component!(
+    #[pre(use_item_cell)]
+    pub fn item_cell(id: Id, key: Key, props: Props, animator: Animator) {
         let ItemCellProps { image, thin } = props.read_cloned_or_default();
-        let button_props = props.clone()
-        .with(NavItemActive)
-        .with(ButtonNotifyProps(id.to_owned().into()));
+        let button_props = props
+            .clone()
+            .with(NavItemActive)
+            .with(ButtonNotifyProps(id.to_owned().into()));
         let size_props = SizeBoxProps {
             width: SizeBoxSizeValue::Exact(if thin { 18.0 } else { 24.0 }),
             height: SizeBoxSizeValue::Exact(24.0),
@@ -91,7 +93,7 @@ widget_component! {
                 top: 2.0,
                 bottom: 2.0,
             },
-            .. Default::default()
+            ..Default::default()
         };
         let panel_props = props.clone().with(PaperProps {
             variant: "cell".to_owned(),
@@ -108,7 +110,11 @@ widget_component! {
                 })
             }
         } else {
-            let scale = lerp(1.0, 1.5, (animator.value_progress_or_zero("", "click") * PI).sin());
+            let scale = lerp(
+                1.0,
+                1.5,
+                (animator.value_progress_or_zero("", "click") * PI).sin(),
+            );
             let image_props = Props::new(ImageBoxProps {
                 content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
                     horizontal_alignment: 0.5,
@@ -124,7 +130,8 @@ widget_component! {
                     ..Default::default()
                 },
                 ..Default::default()
-            }).with(ContentBoxItemLayout {
+            })
+            .with(ContentBoxItemLayout {
                 margin: Rect {
                     left: 4.0,
                     right: 4.0,
@@ -145,4 +152,4 @@ widget_component! {
             }
         }
     }
-}
+);

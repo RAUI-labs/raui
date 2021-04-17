@@ -4,8 +4,8 @@ use crate::ui::components::{
 };
 use raui_core::prelude::*;
 
-widget_component! {
-    pub content(key, props, shared_props) {
+widget_component!(
+    pub fn content(key: Key, props: Props, shared_props: SharedProps) {
         let props0 = Props::new(ImageButtonProps {
             image: "cat".to_owned(),
             horizontal_alignment: 1.0,
@@ -27,7 +27,12 @@ widget_component! {
         });
 
         let props1 = Props::new(ColorRectProps {
-            color: Color { r: 1.0, g: 0.0, b: 0.0, a: 0.5 },
+            color: Color {
+                r: 1.0,
+                g: 0.0,
+                b: 0.0,
+                a: 0.5,
+            },
         })
         .with(GridBoxItemLayout {
             space_occupancy: IntRect {
@@ -79,4 +84,4 @@ widget_component! {
             ])
         }
     }
-}
+);

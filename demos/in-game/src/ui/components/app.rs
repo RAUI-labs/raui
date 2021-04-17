@@ -56,8 +56,9 @@ widget_hook! {
     }
 }
 
-widget_component! {
-    pub app(id, key, props, state) [use_nav_container_active, use_app] {
+widget_component!(
+    #[pre(use_nav_container_active, use_app)]
+    pub fn app(id: Id, key: Key, props: Props, state: State) {
         let shared_props = Props::new(AppSharedProps(id.to_owned())).with(new_theme());
         let minimap_props = ContentBoxItemLayout {
             anchors: Rect {
@@ -66,14 +67,8 @@ widget_component! {
                 top: 0.0,
                 bottom: 0.0,
             },
-            align: Vec2 {
-                x: 1.0,
-                y: 0.0,
-            },
-            offset: Vec2 {
-                x: -6.0,
-                y: 6.0,
-            },
+            align: Vec2 { x: 1.0, y: 0.0 },
+            offset: Vec2 { x: -6.0, y: 6.0 },
             ..Default::default()
         };
         let inventory_props = Props::new(ContentBoxItemLayout {
@@ -83,19 +78,17 @@ widget_component! {
                 top: 1.0,
                 bottom: 1.0,
             },
-            align: Vec2 {
-                x: 0.5,
-                y: 1.0,
-            },
-            offset: Vec2 {
-                x: 0.0,
-                y: -6.0,
-            },
+            align: Vec2 { x: 0.5, y: 1.0 },
+            offset: Vec2 { x: 0.0, y: -6.0 },
             ..Default::default()
-        }).with(ItemCellsProps {
-            items: (0..=18).map(|i| {
-                ItemCellProps { image: format!("icon-{}", i), thin: false }
-            }).collect::<Vec<_>>(),
+        })
+        .with(ItemCellsProps {
+            items: (0..=18)
+                .map(|i| ItemCellProps {
+                    image: format!("icon-{}", i),
+                    thin: false,
+                })
+                .collect::<Vec<_>>(),
         });
         let popup = match state.read::<AppState>() {
             Ok(data) => {
@@ -112,27 +105,25 @@ widget_component! {
                             bottom: 46.0,
                         },
                         ..Default::default()
-                    }).with(PopupProps {
-                        index,
-                        text,
-                    });
+                    })
+                    .with(PopupProps { index, text });
 
                     widget! {
                         (#{"popup"} popup: {popup_props})
                     }
                 } else {
-                    widget!{()}
+                    widget! {()}
                 }
             }
             Err(_) => {
-                widget!{()}
+                widget! {()}
             }
         };
 
-        widget!{(#{key} content_box: {props.clone()} | {shared_props} [
+        widget! {(#{key} content_box: {props.clone()} | {shared_props} [
             (#{"minimap"} minimap: {minimap_props})
             (#{"inventory"} inventory: {inventory_props})
             {popup}
         ])}
     }
-}
+);

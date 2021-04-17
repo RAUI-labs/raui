@@ -127,9 +127,7 @@ fn test_hello_world() {
     // convenient macro that produces widget component processing function.
     widget_component! {
         // <component name> ( [list of context data to unpack into scope] )
-        app(props, named_slots) {
-            // easy way to get widgets from named slots.
-            unpack_named_slots!(named_slots => { title, content });
+        fn app(props: Props, (title, content): NamedSlots) {
             let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
 
             // we always return new widgets tree.
@@ -214,34 +212,37 @@ fn test_hello_world() {
         }
     }
 
-    widget_component! {
-        button(key, props) [use_button] {
+    widget_component!(
+        #[pre(use_button)]
+        fn button(key: Key, props: Props) {
             println!("* PROCESS BUTTON: {}", key);
 
-            widget!{
+            widget! {
                 (#{key} text: {props.clone()})
             }
         }
-    }
+    );
 
-    widget_component! {
-        title_bar(key, props) {
+    widget_component!(
+        fn title_bar(key: Key, props: Props) {
             let title = props.read_cloned_or_default::<String>();
 
             widget! {
                 (#{key} text: {title})
             }
         }
-    }
+    );
 
-    widget_component! {
-        vertical_box(id, key, listed_slots) {
+    widget_component!(
+        fn vertical_box(id: Id, key: Key, listed_slots: ListedSlots) {
             // listed slots are just widget node children.
             // here we just unwrap widget units (final atomic UI elements that renderers read).
             let items = listed_slots
                 .into_iter()
                 .map(|slot| FlexBoxItemNode {
-                    slot: slot.try_into().expect("Cannot convert slot to WidgetUnitNode!"),
+                    slot: slot
+                        .try_into()
+                        .expect("Cannot convert slot to WidgetUnitNode!"),
                     ..Default::default()
                 })
                 .collect::<Vec<_>>();
@@ -255,13 +256,13 @@ fn test_hello_world() {
                 }
             }}}
         }
-    }
+    );
 
-    widget_component! {
-        text(id, key, props) {
+    widget_component!(
+        fn text(id: Id, key: Key, props: Props) {
             let text = props.read_cloned_or_default::<String>();
 
-            widget!{{{
+            widget! {{{
                 TextBoxNode {
                     id: id.to_owned(),
                     text,
@@ -269,7 +270,7 @@ fn test_hello_world() {
                 }
             }}}
         }
-    }
+    );
 
     let mapping = CoordsMapping::new(Rect {
         left: 0.0,
@@ -605,12 +606,13 @@ fn test_refs() {
         }
     }
 
-    widget_component! {
-        test(key) [use_test] {
+    widget_component!(
+        #[pre(use_test)]
+        fn test(key: Key) {
             println!("Render test: {:?}", key);
-            widget!{()}
+            widget! {()}
         }
-    }
+    );
 
     widget_hook! {
         use_app(life_cycle) {
@@ -635,8 +637,9 @@ fn test_refs() {
         }
     }
 
-    widget_component! {
-        app(key, state) [use_app] {
+    widget_component!(
+        #[pre(use_app)]
+        fn app(key: Key, state: State) {
             println!("Render app: {:?}", key);
             let state = state.read_cloned_or_default::<AppState>();
 
@@ -644,7 +647,7 @@ fn test_refs() {
                 (#{key} | {state.test_ref} test)
             }
         }
-    }
+    );
 
     let mut appid = WidgetId::default();
     let mut application = Application::new();
@@ -724,8 +727,9 @@ fn test_scroll_box() {
         }
     }
 
-    widget_component! {
-        app(id, key) [use_nav_container, use_app] {
+    widget_component!(
+        #[pre(use_nav_container, use_app)]
+        fn app(id: Id, key: Key) {
             let scroll_props = Props::new(NavContainerActive)
                 .with(NavItemActive)
                 .with(ScrollViewNotifyProps(id.to_owned().into()))
@@ -745,7 +749,7 @@ fn test_scroll_box() {
                 })
             }
         }
-    }
+    );
 
     let mut button = WidgetId::default();
     let mut application = Application::new();
