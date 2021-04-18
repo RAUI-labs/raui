@@ -30,8 +30,33 @@ use crate::{
 use std::{
     collections::{HashMap, HashSet},
     convert::TryInto,
-    sync::mpsc::{channel, Sender},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{channel, Sender},
+        Arc,
+    },
 };
+
+#[derive(Debug, Default, Clone)]
+pub struct ChangeNotifier(Arc<AtomicBool>);
+
+impl ChangeNotifier {
+    pub fn new(changed: bool) -> Self {
+        Self(Arc::new(AtomicBool::new(changed)))
+    }
+
+    pub fn change(&mut self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+
+    pub fn has_changed(&self) -> bool {
+        self.0.load(Ordering::Relaxed)
+    }
+
+    pub fn consume_change(&mut self) -> bool {
+        self.0.swap(false, Ordering::Relaxed)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum ApplicationError {
@@ -76,6 +101,7 @@ pub struct Application {
     dirty: bool,
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
+    change_notifier: ChangeNotifier,
     pub animations_delta_time: Scalar,
 }
 
@@ -103,6 +129,7 @@ impl Application {
             dirty: true,
             render_changed: false,
             last_invalidation_cause: Default::default(),
+            change_notifier: ChangeNotifier::default(),
             animations_delta_time: 0.0,
         }
     }
@@ -113,6 +140,11 @@ impl Application {
         F: FnMut(&mut Self),
     {
         (f)(self);
+    }
+
+    #[inline]
+    pub fn change_notifier(&self) -> ChangeNotifier {
+        self.change_notifier.clone()
     }
 
     #[inline]
@@ -328,6 +360,9 @@ impl Application {
     }
 
     pub fn process(&mut self) -> bool {
+        if self.change_notifier.consume_change() {
+            self.dirty = true;
+        }
         self.animations_delta_time = self.animations_delta_time.max(0.0);
         self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
@@ -503,7 +538,7 @@ impl Application {
             None => possible_key.to_owned(),
         };
         path.push(key.clone());
-        let id = WidgetId::new(type_name, path.clone());
+        let id = WidgetId::new(&type_name, &path);
         used_ids.insert(id.clone());
         if let Some(mut idref) = idref {
             idref.write(id.to_owned());

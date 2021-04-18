@@ -164,24 +164,27 @@ pub struct AnimatorState {
     time: Scalar,
     #[serde(default)]
     duration: Scalar,
+    #[serde(default)]
+    looped: bool,
 }
 
 impl AnimatorState {
     pub fn new(animation: Animation) -> Self {
         let mut sheet = HashMap::new();
         let mut messages = vec![];
-        let time = Self::include_animation(animation, &mut sheet, &mut messages, 0.0);
+        let (time, looped) = Self::include_animation(animation, &mut sheet, &mut messages, 0.0);
         Self {
             sheet,
             messages,
             time: 0.0,
             duration: time,
+            looped,
         }
     }
 
     #[inline]
     pub fn in_progress(&self) -> bool {
-        self.time < self.duration && (!self.sheet.is_empty() || !self.messages.is_empty())
+        self.looped || (self.time <= self.duration && !self.sheet.is_empty())
     }
 
     #[inline]
@@ -219,6 +222,10 @@ impl AnimatorState {
         message_sender: &MessageSender,
     ) {
         if delta_time > 0.0 {
+            if self.looped && self.time > self.duration {
+                self.time = 0.0;
+            }
+            let old_time = self.time;
             self.time += delta_time;
             for phase in self.sheet.values_mut() {
                 phase.cached_time = (self.time - phase.start).min(phase.duration).max(0.0);
@@ -228,18 +235,11 @@ impl AnimatorState {
                     0.0
                 };
             }
-            self.messages = std::mem::take(&mut self.messages)
-                .into_iter()
-                .filter(|(time, message)| {
-                    if *time <= self.time {
-                        message_sender
-                            .write(owner.to_owned(), AnimationMessage(message.to_owned()));
-                        false
-                    } else {
-                        true
-                    }
-                })
-                .collect::<Vec<_>>();
+            for (time, message) in &self.messages {
+                if *time >= old_time && *time < self.time {
+                    message_sender.write(owner.to_owned(), AnimationMessage(message.to_owned()));
+                }
+            }
         }
     }
 
@@ -248,7 +248,7 @@ impl AnimatorState {
         sheet: &mut HashMap<String, AnimationPhase>,
         messages: &mut Vec<(Scalar, String)>,
         mut time: Scalar,
-    ) -> Scalar {
+    ) -> (Scalar, bool) {
         match animation {
             Animation::Value(value) => {
                 let duration = value.duration.max(0.0);
@@ -259,25 +259,32 @@ impl AnimatorState {
                     cached_progress: 0.0,
                 };
                 sheet.insert(value.name, phase);
-                time + duration
+                (time + duration, false)
             }
             Animation::Sequence(anims) => {
                 for anim in anims {
-                    time = Self::include_animation(anim, sheet, messages, time);
+                    time = Self::include_animation(anim, sheet, messages, time).0;
                 }
-                time
+                (time, false)
             }
             Animation::Parallel(anims) => {
                 let mut result = time;
                 for anim in anims {
-                    result = Self::include_animation(anim, sheet, messages, time).max(result);
+                    result = Self::include_animation(anim, sheet, messages, time)
+                        .0
+                        .max(result);
                 }
-                result
+                (result, false)
             }
-            Animation::TimeShift(v) => (time - v).max(0.0),
+            Animation::Looped(anim) => {
+                let looped = sheet.is_empty();
+                time = Self::include_animation(*anim, sheet, messages, time).0;
+                (time, looped)
+            }
+            Animation::TimeShift(v) => ((time - v).max(0.0), false),
             Animation::Message(message) => {
                 messages.push((time, message));
-                time
+                (time, false)
             }
         }
     }
@@ -300,6 +307,7 @@ pub enum Animation {
     Value(AnimatedValue),
     Sequence(Vec<Animation>),
     Parallel(Vec<Animation>),
+    Looped(Box<Animation>),
     TimeShift(Scalar),
     Message(String),
 }

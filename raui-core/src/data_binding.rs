@@ -1,4 +1,4 @@
-use crate::{application::Application, props::PropsData, Prefab};
+use crate::{application::ChangeNotifier, messenger::MessageData, props::PropsData, Prefab};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
 
@@ -9,6 +9,8 @@ where
 {
     #[serde(skip)]
     data: Arc<RwLock<T>>,
+    #[serde(skip)]
+    notifier: Option<ChangeNotifier>,
 }
 
 impl<T> DataBinding<T>
@@ -18,7 +20,23 @@ where
     pub fn new(data: T) -> Self {
         Self {
             data: Arc::new(RwLock::new(data)),
+            notifier: None,
         }
+    }
+
+    pub fn new_bound(data: T, notifier: ChangeNotifier) -> Self {
+        Self {
+            data: Arc::new(RwLock::new(data)),
+            notifier: Some(notifier),
+        }
+    }
+
+    pub fn bind(&mut self, notifier: ChangeNotifier) {
+        self.notifier = Some(notifier);
+    }
+
+    pub fn unbind(&mut self) {
+        self.notifier = None;
     }
 
     pub fn access<F, R>(&self, mut f: F) -> Option<R>
@@ -56,7 +74,11 @@ where
         F: FnMut(&mut T) -> R,
     {
         if let Ok(mut data) = self.data.write() {
-            Some(f(&mut data))
+            let result = f(&mut data);
+            if let Some(notifier) = self.notifier.as_mut() {
+                notifier.change();
+            }
+            Some(result)
         } else {
             None
         }
@@ -65,25 +87,10 @@ where
     pub fn write(&mut self, v: T) {
         if let Ok(mut data) = self.data.write() {
             *data = v;
+            if let Some(notifier) = self.notifier.as_mut() {
+                notifier.change();
+            }
         }
-    }
-
-    pub fn mutate_synced<F, R>(&mut self, app: &mut Application, f: F) -> Option<R>
-    where
-        F: FnMut(&mut T) -> R,
-    {
-        self.sync(app);
-        self.mutate(f)
-    }
-
-    pub fn write_synced(&mut self, app: &mut Application, v: T) {
-        self.sync(app);
-        self.write(v);
-    }
-
-    // For now we just mark application dirty - that will force it to re-render widgets next frame.
-    pub fn sync(&self, app: &mut Application) {
-        app.mark_dirty()
     }
 }
 
@@ -102,3 +109,17 @@ where
 }
 
 impl<T> Prefab for DataBinding<T> where T: std::fmt::Debug + Default + Send + Sync {}
+
+impl<T> MessageData for DataBinding<T>
+where
+    Self: Clone,
+    T: 'static + std::fmt::Debug + Default + Send + Sync,
+{
+    fn clone_message(&self) -> Box<dyn MessageData> {
+        Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}

@@ -41,7 +41,7 @@ pub struct WidgetId {
 }
 
 impl WidgetId {
-    pub fn new(type_name: String, path: Vec<String>) -> Self {
+    pub fn new(type_name: &str, path: &[String]) -> Self {
         if type_name.len() >= 256 {
             panic!(
                 "WidgetId `type_name` (\"{}\") cannot be longer than 255 characters!",
@@ -55,7 +55,7 @@ impl WidgetId {
         let mut id = String::with_capacity(count);
         id.push_str(&type_name);
         id.push(':');
-        for (i, part) in path.into_iter().enumerate() {
+        for (i, part) in path.iter().enumerate() {
             if part.len() >= 256 {
                 panic!(
                     "WidgetId `path[{}]` (\"{}\") cannot be longer than 255 characters!",
@@ -151,7 +151,7 @@ impl FromStr for WidgetId {
             let type_name = s[..index].to_owned();
             let rest = &s[(index + 2)..];
             let path = rest.split('/').map(|p| p.to_owned()).collect::<Vec<_>>();
-            Ok(Self::new(type_name, path))
+            Ok(Self::new(&type_name, &path))
         } else {
             Err(())
         }
@@ -699,10 +699,7 @@ mod tests {
 
     #[test]
     fn test_widget_id() {
-        let id = WidgetId::new(
-            "type".to_owned(),
-            vec!["parent".to_owned(), "me".to_owned()],
-        );
+        let id = WidgetId::new("type", &["parent".to_owned(), "me".to_owned()]);
         assert_eq!(id.to_string(), "type:/parent/me".to_owned());
         assert_eq!(id.type_name(), "type");
         assert_eq!(id.parts().next().unwrap(), "parent");

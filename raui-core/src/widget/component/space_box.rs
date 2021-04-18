@@ -14,6 +14,23 @@ pub struct SpaceBoxProps {
 }
 implement_props_data!(SpaceBoxProps);
 
+impl SpaceBoxProps {
+    pub fn cube(value: Scalar) -> Self {
+        Self {
+            width: value,
+            height: value,
+        }
+    }
+
+    pub fn horizontal(width: Scalar) -> Self {
+        Self { width, height: 0.0 }
+    }
+
+    pub fn vertical(height: Scalar) -> Self {
+        Self { width: 0.0, height }
+    }
+}
+
 widget_component! {
     pub space_box(id, props) {
         let SpaceBoxProps { width, height } = props.read_cloned_or_default();

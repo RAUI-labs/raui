@@ -1,10 +1,6 @@
 name: Rust
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,6 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --all --verbose
+      run: cargo build --all --verbose --exclude hello-world in-game todo-app
     - name: Run tests
-      run: cargo test --all --features all --verbose
+      run: cargo test --all --features all --verbose --exclude hello-world in-game todo-app

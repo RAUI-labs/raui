@@ -858,7 +858,9 @@ fn test_immediate_mode() {
 fn test_tesselation() {
     let mut application = Application::new();
     let mut layout_engine = DefaultLayoutEngine::default();
-    let mut renderer = TesselateRenderer::<()>::default();
+    let atlas_mapping = Default::default();
+    let image_sizes = Default::default();
+    let mut renderer = TesselateRenderer::new(Default::default(), (), &atlas_mapping, &image_sizes);
     let mapping = CoordsMapping::new(Rect {
         left: 0.0,
         right: 100.0,
@@ -867,14 +869,14 @@ fn test_tesselation() {
     });
     application.apply(
         make_widget!(grid_box)
-            .props(GridBoxProps {
+            .with_props(GridBoxProps {
                 cols: 2,
                 rows: 2,
                 ..Default::default()
             })
             .listed_slot(
                 make_widget!(image_box)
-                    .props(ImageBoxProps {
+                    .with_props(ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
                             color: Color {
                                 r: 0.25,
@@ -886,7 +888,7 @@ fn test_tesselation() {
                         }),
                         ..Default::default()
                     })
-                    .props(GridBoxItemLayout {
+                    .with_props(GridBoxItemLayout {
                         space_occupancy: IntRect {
                             left: 1,
                             right: 2,
@@ -898,7 +900,7 @@ fn test_tesselation() {
             )
             .listed_slot(
                 make_widget!(image_box)
-                    .props(ImageBoxProps {
+                    .with_props(ImageBoxProps {
                         material: ImageBoxMaterial::Image(ImageBoxImage {
                             id: "ass".to_owned(),
                             ..Default::default()
@@ -909,7 +911,7 @@ fn test_tesselation() {
                         }),
                         ..Default::default()
                     })
-                    .props(GridBoxItemLayout {
+                    .with_props(GridBoxItemLayout {
                         space_occupancy: IntRect {
                             left: 0,
                             right: 1,
@@ -921,7 +923,7 @@ fn test_tesselation() {
             )
             .listed_slot(
                 make_widget!(image_box)
-                    .props(ImageBoxProps {
+                    .with_props(ImageBoxProps {
                         material: ImageBoxMaterial::Image(ImageBoxImage {
                             id: "ass".to_owned(),
                             ..Default::default()
@@ -932,7 +934,7 @@ fn test_tesselation() {
                         }),
                         ..Default::default()
                     })
-                    .props(GridBoxItemLayout {
+                    .with_props(GridBoxItemLayout {
                         space_occupancy: IntRect {
                             left: 0,
                             right: 2,
@@ -942,7 +944,7 @@ fn test_tesselation() {
                         ..Default::default()
                     }),
             )
-            .listed_slot(make_widget!(text_box).props(TextBoxProps {
+            .listed_slot(make_widget!(text_box).with_props(TextBoxProps {
                 text: "hello".to_owned(),
                 font: TextBoxFont {
                     name: "font".to_owned(),
