@@ -10,9 +10,10 @@ jobs:
 
     runs-on: windows-latest
 
+    # until we figure out how to make bundled sdl2 dependency compile we just exclude projects that use it
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --all --verbose --exclude hello-world --exclude in-game --exclude todo-app
+      run: cargo build --all --verbose --exclude hello-world --exclude in-game --exclude todo-app --exclude raui-tetra-renderer
     - name: Run tests
-      run: cargo test --all --features all --verbose --exclude hello-world --exclude in-game --exclude todo-app
+      run: cargo test --all --features all --verbose --exclude hello-world --exclude in-game --exclude todo-app --exclude raui-tetra-renderer
