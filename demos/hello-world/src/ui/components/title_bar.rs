@@ -4,8 +4,7 @@ widget_component! {
     pub title_bar(id, key, state) [use_button_notified_state, use_text_input_notified_state] {
         let ButtonProps { selected, trigger, .. } = state.read_cloned_or_default();
         let TextInputProps { text, cursor_position, focused, .. } = state.read_cloned_or_default();
-        let text = text.trim();
-        let text = if text.is_empty() {
+        let text = if text.trim().is_empty() {
             "> Focus here and start typing...".to_owned()
         } else if focused {
             if cursor_position < text.len() {
