@@ -13,6 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --all --verbose --exclude hello-world in-game todo-app
+      run: cargo build --all --verbose --exclude hello-world --exclude in-game --exclude todo-app
     - name: Run tests
-      run: cargo test --all --features all --verbose --exclude hello-world in-game todo-app
+      run: cargo test --all --features all --verbose --exclude hello-world --exclude in-game --exclude todo-app
