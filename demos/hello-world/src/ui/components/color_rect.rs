@@ -8,19 +8,19 @@ pub struct ColorRectProps {
 }
 implement_props_data!(ColorRectProps);
 
-widget_component! {
-    pub color_rect(key, props) {
-        let color = props.read_cloned_or_default::<ColorRectProps>().color;
-        let props = props.clone().with(ImageBoxProps {
-            material: ImageBoxMaterial::Color(ImageBoxColor {
-                color,
-                scaling: ImageBoxImageScaling::Frame((10.0, true).into()),
-            }),
-            ..Default::default()
-        });
+pub fn color_rect(context: WidgetContext) -> WidgetNode {
+    let WidgetContext { key, props, .. } = context;
 
-        widget! {
-            (#{key} image_box: {props})
-        }
+    let color = props.read_cloned_or_default::<ColorRectProps>().color;
+    let props = props.clone().with(ImageBoxProps {
+        material: ImageBoxMaterial::Color(ImageBoxColor {
+            color,
+            scaling: ImageBoxImageScaling::Frame((10.0, true).into()),
+        }),
+        ..Default::default()
+    });
+
+    widget! {
+        (#{key} image_box: {props})
     }
 }

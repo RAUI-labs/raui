@@ -1,12 +1,12 @@
 use crate::{
     messenger::MessageData,
+    pre_hooks,
     widget::{
         component::interactive::navigation::{use_nav_scroll_view, NavJump, NavScroll, NavSignal},
-        context::WidgetMountOrChangeContext,
+        context::{WidgetContext, WidgetMountOrChangeContext},
         utils::Vec2,
         WidgetId, WidgetIdOrRef,
     },
-    widget_hook,
 };
 use serde::{Deserialize, Serialize};
 
@@ -58,68 +58,74 @@ pub struct ScrollViewNotifyMessage {
 }
 implement_message_data!(ScrollViewNotifyMessage);
 
-widget_hook! {
-    pub use_scroll_view_notified_state(life_cycle) {
-        life_cycle.change(|context| {
-            for msg in context.messenger.messages {
-                if let Some(msg) = msg.as_any().downcast_ref::<ScrollViewNotifyMessage>() {
-                    drop(context.state.write_with(msg.state.clone()));
-                }
-            }
-        });
-    }
-}
-
-widget_hook! {
-    pub use_scroll_view(life_cycle) [use_nav_scroll_view] {
-        fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
-        where
-            T: 'static + MessageData,
-        {
-            if let Ok(notify) = context.props.read::<ScrollViewNotifyProps>() {
-                if let Some(to) = notify.0.read() {
-                    context.messenger.write(to, data);
-                }
+pub fn use_scroll_view_notified_state(context: &mut WidgetContext) {
+    context.life_cycle.change(|context| {
+        for msg in context.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<ScrollViewNotifyMessage>() {
+                drop(context.state.write_with(msg.state.clone()));
             }
         }
+    });
+}
 
-        life_cycle.mount(|context| {
-            notify(&context, ScrollViewNotifyMessage {
+#[pre_hooks(use_nav_scroll_view)]
+pub fn use_scroll_view(context: &mut WidgetContext) {
+    fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
+    where
+        T: 'static + MessageData,
+    {
+        if let Ok(notify) = context.props.read::<ScrollViewNotifyProps>() {
+            if let Some(to) = notify.0.read() {
+                context.messenger.write(to, data);
+            }
+        }
+    }
+
+    context.life_cycle.mount(|context| {
+        notify(
+            &context,
+            ScrollViewNotifyMessage {
                 sender: context.id.to_owned(),
                 state: ScrollViewState::default(),
-            });
-            drop(context.state.write_with(ScrollViewState::default()));
-        });
+            },
+        );
+        drop(context.state.write_with(ScrollViewState::default()));
+    });
 
-        life_cycle.change(|context| {
-            let mut data = context.state.read_cloned_or_default::<ScrollViewState>();
-            let range = context.props.read::<ScrollViewRange>();
-            let mut dirty = false;
-            for msg in context.messenger.messages {
-                if let Some(
-                    NavSignal::Jump(NavJump::Scroll(NavScroll::Change(value, factor, relative)))
-                ) = msg.as_any().downcast_ref() {
-                    if *relative {
-                        data.value.x += value.x;
-                        data.value.y += value.y;
-                    } else {
-                        data.value = *value;
-                    }
-                    if let Ok(range) = &range {
-                        data.value.x = data.value.x.max(range.from.x).min(range.to.x);
-                        data.value.y = data.value.y.max(range.from.y).min(range.to.y);
-                    }
-                    data.size_factor = *factor;
-                    dirty = true;
+    context.life_cycle.change(|context| {
+        let mut data = context.state.read_cloned_or_default::<ScrollViewState>();
+        let range = context.props.read::<ScrollViewRange>();
+        let mut dirty = false;
+        for msg in context.messenger.messages {
+            if let Some(NavSignal::Jump(NavJump::Scroll(NavScroll::Change(
+                value,
+                factor,
+                relative,
+            )))) = msg.as_any().downcast_ref()
+            {
+                if *relative {
+                    data.value.x += value.x;
+                    data.value.y += value.y;
+                } else {
+                    data.value = *value;
                 }
+                if let Ok(range) = &range {
+                    data.value.x = data.value.x.max(range.from.x).min(range.to.x);
+                    data.value.y = data.value.y.max(range.from.y).min(range.to.y);
+                }
+                data.size_factor = *factor;
+                dirty = true;
             }
-            if dirty {
-                notify(&context, ScrollViewNotifyMessage {
+        }
+        if dirty {
+            notify(
+                &context,
+                ScrollViewNotifyMessage {
                     sender: context.id.to_owned(),
                     state: data.clone(),
-                });
-                drop(context.state.write_with(data));
-            }
-        });
-    }
+                },
+            );
+            drop(context.state.write_with(data));
+        }
+    });
 }

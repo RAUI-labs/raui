@@ -22,6 +22,7 @@ pub type Integer = i64;
 #[cfg(not(feature = "integer64"))]
 pub type Integer = i32;
 
+pub use raui_derive::*;
 use serde::{de::DeserializeOwned, Serialize};
 pub use serde_yaml::{Number as PrefabNumber, Value as PrefabValue};
 
@@ -57,6 +58,7 @@ pub mod prelude {
         layout::default_layout_engine::*,
         layout::*,
         messenger::*,
+        post_hooks, pre_hooks,
         props::*,
         renderer::*,
         signals::*,

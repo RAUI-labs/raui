@@ -24,46 +24,55 @@ pub struct IconPaperProps {
 }
 implement_props_data!(IconPaperProps);
 
-widget_component! {
-    pub icon_paper(key, props, shared_props) {
-        let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
-        let tint = match shared_props.read::<ThemeProps>() {
-            Ok(props) => match themed_props.color {
-                ThemeColor::Default => props.active_colors.contrast.default.main,
-                ThemeColor::Primary => props.active_colors.contrast.primary.main,
-                ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
-            },
-            Err(_) => Default::default(),
-        };
-        let icon_props = props.read_cloned_or_default::<IconPaperProps>();
-        let size = match shared_props.read::<ThemeProps>() {
-            Ok(props) => props
-                .icons_level_sizes
-                .get(icon_props.size_level)
-                .copied()
-                .unwrap_or(24.0),
-            Err(_) => 24.0,
-        };
-        let IconImage {id, source_rect, scaling } = icon_props.image;
-        let image = ImageBoxImage {
-            id,
-            source_rect,
-            scaling,
-            tint,
-        };
-        let props = ImageBoxProps {
-            width: ImageBoxSizeValue::Exact(size),
-            height: ImageBoxSizeValue::Exact(size),
-            content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
-                horizontal_alignment: 0.5,
-                vertical_alignment: 0.5,
-            }),
-            material: ImageBoxMaterial::Image(image),
-            transform: icon_props.transform,
-        };
+pub fn icon_paper(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        shared_props,
+        ..
+    } = context;
 
-        widget! {
-            (#{key} image_box: {props})
-        }
+    let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
+    let tint = match shared_props.read::<ThemeProps>() {
+        Ok(props) => match themed_props.color {
+            ThemeColor::Default => props.active_colors.contrast.default.main,
+            ThemeColor::Primary => props.active_colors.contrast.primary.main,
+            ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
+        },
+        Err(_) => Default::default(),
+    };
+    let icon_props = props.read_cloned_or_default::<IconPaperProps>();
+    let size = match shared_props.read::<ThemeProps>() {
+        Ok(props) => props
+            .icons_level_sizes
+            .get(icon_props.size_level)
+            .copied()
+            .unwrap_or(24.0),
+        Err(_) => 24.0,
+    };
+    let IconImage {
+        id,
+        source_rect,
+        scaling,
+    } = icon_props.image;
+    let image = ImageBoxImage {
+        id,
+        source_rect,
+        scaling,
+        tint,
+    };
+    let props = ImageBoxProps {
+        width: ImageBoxSizeValue::Exact(size),
+        height: ImageBoxSizeValue::Exact(size),
+        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+            horizontal_alignment: 0.5,
+            vertical_alignment: 0.5,
+        }),
+        material: ImageBoxMaterial::Image(image),
+        transform: icon_props.transform,
+    };
+
+    widget! {
+        (#{key} image_box: {props})
     }
 }

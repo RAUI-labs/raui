@@ -22,35 +22,42 @@ pub struct TextPaperProps {
 }
 implement_props_data!(TextPaperProps);
 
-widget_component! {
-    pub text_paper(key, props, shared_props) {
-        let TextPaperProps {
-            text,
-            width,
-            height,
-            variant,
-            use_main_color,
-            alignment_override,
-            transform,
-        } = props.read_cloned_or_default();
-        let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
-        let ThemedTextMaterial {
-            mut alignment,
-            direction,
-            font,
-        } = match shared_props.read::<ThemeProps>() {
-            Ok(props) => props
-                .text_variants
-                .get(&variant)
-                .cloned()
-                .unwrap_or_default(),
-            Err(_) => Default::default(),
-        };
-        if let Some(alignment_override) = alignment_override {
-            alignment = alignment_override;
-        }
-        let color = match shared_props.read::<ThemeProps>() {
-            Ok(props) => if use_main_color {
+pub fn text_paper(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        shared_props,
+        ..
+    } = context;
+
+    let TextPaperProps {
+        text,
+        width,
+        height,
+        variant,
+        use_main_color,
+        alignment_override,
+        transform,
+    } = props.read_cloned_or_default();
+    let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
+    let ThemedTextMaterial {
+        mut alignment,
+        direction,
+        font,
+    } = match shared_props.read::<ThemeProps>() {
+        Ok(props) => props
+            .text_variants
+            .get(&variant)
+            .cloned()
+            .unwrap_or_default(),
+        Err(_) => Default::default(),
+    };
+    if let Some(alignment_override) = alignment_override {
+        alignment = alignment_override;
+    }
+    let color = match shared_props.read::<ThemeProps>() {
+        Ok(props) => {
+            if use_main_color {
                 match themed_props.color {
                     ThemeColor::Default => props.active_colors.main.default.main,
                     ThemeColor::Primary => props.active_colors.main.primary.main,
@@ -62,22 +69,22 @@ widget_component! {
                     ThemeColor::Primary => props.active_colors.contrast.primary.main,
                     ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
                 }
-            },
-            Err(_) => Default::default(),
-        };
-        let props = TextBoxProps {
-            text,
-            width,
-            height,
-            alignment,
-            direction,
-            font,
-            color,
-            transform,
-        };
-
-        widget! {
-            (#{key} text_box: {props})
+            }
         }
+        Err(_) => Default::default(),
+    };
+    let props = TextBoxProps {
+        text,
+        width,
+        height,
+        alignment,
+        direction,
+        font,
+        color,
+        transform,
+    };
+
+    widget! {
+        (#{key} text_box: {props})
     }
 }

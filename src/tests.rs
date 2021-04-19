@@ -124,26 +124,26 @@ fn test_hello_world() {
     let d = AppProps::from_prefab(s).unwrap();
     println!("* DESERIALIZED APP PROPS: {:?}", d);
 
-    // convenient macro that produces widget component processing function.
-    widget_component! {
-        // <component name> ( [list of context data to unpack into scope] )
-        app(props, named_slots) {
-            // easy way to get widgets from named slots.
-            unpack_named_slots!(named_slots => { title, content });
-            let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
+    // <component name> ( [list of context data to unpack into scope] )
+    fn app(context: WidgetContext) -> WidgetNode {
+        let WidgetContext {
+            props, named_slots, ..
+        } = context;
+        // easy way to get widgets from named slots.
+        unpack_named_slots!(named_slots => { title, content });
+        let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
 
-            // we always return new widgets tree.
-            widget! {
-                // Forgive me the syntax, i'll make a JSX-like one soon using procedural macros.
-                // `#{key}` - provided value gives a unique name to node. keys allows widgets
-                //      to save state between render calls. here we just pass key of this widget.
-                // `vertical_box` - name of widget component to use.
-                // `[...]` - listed widget slots. here we just put previously unpacked named slots.
-                (#{index} vertical_box [
-                    {title}
-                    {content}
-                ])
-            }
+        // we always return new widgets tree.
+        widget! {
+            // Forgive me the syntax, i'll make a JSX-like one soon using procedural macros.
+            // `#{key}` - provided value gives a unique name to node. keys allows widgets
+            //      to save state between render calls. here we just pass key of this widget.
+            // `vertical_box` - name of widget component to use.
+            // `[...]` - listed widget slots. here we just put previously unpacked named slots.
+            (#{index} vertical_box [
+                {title}
+                {content}
+            ])
         }
     }
 
@@ -161,20 +161,18 @@ fn test_hello_world() {
     }
     implement_message_data!(ButtonAction);
 
-    widget_hook! {
-        use_empty(life_cycle) {
-            life_cycle.mount(|_| {
-                println!("* EMPTY MOUNTED");
-            });
+    fn use_empty(context: &mut WidgetContext) {
+        context.life_cycle.mount(|_| {
+            println!("* EMPTY MOUNTED");
+        });
 
-            life_cycle.change(|_| {
-                println!("* EMPTY CHANGED");
-            });
+        context.life_cycle.change(|_| {
+            println!("* EMPTY CHANGED");
+        });
 
-            life_cycle.unmount(|_| {
-                println!("* EMPTY UNMOUNTED");
-            });
-        }
+        context.life_cycle.unmount(|_| {
+            println!("* EMPTY UNMOUNTED");
+        });
     }
 
     // you use life cycle hooks for storing closures that will be called when widget will be
@@ -186,89 +184,90 @@ fn test_hello_world() {
     // - signal sender (this one is used to message application host)
     // although this hook uses only life cycle, you can make different hooks that use many
     // arguments, even use context you got from the component!
-    widget_hook! {
-        use_button(key, life_cycle) [use_empty] {
-            life_cycle.mount(|context| {
-                println!("* BUTTON MOUNTED: {}", context.id.key());
-                drop(context.state.write(ButtonState { pressed: false }));
-            });
+    #[pre_hooks(use_empty)]
+    fn use_button(context: &mut WidgetContext) {
+        context.life_cycle.mount(|context| {
+            println!("* BUTTON MOUNTED: {}", context.id.key());
+            drop(context.state.write(ButtonState { pressed: false }));
+        });
 
-            life_cycle.change(|context| {
-                println!("* BUTTON CHANGED: {}", context.id.key());
-                for msg in context.messenger.messages {
-                    if let Some(msg) = msg.as_any().downcast_ref::<ButtonAction>() {
-                        let pressed = match msg {
-                            ButtonAction::Pressed => true,
-                            ButtonAction::Released => false,
-                        };
-                        println!("* BUTTON ACTION: {:?}", msg);
-                        drop(context.state.write(ButtonState { pressed }));
-                        drop(context.signals.write(*msg));
-                    }
+        context.life_cycle.change(|context| {
+            println!("* BUTTON CHANGED: {}", context.id.key());
+            for msg in context.messenger.messages {
+                if let Some(msg) = msg.as_any().downcast_ref::<ButtonAction>() {
+                    let pressed = match msg {
+                        ButtonAction::Pressed => true,
+                        ButtonAction::Released => false,
+                    };
+                    println!("* BUTTON ACTION: {:?}", msg);
+                    drop(context.state.write(ButtonState { pressed }));
+                    drop(context.signals.write(*msg));
                 }
-            });
-
-            life_cycle.unmount(|context| {
-                println!("* BUTTON UNMOUNTED: {}", context.id.key());
-            });
-        }
-    }
-
-    widget_component! {
-        button(key, props) [use_button] {
-            println!("* PROCESS BUTTON: {}", key);
-
-            widget!{
-                (#{key} text: {props.clone()})
             }
+        });
+
+        context.life_cycle.unmount(|context| {
+            println!("* BUTTON UNMOUNTED: {}", context.id.key());
+        });
+    }
+
+    #[pre_hooks(use_button)]
+    fn button(mut context: WidgetContext) -> WidgetNode {
+        let WidgetContext { key, props, .. } = context;
+        println!("* PROCESS BUTTON: {}", key);
+
+        widget! {
+            (#{key} text: {props.clone()})
         }
     }
 
-    widget_component! {
-        title_bar(key, props) {
-            let title = props.read_cloned_or_default::<String>();
+    fn title_bar(context: WidgetContext) -> WidgetNode {
+        let WidgetContext { key, props, .. } = context;
+        let title = props.read_cloned_or_default::<String>();
 
-            widget! {
-                (#{key} text: {title})
+        widget! {
+            (#{key} text: {title})
+        }
+    }
+
+    fn vertical_box(context: WidgetContext) -> WidgetNode {
+        let WidgetContext {
+            id, listed_slots, ..
+        } = context;
+
+        // listed slots are just widget node children.
+        // here we just unwrap widget units (final atomic UI elements that renderers read).
+        let items = listed_slots
+            .into_iter()
+            .map(|slot| FlexBoxItemNode {
+                slot: slot
+                    .try_into()
+                    .expect("Cannot convert slot to WidgetUnitNode!"),
+                ..Default::default()
+            })
+            .collect::<Vec<_>>();
+
+        // we use `{{{ ... }}}` to inform macro that this is widget unit.
+        widget! {{{
+            FlexBoxNode {
+                id: id.to_owned(),
+                items,
+                ..Default::default()
             }
-        }
+        }}}
     }
 
-    widget_component! {
-        vertical_box(id, key, listed_slots) {
-            // listed slots are just widget node children.
-            // here we just unwrap widget units (final atomic UI elements that renderers read).
-            let items = listed_slots
-                .into_iter()
-                .map(|slot| FlexBoxItemNode {
-                    slot: slot.try_into().expect("Cannot convert slot to WidgetUnitNode!"),
-                    ..Default::default()
-                })
-                .collect::<Vec<_>>();
+    fn text(context: WidgetContext) -> WidgetNode {
+        let WidgetContext { id, props, .. } = context;
+        let text = props.read_cloned_or_default::<String>();
 
-            // we use `{{{ ... }}}` to inform macro that this is widget unit.
-            widget! {{{
-                FlexBoxNode {
-                    id: id.to_owned(),
-                    items,
-                    ..Default::default()
-                }
-            }}}
-        }
-    }
-
-    widget_component! {
-        text(id, key, props) {
-            let text = props.read_cloned_or_default::<String>();
-
-            widget!{{{
-                TextBoxNode {
-                    id: id.to_owned(),
-                    text,
-                    ..Default::default()
-                }
-            }}}
-        }
+        widget! {{{
+            TextBoxNode {
+                id: id.to_owned(),
+                text,
+                ..Default::default()
+            }
+        }}}
     }
 
     let mapping = CoordsMapping::new(Rect {
@@ -592,57 +591,52 @@ fn test_refs() {
     }
     implement_props_data!(AppState);
 
-    widget_hook! {
-        use_test(life_cycle) {
-            life_cycle.change(|context| {
-                for msg in context.messenger.messages {
-                    if msg.as_any().downcast_ref::<()>().is_some() {
-                        println!("Test got message");
-                        drop(context.signals.write(()));
-                    }
+    fn use_test(context: &mut WidgetContext) {
+        context.life_cycle.change(|context| {
+            for msg in context.messenger.messages {
+                if msg.as_any().downcast_ref::<()>().is_some() {
+                    println!("Test got message");
+                    drop(context.signals.write(()));
                 }
-            });
-        }
-    }
-
-    widget_component! {
-        test(key) [use_test] {
-            println!("Render test: {:?}", key);
-            widget!{()}
-        }
-    }
-
-    widget_hook! {
-        use_app(life_cycle) {
-            life_cycle.mount(|context| {
-                println!("Register app");
-                drop(context.state.write(AppState::default()));
-                drop(context.signals.write(true));
-            });
-
-            life_cycle.change(|context| {
-                for msg in context.messenger.messages {
-                    if msg.as_any().downcast_ref::<()>().is_some() {
-                        println!("App got message");
-                        let state = context.state.read_cloned_or_default::<AppState>();
-                        if let Some(id) = state.test_ref.read() {
-                            println!("App send message to: {:?}", id);
-                            context.messenger.write(id, ());
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    widget_component! {
-        app(key, state) [use_app] {
-            println!("Render app: {:?}", key);
-            let state = state.read_cloned_or_default::<AppState>();
-
-            widget! {
-                (#{key} | {state.test_ref} test)
             }
+        });
+    }
+
+    #[pre_hooks(use_test)]
+    fn test(mut context: WidgetContext) -> WidgetNode {
+        println!("Render test: {:?}", context.key);
+        widget! {()}
+    }
+
+    fn use_app(context: &mut WidgetContext) {
+        context.life_cycle.mount(|context| {
+            println!("Register app");
+            drop(context.state.write(AppState::default()));
+            drop(context.signals.write(true));
+        });
+
+        context.life_cycle.change(|context| {
+            for msg in context.messenger.messages {
+                if msg.as_any().downcast_ref::<()>().is_some() {
+                    println!("App got message");
+                    let state = context.state.read_cloned_or_default::<AppState>();
+                    if let Some(id) = state.test_ref.read() {
+                        println!("App send message to: {:?}", id);
+                        context.messenger.write(id, ());
+                    }
+                }
+            }
+        });
+    }
+
+    #[pre_hooks(use_app)]
+    fn app(mut context: WidgetContext) -> WidgetNode {
+        let WidgetContext { key, state, .. } = context;
+        println!("Render app: {:?}", key);
+        let state = state.read_cloned_or_default::<AppState>();
+
+        widget! {
+            (#{key} | {state.test_ref} test)
         }
     }
 
@@ -714,36 +708,35 @@ fn test_scroll_box() {
         bottom: 100.0,
     });
 
-    widget_hook! {
-        use_app(life_cycle) {
-            life_cycle.change(|context| {
-                for msg in context.messenger.messages {
-                    println!("* App message: {:#?}", msg);
-                }
-            });
-        }
+    fn use_app(context: &mut WidgetContext) {
+        context.life_cycle.change(|context| {
+            for msg in context.messenger.messages {
+                println!("* App message: {:#?}", msg);
+            }
+        });
     }
 
-    widget_component! {
-        app(id, key) [use_nav_container, use_app] {
-            let scroll_props = Props::new(NavContainerActive)
-                .with(NavItemActive)
-                .with(ScrollViewNotifyProps(id.to_owned().into()))
-                .with(ScrollViewRange::default());
-            let size_props = SizeBoxProps {
-                width: SizeBoxSizeValue::Exact(200.0),
-                height: SizeBoxSizeValue::Exact(200.0),
-                ..Default::default()
-            };
+    #[pre_hooks(use_nav_container, use_app)]
+    fn app(mut context: WidgetContext) -> WidgetNode {
+        let WidgetContext { id, key, .. } = context;
 
-            widget! {
-                (#{key} nav_scroll_box: {scroll_props} {
-                    content = (#{"button"} button: {NavItemActive} {
-                        content = (#{"size"} size_box: {size_props})
-                    })
-                    scrollbars = (#{"scrollbars"} nav_scroll_box_side_scrollbars)
+        let scroll_props = Props::new(NavContainerActive)
+            .with(NavItemActive)
+            .with(ScrollViewNotifyProps(id.to_owned().into()))
+            .with(ScrollViewRange::default());
+        let size_props = SizeBoxProps {
+            width: SizeBoxSizeValue::Exact(200.0),
+            height: SizeBoxSizeValue::Exact(200.0),
+            ..Default::default()
+        };
+
+        widget! {
+            (#{key} nav_scroll_box: {scroll_props} {
+                content = (#{"button"} button: {NavItemActive} {
+                    content = (#{"size"} size_box: {size_props})
                 })
-            }
+                scrollbars = (#{"scrollbars"} nav_scroll_box_side_scrollbars)
+            })
         }
     }
 

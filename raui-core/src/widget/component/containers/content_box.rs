@@ -1,14 +1,15 @@
 use crate::{
-    widget,
+    pre_hooks, widget,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
             NavContainerActive, NavItemActive, NavJumpActive,
         },
+        context::WidgetContext,
+        node::WidgetNode,
         unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
-    widget_component,
 };
 use serde::{Deserialize, Serialize};
 
@@ -21,46 +22,58 @@ pub struct ContentBoxProps {
 }
 implement_props_data!(ContentBoxProps);
 
-widget_component! {
-    pub nav_content_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump_direction_active,
-        use_nav_item,
-    ] {
-        let props = props.clone()
-            .without::<NavContainerActive>()
-            .without::<NavJumpActive>()
-            .without::<NavItemActive>();
+#[pre_hooks(use_nav_container_active, use_nav_jump_direction_active, use_nav_item)]
+pub fn nav_content_box(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        listed_slots,
+        ..
+    } = context;
 
-        widget!{
-            (#{key} content_box: {props} |[listed_slots]|)
-        }
+    let props = props
+        .clone()
+        .without::<NavContainerActive>()
+        .without::<NavJumpActive>()
+        .without::<NavItemActive>();
+
+    widget! {
+        (#{key} content_box: {props} |[listed_slots]|)
     }
 }
 
-widget_component! {
-    pub content_box(id, props, listed_slots) {
-        let ContentBoxProps { clipping, transform } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().filter_map(|slot| {
+pub fn content_box(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id,
+        props,
+        listed_slots,
+        ..
+    } = context;
+
+    let ContentBoxProps {
+        clipping,
+        transform,
+    } = props.read_cloned_or_default();
+
+    let items = listed_slots
+        .into_iter()
+        .filter_map(|slot| {
             if let Some(props) = slot.props() {
                 let layout = props.read_cloned_or_default::<ContentBoxItemLayout>();
-                Some(ContentBoxItemNode {
-                    slot,
-                    layout,
-                })
+                Some(ContentBoxItemNode { slot, layout })
             } else {
                 None
             }
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
-        widget! {{{
-            ContentBoxNode {
-                id: id.to_owned(),
-                props: props.clone(),
-                items,
-                clipping,
-                transform,
-            }
-        }}}
-    }
+    widget! {{{
+        ContentBoxNode {
+            id: id.to_owned(),
+            props: props.clone(),
+            items,
+            clipping,
+            transform,
+        }
+    }}}
 }

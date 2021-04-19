@@ -8,10 +8,11 @@ use crate::{
     messenger::Message,
     props::{Props, PropsData},
     widget::{
+        context::WidgetContext,
         node::{WidgetNode, WidgetNodePrefab},
         FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
-    widget_hook, PrefabValue, Scalar,
+    PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{any::TypeId, collections::HashMap, convert::TryFrom};
@@ -41,37 +42,40 @@ pub struct ForwardedMessage {
 }
 implement_message_data!(ForwardedMessage);
 
-widget_hook! {
-    pub use_message_forward(life_cycle) {
-        life_cycle.change(|context| {
-            let (id, no_wrap, types) = match context.props.read::<MessageForwardProps>() {
+pub fn use_message_forward(context: &mut WidgetContext) {
+    context.life_cycle.change(|context| {
+        let (id, no_wrap, types) = match context.props.read::<MessageForwardProps>() {
+            Ok(forward) => match forward.to.read() {
+                Some(id) => (id, forward.no_wrap, &forward.types),
+                _ => return,
+            },
+            _ => match context.shared_props.read::<MessageForwardProps>() {
                 Ok(forward) => match forward.to.read() {
                     Some(id) => (id, forward.no_wrap, &forward.types),
                     _ => return,
                 },
-                _ => match context.shared_props.read::<MessageForwardProps>() {
-                    Ok(forward) => match forward.to.read() {
-                        Some(id) => (id, forward.no_wrap, &forward.types),
-                        _ => return,
-                    },
-                    _ => return,
-                },
-            };
-            for msg in context.messenger.messages {
-                let t = msg.as_any().type_id();
-                if types.contains(&t) {
-                    if no_wrap {
-                        context.messenger.write_raw(id.to_owned(), msg.clone_message());
-                    } else {
-                        context.messenger.write(id.to_owned(), ForwardedMessage {
+                _ => return,
+            },
+        };
+        for msg in context.messenger.messages {
+            let t = msg.as_any().type_id();
+            if types.contains(&t) {
+                if no_wrap {
+                    context
+                        .messenger
+                        .write_raw(id.to_owned(), msg.clone_message());
+                } else {
+                    context.messenger.write(
+                        id.to_owned(),
+                        ForwardedMessage {
                             sender: context.id.to_owned(),
                             data: msg.clone_message(),
-                        });
-                    }
+                        },
+                    );
                 }
             }
-        });
-    }
+        }
+    });
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -82,16 +86,14 @@ pub enum ResizeListenerSignal {
 }
 implement_message_data!(ResizeListenerSignal);
 
-widget_hook! {
-    pub use_resize_listener(life_cycle) {
-        life_cycle.mount(|context| {
-            context.signals.write(ResizeListenerSignal::Register);
-        });
+pub fn use_resize_listener(context: &mut WidgetContext) {
+    context.life_cycle.mount(|context| {
+        context.signals.write(ResizeListenerSignal::Register);
+    });
 
-        life_cycle.unmount(|context| {
-            context.signals.write(ResizeListenerSignal::Unregister);
-        });
-    }
+    context.life_cycle.unmount(|context| {
+        context.signals.write(ResizeListenerSignal::Unregister);
+    });
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]

@@ -25,6 +25,10 @@ impl<'a> WidgetContext<'a> {
         std::mem::take(&mut self.named_slots)
     }
 
+    pub fn take_named_slot(&mut self, name: &str) -> WidgetNode {
+        self.named_slots.remove(name).unwrap_or_default()
+    }
+
     pub fn take_listed_slots(&mut self) -> Vec<WidgetNode> {
         std::mem::take(&mut self.listed_slots)
     }

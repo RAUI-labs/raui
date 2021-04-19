@@ -29,133 +29,136 @@ pub struct TasksProps {
 }
 implement_props_data!(TasksProps);
 
-widget_hook! {
-    use_task(life_cycle) {
-        life_cycle.change(|context| {
-            for msg in context.messenger.messages {
-                if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                    if msg.trigger_start() {
-                        match msg.sender.key() {
-                            "checkbox" => {
-                                // TODO: figure out better to pass index to the message.
-                                // maybe using props? anything would be better than parsing string.
-                                if let Ok(index) = context.id.key().parse::<usize>() {
-                                    let id = context
-                                        .shared_props
-                                        .read_cloned_or_default::<AppSharedProps>()
-                                        .id;
-                                    context.messenger.write(id, AppMessage::ToggleTask(index));
-                                }
+fn use_task(context: &mut WidgetContext) {
+    context.life_cycle.change(|context| {
+        for msg in context.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                if msg.trigger_start() {
+                    match msg.sender.key() {
+                        "checkbox" => {
+                            // TODO: figure out better to pass index to the message.
+                            // maybe using props? anything would be better than parsing string.
+                            if let Ok(index) = context.id.key().parse::<usize>() {
+                                let id = context
+                                    .shared_props
+                                    .read_cloned_or_default::<AppSharedProps>()
+                                    .id;
+                                context.messenger.write(id, AppMessage::ToggleTask(index));
                             }
-                            "delete" => {
-                                // TODO: figure out better to pass index to the message.
-                                // maybe using props? anything would be better than parsing string.
-                                if let Ok(index) = context.id.key().parse::<usize>() {
-                                    let id = context
-                                        .shared_props
-                                        .read_cloned_or_default::<AppSharedProps>()
-                                        .id;
-                                    context.messenger.write(id, AppMessage::DeleteTask(index));
-                                }
-                            }
-                            _ => {}
                         }
+                        "delete" => {
+                            // TODO: figure out better to pass index to the message.
+                            // maybe using props? anything would be better than parsing string.
+                            if let Ok(index) = context.id.key().parse::<usize>() {
+                                let id = context
+                                    .shared_props
+                                    .read_cloned_or_default::<AppSharedProps>()
+                                    .id;
+                                context.messenger.write(id, AppMessage::DeleteTask(index));
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
-        });
-    }
-}
-
-widget_component! {
-    pub task(id, key, props) [use_task] {
-        let data = props.read_cloned_or_default::<TaskProps>();
-        let checkbox_props = Props::new(FlexBoxItemLayout {
-            fill: 0.0,
-            grow: 0.0,
-            shrink: 0.0,
-            align: 0.5,
-            ..Default::default()
-        })
-        .with(SwitchPaperProps {
-            on: data.done,
-            variant: "checkbox".to_owned(),
-            size_level: 2,
-        })
-        .with(NavItemActive)
-        .with(ButtonNotifyProps(id.to_owned().into()))
-        .with(ThemedWidgetProps {
-            color: ThemeColor::Primary,
-            variant: ThemeVariant::ContentOnly,
-        });
-        let name_props = Props::new(TextPaperProps {
-            text: data.name,
-            height: TextBoxSizeValue::Exact(24.0),
-            variant: "title".to_owned(),
-            ..Default::default()
-        })
-        .with(FlexBoxItemLayout {
-            align: 0.5,
-            ..Default::default()
-        });
-        let delete_props = Props::new(FlexBoxItemLayout {
-            fill: 0.0,
-            grow: 0.0,
-            shrink: 0.0,
-            align: 0.5,
-            ..Default::default()
-        })
-        .with(IconPaperProps {
-            image: IconImage {
-                id: "icon-delete".to_owned(),
-                ..Default::default()
-            },
-            size_level: 2,
-            ..Default::default()
-        })
-        .with(NavItemActive)
-        .with(ButtonNotifyProps(id.to_owned().into()))
-        .with(ThemedWidgetProps {
-            color: ThemeColor::Primary,
-            variant: ThemeVariant::ContentOnly,
-        });
-        let list_props = Props::new(HorizontalBoxProps {
-            separation: 10.0,
-            ..Default::default()
-        })
-        .with(ContentBoxItemLayout {
-            margin: Rect {
-                left: 10.0,
-                right: 0.0,
-                top: 10.0,
-                bottom: 10.0,
-            },
-            ..Default::default()
-        });
-
-        widget! {
-            (#{key} horizontal_paper: {list_props} [
-                (#{"checkbox"} switch_button_paper: {checkbox_props})
-                (#{"name"} text_paper: {name_props})
-                (#{"delete"} icon_button_paper: {delete_props})
-            ])
         }
+    });
+}
+
+#[pre_hooks(use_task)]
+pub fn task(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext { id, key, props, .. } = context;
+
+    let data = props.read_cloned_or_default::<TaskProps>();
+    let checkbox_props = Props::new(FlexBoxItemLayout {
+        fill: 0.0,
+        grow: 0.0,
+        shrink: 0.0,
+        align: 0.5,
+        ..Default::default()
+    })
+    .with(SwitchPaperProps {
+        on: data.done,
+        variant: "checkbox".to_owned(),
+        size_level: 2,
+    })
+    .with(NavItemActive)
+    .with(ButtonNotifyProps(id.to_owned().into()))
+    .with(ThemedWidgetProps {
+        color: ThemeColor::Primary,
+        variant: ThemeVariant::ContentOnly,
+    });
+    let name_props = Props::new(TextPaperProps {
+        text: data.name,
+        height: TextBoxSizeValue::Exact(24.0),
+        variant: "title".to_owned(),
+        ..Default::default()
+    })
+    .with(FlexBoxItemLayout {
+        align: 0.5,
+        ..Default::default()
+    });
+    let delete_props = Props::new(FlexBoxItemLayout {
+        fill: 0.0,
+        grow: 0.0,
+        shrink: 0.0,
+        align: 0.5,
+        ..Default::default()
+    })
+    .with(IconPaperProps {
+        image: IconImage {
+            id: "icon-delete".to_owned(),
+            ..Default::default()
+        },
+        size_level: 2,
+        ..Default::default()
+    })
+    .with(NavItemActive)
+    .with(ButtonNotifyProps(id.to_owned().into()))
+    .with(ThemedWidgetProps {
+        color: ThemeColor::Primary,
+        variant: ThemeVariant::ContentOnly,
+    });
+    let list_props = Props::new(HorizontalBoxProps {
+        separation: 10.0,
+        ..Default::default()
+    })
+    .with(ContentBoxItemLayout {
+        margin: Rect {
+            left: 10.0,
+            right: 0.0,
+            top: 10.0,
+            bottom: 10.0,
+        },
+        ..Default::default()
+    });
+
+    widget! {
+        (#{key} horizontal_paper: {list_props} [
+            (#{"checkbox"} switch_button_paper: {checkbox_props})
+            (#{"name"} text_paper: {name_props})
+            (#{"delete"} icon_button_paper: {delete_props})
+        ])
     }
 }
 
-widget_component! {
-    pub tasks_list(key, props) {
-        let TasksProps { tasks } = props.read_cloned_or_default();
-        let tasks = tasks.into_iter().enumerate().map(|(i, item)| {
+pub fn tasks_list(context: WidgetContext) -> WidgetNode {
+    let WidgetContext { key, props, .. } = context;
+
+    let TasksProps { tasks } = props.read_cloned_or_default();
+    let tasks = tasks
+        .into_iter()
+        .enumerate()
+        .map(|(i, item)| {
             widget! { (#{i} task: {item}) }
-        }).collect::<Vec<_>>();
-        let props = props.clone().with(VerticalBoxProps {
-            separation: 10.0,
-            ..Default::default()
-        });
+        })
+        .collect::<Vec<_>>();
+    let props = props.clone().with(VerticalBoxProps {
+        separation: 10.0,
+        ..Default::default()
+    });
 
-        widget! {
-            (#{key} vertical_box: {props} |[ tasks ]|)
-        }
+    widget! {
+        (#{key} vertical_box: {props} |[ tasks ]|)
     }
 }

@@ -66,39 +66,50 @@ impl Default for TextFieldPaperProps {
     }
 }
 
-widget_component! {
-    text_field_paper_content(key, props) {
-        let TextFieldPaperProps {
-            hint,
-            width,
-            height,
-            variant,
-            use_main_color,
-            inactive_alpha,
-            alignment_override,
-            transform,
-            paper_theme,
-            padding,
-        } = props.read_cloned_or_default();
-        let TextInputProps { text, cursor_position, focused, .. } = props.read_cloned_or_default();
-        let text = text.trim();
-        let text = if text.is_empty() {
-            hint
-        } else if focused {
-            if cursor_position < text.len() {
-                format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
-            } else {
-                format!("{}|", text)
-            }
+fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
+    let WidgetContext { key, props, .. } = context;
+
+    let TextFieldPaperProps {
+        hint,
+        width,
+        height,
+        variant,
+        use_main_color,
+        inactive_alpha,
+        alignment_override,
+        transform,
+        paper_theme,
+        padding,
+    } = props.read_cloned_or_default();
+    let TextInputProps {
+        text,
+        cursor_position,
+        focused,
+        ..
+    } = props.read_cloned_or_default();
+    let text = text.trim();
+    let text = if text.is_empty() {
+        hint
+    } else if focused {
+        if cursor_position < text.len() {
+            format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
         } else {
-            text.to_owned()
-        };
-        let paper_variant = props.map_or_default::<PaperProps, _, _>(|p| p.variant.clone());
-        let paper_props = props.clone().with(PaperProps {
+            format!("{}|", text)
+        }
+    } else {
+        text.to_owned()
+    };
+    let paper_variant = props.map_or_default::<PaperProps, _, _>(|p| p.variant.clone());
+    let paper_props = props
+        .clone()
+        .with(PaperProps {
             variant: paper_variant,
             ..Default::default()
-        }).with(paper_theme);
-        let text_props = props.clone().with(TextPaperProps {
+        })
+        .with(paper_theme);
+    let text_props = props
+        .clone()
+        .with(TextPaperProps {
             text,
             width,
             height,
@@ -106,26 +117,26 @@ widget_component! {
             use_main_color,
             alignment_override,
             transform,
-        }).with(ContentBoxItemLayout {
+        })
+        .with(ContentBoxItemLayout {
             margin: padding,
             ..Default::default()
         });
-        let alpha = if focused { 1.0 } else { inactive_alpha };
+    let alpha = if focused { 1.0 } else { inactive_alpha };
 
-        widget! {
-            (#{key} paper: {paper_props} [
-                (#{"text"} text_paper: {text_props} | {WidgetAlpha(alpha)})
-            ])
-        }
+    widget! {
+        (#{key} paper: {paper_props} [
+            (#{"text"} text_paper: {text_props} | {WidgetAlpha(alpha)})
+        ])
     }
 }
 
-widget_component! {
-    pub text_field_paper(key, props) {
-        widget! {
-            (#{key} input_field: {props.clone()} {
-                content = (#{"content"} text_field_paper_content: {props.clone()})
-            })
-        }
+pub fn text_field_paper(context: WidgetContext) -> WidgetNode {
+    let WidgetContext { key, props, .. } = context;
+
+    widget! {
+        (#{key} input_field: {props.clone()} {
+            content = (#{"content"} text_field_paper_content: {props.clone()})
+        })
     }
 }

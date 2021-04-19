@@ -1,7 +1,11 @@
 use crate::{
     widget,
-    widget::unit::size::{SizeBoxNode, SizeBoxSizeValue},
-    widget_component, Scalar,
+    widget::{
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::size::{SizeBoxNode, SizeBoxSizeValue},
+    },
+    Scalar,
 };
 use serde::{Deserialize, Serialize};
 
@@ -31,18 +35,18 @@ impl SpaceBoxProps {
     }
 }
 
-widget_component! {
-    pub space_box(id, props) {
-        let SpaceBoxProps { width, height } = props.read_cloned_or_default();
+pub fn space_box(context: WidgetContext) -> WidgetNode {
+    let WidgetContext { id, props, .. } = context;
 
-        widget! {{{
-            SizeBoxNode {
-                id: id.to_owned(),
-                props: props.clone(),
-                width: SizeBoxSizeValue::Exact(width),
-                height: SizeBoxSizeValue::Exact(height),
-                ..Default::default()
-            }
-        }}}
-    }
+    let SpaceBoxProps { width, height } = props.read_cloned_or_default();
+
+    widget! {{{
+        SizeBoxNode {
+            id: id.to_owned(),
+            props: props.clone(),
+            width: SizeBoxSizeValue::Exact(width),
+            height: SizeBoxSizeValue::Exact(height),
+            ..Default::default()
+        }
+    }}}
 }

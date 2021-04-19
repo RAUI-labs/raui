@@ -1,14 +1,15 @@
 use crate::{
-    widget,
+    pre_hooks, widget,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
             NavContainerActive, NavItemActive, NavJumpActive,
         },
+        context::WidgetContext,
+        node::WidgetNode,
         unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
         utils::Transform,
     },
-    widget_component,
 };
 use serde::{Deserialize, Serialize};
 
@@ -23,47 +24,60 @@ pub struct GridBoxProps {
 }
 implement_props_data!(GridBoxProps);
 
-widget_component! {
-    pub nav_grid_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump_direction_active,
-        use_nav_item,
-    ] {
-        let props = props.clone()
-            .without::<NavContainerActive>()
-            .without::<NavJumpActive>()
-            .without::<NavItemActive>();
+#[pre_hooks(use_nav_container_active, use_nav_jump_direction_active, use_nav_item)]
+pub fn nav_grid_box(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        listed_slots,
+        ..
+    } = context;
 
-        widget!{
-            (#{key} grid_box: {props} |[listed_slots]|)
-        }
+    let props = props
+        .clone()
+        .without::<NavContainerActive>()
+        .without::<NavJumpActive>()
+        .without::<NavItemActive>();
+
+    widget! {
+        (#{key} grid_box: {props} |[listed_slots]|)
     }
 }
 
-widget_component! {
-    pub grid_box(id, props, listed_slots) {
-        let GridBoxProps { cols, rows, transform } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().filter_map(|slot| {
+pub fn grid_box(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id,
+        props,
+        listed_slots,
+        ..
+    } = context;
+
+    let GridBoxProps {
+        cols,
+        rows,
+        transform,
+    } = props.read_cloned_or_default();
+
+    let items = listed_slots
+        .into_iter()
+        .filter_map(|slot| {
             if let Some(props) = slot.props() {
                 let layout = props.read_cloned_or_default::<GridBoxItemLayout>();
-                Some(GridBoxItemNode {
-                    slot,
-                    layout,
-                })
+                Some(GridBoxItemNode { slot, layout })
             } else {
                 None
             }
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
-        widget! {{{
-            GridBoxNode {
-                id: id.to_owned(),
-                props: props.clone(),
-                items,
-                cols,
-                rows,
-                transform,
-            }
-        }}}
-    }
+    widget! {{{
+        GridBoxNode {
+            id: id.to_owned(),
+            props: props.clone(),
+            items,
+            cols,
+            rows,
+            transform,
+        }
+    }}}
 }

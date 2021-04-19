@@ -1,14 +1,16 @@
 use crate::{
-    widget,
+    pre_hooks, widget,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump, NavContainerActive,
             NavItemActive, NavJumpActive,
         },
+        context::WidgetContext,
+        node::WidgetNode,
         unit::flex::{FlexBoxDirection, FlexBoxItemLayout, FlexBoxItemNode, FlexBoxNode},
         utils::Transform,
     },
-    widget_component, Scalar,
+    Scalar,
 };
 use serde::{Deserialize, Serialize};
 
@@ -25,53 +27,62 @@ pub struct FlexBoxProps {
 }
 implement_props_data!(FlexBoxProps);
 
-widget_component! {
-    pub nav_flex_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump,
-        use_nav_item,
-    ] {
-        let props = props.clone()
-            .without::<NavContainerActive>()
-            .without::<NavJumpActive>()
-            .without::<NavItemActive>();
+#[pre_hooks(use_nav_container_active, use_nav_jump, use_nav_item)]
+pub fn nav_flex_box(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        listed_slots,
+        ..
+    } = context;
 
-        widget!{
-            (#{key} flex_box: {props} |[listed_slots]|)
-        }
+    let props = props
+        .clone()
+        .without::<NavContainerActive>()
+        .without::<NavJumpActive>()
+        .without::<NavItemActive>();
+
+    widget! {
+        (#{key} flex_box: {props} |[listed_slots]|)
     }
 }
 
-widget_component! {
-    pub flex_box(id, props, listed_slots) {
-        let FlexBoxProps {
+pub fn flex_box(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id,
+        props,
+        listed_slots,
+        ..
+    } = context;
+
+    let FlexBoxProps {
+        direction,
+        separation,
+        wrap,
+        transform,
+    } = props.read_cloned_or_default();
+
+    let items = listed_slots
+        .into_iter()
+        .filter_map(|slot| {
+            if let Some(props) = slot.props() {
+                let layout = props.read_cloned_or_default::<FlexBoxItemLayout>();
+                Some(FlexBoxItemNode { slot, layout })
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    widget! {{{
+        FlexBoxNode {
+            id: id.to_owned(),
+            props: props.clone(),
+            items,
             direction,
             separation,
             wrap,
             transform,
-        } = props.read_cloned_or_default();
-        let items = listed_slots.into_iter().filter_map(|slot| {
-            if let Some(props) = slot.props() {
-                let layout = props.read_cloned_or_default::<FlexBoxItemLayout>();
-                Some(FlexBoxItemNode {
-                    slot,
-                    layout,
-                })
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
-
-        widget! {{{
-            FlexBoxNode {
-                id: id.to_owned(),
-                props: props.clone(),
-                items,
-                direction,
-                separation,
-                wrap,
-                transform,
-            }
-        }}}
-    }
+        }
+    }}}
 }

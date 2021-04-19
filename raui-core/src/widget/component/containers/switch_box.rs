@@ -1,14 +1,15 @@
 use crate::{
-    widget,
+    pre_hooks, widget,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_step_pages_active,
             NavContainerActive, NavItemActive, NavJumpActive,
         },
+        context::WidgetContext,
+        node::WidgetNode,
         unit::content::{ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
-    widget_component,
 };
 use serde::{Deserialize, Serialize};
 
@@ -24,49 +25,60 @@ pub struct SwitchBoxProps {
 }
 implement_props_data!(SwitchBoxProps);
 
-widget_component! {
-    pub nav_switch_box(key, props, listed_slots) [
-        use_nav_container_active,
-        use_nav_jump_step_pages_active,
-        use_nav_item,
-    ] {
-        let props = props.clone()
-            .without::<NavContainerActive>()
-            .without::<NavJumpActive>()
-            .without::<NavItemActive>();
+#[pre_hooks(use_nav_container_active, use_nav_jump_step_pages_active, use_nav_item)]
+pub fn nav_switch_box(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key,
+        props,
+        listed_slots,
+        ..
+    } = context;
 
-        widget!{
-            (#{key} switch_box: {props} |[listed_slots]|)
-        }
+    let props = props
+        .clone()
+        .without::<NavContainerActive>()
+        .without::<NavJumpActive>()
+        .without::<NavItemActive>();
+
+    widget! {
+        (#{key} switch_box: {props} |[listed_slots]|)
     }
 }
 
-widget_component! {
-    pub switch_box(id, props, listed_slots) {
-        let SwitchBoxProps { active_index, clipping, transform } = props.read_cloned_or_default();
-        let items = if let Some(index) = active_index {
-            if let Some(slot) = listed_slots.into_iter().nth(index) {
-                vec![
-                    ContentBoxItemNode {
-                        slot,
-                        ..Default::default()
-                    }
-                ]
-            } else {
-                vec![]
-            }
+pub fn switch_box(context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id,
+        props,
+        listed_slots,
+        ..
+    } = context;
+
+    let SwitchBoxProps {
+        active_index,
+        clipping,
+        transform,
+    } = props.read_cloned_or_default();
+
+    let items = if let Some(index) = active_index {
+        if let Some(slot) = listed_slots.into_iter().nth(index) {
+            vec![ContentBoxItemNode {
+                slot,
+                ..Default::default()
+            }]
         } else {
             vec![]
-        };
+        }
+    } else {
+        vec![]
+    };
 
-        widget! {{{
-            ContentBoxNode {
-                id: id.to_owned(),
-                props: props.clone(),
-                items,
-                clipping,
-                transform,
-            }
-        }}}
-    }
+    widget! {{{
+        ContentBoxNode {
+            id: id.to_owned(),
+            props: props.clone(),
+            items,
+            clipping,
+            transform,
+        }
+    }}}
 }
