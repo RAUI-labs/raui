@@ -53,16 +53,19 @@ pub mod prelude {
         animator::*,
         application::*,
         data_binding::*,
+        destruct, implement_message_data, implement_props_data,
         interactive::default_interactions_engine::*,
         interactive::*,
         layout::default_layout_engine::*,
         layout::*,
+        make_widget,
         messenger::*,
         post_hooks, pre_hooks,
         props::*,
         renderer::*,
         signals::*,
         state::*,
+        unpack_named_slots, widget,
         widget::*,
         widget::{
             component::*,
@@ -83,6 +86,6 @@ pub mod prelude {
             unit::{area::*, content::*, flex::*, grid::*, image::*, size::*, text::*},
             utils::*,
         },
-        Integer, Prefab, PrefabError, Scalar,
+        widget_wrap, Integer, Prefab, PrefabError, Scalar,
     };
 }
