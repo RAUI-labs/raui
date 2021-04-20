@@ -42,7 +42,8 @@ let mapping = CoordsMapping::new(Rect {
     top: 0.0,
     bottom: 576.0,
 });
-application.layout(&mapping, &mut DefaultLayoutEngine);
+application.layout(&mapping, &mut DefaultLayoutEngine).unwrap();
+application.process();
 if let Ok(output) = application.render(&mapping, &mut renderer) {
     println!("OUTPUT: {}", output);
 }
