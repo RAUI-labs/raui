@@ -111,12 +111,14 @@ fn test_hello_world() {
     use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
 
+    // [md-bakery: begin @ component-function]
     #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct AppProps {
         #[serde(default)]
         pub index: usize,
     }
     implement_props_data!(AppProps);
+    // [md-bakery: end]
 
     let v = AppProps { index: 42 };
     let s = v.to_prefab().unwrap();
@@ -124,6 +126,7 @@ fn test_hello_world() {
     let d = AppProps::from_prefab(s).unwrap();
     println!("* DESERIALIZED APP PROPS: {:?}", d);
 
+    // [md-bakery: begin @ component-function]
     // <component name> ( [list of context data to unpack into scope] )
     fn app(context: WidgetContext) -> WidgetNode {
         let WidgetContext {
@@ -135,10 +138,9 @@ fn test_hello_world() {
 
         // we always return new widgets tree.
         widget! {
-            // Forgive me the syntax, i'll make a JSX-like one soon using procedural macros.
             // `#{key}` - provided value gives a unique name to node. keys allows widgets
             //      to save state between render calls. here we just pass key of this widget.
-            // `vertical_box` - name of widget component to use.
+            // `vertical_box` - name of widget component to use, this one is built into RAUI.
             // `[...]` - listed widget slots. here we just put previously unpacked named slots.
             (#{index} vertical_box [
                 {title}
@@ -146,14 +148,18 @@ fn test_hello_world() {
             ])
         }
     }
+    // [md-bakery: end]
 
+    // [md-bakery: begin @ state]
     #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct ButtonState {
         #[serde(default)]
         pub pressed: bool,
     }
     implement_props_data!(ButtonState);
+    // [md-bakery: end]
 
+    // [md-bakery: begin @ hooks]
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     enum ButtonAction {
         Pressed,
@@ -220,6 +226,7 @@ fn test_hello_world() {
             (#{key} text: {props.clone()})
         }
     }
+    // [md-bakery: end]
 
     fn title_bar(context: WidgetContext) -> WidgetNode {
         let WidgetContext { key, props, .. } = context;
@@ -270,6 +277,9 @@ fn test_hello_world() {
         }}}
     }
 
+    // [md-bakery: begin @ application]
+    // Coords mapping tell RAUI renderers how to convert coordinates
+    // between virtual-space and ui-space.
     let mapping = CoordsMapping::new(Rect {
         left: 0.0,
         right: 1024.0,
@@ -277,9 +287,14 @@ fn test_hello_world() {
         bottom: 576.0,
     });
 
+    // Application is UI host.
     let mut application = Application::new();
+    // we use setup functions to register component and props mappings for serialization.
     application.setup(setup);
+    // we can also register them at any time one by one.
     application.register_component("app", app);
+
+    // Widget tree is simply a set of nested widget nodes, usually made with special macros.
     let tree = widget! {
         (app {
             // <named slot name> = ( <widget to put in a slot> )
@@ -290,21 +305,19 @@ fn test_hello_world() {
             ])
         })
     };
-    println!("* INPUT:\n{:#?}", tree);
 
     // some dummy widget tree renderer.
     // it reads widget unit tree and transforms it into target format.
     let mut renderer = HtmlRenderer::default();
 
-    println!("* PROCESS");
     // `apply()` sets new widget tree.
     application.apply(tree);
+
     // `render()` calls renderer to perform transformations on processed application widget tree.
     if let Ok(output) = application.render(&mapping, &mut renderer) {
         println!("* OUTPUT:\n{}", output);
     }
 
-    println!("* PROCESS");
     // by default application won't process widget tree if nothing was changed.
     // "change" is either any widget state change, or new message sent to any widget (messages
     // can be sent from application host, for example a mouse click, or from another widget).
@@ -312,6 +325,29 @@ fn test_hello_world() {
     if let Ok(output) = application.render(&mapping, &mut renderer) {
         println!("* OUTPUT:\n{}", output);
     }
+    // [md-bakery: end]
+
+    // [md-bakery: begin @ widget-node]
+    widget! {
+        (app {
+            // <named slot name> = ( <widget to put in a slot> )
+            title = (title_bar: {"Hello".to_owned()})
+            content = (vertical_box [
+                (#{"hi"} button: {"Say hi!".to_owned()})
+                (#{"exit"} button: {"Close".to_owned()})
+            ])
+        })
+    };
+    // [md-bakery: end]
+
+    // [md-bakery: begin @ widget-unit]
+    widget! {{{
+      TextBoxNode {
+          text: "Hello World".to_owned(),
+          ..Default::default()
+      }
+    }}};
+    // [md-bakery: end]
 
     let tree = widget! {
         (app)
@@ -428,6 +464,7 @@ fn test_layout_no_wrap() {
         }
     }}};
 
+    // [md-bakery: begin @ layouting]
     let mut application = Application::new();
     application.apply(tree);
     application.forced_process();
@@ -438,6 +475,7 @@ fn test_layout_no_wrap() {
     if application.layout(&mapping, &mut layout_engine).is_ok() {
         println!("* LAYOUT:\n{:#?}", application.layout_data());
     }
+    // [md-bakery: end]
 }
 
 #[test]
@@ -665,6 +703,46 @@ fn test_refs() {
         .signals()
         .iter()
         .any(|(_, msg)| msg.as_any().downcast_ref::<()>().is_some()));
+}
+
+#[test]
+fn test_interactivity() {
+    // [md-bakery: begin @ interactivity]
+    let mut application = Application::new();
+    // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
+    let mut interactions = DefaultInteractionsEngine::new();
+    // we interact with UI by sending interaction messages to the engine.
+    interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
+    interactions.interact(Interaction::PointerDown(
+        PointerButton::Trigger,
+        Vec2 { x: 200.0, y: 100.0 },
+    ));
+    // navigation/interactions works only if we have navigable items (such as `button`) registered
+    // in some navigable container (usually containers with `nav_` prefix).
+    let tree = widget! {
+        (#{"app"} nav_content_box [
+            // by default navigable items are inactive which means we have to tell RAUI we activate
+            // them to interact with them.
+            (#{"button"} button: {NavItemActive} {
+                content = (#{"icon"} image_box)
+            })
+        ])
+    };
+    application.apply(tree);
+    application.process();
+    let mapping = CoordsMapping::new(Rect {
+        left: 0.0,
+        right: 1024.0,
+        top: 0.0,
+        bottom: 576.0,
+    });
+    application
+        .layout(&mapping, &mut DefaultLayoutEngine)
+        .unwrap();
+    // Since interactions engines require constructed layout to process interactions we have to
+    // process interactions after we layout the UI.
+    application.interact(&mut interactions).unwrap();
+    // [md-bakery: end]
 }
 
 #[test]

@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate raui_core;
-
 mod app;
 mod ui;
 

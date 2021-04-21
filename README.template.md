@@ -24,70 +24,15 @@ The main idea behind RAUI architecture is to treat UI as another data that you t
 
 ### Application
 It is the central point of user interrest. It performs whole UI processing logic. There you apply widget tree that wil be processed, send messages from host application to widgets and receive signals sent from widgets to host application.
-```rust
-    // Coords mapping tell RAUI renderers how to convert coordinates
-    // between virtual-space and ui-space.
-    let mapping = CoordsMapping::new(Rect {
-        left: 0.0,
-        right: 1024.0,
-        top: 0.0,
-        bottom: 576.0,
-    });
-
-    // Application is UI host.
-    let mut application = Application::new();
-    // we use setup functions to register component and props mappings for serialization.
-    application.setup(setup);
-    // we can also register them at any time one by one.
-    application.register_component("app", app);
-
-    // Widget tree is simply a set of nested widget nodes, usually made with special macros.
-    let tree = widget! {
-        (app {
-            // <named slot name> = ( <widget to put in a slot> )
-            title = (title_bar: {"Hello".to_owned()})
-            content = (vertical_box [
-                (#{"hi"} button: {"Say hi!".to_owned()})
-                (#{"exit"} button: {"Close".to_owned()})
-            ])
-        })
-    };
-
-    // some dummy widget tree renderer.
-    // it reads widget unit tree and transforms it into target format.
-    let mut renderer = HtmlRenderer::default();
-
-    // `apply()` sets new widget tree.
-    application.apply(tree);
-
-    // `render()` calls renderer to perform transformations on processed application widget tree.
-    if let Ok(output) = application.render(&mapping, &mut renderer) {
-        println!("* OUTPUT:\n{}", output);
-    }
-
-    // by default application won't process widget tree if nothing was changed.
-    // "change" is either any widget state change, or new message sent to any widget (messages
-    // can be sent from application host, for example a mouse click, or from another widget).
-    application.forced_process();
-    if let Ok(output) = application.render(&mapping, &mut renderer) {
-        println!("* OUTPUT:\n{}", output);
-    }
+```rust: source @ application
+./src/tests.rs
 ```
 
 ### Widget
 Widgets are divided into three categories:
 - **Widget Node** - used as source UI trees (variant that can be either a component, unit or none)
-  ```rust
-      widget! {
-          (app {
-              // <named slot name> = ( <widget to put in a slot> )
-              title = (title_bar: {"Hello".to_owned()})
-              content = (vertical_box [
-                  (#{"hi"} button: {"Say hi!".to_owned()})
-                  (#{"exit"} button: {"Close".to_owned()})
-              ])
-          })
-      };
+  ```rust: source @ widget-node
+  ./src/tests.rs
   ```
 - **Widget Component** - you can think of them as Virtual DOM nodes, they store:
   - pointer to _component function_ (that process their data)
@@ -96,131 +41,30 @@ Widgets are divided into three categories:
   - _listed slots_ (simply: widget children)
   - _named slots_ (similar to listed slots: widget children, but these ones have names assigned to them, so you can access them by name instead of by index)
 - **Widget Unit** - an atomic element that renderers use to convert into target renderable data format for rendering engine of choice.
-  ```rust
-      widget! {{{
-        TextBoxNode {
-            text: "Hello World".to_owned(),
-            ..Default::default()
-        }
-      }}};
+  ```rust: source @ widget-unit
+  ./src/tests.rs
   ```
 
 ### Component Function
 Component functions are static functions that transforms input data (properties, state or neither of them) into output widget tree (usually used to simply wrap another components tree under one simple component, where at some point the simplest components returns final _widget units_).
 They work together as a chain of transforms - root component applies some properties into children components using data from its own properties or state.
-```rust
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-    struct AppProps {
-        #[serde(default)]
-        pub index: usize,
-    }
-    implement_props_data!(AppProps);
-    // <component name> ( [list of context data to unpack into scope] )
-    fn app(context: WidgetContext) -> WidgetNode {
-        let WidgetContext {
-            props, named_slots, ..
-        } = context;
-        // easy way to get widgets from named slots.
-        unpack_named_slots!(named_slots => { title, content });
-        let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
-
-        // we always return new widgets tree.
-        widget! {
-            // `#{key}` - provided value gives a unique name to node. keys allows widgets
-            //      to save state between render calls. here we just pass key of this widget.
-            // `vertical_box` - name of widget component to use, this one is built into RAUI.
-            // `[...]` - listed widget slots. here we just put previously unpacked named slots.
-            (#{index} vertical_box [
-                {title}
-                {content}
-            ])
-        }
-    }
+```rust: source @ component-function
+./src/tests.rs
 ```
 This may bring up a question: _**"If i use only functions and no objects to tell how to visualize UI, how do i keep some data between each render run?"**_.
 For that you use _states_. State is a data that is stored between each processing calls as long as given widget is alive (that means: as long as widget id stays the same between two processing calls, to make sure your widget stays the same, you use keys - if no key is assigned, system will generate one for your widget but that will make it possible to die at any time if for example number of widget children changes in your common parent, your widget will change its id when key wasn't assigned).
 Some additional notes: While you use _properties_ to send information down the tree and _states_ to store widget data between processing cals, you can communicate with another widgets and host application using messages and signals!
 More than that, you can use hooks to listen for widget life cycle and perform actions there.
 It's worth noting that state uses _properties_ to hold its data, so by that you can for example attach multiple hooks that each of them uses different data type as widget state, this opens the doors to be very creative when combining different hooks that operate on the same widget.
-```rust
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-    struct ButtonState {
-        #[serde(default)]
-        pub pressed: bool,
-    }
-    implement_props_data!(ButtonState);
+```rust: source @ state
+./src/tests.rs
 ```
 
 ### Hooks
 Hooks are used to put common widget logic into separate functions that can be chained in widgets and another hooks (you can build a reusable dependency chain of logic with that).
 Usually it is used to listen for life cycle events such as mount, change and unmount, additionally you can chain hooks to be processed sequentially in order they are chained in widgets and other hooks.
-```rust
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-    enum ButtonAction {
-        Pressed,
-        Released,
-    }
-    implement_message_data!(ButtonAction);
-
-    fn use_empty(context: &mut WidgetContext) {
-        context.life_cycle.mount(|_| {
-            println!("* EMPTY MOUNTED");
-        });
-
-        context.life_cycle.change(|_| {
-            println!("* EMPTY CHANGED");
-        });
-
-        context.life_cycle.unmount(|_| {
-            println!("* EMPTY UNMOUNTED");
-        });
-    }
-
-    // you use life cycle hooks for storing closures that will be called when widget will be
-    // mounted/changed/unmounted. they exists for you to be able to reuse some common logic across
-    // multiple components. each closure provides arguments such as:
-    // - widget id
-    // - widget state
-    // - message sender (this one is used to message other widgets you know about)
-    // - signal sender (this one is used to message application host)
-    // although this hook uses only life cycle, you can make different hooks that use many
-    // arguments, even use context you got from the component!
-    #[pre_hooks(use_empty)]
-    fn use_button(context: &mut WidgetContext) {
-        context.life_cycle.mount(|context| {
-            println!("* BUTTON MOUNTED: {}", context.id.key());
-            drop(context.state.write(ButtonState { pressed: false }));
-        });
-
-        context.life_cycle.change(|context| {
-            println!("* BUTTON CHANGED: {}", context.id.key());
-            for msg in context.messenger.messages {
-                if let Some(msg) = msg.as_any().downcast_ref::<ButtonAction>() {
-                    let pressed = match msg {
-                        ButtonAction::Pressed => true,
-                        ButtonAction::Released => false,
-                    };
-                    println!("* BUTTON ACTION: {:?}", msg);
-                    drop(context.state.write(ButtonState { pressed }));
-                    drop(context.signals.write(*msg));
-                }
-            }
-        });
-
-        context.life_cycle.unmount(|context| {
-            println!("* BUTTON UNMOUNTED: {}", context.id.key());
-        });
-    }
-
-    #[pre_hooks(use_button)]
-    fn button(mut context: WidgetContext) -> WidgetNode {
-        let WidgetContext { key, props, .. } = context;
-        println!("* PROCESS BUTTON: {}", key);
-
-        widget! {
-            (#{key} text: {props.clone()})
-        }
-    }
+```rust: source @ hooks
+./src/tests.rs
 ```
 What happens under the hood:
 - Application calls `button` on a node
@@ -236,17 +80,8 @@ RAUI exposes API (`Application::layout()`) to allow use of virtual-to-real coord
 Every call to perform layouting will store a layout data inside Application, you can always access that data at any time.
 There is a `DefaultLayoutEngine` that does this in a generic way.
 If you find some part of its pipeline working different than what you've expected, feel free to create your custom layout engine!
-```rust
-    let mut application = Application::new();
-    application.apply(tree);
-    application.forced_process();
-    println!(
-        "* TREE INSPECTION:\n{:#?}",
-        application.rendered_tree().inspect()
-    );
-    if application.layout(&mapping, &mut layout_engine).is_ok() {
-        println!("* LAYOUT:\n{:#?}", application.layout_data());
-    }
+```rust: source @ layouting
+./src/tests.rs
 ```
 
 ### Interactivity
@@ -258,41 +93,8 @@ RAUI integrations that want to just use use default interactions engine should m
 There is an example of that feature covered in Tetra integration crate (`TetraInteractionsEngine` struct).
 
 **NOTE: Interactions engines should use layout for pointer events so make sure that you rebuild layout before you perform interactions!**
-```rust
-    let mut application = Application::new();
-    // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
-    let mut interactions = DefaultInteractionsEngine::new();
-    // we interact with UI by sending interaction messages to the engine.
-    interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
-    interactions.interact(Interaction::PointerDown(
-        PointerButton::Trigger,
-        Vec2 { x: 200.0, y: 100.0 },
-    ));
-    // navigation/interactions works only if we have navigable items (such as `button`) registered
-    // in some navigable container (usually containers with `nav_` prefix).
-    let tree = widget! {
-        (#{"app"} nav_content_box [
-            // by default navigable items are inactive which means we have to tell RAUI we activate
-            // them to interact with them.
-            (#{"button"} button: {NavItemActive} {
-                content = (#{"icon"} image_box)
-            })
-        ])
-    };
-    application.apply(tree);
-    application.process();
-    let mapping = CoordsMapping::new(Rect {
-        left: 0.0,
-        right: 1024.0,
-        top: 0.0,
-        bottom: 576.0,
-    });
-    application
-        .layout(&mapping, &mut DefaultLayoutEngine)
-        .unwrap();
-    // Since interactions engines require constructed layout to process interactions we have to
-    // process interactions after we layout the UI.
-    application.interact(&mut interactions).unwrap();
+```rust: source @ interactivity
+./src/tests.rs
 ```
 
 ## Media

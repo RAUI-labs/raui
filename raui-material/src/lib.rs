@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate raui_core;
-
 pub mod component;
 pub mod theme;
 

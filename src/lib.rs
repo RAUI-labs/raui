@@ -1,7 +1,3 @@
-#[allow(unused_imports)]
-#[macro_use]
-extern crate raui_core;
-
 #[cfg(test)]
 mod tests;
 
