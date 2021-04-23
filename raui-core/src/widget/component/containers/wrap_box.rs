@@ -1,15 +1,17 @@
 use crate::{
     unpack_named_slots, widget,
     widget::{context::WidgetContext, node::WidgetNode, unit::size::SizeBoxNode, utils::Rect},
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct WrapBoxProps {
     #[serde(default)]
     pub margin: Rect,
 }
-implement_props_data!(WrapBoxProps);
 
 pub fn wrap_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

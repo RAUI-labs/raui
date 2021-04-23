@@ -10,11 +10,13 @@ use crate::{
         unit::flex::{FlexBoxDirection, FlexBoxItemLayout, FlexBoxItemNode, FlexBoxNode},
         utils::Transform,
     },
-    Scalar,
+    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct FlexBoxProps {
     #[serde(default)]
     pub direction: FlexBoxDirection,
@@ -25,7 +27,6 @@ pub struct FlexBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(FlexBoxProps);
 
 #[pre_hooks(use_nav_container_active, use_nav_jump, use_nav_item)]
 pub fn nav_flex_box(mut context: WidgetContext) -> WidgetNode {

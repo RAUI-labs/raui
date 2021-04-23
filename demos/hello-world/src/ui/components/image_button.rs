@@ -1,14 +1,13 @@
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageButtonProps {
     #[serde(default)]
     pub image: String,
     #[serde(default)]
     pub horizontal_alignment: Scalar,
 }
-implement_props_data!(ImageButtonProps);
 
 #[pre_hooks(use_button_notified_state)]
 pub fn image_button(mut context: WidgetContext) -> WidgetNode {

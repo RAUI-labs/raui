@@ -23,19 +23,22 @@ use crate::{
         utils::{Rect, Vec2},
         WidgetId,
     },
-    Scalar,
+    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ScrollBoxOwner(
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetId::is_none")]
     pub WidgetId,
 );
-implement_props_data!(ScrollBoxOwner);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct SideScrollbarsProps {
     #[serde(default)]
     pub size: Scalar,
@@ -45,7 +48,6 @@ pub struct SideScrollbarsProps {
     #[serde(default)]
     pub front_material: ImageBoxMaterial,
 }
-implement_props_data!(SideScrollbarsProps);
 
 impl Default for SideScrollbarsProps {
     fn default() -> Self {
@@ -57,12 +59,13 @@ impl Default for SideScrollbarsProps {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct SideScrollbarsState {
     pub horizontal: Scalar,
     pub vertical: Scalar,
 }
-implement_props_data!(SideScrollbarsState);
 
 pub fn use_nav_scroll_box_content(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

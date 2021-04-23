@@ -9,6 +9,7 @@ use crate::{
         utils::Vec2,
         WidgetId, WidgetIdOrRef,
     },
+    MessageData, PropsData,
 };
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +21,9 @@ fn is_zero(v: &Vec2) -> bool {
     v.x.abs() < 1.0e-6 && v.y.abs() < 1.0e-6
 }
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ButtonProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
@@ -35,23 +38,23 @@ pub struct ButtonProps {
     #[serde(skip_serializing_if = "is_zero")]
     pub pointer: Vec2,
 }
-implement_props_data!(ButtonProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ButtonNotifyProps(
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
     pub WidgetIdOrRef,
 );
-implement_props_data!(ButtonNotifyProps);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub struct ButtonNotifyMessage {
     pub sender: WidgetId,
     pub state: ButtonProps,
     pub prev: ButtonProps,
 }
-implement_message_data!(ButtonNotifyMessage);
 
 impl ButtonNotifyMessage {
     pub fn select_start(&self) -> bool {

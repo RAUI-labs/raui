@@ -12,7 +12,7 @@ use crate::{
         node::{WidgetNode, WidgetNodePrefab},
         FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
-    PrefabValue, Scalar,
+    MessageData, PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{any::TypeId, collections::HashMap, convert::TryFrom};
@@ -21,7 +21,9 @@ fn is_false(v: &bool) -> bool {
     !*v
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct MessageForwardProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
@@ -33,14 +35,13 @@ pub struct MessageForwardProps {
     #[serde(skip_serializing_if = "is_false")]
     pub no_wrap: bool,
 }
-implement_props_data!(MessageForwardProps);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub struct ForwardedMessage {
     pub sender: WidgetId,
     pub data: Message,
 }
-implement_message_data!(ForwardedMessage);
 
 pub fn use_message_forward(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
@@ -78,13 +79,13 @@ pub fn use_message_forward(context: &mut WidgetContext) {
     });
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(MessageData, Debug, Copy, Clone, PartialEq, Eq)]
+#[message_data(crate::messenger::MessageData)]
 pub enum ResizeListenerSignal {
     Register,
     Unregister,
     Change,
 }
-implement_message_data!(ResizeListenerSignal);
 
 pub fn use_resize_listener(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
@@ -96,9 +97,10 @@ pub fn use_resize_listener(context: &mut WidgetContext) {
     });
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Copy, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct WidgetAlpha(pub Scalar);
-implement_props_data!(WidgetAlpha);
 
 impl Default for WidgetAlpha {
     fn default() -> Self {

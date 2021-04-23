@@ -9,14 +9,11 @@ use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeMode {
     Light,
     Dark,
 }
-
-pub type ThemeModeProps = ThemeMode;
-implement_props_data!(ThemeModeProps);
 
 impl Default for ThemeMode {
     fn default() -> Self {
@@ -24,7 +21,7 @@ impl Default for ThemeMode {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppState {
     #[serde(default)]
     pub theme: ThemeMode,
@@ -32,16 +29,14 @@ pub struct AppState {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tasks: Vec<TaskProps>,
 }
-implement_props_data!(AppState);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps {
     #[serde(default)]
     pub id: WidgetId,
 }
-implement_props_data!(AppSharedProps);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
 pub enum AppMessage {
     ToggleTheme,
     AddTask(String),
@@ -50,7 +45,6 @@ pub enum AppMessage {
     Save,
     Load(AppState),
 }
-implement_message_data!(AppMessage);
 
 fn new_theme(theme: ThemeMode) -> ThemeProps {
     let mut theme = match theme {

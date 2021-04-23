@@ -13,11 +13,13 @@ use crate::{
         unit::flex::FlexBoxDirection,
         utils::Transform,
     },
-    Scalar,
+    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct VerticalBoxProps {
     #[serde(default)]
     pub separation: Scalar,
@@ -26,7 +28,6 @@ pub struct VerticalBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(VerticalBoxProps);
 
 #[pre_hooks(
     use_nav_container_active,

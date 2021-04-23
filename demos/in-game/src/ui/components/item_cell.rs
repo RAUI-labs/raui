@@ -7,32 +7,28 @@ use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemCellProps {
     #[serde(default)]
     pub image: String,
     #[serde(default)]
     pub thin: bool,
 }
-implement_props_data!(ItemCellProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemData {
     pub index: usize,
 }
-implement_props_data!(ItemData);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ItemCellsProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<ItemCellProps>,
 }
-implement_props_data!(ItemCellsProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct OwningInventoryProps(pub WidgetId);
-implement_props_data!(OwningInventoryProps);
 
 fn use_item_cell(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

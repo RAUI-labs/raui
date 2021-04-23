@@ -7,6 +7,7 @@ use crate::{
         utils::Vec2,
         WidgetId, WidgetIdOrRef,
     },
+    MessageData, PropsData,
 };
 use serde::{Deserialize, Serialize};
 
@@ -14,16 +15,19 @@ fn is_zero(v: &Vec2) -> bool {
     v.x.abs() < 1.0e-6 && v.y.abs() < 1.0e-6
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ScrollViewState {
     #[serde(default)]
     pub value: Vec2,
     #[serde(default)]
     pub size_factor: Vec2,
 }
-implement_props_data!(ScrollViewState);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ScrollViewRange {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_zero")]
@@ -32,7 +36,6 @@ pub struct ScrollViewRange {
     #[serde(skip_serializing_if = "is_zero")]
     pub to: Vec2,
 }
-implement_props_data!(ScrollViewRange);
 
 impl Default for ScrollViewRange {
     fn default() -> Self {
@@ -43,20 +46,21 @@ impl Default for ScrollViewRange {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ScrollViewNotifyProps(
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
     pub WidgetIdOrRef,
 );
-implement_props_data!(ScrollViewNotifyProps);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub struct ScrollViewNotifyMessage {
     pub sender: WidgetId,
     pub state: ScrollViewState,
 }
-implement_message_data!(ScrollViewNotifyMessage);
 
 pub fn use_scroll_view_notified_state(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

@@ -1,4 +1,4 @@
-use crate::{messenger::MessageSender, widget::WidgetId, Scalar};
+use crate::{messenger::MessageSender, widget::WidgetId, MessageData, Scalar};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::mpsc::Sender};
 
@@ -326,9 +326,9 @@ pub struct AnimatedValue {
     pub duration: Scalar,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(MessageData, Debug, Default, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub struct AnimationMessage(pub String);
-implement_message_data!(AnimationMessage);
 
 #[cfg(test)]
 mod tests {

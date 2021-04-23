@@ -2,7 +2,9 @@ use crate::theme::{ThemeColor, ThemeProps, ThemedTextMaterial, ThemedWidgetProps
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct TextPaperProps {
     #[serde(default)]
     pub text: String,
@@ -20,7 +22,6 @@ pub struct TextPaperProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(TextPaperProps);
 
 pub fn text_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

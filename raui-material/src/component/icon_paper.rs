@@ -13,7 +13,9 @@ pub struct IconImage {
     pub scaling: ImageBoxImageScaling,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct IconPaperProps {
     #[serde(default)]
     pub image: IconImage,
@@ -22,7 +24,6 @@ pub struct IconPaperProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(IconPaperProps);
 
 pub fn icon_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

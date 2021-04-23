@@ -6,12 +6,14 @@ use crate::{
         utils::{Rect, Transform, Vec2},
         WidgetId,
     },
-    PrefabValue, Scalar,
+    PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ContentBoxItemLayout {
     #[serde(default = "ContentBoxItemLayout::default_anchors")]
     pub anchors: Rect,
@@ -24,7 +26,6 @@ pub struct ContentBoxItemLayout {
     #[serde(default)]
     pub depth: Scalar,
 }
-implement_props_data!(ContentBoxItemLayout);
 
 impl ContentBoxItemLayout {
     fn default_anchors() -> Rect {

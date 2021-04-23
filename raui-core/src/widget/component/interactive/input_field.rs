@@ -11,6 +11,7 @@ use crate::{
         unit::area::AreaBoxNode,
         WidgetId, WidgetIdOrRef,
     },
+    MessageData, PropsData,
 };
 use serde::{Deserialize, Serialize};
 
@@ -22,7 +23,9 @@ fn is_zero(v: &usize) -> bool {
     *v == 0
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct TextInputProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
@@ -37,22 +40,22 @@ pub struct TextInputProps {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub text: String,
 }
-implement_props_data!(TextInputProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct TextInputNotifyProps(
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
     pub WidgetIdOrRef,
 );
-implement_props_data!(TextInputNotifyProps);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub struct TextInputNotifyMessage {
     pub sender: WidgetId,
     pub state: TextInputProps,
 }
-implement_message_data!(TextInputNotifyMessage);
 
 pub fn use_text_input_notified_state(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

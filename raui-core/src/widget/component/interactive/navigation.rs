@@ -1,29 +1,34 @@
 use crate::{
     post_hooks,
     widget::{context::WidgetContext, utils::Vec2, WidgetIdOrRef},
-    Scalar,
+    MessageData, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavItemActive;
-implement_props_data!(NavItemActive);
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavButtonTrackingActive;
-implement_props_data!(NavButtonTrackingActive);
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavContainerActive;
-implement_props_data!(NavContainerActive);
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavJumpActive(#[serde(default)] pub NavJumpMode);
-implement_props_data!(NavJumpActive);
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavJumpLooped;
-implement_props_data!(NavJumpLooped);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum NavType {
@@ -36,7 +41,8 @@ pub enum NavType {
     ScrollViewContent,
 }
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
 pub enum NavSignal {
     None,
     Register(NavType),
@@ -58,7 +64,6 @@ pub enum NavSignal {
     Axis(String, Scalar),
     Custom(WidgetIdOrRef, String),
 }
-implement_message_data!(NavSignal);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NavJumpMode {
@@ -74,7 +79,9 @@ impl Default for NavJumpMode {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavJumpMapProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
@@ -95,7 +102,6 @@ pub struct NavJumpMapProps {
     #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
     pub next: WidgetIdOrRef,
 }
-implement_props_data!(NavJumpMapProps);
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NavDirection {

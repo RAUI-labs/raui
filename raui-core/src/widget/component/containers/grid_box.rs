@@ -10,10 +10,13 @@ use crate::{
         unit::grid::{GridBoxItemLayout, GridBoxItemNode, GridBoxNode},
         utils::Transform,
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct GridBoxProps {
     #[serde(default)]
     pub cols: usize,
@@ -22,7 +25,6 @@ pub struct GridBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(GridBoxProps);
 
 #[pre_hooks(use_nav_container_active, use_nav_jump_direction_active, use_nav_item)]
 pub fn nav_grid_box(mut context: WidgetContext) -> WidgetNode {

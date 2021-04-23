@@ -6,12 +6,14 @@ use crate::{
         utils::{Rect, Transform},
         WidgetId,
     },
-    PrefabValue, Scalar,
+    PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct FlexBoxItemLayout {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +29,6 @@ pub struct FlexBoxItemLayout {
     #[serde(default)]
     pub align: Scalar,
 }
-implement_props_data!(FlexBoxItemLayout);
 
 impl FlexBoxItemLayout {
     fn default_fill() -> Scalar {

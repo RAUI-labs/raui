@@ -112,12 +112,11 @@ fn test_hello_world() {
     use std::convert::TryInto;
 
     // [md-bakery: begin @ component-function]
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct AppProps {
         #[serde(default)]
         pub index: usize,
     }
-    implement_props_data!(AppProps);
     // [md-bakery: end]
 
     let v = AppProps { index: 42 };
@@ -151,21 +150,19 @@ fn test_hello_world() {
     // [md-bakery: end]
 
     // [md-bakery: begin @ state]
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct ButtonState {
         #[serde(default)]
         pub pressed: bool,
     }
-    implement_props_data!(ButtonState);
     // [md-bakery: end]
 
     // [md-bakery: begin @ hooks]
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(MessageData, Debug, Copy, Clone, PartialEq, Eq)]
     enum ButtonAction {
         Pressed,
         Released,
     }
-    implement_message_data!(ButtonAction);
 
     fn use_empty(context: &mut WidgetContext) {
         context.life_cycle.mount(|_| {
@@ -623,11 +620,10 @@ fn test_components() {
 fn test_refs() {
     use serde::{Deserialize, Serialize};
 
-    #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+    #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
     struct AppState {
         test_ref: WidgetRef,
     }
-    implement_props_data!(AppState);
 
     fn use_test(context: &mut WidgetContext) {
         context.life_cycle.change(|context| {

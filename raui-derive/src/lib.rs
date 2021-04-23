@@ -1,12 +1,12 @@
 extern crate proc_macro;
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input,
+    parse_macro_input, parse_str,
     punctuated::Punctuated,
-    FnArg, Ident, ItemFn, Pat, PatIdent, Result, Token, Type, TypePath, TypeReference,
+    DeriveInput, FnArg, Ident, ItemFn, Pat, PatIdent, Path, Result, Token, Type, TypePath,
+    TypeReference,
 };
 
 #[derive(Debug, Clone)]
@@ -105,6 +105,77 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
             };
             #(#hooks)*
             result
+        }
+    };
+    tokens.into()
+}
+
+#[proc_macro_derive(PropsData, attributes(remote, props_data, prefab))]
+pub fn derive_props(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, attrs, .. } = parse_macro_input!(input as DeriveInput);
+
+    let mut path = Path::from(ident);
+    let mut props_data = parse_str::<Path>("PropsData").unwrap();
+    let mut prefab = parse_str::<Path>("Prefab").unwrap();
+    for attr in attrs {
+        if let Some(ident) = attr.path.get_ident() {
+            if ident == "remote" {
+                path = attr.parse_args::<Path>().unwrap();
+            } else if ident == "props_data" {
+                props_data = attr.parse_args::<Path>().unwrap();
+            } else if ident == "prefab" {
+                prefab = attr.parse_args::<Path>().unwrap();
+            }
+        }
+    }
+
+    let tokens = quote! {
+        impl #props_data for #path
+        where
+            Self: Clone,
+        {
+            fn clone_props(&self) -> Box<dyn #props_data> {
+                Box::new(self.clone())
+            }
+
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
+
+        impl #prefab for #path {}
+    };
+    tokens.into()
+}
+
+#[proc_macro_derive(MessageData, attributes(remote, message_data))]
+pub fn derive_message(input: TokenStream) -> TokenStream {
+    let DeriveInput { ident, attrs, .. } = parse_macro_input!(input as DeriveInput);
+
+    let mut path = Path::from(ident);
+    let mut message_data = parse_str::<Path>("MessageData").unwrap();
+    for attr in attrs {
+        if let Some(ident) = attr.path.get_ident() {
+            if ident == "remote" {
+                path = attr.parse_args::<Path>().unwrap();
+            } else if ident == "message_data" {
+                message_data = attr.parse_args::<Path>().unwrap();
+            }
+        }
+    }
+
+    let tokens = quote! {
+        impl #message_data for #path
+        where
+            Self: Clone,
+        {
+            fn clone_message(&self) -> Box<dyn #message_data> {
+                Box::new(self.clone())
+            }
+
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
         }
     };
     tokens.into()

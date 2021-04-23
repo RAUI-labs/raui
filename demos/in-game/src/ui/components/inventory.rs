@@ -5,12 +5,11 @@ use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct InventoryState {
     pub index: usize,
     pub count: usize,
 }
-implement_props_data!(InventoryState);
 
 impl Default for InventoryState {
     fn default() -> Self {
@@ -18,12 +17,11 @@ impl Default for InventoryState {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(MessageData, Debug, Copy, Clone)]
 pub enum InventoryMessage {
     Prev,
     Next,
 }
-implement_message_data!(InventoryMessage);
 
 fn use_inventory(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

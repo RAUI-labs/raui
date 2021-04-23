@@ -3,14 +3,13 @@ use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PopupProps {
     #[serde(default)]
     pub index: usize,
     #[serde(default)]
     pub text: String,
 }
-implement_props_data!(PopupProps);
 
 fn use_popup(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

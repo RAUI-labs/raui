@@ -8,7 +8,9 @@ use crate::{
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct TextFieldPaperProps {
     #[serde(default)]
     pub hint: String,
@@ -32,7 +34,6 @@ pub struct TextFieldPaperProps {
     #[serde(default = "TextFieldPaperProps::default_padding")]
     pub padding: Rect,
 }
-implement_props_data!(TextFieldPaperProps);
 
 impl TextFieldPaperProps {
     fn default_inactive_alpha() -> Scalar {

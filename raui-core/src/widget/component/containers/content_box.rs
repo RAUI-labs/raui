@@ -10,17 +10,19 @@ use crate::{
         unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ContentBoxProps {
     #[serde(default)]
     pub clipping: bool,
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(ContentBoxProps);
 
 #[pre_hooks(use_nav_container_active, use_nav_jump_direction_active, use_nav_item)]
 pub fn nav_content_box(mut context: WidgetContext) -> WidgetNode {

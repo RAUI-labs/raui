@@ -1,12 +1,11 @@
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct ColorRectProps {
     #[serde(default)]
     pub color: Color,
 }
-implement_props_data!(ColorRectProps);
 
 pub fn color_rect(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;

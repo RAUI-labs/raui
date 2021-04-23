@@ -10,10 +10,13 @@ use crate::{
         unit::content::{ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct SwitchBoxProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -23,7 +26,6 @@ pub struct SwitchBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(SwitchBoxProps);
 
 #[pre_hooks(use_nav_container_active, use_nav_jump_step_pages_active, use_nav_item)]
 pub fn nav_switch_box(mut context: WidgetContext) -> WidgetNode {

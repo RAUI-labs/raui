@@ -28,14 +28,15 @@ impl Default for ThemeVariant {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct ThemedWidgetProps {
     #[serde(default)]
     pub color: ThemeColor,
     #[serde(default)]
     pub variant: ThemeVariant,
 }
-implement_props_data!(ThemedWidgetProps);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ThemeColorSet {
@@ -106,7 +107,9 @@ pub struct ThemedSwitchMaterial {
     pub off: ThemedImageMaterial,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct ThemeProps {
     #[serde(default)]
     pub active_colors: ThemeColorsBundle,
@@ -128,7 +131,6 @@ pub struct ThemeProps {
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub switch_variants: HashMap<String, ThemedSwitchMaterial>,
 }
-implement_props_data!(ThemeProps);
 
 pub fn new_light_theme() -> ThemeProps {
     make_default_theme(

@@ -8,30 +8,26 @@ use crate::ui::components::{
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
 pub struct AppProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub texts: Vec<String>,
 }
-implement_props_data!(AppProps);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppSharedProps(pub WidgetId);
-implement_props_data!(AppSharedProps);
 
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct AppState {
     pub popup_index: Option<usize>,
 }
-implement_props_data!(AppState);
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
 pub enum AppMessage {
     ShowPopup(usize),
     ClosePopup,
 }
-implement_message_data!(AppMessage);
 
 fn use_app(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

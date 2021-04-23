@@ -6,10 +6,13 @@ use crate::{
         unit::size::{SizeBoxNode, SizeBoxSizeValue},
         utils::{Rect, Transform},
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct SizeBoxProps {
     #[serde(default)]
     pub width: SizeBoxSizeValue,
@@ -20,7 +23,6 @@ pub struct SizeBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(SizeBoxProps);
 
 pub fn size_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

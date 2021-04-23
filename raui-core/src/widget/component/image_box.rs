@@ -7,10 +7,13 @@ use crate::{
         unit::image::{ImageBoxAspectRatio, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue},
         utils::Transform,
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct ImageBoxProps {
     #[serde(default)]
     pub width: ImageBoxSizeValue,
@@ -24,7 +27,6 @@ pub struct ImageBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(ImageBoxProps);
 
 pub fn image_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

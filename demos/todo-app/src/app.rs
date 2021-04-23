@@ -23,12 +23,11 @@ struct AssetsManifest {
     pub images: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(MessageData, Debug, Clone)]
 pub enum AppSignal {
     Ready(WidgetId),
     Save(AppState),
 }
-implement_message_data!(AppSignal);
 
 fn setup(app: &mut Application) {
     app.setup(setup_core);

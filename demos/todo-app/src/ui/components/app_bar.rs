@@ -1,14 +1,13 @@
-use crate::ui::components::app::{AppMessage, AppSharedProps, ThemeModeProps};
+use crate::ui::components::app::{AppMessage, AppSharedProps, ThemeMode};
 use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppBarState {
     pub creating_task: bool,
     pub new_task_name: String,
 }
-implement_props_data!(AppBarState);
 
 fn use_app_bar(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
@@ -78,7 +77,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
         ..
     } = context;
 
-    let theme_mode = shared_props.read_cloned_or_default::<ThemeModeProps>();
+    let theme_mode = shared_props.read_cloned_or_default::<ThemeMode>();
     let props = props.clone().with(VerticalBoxProps {
         separation: 10.0,
         ..Default::default()
@@ -118,7 +117,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     })
     .with(IconPaperProps {
         image: IconImage {
-            id: if theme_mode == ThemeModeProps::Dark {
+            id: if theme_mode == ThemeMode::Dark {
                 "icon-light-mode".to_owned()
             } else {
                 "icon-dark-mode".to_owned()

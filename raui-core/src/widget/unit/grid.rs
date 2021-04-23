@@ -6,12 +6,14 @@ use crate::{
         utils::{IntRect, Rect, Transform},
         WidgetId,
     },
-    PrefabValue, Scalar,
+    PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct GridBoxItemLayout {
     #[serde(default)]
     pub space_occupancy: IntRect,
@@ -22,7 +24,6 @@ pub struct GridBoxItemLayout {
     #[serde(default)]
     pub vertical_align: Scalar,
 }
-implement_props_data!(GridBoxItemLayout);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GridBoxItem {

@@ -86,6 +86,6 @@ pub mod prelude {
             unit::{area::*, content::*, flex::*, grid::*, image::*, size::*, text::*},
             utils::*,
         },
-        widget_wrap, Integer, Prefab, PrefabError, Scalar,
+        widget_wrap, Integer, MessageData, Prefab, PrefabError, PropsData, Scalar,
     };
 }

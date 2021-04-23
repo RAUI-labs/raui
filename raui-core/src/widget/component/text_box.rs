@@ -9,10 +9,13 @@ use crate::{
         },
         utils::{Color, Transform},
     },
+    PropsData,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct TextBoxProps {
     #[serde(default)]
     pub text: String,
@@ -31,7 +34,6 @@ pub struct TextBoxProps {
     #[serde(default)]
     pub transform: Transform,
 }
-implement_props_data!(TextBoxProps);
 
 pub fn text_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

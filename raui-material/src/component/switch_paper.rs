@@ -2,7 +2,9 @@ use crate::theme::{ThemeColor, ThemeProps, ThemedImageMaterial, ThemedWidgetProp
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct SwitchPaperProps {
     #[serde(default)]
     pub on: bool,
@@ -11,7 +13,6 @@ pub struct SwitchPaperProps {
     #[serde(default)]
     pub size_level: usize,
 }
-implement_props_data!(SwitchPaperProps);
 
 pub fn switch_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

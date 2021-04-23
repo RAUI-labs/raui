@@ -109,12 +109,11 @@ Widgets are divided into three categories:
 Component functions are static functions that transforms input data (properties, state or neither of them) into output widget tree (usually used to simply wrap another components tree under one simple component, where at some point the simplest components returns final _widget units_).
 They work together as a chain of transforms - root component applies some properties into children components using data from its own properties or state.
 ```rust
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct AppProps {
         #[serde(default)]
         pub index: usize,
     }
-    implement_props_data!(AppProps);
     // <component name> ( [list of context data to unpack into scope] )
     fn app(context: WidgetContext) -> WidgetNode {
         let WidgetContext {
@@ -143,24 +142,22 @@ Some additional notes: While you use _properties_ to send information down the t
 More than that, you can use hooks to listen for widget life cycle and perform actions there.
 It's worth noting that state uses _properties_ to hold its data, so by that you can for example attach multiple hooks that each of them uses different data type as widget state, this opens the doors to be very creative when combining different hooks that operate on the same widget.
 ```rust
-    #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
     struct ButtonState {
         #[serde(default)]
         pub pressed: bool,
     }
-    implement_props_data!(ButtonState);
 ```
 
 ### Hooks
 Hooks are used to put common widget logic into separate functions that can be chained in widgets and another hooks (you can build a reusable dependency chain of logic with that).
 Usually it is used to listen for life cycle events such as mount, change and unmount, additionally you can chain hooks to be processed sequentially in order they are chained in widgets and other hooks.
 ```rust
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(MessageData, Debug, Copy, Clone, PartialEq, Eq)]
     enum ButtonAction {
         Pressed,
         Released,
     }
-    implement_message_data!(ButtonAction);
 
     fn use_empty(context: &mut WidgetContext) {
         context.life_cycle.mount(|_| {
@@ -367,9 +364,10 @@ raui = { version = "*", features = ["all"] }
 
 ## Contribute
 Any contribution that improves quality of the RAUI toolset is highly appreciated.
-- whenever you would like to create na PR, please create your feature branch from `next` branch so when it gets approved it can be simply merged using GitHub merge button
-- all changes are staged into `next` branch and new versions are made out of its commits, master is considered stable/release branch.
-- changes should pass tests, you run tests with: `cargo test --all --features all`.
+- If you have a feature request, create an Issue post and explain the goal of the feature along with the reason why it is needed and its pros and cons.
+- Whenever you would like to create na PR, please create your feature branch from `next` branch so when it gets approved it can be simply merged using GitHub merge button
+- All changes are staged into `next` branch and new versions are made out of its commits, master is considered stable/release branch.
+- Changes should pass tests, you run tests with: `cargo test --all --features all`.
 - This readme file is generated from `README.template.md` file using [MD Bakery CLI tool](https://github.com/PsichiX/md-bakery) that allows us to inject snippets of code from `/src/tests.rs` file to make sure all code examples are up-to-date, formatted, compiling and tested before new version gets published. To bake `README.md` you simply run: `mdbakery -i ./README.template.md -o ./README.md`.
 
 ## Milestones
@@ -400,3 +398,4 @@ Things that now are done:
 - [x] Create tesselation renderer that produces Vertex + Index + Batch buffers ready for mesh renderers.
 - [x] Create renderer for Tetra game framework.
 - [x] Move from `widget_component!` and `widget_hook!` macro rules to `pre_hooks` and `post_hooks` function attributes.
+- [x] Add derive `PropsData` and `MessageData` procedural macros to gradually replace the need to call `implement_props_data!` and `implement_message_data!` macros.

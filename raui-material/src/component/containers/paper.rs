@@ -2,7 +2,9 @@ use crate::theme::{ThemeColor, ThemeProps, ThemeVariant, ThemedImageMaterial, Th
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
 pub struct PaperProps {
     #[serde(default = "PaperProps::default_frame")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -10,7 +12,6 @@ pub struct PaperProps {
     #[serde(default)]
     pub variant: String,
 }
-implement_props_data!(PaperProps);
 
 impl PaperProps {
     #[allow(clippy::unnecessary_wraps)]

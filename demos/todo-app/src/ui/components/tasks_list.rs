@@ -3,14 +3,13 @@ use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct TaskProps {
     #[serde(default)]
     pub done: bool,
     #[serde(default)]
     pub name: String,
 }
-implement_props_data!(TaskProps);
 
 impl TaskProps {
     pub fn new(name: &str) -> Self {
@@ -21,13 +20,12 @@ impl TaskProps {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct TasksProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tasks: Vec<TaskProps>,
 }
-implement_props_data!(TasksProps);
 
 fn use_task(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {

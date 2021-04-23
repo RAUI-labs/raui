@@ -5,18 +5,19 @@ use crate::{
         node::WidgetNode,
         unit::size::{SizeBoxNode, SizeBoxSizeValue},
     },
-    Scalar,
+    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct SpaceBoxProps {
     #[serde(default)]
     pub width: Scalar,
     #[serde(default)]
     pub height: Scalar,
 }
-implement_props_data!(SpaceBoxProps);
 
 impl SpaceBoxProps {
     pub fn cube(value: Scalar) -> Self {
