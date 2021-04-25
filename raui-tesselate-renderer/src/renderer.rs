@@ -641,7 +641,7 @@ where
 
     fn count(&self, unit: &WidgetUnit, layout: &Layout) -> (usize, usize, usize) {
         match unit {
-            WidgetUnit::None => (0, 0, 0),
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => (0, 0, 0),
             WidgetUnit::AreaBox(unit) => self.count(&unit.slot, layout),
             WidgetUnit::ContentBox(unit) => {
                 if layout.items.contains_key(&unit.id) {
@@ -727,7 +727,7 @@ where
         result: &mut Tesselation,
     ) -> Result<(), Error> {
         match unit {
-            WidgetUnit::None => Ok(()),
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => Ok(()),
             WidgetUnit::AreaBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
                     let local_space = mapping.virtual_to_real_rect(item.local_space);

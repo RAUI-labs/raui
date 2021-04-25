@@ -14,11 +14,20 @@ use crate::{
         unit::{
             area::{AreaBoxNode, AreaBoxNodePrefab},
             content::{
-                ContentBoxItemNode, ContentBoxItemNodePrefab, ContentBoxNode, ContentBoxNodePrefab,
+                ContentBoxItem, ContentBoxItemNode, ContentBoxItemNodePrefab, ContentBoxNode,
+                ContentBoxNodePrefab,
             },
-            flex::{FlexBoxItemNode, FlexBoxItemNodePrefab, FlexBoxNode, FlexBoxNodePrefab},
-            grid::{GridBoxItemNode, GridBoxItemNodePrefab, GridBoxNode, GridBoxNodePrefab},
+            flex::{
+                FlexBoxItem, FlexBoxItemNode, FlexBoxItemNodePrefab, FlexBoxNode, FlexBoxNodePrefab,
+            },
+            grid::{
+                GridBoxItem, GridBoxItemNode, GridBoxItemNodePrefab, GridBoxNode, GridBoxNodePrefab,
+            },
             image::{ImageBoxNode, ImageBoxNodePrefab},
+            portal::{
+                PortalBox, PortalBoxNode, PortalBoxNodePrefab, PortalBoxSlot, PortalBoxSlotNode,
+                PortalBoxSlotNodePrefab,
+            },
             size::{SizeBoxNode, SizeBoxNodePrefab},
             text::{TextBoxNode, TextBoxNodePrefab},
             WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
@@ -452,7 +461,7 @@ impl Application {
             .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
             .collect::<HashMap<_, _>>();
         if let Ok(tree) = rendered_tree.try_into() {
-            self.rendered_tree = tree;
+            self.rendered_tree = Self::teleport_portals(tree);
             true
         } else {
             false
@@ -474,6 +483,7 @@ impl Application {
         signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         match node {
+            WidgetNode::None => node,
             WidgetNode::Component(component) => self.process_node_component(
                 component,
                 states,
@@ -497,7 +507,6 @@ impl Application {
                 message_sender,
                 signal_sender,
             ),
-            _ => node,
         }
     }
 
@@ -519,7 +528,7 @@ impl Application {
             processor,
             type_name,
             key,
-            idref,
+            mut idref,
             mut props,
             shared_props,
             listed_slots,
@@ -540,7 +549,7 @@ impl Application {
         path.push(key.clone());
         let id = WidgetId::new(&type_name, &path);
         used_ids.insert(id.clone());
-        if let Some(mut idref) = idref {
+        if let Some(idref) = &mut idref {
             idref.write(id.to_owned());
         }
         let (state_sender, state_receiver) = channel();
@@ -557,6 +566,7 @@ impl Application {
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
+                    idref: idref.as_ref(),
                     key: &key,
                     props: &mut props,
                     shared_props: &mut shared_props,
@@ -574,6 +584,7 @@ impl Application {
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
                 let context = WidgetContext {
                     id: &id,
+                    idref: idref.as_ref(),
                     key: &key,
                     props: &mut props,
                     shared_props: &mut shared_props,
@@ -679,6 +690,7 @@ impl Application {
         signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
         match &mut unit {
+            WidgetUnitNode::None | WidgetUnitNode::ImageBox(_) | WidgetUnitNode::TextBox(_) => {}
             WidgetUnitNode::AreaBox(unit) => {
                 let slot = *std::mem::take(&mut unit.slot);
                 unit.slot = Box::new(self.process_node(
@@ -694,6 +706,68 @@ impl Application {
                     signal_sender,
                 ));
             }
+            WidgetUnitNode::PortalBox(unit) => match &mut *unit.slot {
+                PortalBoxSlotNode::Slot(data) => {
+                    let slot = std::mem::take(data);
+                    *data = self.process_node(
+                        slot,
+                        states,
+                        path,
+                        messages,
+                        new_states,
+                        used_ids,
+                        ".".to_owned(),
+                        master_shared_props,
+                        message_sender,
+                        signal_sender,
+                    )
+                }
+                PortalBoxSlotNode::ContentItem(item) => {
+                    let slot = std::mem::take(&mut item.slot);
+                    item.slot = self.process_node(
+                        slot,
+                        states,
+                        path,
+                        messages,
+                        new_states,
+                        used_ids,
+                        ".".to_owned(),
+                        master_shared_props,
+                        message_sender,
+                        signal_sender,
+                    )
+                }
+                PortalBoxSlotNode::FlexItem(item) => {
+                    let slot = std::mem::take(&mut item.slot);
+                    item.slot = self.process_node(
+                        slot,
+                        states,
+                        path,
+                        messages,
+                        new_states,
+                        used_ids,
+                        ".".to_owned(),
+                        master_shared_props,
+                        message_sender,
+                        signal_sender,
+                    )
+                }
+                PortalBoxSlotNode::GridItem(item) => {
+                    let slot = std::mem::take(&mut item.slot);
+                    item.slot = self.process_node(
+                        slot,
+                        states,
+                        path,
+                        messages,
+                        new_states,
+                        used_ids,
+                        ".".to_owned(),
+                        master_shared_props,
+                        message_sender,
+                        signal_sender,
+                    )
+                }
+            },
             WidgetUnitNode::ContentBox(unit) => {
                 let items = std::mem::take(&mut unit.items);
                 unit.items = items
@@ -778,9 +852,164 @@ impl Application {
                     signal_sender,
                 ));
             }
-            _ => {}
         }
         unit.into()
+    }
+
+    fn teleport_portals(mut root: WidgetUnit) -> WidgetUnit {
+        let count = Self::estimate_portals(&root);
+        if count == 0 {
+            return root;
+        }
+        let mut portals = Vec::with_capacity(count);
+        Self::consume_portals(&mut root, &mut portals);
+        Self::inject_portals(&mut root, portals);
+        root
+    }
+
+    fn estimate_portals(unit: &WidgetUnit) -> usize {
+        let mut count = 0;
+        match unit {
+            WidgetUnit::None | WidgetUnit::ImageBox(_) | WidgetUnit::TextBox(_) => {}
+            WidgetUnit::AreaBox(b) => count += Self::estimate_portals(&b.slot),
+            WidgetUnit::PortalBox(b) => {
+                count += Self::estimate_portals(match &*b.slot {
+                    PortalBoxSlot::Slot(slot) => slot,
+                    PortalBoxSlot::ContentItem(item) => &item.slot,
+                    PortalBoxSlot::FlexItem(item) => &item.slot,
+                    PortalBoxSlot::GridItem(item) => &item.slot,
+                }) + 1
+            }
+            WidgetUnit::ContentBox(b) => {
+                for item in &b.items {
+                    count += Self::estimate_portals(&item.slot);
+                }
+            }
+            WidgetUnit::FlexBox(b) => {
+                for item in &b.items {
+                    count += Self::estimate_portals(&item.slot);
+                }
+            }
+            WidgetUnit::GridBox(b) => {
+                for item in &b.items {
+                    count += Self::estimate_portals(&item.slot);
+                }
+            }
+            WidgetUnit::SizeBox(b) => count += Self::estimate_portals(&b.slot),
+        }
+        count
+    }
+
+    fn consume_portals(unit: &mut WidgetUnit, bucket: &mut Vec<(WidgetId, PortalBoxSlot)>) {
+        match unit {
+            WidgetUnit::None | WidgetUnit::ImageBox(_) | WidgetUnit::TextBox(_) => {}
+            WidgetUnit::AreaBox(b) => Self::consume_portals(&mut b.slot, bucket),
+            WidgetUnit::PortalBox(b) => {
+                let PortalBox {
+                    owner, mut slot, ..
+                } = std::mem::take(b);
+                Self::consume_portals(
+                    match &mut *slot {
+                        PortalBoxSlot::Slot(slot) => slot,
+                        PortalBoxSlot::ContentItem(item) => &mut item.slot,
+                        PortalBoxSlot::FlexItem(item) => &mut item.slot,
+                        PortalBoxSlot::GridItem(item) => &mut item.slot,
+                    },
+                    bucket,
+                );
+                bucket.push((owner, *slot));
+            }
+            WidgetUnit::ContentBox(b) => {
+                for item in &mut b.items {
+                    Self::consume_portals(&mut item.slot, bucket);
+                }
+            }
+            WidgetUnit::FlexBox(b) => {
+                for item in &mut b.items {
+                    Self::consume_portals(&mut item.slot, bucket);
+                }
+            }
+            WidgetUnit::GridBox(b) => {
+                for item in &mut b.items {
+                    Self::consume_portals(&mut item.slot, bucket);
+                }
+            }
+            WidgetUnit::SizeBox(b) => Self::consume_portals(&mut b.slot, bucket),
+        }
+    }
+
+    fn inject_portals(unit: &mut WidgetUnit, mut portals: Vec<(WidgetId, PortalBoxSlot)>) {
+        if portals.is_empty() {
+            return;
+        }
+        if let Some(data) = unit.as_data() {
+            if let Some(index) = portals.iter().position(|(id, _)| data.id() == id) {
+                let slot = portals.swap_remove(index).1;
+                match unit {
+                    WidgetUnit::None
+                    | WidgetUnit::PortalBox(_)
+                    | WidgetUnit::ImageBox(_)
+                    | WidgetUnit::TextBox(_) => {}
+                    WidgetUnit::AreaBox(b) => match slot {
+                        PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
+                        PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
+                        PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
+                        PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                    },
+                    WidgetUnit::ContentBox(b) => b.items.push(match slot {
+                        PortalBoxSlot::Slot(slot) => ContentBoxItem {
+                            slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::ContentItem(item) => item,
+                        PortalBoxSlot::FlexItem(item) => ContentBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::GridItem(item) => ContentBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                    }),
+                    WidgetUnit::FlexBox(b) => b.items.push(match slot {
+                        PortalBoxSlot::Slot(slot) => FlexBoxItem {
+                            slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::ContentItem(item) => FlexBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::FlexItem(item) => item,
+                        PortalBoxSlot::GridItem(item) => FlexBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                    }),
+                    WidgetUnit::GridBox(b) => b.items.push(match slot {
+                        PortalBoxSlot::Slot(slot) => GridBoxItem {
+                            slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::ContentItem(item) => GridBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::FlexItem(item) => GridBoxItem {
+                            slot: item.slot,
+                            ..Default::default()
+                        },
+                        PortalBoxSlot::GridItem(item) => item,
+                    }),
+                    WidgetUnit::SizeBox(b) => match slot {
+                        PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
+                        PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
+                        PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
+                        PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                    },
+                }
+            }
+        }
     }
 
     fn node_to_prefab(&self, data: &WidgetNode) -> Result<WidgetNodePrefab, ApplicationError> {
@@ -833,6 +1062,9 @@ impl Application {
             WidgetUnitNode::AreaBox(data) => {
                 WidgetUnitNodePrefab::AreaBox(self.area_box_to_prefab(data)?)
             }
+            WidgetUnitNode::PortalBox(data) => {
+                WidgetUnitNodePrefab::PortalBox(self.portal_box_to_prefab(data)?)
+            }
             WidgetUnitNode::ContentBox(data) => {
                 WidgetUnitNodePrefab::ContentBox(self.content_box_to_prefab(data)?)
             }
@@ -862,6 +1094,39 @@ impl Application {
             id: data.id.to_owned(),
             slot: Box::new(self.node_to_prefab(&data.slot)?),
             renderer_effect: data.renderer_effect.to_owned(),
+        })
+    }
+
+    fn portal_box_to_prefab(
+        &self,
+        data: &PortalBoxNode,
+    ) -> Result<PortalBoxNodePrefab, ApplicationError> {
+        Ok(PortalBoxNodePrefab {
+            id: data.id.to_owned(),
+            slot: Box::new(match &*data.slot {
+                PortalBoxSlotNode::Slot(slot) => {
+                    PortalBoxSlotNodePrefab::Slot(self.node_to_prefab(&slot)?)
+                }
+                PortalBoxSlotNode::ContentItem(item) => {
+                    PortalBoxSlotNodePrefab::ContentItem(ContentBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&item.slot)?,
+                        layout: item.layout.clone(),
+                    })
+                }
+                PortalBoxSlotNode::FlexItem(item) => {
+                    PortalBoxSlotNodePrefab::FlexItem(FlexBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&item.slot)?,
+                        layout: item.layout.clone(),
+                    })
+                }
+                PortalBoxSlotNode::GridItem(item) => {
+                    PortalBoxSlotNodePrefab::GridItem(GridBoxItemNodePrefab {
+                        slot: self.node_to_prefab(&item.slot)?,
+                        layout: item.layout.clone(),
+                    })
+                }
+            }),
+            owner: data.owner.to_owned(),
         })
     }
 
@@ -1034,6 +1299,9 @@ impl Application {
             WidgetUnitNodePrefab::AreaBox(data) => {
                 WidgetUnitNode::AreaBox(self.area_box_from_prefab(data)?)
             }
+            WidgetUnitNodePrefab::PortalBox(data) => {
+                WidgetUnitNode::PortalBox(self.portal_box_from_prefab(data)?)
+            }
             WidgetUnitNodePrefab::ContentBox(data) => {
                 WidgetUnitNode::ContentBox(self.content_box_from_prefab(data)?)
             }
@@ -1063,6 +1331,39 @@ impl Application {
             id: data.id,
             slot: Box::new(self.node_from_prefab(*data.slot)?),
             renderer_effect: data.renderer_effect,
+        })
+    }
+
+    fn portal_box_from_prefab(
+        &self,
+        data: PortalBoxNodePrefab,
+    ) -> Result<PortalBoxNode, ApplicationError> {
+        Ok(PortalBoxNode {
+            id: data.id,
+            slot: Box::new(match *data.slot {
+                PortalBoxSlotNodePrefab::Slot(slot) => {
+                    PortalBoxSlotNode::Slot(self.node_from_prefab(slot)?)
+                }
+                PortalBoxSlotNodePrefab::ContentItem(item) => {
+                    PortalBoxSlotNode::ContentItem(ContentBoxItemNode {
+                        slot: self.node_from_prefab(item.slot)?,
+                        layout: item.layout,
+                    })
+                }
+                PortalBoxSlotNodePrefab::FlexItem(item) => {
+                    PortalBoxSlotNode::FlexItem(FlexBoxItemNode {
+                        slot: self.node_from_prefab(item.slot)?,
+                        layout: item.layout,
+                    })
+                }
+                PortalBoxSlotNodePrefab::GridItem(item) => {
+                    PortalBoxSlotNode::GridItem(GridBoxItemNode {
+                        slot: self.node_from_prefab(item.slot)?,
+                        layout: item.layout,
+                    })
+                }
+            }),
+            owner: data.owner,
         })
     }
 

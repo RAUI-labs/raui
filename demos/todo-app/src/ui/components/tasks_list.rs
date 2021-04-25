@@ -1,4 +1,7 @@
-use crate::ui::components::app::{AppMessage, AppSharedProps};
+use crate::ui::components::{
+    app::{AppMessage, AppSharedProps},
+    confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage},
+};
 use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -18,6 +21,12 @@ impl TaskProps {
             name: name.to_owned(),
         }
     }
+}
+
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+struct TaskState {
+    #[serde(default)]
+    deleting: bool,
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -44,18 +53,21 @@ fn use_task(context: &mut WidgetContext) {
                                 context.messenger.write(id, AppMessage::ToggleTask(index));
                             }
                         }
-                        "delete" => {
-                            // TODO: figure out better to pass index to the message.
-                            // maybe using props? anything would be better than parsing string.
-                            if let Ok(index) = context.id.key().parse::<usize>() {
-                                let id = context
-                                    .shared_props
-                                    .read_cloned_or_default::<AppSharedProps>()
-                                    .id;
-                                context.messenger.write(id, AppMessage::DeleteTask(index));
-                            }
-                        }
+                        "delete" => drop(context.state.write_with(TaskState { deleting: true })),
                         _ => {}
+                    }
+                }
+            } else if let Some(msg) = msg.as_any().downcast_ref::<ConfirmNotifyMessage>() {
+                drop(context.state.write_with(TaskState { deleting: false }));
+                if msg.confirmed {
+                    // TODO: figure out better to pass index to the message.
+                    // maybe using props? anything would be better than parsing string.
+                    if let Ok(index) = context.id.key().parse::<usize>() {
+                        let id = context
+                            .shared_props
+                            .read_cloned_or_default::<AppSharedProps>()
+                            .id;
+                        context.messenger.write(id, AppMessage::DeleteTask(index));
                     }
                 }
             }
@@ -65,9 +77,17 @@ fn use_task(context: &mut WidgetContext) {
 
 #[pre_hooks(use_task)]
 pub fn task(mut context: WidgetContext) -> WidgetNode {
-    let WidgetContext { id, key, props, .. } = context;
+    let WidgetContext {
+        id,
+        key,
+        props,
+        state,
+        ..
+    } = context;
 
     let data = props.read_cloned_or_default::<TaskProps>();
+    let TaskState { deleting } = state.read_cloned_or_default();
+
     let checkbox_props = Props::new(FlexBoxItemLayout {
         fill: 0.0,
         grow: 0.0,
@@ -86,6 +106,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
         color: ThemeColor::Primary,
         variant: ThemeVariant::ContentOnly,
     });
+
     let name_props = Props::new(TextPaperProps {
         text: data.name,
         height: TextBoxSizeValue::Exact(24.0),
@@ -96,6 +117,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
         align: 0.5,
         ..Default::default()
     });
+
     let delete_props = Props::new(FlexBoxItemLayout {
         fill: 0.0,
         grow: 0.0,
@@ -117,6 +139,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
         color: ThemeColor::Primary,
         variant: ThemeVariant::ContentOnly,
     });
+
     let list_props = Props::new(HorizontalBoxProps {
         separation: 10.0,
         ..Default::default()
@@ -131,11 +154,18 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
         ..Default::default()
     });
 
+    let confirm_props = ConfirmBoxProps {
+        open: deleting,
+        text: "Do you want to remove task?".to_owned(),
+        notify: id.to_owned().into(),
+    };
+
     widget! {
         (#{key} horizontal_paper: {list_props} [
             (#{"checkbox"} switch_button_paper: {checkbox_props})
             (#{"name"} text_paper: {name_props})
             (#{"delete"} icon_button_paper: {delete_props})
+            (#{"confirm"} confirm_box: {confirm_props})
         ])
     }
 }

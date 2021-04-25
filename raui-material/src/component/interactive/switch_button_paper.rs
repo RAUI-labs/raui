@@ -2,10 +2,12 @@ use crate::component::{interactive::button_paper::button_paper, switch_paper::sw
 use raui_core::prelude::*;
 
 pub fn switch_button_paper(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+    let WidgetContext {
+        idref, key, props, ..
+    } = context;
 
     widget! {
-        (#{key} button_paper: {props.clone()} {
+        (#{key} | {idref.cloned()} button_paper: {props.clone()} {
             content = (#{"switch"} switch_paper: {props.clone()})
         })
     }

@@ -71,8 +71,8 @@ pub mod prelude {
     pub use crate::{
         component::{
             containers::{
-                flex_paper::*, grid_paper::*, horizontal_paper::*, paper::*, vertical_paper::*,
-                wrap_paper::*,
+                flex_paper::*, grid_paper::*, horizontal_paper::*, modal_paper::*, paper::*,
+                vertical_paper::*, wrap_paper::*,
             },
             icon_paper::*,
             interactive::{

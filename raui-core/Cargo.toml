@@ -1,6 +1,6 @@
 [package]
 name = "raui-core"
-version = "0.32.0"
+version = "0.33.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
@@ -15,6 +15,6 @@ scalar64 = []
 integer64 = []
 
 [dependencies]
-raui-derive = { version = "0.32", path = "../raui-derive" }
+raui-derive = { version = "0.33", path = "../raui-derive" }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.8"

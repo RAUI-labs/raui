@@ -2,11 +2,17 @@ use crate::component::{interactive::button_paper::button_paper, text_paper::text
 use raui_core::prelude::*;
 
 pub fn text_button_paper(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+    let WidgetContext {
+        idref, key, props, ..
+    } = context;
+
+    let wrap_props = props.read_cloned_or_default::<WrapBoxProps>();
 
     widget! {
-        (#{key} button_paper: {props.clone()} {
-            content = (#{"text"} text_paper: {props.clone()})
+        (#{key} | {idref.cloned()} button_paper: {props.clone()} {
+            content = (#{"wrap"} wrap_box: {wrap_props} {
+                content = (#{"text"} text_paper: {props.clone()})
+            })
         })
     }
 }

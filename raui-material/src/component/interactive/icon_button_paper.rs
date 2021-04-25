@@ -2,10 +2,12 @@ use crate::component::{icon_paper::icon_paper, interactive::button_paper::button
 use raui_core::prelude::*;
 
 pub fn icon_button_paper(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+    let WidgetContext {
+        idref, key, props, ..
+    } = context;
 
     widget! {
-        (#{key} button_paper: {props.clone()} {
+        (#{key} | {idref.cloned()} button_paper: {props.clone()} {
             content = (#{"icon"} icon_paper: {props.clone()})
         })
     }

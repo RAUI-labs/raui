@@ -204,3 +204,4 @@ Things that now are done:
 - [x] Create renderer for Tetra game framework.
 - [x] Move from `widget_component!` and `widget_hook!` macro rules to `pre_hooks` and `post_hooks` function attributes.
 - [x] Add derive `PropsData` and `MessageData` procedural macros to gradually replace the need to call `implement_props_data!` and `implement_message_data!` macros.
+- [x] Add support for portals - an easy way to "teleport" sub-tree into another tree node (useful for modals and drag & drop).

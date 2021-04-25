@@ -130,6 +130,9 @@ pub struct ThemeProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub switch_variants: HashMap<String, ThemedSwitchMaterial>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub modal_shadow_variants: HashMap<String, Color>,
 }
 
 pub fn new_light_theme() -> ThemeProps {
@@ -167,6 +170,8 @@ pub fn make_default_theme(
 ) -> ThemeProps {
     let background_primary = color_lerp(background, primary, 0.05);
     let background_secondary = color_lerp(background, secondary, 0.05);
+    let mut background_modal = fluid_polarize_color(background);
+    background_modal.a = 0.75;
     let mut content_backgrounds = HashMap::with_capacity(1);
     content_backgrounds.insert(String::new(), Default::default());
     let mut button_backgrounds = HashMap::with_capacity(1);
@@ -187,6 +192,8 @@ pub fn make_default_theme(
     switch_variants.insert("checkbox".to_owned(), ThemedSwitchMaterial::default());
     switch_variants.insert("toggle".to_owned(), ThemedSwitchMaterial::default());
     switch_variants.insert("radio".to_owned(), ThemedSwitchMaterial::default());
+    let mut modal_shadow_variants = HashMap::with_capacity(1);
+    modal_shadow_variants.insert(String::new(), background_modal);
     ThemeProps {
         active_colors: make_colors_bundle(
             make_color_set(default, 0.1, 0.2),
@@ -203,6 +210,7 @@ pub fn make_default_theme(
         icons_level_sizes: vec![18.0, 24.0, 32.0, 48.0, 64.0, 128.0, 256.0, 512.0, 1024.0],
         text_variants,
         switch_variants,
+        modal_shadow_variants,
     }
 }
 
@@ -251,6 +259,19 @@ pub fn contrast_color(base_color: Color) -> Color {
         g: 1.0 - base_color.g,
         b: 1.0 - base_color.b,
         a: base_color.a,
+    }
+}
+
+pub fn fluid_polarize(v: Scalar) -> Scalar {
+    (v - 0.5 * std::f32::consts::PI).sin() * 0.5 + 0.5
+}
+
+pub fn fluid_polarize_color(color: Color) -> Color {
+    Color {
+        r: fluid_polarize(color.r),
+        g: fluid_polarize(color.g),
+        b: fluid_polarize(color.b),
+        a: color.a,
     }
 }
 

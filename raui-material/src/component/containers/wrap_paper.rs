@@ -3,6 +3,7 @@ use raui_core::prelude::*;
 
 pub fn wrap_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         named_slots,
@@ -11,7 +12,7 @@ pub fn wrap_paper(context: WidgetContext) -> WidgetNode {
     unpack_named_slots!(named_slots => content);
 
     widget! {
-        (#{key} paper: {props.clone()} [
+        (#{key} | {idref.cloned()} paper: {props.clone()} [
             (#{"wrap"} wrap_box: {props.clone()} {
                 content = {content}
             })

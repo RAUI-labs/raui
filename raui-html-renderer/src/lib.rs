@@ -264,7 +264,7 @@ impl HtmlRenderer {
         W: Write,
     {
         match tree {
-            WidgetUnit::None => {}
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => {}
             WidgetUnit::AreaBox(AreaBox { slot, .. }) => {
                 node!(self: div [writer] level={level} {
                     self.write_node(writer, slot, level)?;

@@ -25,6 +25,7 @@ pub struct TextPaperProps {
 
 pub fn text_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         shared_props,
@@ -86,6 +87,6 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
     };
 
     widget! {
-        (#{key} text_box: {props})
+        (#{key} | {idref.cloned()} text_box: {props})
     }
 }

@@ -31,6 +31,7 @@ impl Default for PaperProps {
 
 pub fn paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         shared_props,
@@ -148,6 +149,6 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
     };
 
     widget! {
-        (#{key} content_box: {props.clone()} |[ items ]|)
+        (#{key} | {idref.cloned()} content_box: {props.clone()} |[ items ]|)
     }
 }

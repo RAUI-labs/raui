@@ -4,12 +4,13 @@ use crate::{
     props::Props,
     signals::SignalSender,
     state::State,
-    widget::{node::WidgetNode, WidgetId, WidgetLifeCycle},
+    widget::{node::WidgetNode, WidgetId, WidgetLifeCycle, WidgetRef},
 };
 use std::collections::HashMap;
 
 pub struct WidgetContext<'a> {
     pub id: &'a WidgetId,
+    pub idref: Option<&'a WidgetRef>,
     pub key: &'a str,
     pub props: &'a mut Props,
     pub shared_props: &'a mut Props,

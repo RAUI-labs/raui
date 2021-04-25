@@ -27,6 +27,7 @@ pub struct IconPaperProps {
 
 pub fn icon_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         shared_props,
@@ -74,6 +75,6 @@ pub fn icon_paper(context: WidgetContext) -> WidgetNode {
     };
 
     widget! {
-        (#{key} image_box: {props})
+        (#{key} | {idref.cloned()} image_box: {props})
     }
 }

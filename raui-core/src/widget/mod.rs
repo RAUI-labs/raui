@@ -6,10 +6,12 @@ pub mod utils;
 
 use crate::{
     application::Application,
+    props::PropsData,
     widget::{
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
         node::WidgetNode,
     },
+    Prefab, PropsData,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -30,7 +32,7 @@ impl From<WidgetId> for WidgetIdDef {
     }
 }
 
-#[derive(Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(try_from = "WidgetIdDef")]
 #[serde(into = "WidgetIdDef")]
 pub struct WidgetId {
@@ -187,12 +189,16 @@ impl From<WidgetRef> for WidgetRefDef {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(from = "WidgetRefDef")]
 #[serde(into = "WidgetRefDef")]
 pub struct WidgetRef(#[serde(skip)] Arc<RwLock<Option<WidgetId>>>);
 
 impl WidgetRef {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
     pub(crate) fn write(&mut self, id: WidgetId) {
         if let Ok(mut data) = self.0.write() {
             *data = Some(id);
@@ -214,7 +220,7 @@ impl From<WidgetRefDef> for WidgetRef {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
 pub enum WidgetIdOrRef {
     None,
     Id(WidgetId),
@@ -508,7 +514,7 @@ macro_rules! widget {
             #[allow(unused_mut)]
             let mut idref = None;
             $(
-                idref = Some($crate::widget::WidgetRef::from($idref));
+                idref = Option::<$crate::widget::WidgetRef>::from($idref);
             )?
             let processor = $type_id;
             let type_name = stringify!($type_id).to_owned();

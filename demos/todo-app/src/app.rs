@@ -90,6 +90,14 @@ impl State for TodoState {
                 }
             }
         }
+        if let Event::KeyPressed { key: Key::I } = event {
+            if is_key_modifier_down(context, KeyModifier::Ctrl) {
+                println!(
+                    "INSPECT TREE: {:#?}",
+                    self.ui.application.rendered_tree().inspect()
+                );
+            }
+        }
         Ok(())
     }
 }

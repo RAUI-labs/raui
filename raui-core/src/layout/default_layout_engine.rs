@@ -24,18 +24,21 @@ pub struct DefaultLayoutEngine;
 impl DefaultLayoutEngine {
     pub fn layout_node(size_available: Vec2, unit: &WidgetUnit) -> Option<LayoutNode> {
         match unit {
-            WidgetUnit::None => None,
-            WidgetUnit::AreaBox(b) => Some(Self::layout_area_box(size_available, b)),
-            WidgetUnit::ContentBox(b) => Some(Self::layout_content_box(size_available, b)),
-            WidgetUnit::FlexBox(b) => Some(Self::layout_flex_box(size_available, b)),
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => None,
+            WidgetUnit::AreaBox(b) => Self::layout_area_box(size_available, b),
+            WidgetUnit::ContentBox(b) => Self::layout_content_box(size_available, b),
+            WidgetUnit::FlexBox(b) => Self::layout_flex_box(size_available, b),
             WidgetUnit::GridBox(b) => Self::layout_grid_box(size_available, b),
-            WidgetUnit::SizeBox(b) => Some(Self::layout_size_box(size_available, b)),
-            WidgetUnit::ImageBox(b) => Some(Self::layout_image_box(size_available, b)),
-            WidgetUnit::TextBox(b) => Some(Self::layout_text_box(size_available, b)),
+            WidgetUnit::SizeBox(b) => Self::layout_size_box(size_available, b),
+            WidgetUnit::ImageBox(b) => Self::layout_image_box(size_available, b),
+            WidgetUnit::TextBox(b) => Self::layout_text_box(size_available, b),
         }
     }
 
-    pub fn layout_area_box(size_available: Vec2, unit: &AreaBox) -> LayoutNode {
+    pub fn layout_area_box(size_available: Vec2, unit: &AreaBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let (children, w, h) = if let Some(child) = Self::layout_node(size_available, &unit.slot) {
             let w = child.local_space.width();
             let h = child.local_space.height();
@@ -49,14 +52,17 @@ impl DefaultLayoutEngine {
             top: 0.0,
             bottom: h,
         };
-        LayoutNode {
+        Some(LayoutNode {
             id: unit.id.to_owned(),
             local_space,
             children,
-        }
+        })
     }
 
-    pub fn layout_content_box(size_available: Vec2, unit: &ContentBox) -> LayoutNode {
+    pub fn layout_content_box(size_available: Vec2, unit: &ContentBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let children = unit
             .items
             .iter()
@@ -90,7 +96,7 @@ impl DefaultLayoutEngine {
                 }
             })
             .collect::<Vec<_>>();
-        LayoutNode {
+        Some(LayoutNode {
             id: unit.id.to_owned(),
             local_space: Rect {
                 left: 0.0,
@@ -99,14 +105,17 @@ impl DefaultLayoutEngine {
                 bottom: size_available.y,
             },
             children,
-        }
+        })
     }
 
-    pub fn layout_flex_box(size_available: Vec2, unit: &FlexBox) -> LayoutNode {
+    pub fn layout_flex_box(size_available: Vec2, unit: &FlexBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         if unit.wrap {
-            Self::layout_flex_box_wrapping(size_available, unit)
+            Some(Self::layout_flex_box_wrapping(size_available, unit))
         } else {
-            Self::layout_flex_box_no_wrap(size_available, unit)
+            Some(Self::layout_flex_box_no_wrap(size_available, unit))
         }
     }
 
@@ -123,7 +132,7 @@ impl DefaultLayoutEngine {
             let items = unit
                 .items
                 .iter()
-                .filter(|item| item.slot.is_some())
+                .filter(|item| item.slot.is_some() && item.slot.as_data().unwrap().id().is_valid())
                 .collect::<Vec<_>>();
             let count = items.len();
             let mut lines = vec![];
@@ -301,7 +310,7 @@ impl DefaultLayoutEngine {
         let items = unit
             .items
             .iter()
-            .filter(|item| item.slot.is_some())
+            .filter(|item| item.slot.is_some() && item.slot.as_data().unwrap().id().is_valid())
             .collect::<Vec<_>>();
         let mut axis_sizes = Vec::with_capacity(items.len());
         for item in &items {
@@ -461,6 +470,9 @@ impl DefaultLayoutEngine {
     }
 
     pub fn layout_grid_box(size_available: Vec2, unit: &GridBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let cell_width = if unit.cols > 0 {
             size_available.x / unit.cols as Scalar
         } else {
@@ -514,7 +526,10 @@ impl DefaultLayoutEngine {
         })
     }
 
-    pub fn layout_size_box(size_available: Vec2, unit: &SizeBox) -> LayoutNode {
+    pub fn layout_size_box(size_available: Vec2, unit: &SizeBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let size = Vec2 {
             x: match unit.width {
                 SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &unit.slot),
@@ -542,14 +557,17 @@ impl DefaultLayoutEngine {
             top: 0.0,
             bottom: size.y,
         };
-        LayoutNode {
+        Some(LayoutNode {
             id: unit.id.to_owned(),
             local_space,
             children,
-        }
+        })
     }
 
-    pub fn layout_image_box(size_available: Vec2, unit: &ImageBox) -> LayoutNode {
+    pub fn layout_image_box(size_available: Vec2, unit: &ImageBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let local_space = Rect {
             left: 0.0,
             right: match unit.width {
@@ -562,14 +580,17 @@ impl DefaultLayoutEngine {
                 ImageBoxSizeValue::Exact(v) => v,
             },
         };
-        LayoutNode {
+        Some(LayoutNode {
             id: unit.id.to_owned(),
             local_space,
             children: vec![],
-        }
+        })
     }
 
-    pub fn layout_text_box(size_available: Vec2, unit: &TextBox) -> LayoutNode {
+    pub fn layout_text_box(size_available: Vec2, unit: &TextBox) -> Option<LayoutNode> {
+        if !unit.id.is_valid() {
+            return None;
+        }
         let local_space = Rect {
             left: 0.0,
             right: match unit.width {
@@ -582,16 +603,16 @@ impl DefaultLayoutEngine {
                 TextBoxSizeValue::Exact(v) => v,
             },
         };
-        LayoutNode {
+        Some(LayoutNode {
             id: unit.id.to_owned(),
             local_space,
             children: vec![],
-        }
+        })
     }
 
     fn calc_unit_min_width(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
-            WidgetUnit::None => 0.0,
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => 0.0,
             WidgetUnit::AreaBox(b) => Self::calc_unit_min_width(size_available, &b.slot),
             WidgetUnit::ContentBox(b) => Self::calc_content_box_min_width(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_width(size_available, b),
@@ -729,7 +750,7 @@ impl DefaultLayoutEngine {
 
     fn calc_unit_min_height(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
         match unit {
-            WidgetUnit::None => 0.0,
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => 0.0,
             WidgetUnit::AreaBox(b) => Self::calc_unit_min_height(size_available, &b.slot),
             WidgetUnit::ContentBox(b) => Self::calc_content_box_min_height(size_available, b),
             WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_height(size_available, b),

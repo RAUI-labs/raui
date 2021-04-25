@@ -16,6 +16,7 @@ pub struct SwitchPaperProps {
 
 pub fn switch_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         shared_props,
@@ -87,6 +88,6 @@ pub fn switch_paper(context: WidgetContext) -> WidgetNode {
         },
     };
     widget! {
-        (#{key} image_box: {image})
+        (#{key} | {idref.cloned()} image_box: {image})
     }
 }

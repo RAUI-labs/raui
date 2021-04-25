@@ -141,6 +141,7 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
 
 pub fn button_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
+        idref,
         key,
         props,
         named_slots,
@@ -149,7 +150,7 @@ pub fn button_paper(context: WidgetContext) -> WidgetNode {
     unpack_named_slots!(named_slots => content);
 
     widget! {
-        (#{key} button: {props.clone()} {
+        (#{key} | {idref.cloned()} button: {props.clone()} {
             content = (#{"content"} button_paper_content: {props.clone()} {
                 content = {content}
             })

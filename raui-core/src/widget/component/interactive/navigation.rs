@@ -1,6 +1,9 @@
 use crate::{
-    post_hooks,
-    widget::{context::WidgetContext, utils::Vec2, WidgetIdOrRef},
+    post_hooks, pre_hooks, unpack_named_slots, widget,
+    widget::{
+        context::WidgetContext, node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2,
+        WidgetIdOrRef,
+    },
     MessageData, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
@@ -488,4 +491,20 @@ pub fn use_nav_scroll_view_content(context: &mut WidgetContext) {
             .signals
             .write(NavSignal::Unregister(NavType::ScrollViewContent));
     });
+}
+
+#[pre_hooks(use_nav_button)]
+pub fn navigation_barrier(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id, named_slots, ..
+    } = context;
+    unpack_named_slots!(named_slots => content);
+
+    widget! {{{
+        AreaBoxNode {
+            id: id.to_owned(),
+            slot: Box::new(content),
+            ..Default::default()
+        }
+    }}}
 }

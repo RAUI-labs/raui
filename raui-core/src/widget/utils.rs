@@ -221,6 +221,17 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    pub fn transparent() -> Self {
+        Self {
+            r: 0.0,
+            g: 0.0,
+            b: 0.0,
+            a: 0.0,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Transform {
     /// Rectangle center of mass. Values in range: <0;1>

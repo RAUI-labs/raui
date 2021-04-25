@@ -142,51 +142,54 @@ fn use_app(context: &mut WidgetContext) {
 
 #[pre_hooks(use_nav_container_active, use_app)]
 pub fn app(mut context: WidgetContext) -> WidgetNode {
-    let WidgetContext {
-        id,
-        key,
-        props,
-        state,
-        ..
-    } = context;
+    let WidgetContext { id, key, state, .. } = context;
 
     let (theme_mode, tasks) =
         state.map_or_default::<AppState, _, _>(|s| (s.theme, s.tasks.clone()));
     let theme = new_theme(theme_mode);
+    let idref = WidgetRef::new();
+
     let shared_props = Props::new(AppSharedProps { id: id.to_owned() })
+        .with(ModalsContainer(idref.clone()))
         .with(theme)
         .with(theme_mode);
+
     let bar_props = FlexBoxItemLayout {
         grow: 0.0,
         shrink: 0.0,
         ..Default::default()
     };
+
     let tasks_props = Props::new(FlexBoxItemLayout {
         grow: 0.0,
         shrink: 0.0,
         ..Default::default()
     })
     .with(TasksProps { tasks });
-    let props = props
-        .clone()
-        .with(ContentBoxItemLayout {
-            margin: Rect {
-                left: 32.0,
-                right: 32.0,
-                top: 32.0,
-                bottom: 32.0,
-            },
-            ..Default::default()
-        })
-        .with(VerticalBoxProps {
-            separation: 10.0,
-            ..Default::default()
-        });
+
+    let wrap_props = WrapBoxProps {
+        margin: Rect {
+            left: 32.0,
+            right: 32.0,
+            top: 32.0,
+            bottom: 32.0,
+        },
+        fill: true,
+    };
+
+    let list_props = VerticalBoxProps {
+        separation: 10.0,
+        ..Default::default()
+    };
 
     widget! {
-        (#{key} vertical_paper: {props} | {shared_props} [
-            (#{"app-bar"} app_bar: {bar_props})
-            (#{"tasks-list"} tasks_list: {tasks_props})
+        (#{key} | {idref} paper | {shared_props} [
+            (#{"wrap"} wrap_box: {wrap_props} {
+                content = (#{"list"} vertical_box: {list_props} [
+                    (#{"app-bar"} app_bar: {bar_props})
+                    (#{"tasks-list"} tasks_list: {tasks_props})
+                ])
+            })
         ])
     }
 }

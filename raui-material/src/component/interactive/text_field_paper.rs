@@ -133,10 +133,12 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
 }
 
 pub fn text_field_paper(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+    let WidgetContext {
+        idref, key, props, ..
+    } = context;
 
     widget! {
-        (#{key} input_field: {props.clone()} {
+        (#{key} | {idref.cloned()} input_field: {props.clone()} {
             content = (#{"content"} text_field_paper_content: {props.clone()})
         })
     }
