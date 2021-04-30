@@ -6,6 +6,11 @@ pub mod core {
 }
 
 pub mod renderer {
+    #[cfg(feature = "material")]
+    pub mod material {
+        pub use raui_material::*;
+    }
+
     #[cfg(feature = "binary")]
     pub mod binary {
         pub use raui_binary_renderer::*;
@@ -33,6 +38,9 @@ pub mod renderer {
 }
 
 pub mod prelude {
+    #[cfg(feature = "material")]
+    pub use raui_material::prelude::*;
+
     #[cfg(feature = "binary")]
     pub use raui_binary_renderer::*;
     pub use raui_core::prelude::*;
