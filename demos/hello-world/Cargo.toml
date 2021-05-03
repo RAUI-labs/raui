@@ -8,5 +8,5 @@ publish = false
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 tetra = { version = "0.6", features = ["sdl2_bundled"] }
-raui-core = { version = "0.33", path = "../../raui-core" }
-raui-tetra-renderer = { version = "0.33", path = "../../raui-tetra-renderer" }
+raui-core = { version = "0.34", path = "../../raui-core" }
+raui-tetra-renderer = { version = "0.34", path = "../../raui-tetra-renderer" }
