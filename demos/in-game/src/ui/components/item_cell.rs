@@ -35,13 +35,13 @@ fn use_item_cell(context: &mut WidgetContext) {
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
                 if msg.trigger_start() {
-                    drop(context.animator.change(
+                    let _ = context.animator.change(
                         "",
                         Some(Animation::Value(AnimatedValue {
                             name: "click".to_owned(),
                             duration: 0.15,
                         })),
-                    ));
+                    );
                     match msg.sender.key() {
                         "prev" => {
                             let id = context

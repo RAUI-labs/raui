@@ -98,7 +98,7 @@ pub fn use_button_notified_state(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                drop(context.state.write_with(msg.state));
+                let _ = context.state.write_with(msg.state);
             }
         }
     });
@@ -126,7 +126,7 @@ pub fn use_button(context: &mut WidgetContext) {
                 prev: ButtonProps::default(),
             },
         );
-        drop(context.state.write_with(ButtonProps::default()));
+        let _ = context.state.write_with(ButtonProps::default());
     });
 
     context.life_cycle.change(|context| {
@@ -176,7 +176,7 @@ pub fn use_button(context: &mut WidgetContext) {
                     prev,
                 },
             );
-            drop(context.state.write_with(data));
+            let _ = context.state.write_with(data);
         }
     });
 }
@@ -199,7 +199,7 @@ pub fn button(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            ..Default::default()
+            renderer_effect: None,
         }
     }}}
 }

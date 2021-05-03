@@ -55,9 +55,9 @@ impl TodoState {
             .map(|(k, p)| (k.as_str(), p.as_str()))
             .collect::<Vec<_>>();
         let tree = widget! { (#{"app"} app) };
-        Ok(Self {
-            ui: TetraSimpleHost::new(context, tree, &fonts, &textures, setup)?,
-        })
+        let mut ui = TetraSimpleHost::new(context, tree, &fonts, &textures, setup)?;
+        ui.interactions.single_scroll_units = (15.0, 15.0).into();
+        Ok(Self { ui })
     }
 }
 
@@ -115,7 +115,7 @@ impl TodoState {
 
     fn save(state: &AppState) {
         if let Ok(content) = serde_json::to_string_pretty(state) {
-            drop(write("./state.json", content));
+            let _ = write("./state.json", content);
         }
     }
 }

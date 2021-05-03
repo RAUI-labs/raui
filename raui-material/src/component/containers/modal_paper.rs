@@ -12,6 +12,12 @@ pub struct ModalPaperProps {
     pub shadow_variant: String,
 }
 
+impl ModalPaperProps {
+    fn default_shadow_shown() -> bool {
+        true
+    }
+}
+
 #[derive(PropsData, Default, Debug, Clone, Serialize, Deserialize)]
 #[props_data(raui_core::props::PropsData)]
 #[prefab(raui_core::Prefab)]
@@ -23,12 +29,6 @@ impl Default for ModalPaperProps {
             shadow_shown: Self::default_shadow_shown(),
             shadow_variant: Default::default(),
         }
-    }
-}
-
-impl ModalPaperProps {
-    fn default_shadow_shown() -> bool {
-        true
     }
 }
 

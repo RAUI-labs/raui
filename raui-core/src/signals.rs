@@ -35,7 +35,7 @@ impl SignalSender {
         I: IntoIterator<Item = Message>,
     {
         for data in messages {
-            drop(self.sender.send((self.id.clone(), data)));
+            let _ = self.sender.send((self.id.clone(), data));
         }
     }
 }

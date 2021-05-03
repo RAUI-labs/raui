@@ -191,7 +191,7 @@ fn test_hello_world() {
     fn use_button(context: &mut WidgetContext) {
         context.life_cycle.mount(|context| {
             println!("* BUTTON MOUNTED: {}", context.id.key());
-            drop(context.state.write(ButtonState { pressed: false }));
+            let _ = context.state.write(ButtonState { pressed: false });
         });
 
         context.life_cycle.change(|context| {
@@ -203,8 +203,8 @@ fn test_hello_world() {
                         ButtonAction::Released => false,
                     };
                     println!("* BUTTON ACTION: {:?}", msg);
-                    drop(context.state.write(ButtonState { pressed }));
-                    drop(context.signals.write(*msg));
+                    let _ = context.state.write(ButtonState { pressed });
+                    let _ = context.signals.write(*msg);
                 }
             }
         });
@@ -630,7 +630,7 @@ fn test_refs() {
             for msg in context.messenger.messages {
                 if msg.as_any().downcast_ref::<()>().is_some() {
                     println!("Test got message");
-                    drop(context.signals.write(()));
+                    let _ = context.signals.write(());
                 }
             }
         });
@@ -645,8 +645,8 @@ fn test_refs() {
     fn use_app(context: &mut WidgetContext) {
         context.life_cycle.mount(|context| {
             println!("Register app");
-            drop(context.state.write(AppState::default()));
-            drop(context.signals.write(true));
+            let _ = context.state.write(AppState::default());
+            let _ = context.signals.write(true);
         });
 
         context.life_cycle.change(|context| {
@@ -765,7 +765,7 @@ fn test_scroll_box() {
             }
             application
                 .interact(interactions)
-                .expect("Failed integration");
+                .expect("Failed interation");
             println!("* Read signals");
             for (id, msg) in application.consume_signals() {
                 println!("* Signal: {:?} -> {:?}", id, msg);

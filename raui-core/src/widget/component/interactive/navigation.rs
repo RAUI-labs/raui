@@ -52,6 +52,8 @@ pub enum NavSignal {
     Unregister(NavType),
     Select(WidgetIdOrRef),
     Unselect,
+    Lock,
+    Unlock,
     Accept(bool),
     Context(bool),
     Cancel(bool),
@@ -504,7 +506,7 @@ pub fn navigation_barrier(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            ..Default::default()
+            renderer_effect: None,
         }
     }}}
 }

@@ -61,7 +61,7 @@ pub fn use_text_input_notified_state(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
-                drop(context.state.write_with(msg.state.to_owned()));
+                let _ = context.state.write_with(msg.state.to_owned());
             }
         }
     });
@@ -90,7 +90,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
                 state: data.to_owned(),
             },
         );
-        drop(context.state.write_with(data));
+        let _ = context.state.write_with(data);
     });
 
     context.life_cycle.change(|context| {
@@ -166,7 +166,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
                     state: data.to_owned(),
                 },
             );
-            drop(context.state.write_with(data));
+            let _ = context.state.write_with(data);
         }
     });
 }
@@ -217,7 +217,7 @@ pub fn text_input(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            ..Default::default()
+            renderer_effect: None,
         }
     }}}
 }
@@ -241,7 +241,7 @@ pub fn input_field(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            ..Default::default()
+            renderer_effect: None,
         }
     }}}
 }

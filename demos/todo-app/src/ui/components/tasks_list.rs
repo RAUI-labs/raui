@@ -53,12 +53,14 @@ fn use_task(context: &mut WidgetContext) {
                                 context.messenger.write(id, AppMessage::ToggleTask(index));
                             }
                         }
-                        "delete" => drop(context.state.write_with(TaskState { deleting: true })),
+                        "delete" => {
+                            let _ = context.state.write_with(TaskState { deleting: true });
+                        }
                         _ => {}
                     }
                 }
             } else if let Some(msg) = msg.as_any().downcast_ref::<ConfirmNotifyMessage>() {
-                drop(context.state.write_with(TaskState { deleting: false }));
+                let _ = context.state.write_with(TaskState { deleting: false });
                 if msg.confirmed {
                     // TODO: figure out better to pass index to the message.
                     // maybe using props? anything would be better than parsing string.
@@ -171,22 +173,37 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
 }
 
 pub fn tasks_list(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+    let WidgetContext { id, key, props, .. } = context;
 
     let TasksProps { tasks } = props.read_cloned_or_default();
+
     let tasks = tasks
         .into_iter()
         .enumerate()
         .map(|(i, item)| {
-            widget! { (#{i} task: {item}) }
+            let props = Props::new(item).with(FlexBoxItemLayout {
+                grow: 0.0,
+                shrink: 0.0,
+                ..Default::default()
+            });
+            widget! { (#{i} task: {props}) }
         })
         .collect::<Vec<_>>();
-    let props = props.clone().with(VerticalBoxProps {
+
+    let scroll_props = Props::new(NavContainerActive)
+        .with(NavItemActive)
+        .with(ScrollViewNotifyProps(id.to_owned().into()))
+        .with(ScrollViewRange::default());
+
+    let list_props = VerticalBoxProps {
         separation: 10.0,
         ..Default::default()
-    });
+    };
 
     widget! {
-        (#{key} vertical_box: {props} |[ tasks ]|)
+        (#{key} nav_scroll_paper: {scroll_props} {
+            content = (#{"list"} vertical_box: {list_props} |[ tasks ]|)
+            scrollbars = (#{"scrollbars"} nav_scroll_paper_side_scrollbars)
+        })
     }
 }

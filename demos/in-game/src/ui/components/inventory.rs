@@ -34,7 +34,7 @@ fn use_inventory(context: &mut WidgetContext) {
                             Err(_) => InventoryState::default(),
                         };
                         data.index = data.index.saturating_sub(1);
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                     InventoryMessage::Next => {
                         let mut data = match context.state.read::<InventoryState>() {
@@ -45,7 +45,7 @@ fn use_inventory(context: &mut WidgetContext) {
                             .props
                             .map_or_default::<ItemCellsProps, _, _>(|p| p.items.len());
                         data.index = (data.index + 1).min(count.saturating_sub(data.count));
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                 }
             }

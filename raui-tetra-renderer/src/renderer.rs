@@ -13,22 +13,64 @@ use tetra::{
     graphics::{
         get_transform_matrix,
         mesh::{Mesh, VertexWinding},
-        set_transform_matrix,
+        reset_scissor, set_scissor, set_transform_matrix,
         text::Text,
-        Color, DrawParams,
+        Color, DrawParams, Rectangle,
     },
     math::{Mat4, Vec2},
     Context,
 };
 
+fn intersect_rects(parent: Rectangle<i32>, child: Rectangle<i32>) -> Rectangle<i32> {
+    if parent.intersects(&child) {
+        let tl = Vec2::<i32>::max(child.top_left(), parent.top_left());
+        let br = Vec2::<i32>::min(child.bottom_right(), parent.bottom_right());
+        let w = br.x - tl.x;
+        let h = br.y - tl.y;
+        if w > 0 && h > 0 {
+            let x = tl.x;
+            let y = tl.y;
+            return Rectangle::new(x, y, w, h);
+        }
+    }
+    parent
+}
+
 pub struct TetraRenderer<'a> {
     context: &'a mut Context,
     resources: &'a mut TetraResources,
+    clip_stack: Vec<Rectangle<i32>>,
 }
 
 impl<'a> TetraRenderer<'a> {
     pub fn new(context: &'a mut Context, resources: &'a mut TetraResources) -> Self {
-        Self { context, resources }
+        Self {
+            context,
+            resources,
+            clip_stack: Vec::with_capacity(32),
+        }
+    }
+
+    fn push_clip(&mut self, rect: Rectangle<i32>) {
+        if let Some(last) = self.clip_stack.last().copied() {
+            self.clip_stack.push(intersect_rects(last, rect));
+        } else {
+            self.clip_stack.push(rect);
+        }
+        self.apply_clip();
+    }
+
+    fn pop_clip(&mut self) {
+        self.clip_stack.pop();
+        self.apply_clip();
+    }
+
+    fn apply_clip(&mut self) {
+        if let Some(rect) = self.clip_stack.last().copied() {
+            set_scissor(self.context, rect);
+        } else {
+            reset_scissor(self.context);
+        }
     }
 }
 
@@ -39,6 +81,7 @@ impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
         mapping: &CoordsMapping,
         layout: &Layout,
     ) -> Result<(), Error> {
+        self.clip_stack.clear();
         for (k, t) in &self.resources.textures {
             if let Some(v) = self.resources.image_sizes.get_mut(k) {
                 v.x = t.width() as Scalar;
@@ -80,6 +123,7 @@ impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
         mesh.set_front_face_winding(VertexWinding::Clockwise);
         for batch in tesselation.batches {
             match batch {
+                Batch::None | Batch::FontTriangles(_, _, _) => {}
                 Batch::ColoredTriangles(range) => {
                     mesh.reset_texture();
                     mesh.set_draw_range(range.start, range.end - range.start);
@@ -134,7 +178,21 @@ impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
                         return Err(Error::FontResourceNotFound(id));
                     }
                 }
-                _ => {}
+                Batch::ClipPush(clip) => {
+                    let matrix = Mat4::from_col_array(clip.matrix);
+                    let tl = matrix.mul_point(Vec2::new(0.0, 0.0));
+                    let tr = matrix.mul_point(Vec2::new(clip.box_size.0, 0.0));
+                    let br = matrix.mul_point(Vec2::new(clip.box_size.0, clip.box_size.1));
+                    let bl = matrix.mul_point(Vec2::new(0.0, clip.box_size.1));
+                    let x = tl.x.min(tr.x).min(br.x).min(bl.x).round();
+                    let y = tl.y.min(tr.y).min(br.y).min(bl.y).round();
+                    let x2 = tl.x.max(tr.x).max(br.x).max(bl.x).round();
+                    let y2 = tl.y.max(tr.y).max(br.y).max(bl.y).round();
+                    let w = x2 - x;
+                    let h = y2 - y;
+                    self.push_clip(Rectangle::new(x as i32, y as i32, w as i32, h as i32));
+                }
+                Batch::ClipPop => self.pop_clip(),
             }
         }
         Ok(())

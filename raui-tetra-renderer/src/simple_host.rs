@@ -69,25 +69,25 @@ impl TetraSimpleHost {
     pub fn update(&mut self, context: &mut Context) -> Vec<Signal> {
         self.interactions.update(context);
         self.application.animations_delta_time = time::get_delta_time(context).as_secs_f32();
-        self.application.process();
+        if self.application.process() {
+            let mapping = self.make_coords_mapping(context);
+            let _ = self.application.layout(&mapping, &mut DefaultLayoutEngine);
+        }
         self.application.interact(&mut self.interactions).unwrap();
         self.application.consume_signals()
     }
 
     pub fn draw(&mut self, context: &mut Context) -> tetra::Result {
         let mapping = self.make_coords_mapping(context);
-        if self
-            .application
-            .layout(&mapping, &mut DefaultLayoutEngine)
-            .is_ok()
-        {
-            let mut renderer = TetraRenderer::new(context, &mut self.resources);
-            self.application.render(&mapping, &mut renderer)?;
-        }
+        let mut renderer = TetraRenderer::new(context, &mut self.resources);
+        self.application.render(&mapping, &mut renderer)?;
         Ok(())
     }
 
     pub fn event(&mut self, context: &mut Context, event: &Event) {
+        if let Event::Resized { .. } = event {
+            self.application.mark_dirty();
+        }
         let mapping = self.make_coords_mapping(context);
         self.interactions.event(context, event, &mapping);
     }

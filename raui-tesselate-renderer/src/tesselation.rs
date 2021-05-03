@@ -38,6 +38,12 @@ pub struct BatchExternalText {
     pub matrix: [Scalar; 16],
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct BatchClipRect {
+    pub box_size: (Scalar, Scalar),
+    pub matrix: [Scalar; 16],
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Batch {
     None,
@@ -45,6 +51,8 @@ pub enum Batch {
     ImageTriangles(String, Range<usize>),
     FontTriangles(String, Scalar, Range<usize>),
     ExternalText(WidgetId, BatchExternalText),
+    ClipPush(BatchClipRect),
+    ClipPop,
 }
 
 impl Default for Batch {
@@ -65,6 +73,7 @@ impl Batch {
             (Self::FontTriangles(na, sa, ra), Self::FontTriangles(nb, sb, rb)) => {
                 na == nb && (sa - sb).abs() < 1.0e-6 && ra.end == rb.start
             }
+            (Self::ClipPush(_), Self::ClipPush(_)) => true,
             _ => false,
         }
     }
@@ -138,6 +147,9 @@ impl Tesselation {
                     | (Batch::ImageTriangles(_, ra), Batch::ImageTriangles(_, rb))
                     | (Batch::FontTriangles(_, _, ra), Batch::FontTriangles(_, _, rb)) => {
                         ra.end = rb.end
+                    }
+                    (a @ Batch::ClipPush(_), b @ Batch::ClipPush(_)) => {
+                        *a = b;
                     }
                     _ => {}
                 }

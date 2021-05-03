@@ -258,6 +258,21 @@ impl Props {
         }
     }
 
+    pub fn mutate_or_write<T, F, W>(&mut self, mut f: F, mut w: W)
+    where
+        T: 'static + PropsData,
+        F: FnMut(&T) -> T,
+        W: FnMut() -> T,
+    {
+        if let Ok(data) = self.read() {
+            let data = f(data);
+            self.write(data);
+        } else {
+            let data = w();
+            self.write(data);
+        }
+    }
+
     pub fn with<T>(mut self, data: T) -> Self
     where
         T: 'static + PropsData,

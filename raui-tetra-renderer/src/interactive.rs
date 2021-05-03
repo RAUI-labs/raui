@@ -8,9 +8,10 @@ use raui_core::{
     },
     layout::CoordsMapping,
     widget::{
-        component::interactive::navigation::{NavSignal, NavTextChange},
+        component::interactive::navigation::{NavJump, NavScroll, NavSignal, NavTextChange},
         utils::Vec2,
     },
+    Scalar,
 };
 use tetra::{
     input::{get_text_input, is_key_modifier_down, Key, KeyModifier, MouseButton},
@@ -20,6 +21,7 @@ use tetra::{
 #[derive(Debug)]
 pub struct TetraInteractionsEngine {
     pub engine: DefaultInteractionsEngine,
+    pub single_scroll_units: Vec2,
     pointer_position: Vec2,
 }
 
@@ -30,9 +32,14 @@ impl Default for TetraInteractionsEngine {
 }
 
 impl TetraInteractionsEngine {
+    fn default_single_scroll_units() -> Vec2 {
+        Vec2 { x: 10.0, y: 10.0 }
+    }
+
     pub fn new() -> Self {
         Self {
             engine: Default::default(),
+            single_scroll_units: Self::default_single_scroll_units(),
             pointer_position: Default::default(),
         }
     }
@@ -56,6 +63,7 @@ impl TetraInteractionsEngine {
                 scroll_views,
                 selected_chain,
             ),
+            single_scroll_units: Self::default_single_scroll_units(),
             pointer_position: Default::default(),
         }
     }
@@ -113,6 +121,16 @@ impl TetraInteractionsEngine {
                 }
                 _ => {}
             },
+            Event::MouseWheelMoved { amount } => {
+                let value = Vec2 {
+                    x: -self.single_scroll_units.x * amount.x as Scalar,
+                    y: -self.single_scroll_units.y * amount.y as Scalar,
+                };
+                self.engine
+                    .interact(Interaction::Navigate(NavSignal::Jump(NavJump::Scroll(
+                        NavScroll::Units(value, true),
+                    ))));
+            }
             Event::KeyPressed { key } => {
                 if self.engine.focused_text_input().is_some() {
                     match key {

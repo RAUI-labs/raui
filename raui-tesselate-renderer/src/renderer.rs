@@ -1,6 +1,6 @@
 use crate::{
     tesselation::{
-        Batch, BatchExternalText, Color, Tesselation, TesselationVertices,
+        Batch, BatchClipRect, BatchExternalText, Color, Tesselation, TesselationVertices,
         TesselationVerticesFormat, TesselationVerticesSliceMut,
     },
     Error, Index,
@@ -645,10 +645,15 @@ where
             WidgetUnit::AreaBox(unit) => self.count(&unit.slot, layout),
             WidgetUnit::ContentBox(unit) => {
                 if layout.items.contains_key(&unit.id) {
-                    unit.items.iter().fold((0, 0, 0), |a, v| {
-                        let v = self.count(&v.slot, layout);
-                        (a.0 + v.0, a.1 + v.1, a.2 + v.2)
-                    })
+                    let (vertices, indices, mut batches) =
+                        unit.items.iter().fold((0, 0, 0), |a, v| {
+                            let v = self.count(&v.slot, layout);
+                            (a.0 + v.0, a.1 + v.1, a.2 + v.2)
+                        });
+                    if unit.clipping {
+                        batches += 2;
+                    }
+                    (vertices, indices, batches)
                 } else {
                     (0, 0, 0)
                 }
@@ -749,8 +754,17 @@ where
                     items.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
                     let local_space = mapping.virtual_to_real_rect(item.local_space);
                     self.push_transform(&unit.transform, local_space);
+                    if unit.clipping {
+                        result.batches.push(Batch::ClipPush(BatchClipRect {
+                            box_size: (local_space.width(), local_space.height()),
+                            matrix: self.top_transform().into_col_array(),
+                        }));
+                    }
                     for (_, item) in items {
                         self.render_node(&item.slot, mapping, layout, result)?;
+                    }
+                    if unit.clipping {
+                        result.batches.push(Batch::ClipPop);
                     }
                     self.pop_transform();
                     Ok(())

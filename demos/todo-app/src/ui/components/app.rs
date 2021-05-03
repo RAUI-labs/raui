@@ -79,7 +79,7 @@ fn new_theme(theme: ThemeMode) -> ThemeProps {
 
 fn use_app(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
-        drop(context.state.write(AppState::default()));
+        let _ = context.state.write(AppState::default());
         context
             .signals
             .write(AppSignal::Ready(context.id.to_owned()));
@@ -98,7 +98,7 @@ fn use_app(context: &mut WidgetContext) {
                             ThemeMode::Light => ThemeMode::Dark,
                             ThemeMode::Dark => ThemeMode::Light,
                         };
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                     AppMessage::AddTask(name) => {
                         let mut data = match context.state.read::<AppState>() {
@@ -106,7 +106,7 @@ fn use_app(context: &mut WidgetContext) {
                             Err(_) => AppState::default(),
                         };
                         data.tasks.push(TaskProps::new(name));
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                     AppMessage::DeleteTask(index) => {
                         let mut data = match context.state.read::<AppState>() {
@@ -114,7 +114,7 @@ fn use_app(context: &mut WidgetContext) {
                             Err(_) => AppState::default(),
                         };
                         data.tasks.remove(*index);
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                     AppMessage::ToggleTask(index) => {
                         let mut data = match context.state.read::<AppState>() {
@@ -124,7 +124,7 @@ fn use_app(context: &mut WidgetContext) {
                         if let Some(item) = data.tasks.get_mut(*index) {
                             item.done = !item.done;
                         }
-                        drop(context.state.write(data));
+                        let _ = context.state.write(data);
                     }
                     AppMessage::Save => {
                         if let Ok(data) = context.state.read::<AppState>() {
@@ -132,7 +132,7 @@ fn use_app(context: &mut WidgetContext) {
                         }
                     }
                     AppMessage::Load(data) => {
-                        drop(context.state.write(data.clone()));
+                        let _ = context.state.write(data.clone());
                     }
                 }
             }
@@ -160,13 +160,6 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
         ..Default::default()
     };
 
-    let tasks_props = Props::new(FlexBoxItemLayout {
-        grow: 0.0,
-        shrink: 0.0,
-        ..Default::default()
-    })
-    .with(TasksProps { tasks });
-
     let wrap_props = WrapBoxProps {
         margin: Rect {
             left: 32.0,
@@ -187,7 +180,7 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
             (#{"wrap"} wrap_box: {wrap_props} {
                 content = (#{"list"} vertical_box: {list_props} [
                     (#{"app-bar"} app_bar: {bar_props})
-                    (#{"tasks-list"} tasks_list: {tasks_props})
+                    (#{"tasks-list"} tasks_list: {TasksProps { tasks }})
                 ])
             })
         ])

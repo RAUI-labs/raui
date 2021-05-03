@@ -35,12 +35,12 @@ fn use_app(context: &mut WidgetContext) {
             if let Some(msg) = msg.as_any().downcast_ref::<AppMessage>() {
                 match msg {
                     AppMessage::ShowPopup(index) => {
-                        drop(context.state.write(AppState {
+                        let _ = context.state.write(AppState {
                             popup_index: Some(*index),
-                        }));
+                        });
                     }
                     AppMessage::ClosePopup => {
-                        drop(context.state.write(AppState { popup_index: None }));
+                        let _ = context.state.write(AppState { popup_index: None });
                     }
                 }
             }

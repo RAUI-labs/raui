@@ -66,7 +66,7 @@ pub fn use_scroll_view_notified_state(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ScrollViewNotifyMessage>() {
-                drop(context.state.write_with(msg.state.clone()));
+                let _ = context.state.write_with(msg.state.clone());
             }
         }
     });
@@ -93,7 +93,7 @@ pub fn use_scroll_view(context: &mut WidgetContext) {
                 state: ScrollViewState::default(),
             },
         );
-        drop(context.state.write_with(ScrollViewState::default()));
+        let _ = context.state.write_with(ScrollViewState::default());
     });
 
     context.life_cycle.change(|context| {
@@ -113,6 +113,12 @@ pub fn use_scroll_view(context: &mut WidgetContext) {
                 } else {
                     data.value = *value;
                 }
+                if factor.x <= 1.0 {
+                    data.value.x = 0.0;
+                }
+                if factor.y <= 1.0 {
+                    data.value.y = 0.0;
+                }
                 if let Ok(range) = &range {
                     data.value.x = data.value.x.max(range.from.x).min(range.to.x);
                     data.value.y = data.value.y.max(range.from.y).min(range.to.y);
@@ -129,7 +135,7 @@ pub fn use_scroll_view(context: &mut WidgetContext) {
                     state: data.clone(),
                 },
             );
-            drop(context.state.write_with(data));
+            let _ = context.state.write_with(data);
         }
     });
 }

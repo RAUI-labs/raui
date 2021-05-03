@@ -10,6 +10,7 @@ use crate::{
     widget::{
         context::WidgetContext,
         node::{WidgetNode, WidgetNodePrefab},
+        utils::Vec2,
         FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
     MessageData, PrefabValue, PropsData, Scalar,
@@ -79,12 +80,12 @@ pub fn use_message_forward(context: &mut WidgetContext) {
     });
 }
 
-#[derive(MessageData, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(MessageData, Debug, Copy, Clone, PartialEq)]
 #[message_data(crate::messenger::MessageData)]
 pub enum ResizeListenerSignal {
     Register,
     Unregister,
-    Change,
+    Change(Vec2),
 }
 
 pub fn use_resize_listener(context: &mut WidgetContext) {

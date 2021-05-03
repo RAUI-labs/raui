@@ -353,6 +353,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::scroll_box::SideScrollbarsState>(
         "SideScrollbarsState",
     );
+    app.register_props::<component::containers::portal_box::PortalBoxProps>("PortalBoxProps");
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
     app.register_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
@@ -421,6 +422,7 @@ pub fn setup(app: &mut Application) {
         "nav_scroll_box_side_scrollbars",
         component::containers::scroll_box::nav_scroll_box_side_scrollbars,
     );
+    app.register_component("portal_box", component::containers::portal_box::portal_box);
     app.register_component("size_box", component::containers::size_box::size_box);
     app.register_component(
         "nav_switch_box",
@@ -490,7 +492,7 @@ macro_rules! widget {
             )?
             $(
                 {
-                    $($named_slot_name:ident = $named_slot_widget:tt)+
+                    $($named_slot_name:ident = $named_slot_widget:tt)*
                 }
             )?
             $(
@@ -498,7 +500,7 @@ macro_rules! widget {
             )?
             $(
                 [
-                    $($listed_slot_widget:tt)+
+                    $($listed_slot_widget:tt)*
                 ]
             )?
         )
@@ -539,7 +541,7 @@ macro_rules! widget {
                         let name = stringify!($named_slot_name).to_owned();
                         named_slots.insert(name, widget);
                     }
-                )+
+                )*
             )?
             #[allow(unused_mut)]
             let mut listed_slots = vec![];

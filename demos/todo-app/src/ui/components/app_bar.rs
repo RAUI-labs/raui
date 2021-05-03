@@ -11,7 +11,7 @@ pub struct AppBarState {
 
 fn use_app_bar(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
-        drop(context.state.write(AppBarState::default()));
+        let _ = context.state.write(AppBarState::default());
     });
 
     context.life_cycle.change(|context| {
@@ -34,10 +34,10 @@ fn use_app_bar(context: &mut WidgetContext) {
                             context.messenger.write(id, AppMessage::Save);
                         }
                         "create" => {
-                            drop(context.state.write(AppBarState {
+                            let _ = context.state.write(AppBarState {
                                 creating_task: true,
                                 ..Default::default()
-                            }));
+                            });
                         }
                         "add" => {
                             if let Ok(data) = context.state.read::<AppBarState>() {
@@ -52,16 +52,16 @@ fn use_app_bar(context: &mut WidgetContext) {
                                     );
                                 }
                             }
-                            drop(context.state.write(AppBarState::default()));
+                            let _ = context.state.write(AppBarState::default());
                         }
                         _ => {}
                     }
                 }
             } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
-                drop(context.state.write(AppBarState {
+                let _ = context.state.write(AppBarState {
                     creating_task: true,
                     new_task_name: msg.state.text.to_owned(),
-                }));
+                });
             }
         }
     });
@@ -78,19 +78,23 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     } = context;
 
     let theme_mode = shared_props.read_cloned_or_default::<ThemeMode>();
+
     let props = props.clone().with(VerticalBoxProps {
         separation: 10.0,
         ..Default::default()
     });
+
     let line_props = props.clone().with(HorizontalBoxProps {
         separation: 10.0,
         ..Default::default()
     });
+
     let title_props = TextPaperProps {
         text: "TODO Demo App".to_owned(),
         variant: "title".to_owned(),
         ..Default::default()
     };
+
     let name_props = Props::new(TextFieldPaperProps {
         hint: "> Type new task name...".to_owned(),
         paper_theme: ThemedWidgetProps {
@@ -108,6 +112,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     .with(NavItemActive)
     .with(ButtonNotifyProps(id.to_owned().into()))
     .with(TextInputNotifyProps(id.to_owned().into()));
+
     let theme_props = Props::new(FlexBoxItemLayout {
         fill: 0.0,
         grow: 0.0,
@@ -133,6 +138,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     })
     .with(NavItemActive)
     .with(ButtonNotifyProps(id.to_owned().into()));
+
     let save_props = Props::new(FlexBoxItemLayout {
         fill: 0.0,
         grow: 0.0,
@@ -154,6 +160,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     })
     .with(NavItemActive)
     .with(ButtonNotifyProps(id.to_owned().into()));
+
     let create_props = Props::new(FlexBoxItemLayout {
         fill: 0.0,
         grow: 0.0,
@@ -175,6 +182,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     })
     .with(NavItemActive)
     .with(ButtonNotifyProps(id.to_owned().into()));
+
     let creating_task = match state.read::<AppBarState>() {
         Ok(state) => state.creating_task,
         Err(_) => false,

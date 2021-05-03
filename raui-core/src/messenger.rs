@@ -39,7 +39,7 @@ impl MessageSender {
         I: IntoIterator<Item = (WidgetId, Message)>,
     {
         for data in messages {
-            drop(self.0.send(data));
+            let _ = self.0.send(data);
         }
     }
 }
