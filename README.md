@@ -186,7 +186,7 @@ fn use_empty(context: &mut WidgetContext) {
 fn use_button(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
         println!("* BUTTON MOUNTED: {}", context.id.key());
-        drop(context.state.write(ButtonState { pressed: false }));
+        let _ = context.state.write(ButtonState { pressed: false });
     });
 
     context.life_cycle.change(|context| {
@@ -198,8 +198,8 @@ fn use_button(context: &mut WidgetContext) {
                     ButtonAction::Released => false,
                 };
                 println!("* BUTTON ACTION: {:?}", msg);
-                drop(context.state.write(ButtonState { pressed }));
-                drop(context.signals.write(*msg));
+                let _ = context.state.write(ButtonState { pressed });
+                let _ = context.signals.write(*msg);
             }
         }
     });
