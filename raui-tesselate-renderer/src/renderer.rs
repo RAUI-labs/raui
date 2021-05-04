@@ -63,6 +63,8 @@ impl TextTesselationEngine for () {
                 text: text.text.to_owned(),
                 font: text.font.name.to_owned(),
                 size: text.font.size,
+                alignment: text.alignment,
+                direction: text.direction,
                 color: raui_to_color(text.color),
                 box_size: (layout.local_space.width(), layout.local_space.height()),
                 matrix,

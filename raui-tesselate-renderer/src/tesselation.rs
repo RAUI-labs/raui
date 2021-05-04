@@ -1,5 +1,11 @@
 use crate::Index;
-use raui_core::{widget::WidgetId, Scalar};
+use raui_core::{
+    widget::{
+        unit::text::{TextBoxAlignment, TextBoxDirection},
+        WidgetId,
+    },
+    Scalar,
+};
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
 use vek::Vec2;
@@ -35,6 +41,8 @@ pub struct BatchExternalText {
     pub size: Scalar,
     pub color: Color,
     pub box_size: (Scalar, Scalar),
+    pub alignment: TextBoxAlignment,
+    pub direction: TextBoxDirection,
     pub matrix: [Scalar; 16],
 }
 
