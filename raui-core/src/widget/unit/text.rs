@@ -12,15 +12,28 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TextBoxAlignment {
+pub enum TextBoxHorizontalAlign {
     Left,
     Center,
     Right,
 }
 
-impl Default for TextBoxAlignment {
+impl Default for TextBoxHorizontalAlign {
     fn default() -> Self {
         Self::Left
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TextBoxVerticalAlign {
+    Top,
+    Middle,
+    Bottom,
+}
+
+impl Default for TextBoxVerticalAlign {
+    fn default() -> Self {
+        Self::Top
     }
 }
 
@@ -87,7 +100,9 @@ pub struct TextBox {
     #[serde(default)]
     pub height: TextBoxSizeValue,
     #[serde(default)]
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    #[serde(default)]
+    pub vertical_align: TextBoxVerticalAlign,
     #[serde(default)]
     pub direction: TextBoxDirection,
     #[serde(default)]
@@ -113,7 +128,8 @@ impl TryFrom<TextBoxNode> for TextBox {
             text,
             width,
             height,
-            alignment,
+            horizontal_align,
+            vertical_align,
             direction,
             font,
             color,
@@ -125,7 +141,8 @@ impl TryFrom<TextBoxNode> for TextBox {
             text,
             width,
             height,
-            alignment,
+            horizontal_align,
+            vertical_align,
             direction,
             font,
             color,
@@ -141,7 +158,8 @@ pub struct TextBoxNode {
     pub text: String,
     pub width: TextBoxSizeValue,
     pub height: TextBoxSizeValue,
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    pub vertical_align: TextBoxVerticalAlign,
     pub direction: TextBoxDirection,
     pub font: TextBoxFont,
     pub color: Color,
@@ -177,7 +195,9 @@ pub(crate) struct TextBoxNodePrefab {
     #[serde(default)]
     pub height: TextBoxSizeValue,
     #[serde(default)]
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    #[serde(default)]
+    pub vertical_align: TextBoxVerticalAlign,
     #[serde(default)]
     pub direction: TextBoxDirection,
     #[serde(default)]

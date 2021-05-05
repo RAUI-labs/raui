@@ -18,7 +18,10 @@ pub struct TextPaperProps {
     pub use_main_color: bool,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub alignment_override: Option<TextBoxAlignment>,
+    pub horizontal_align_override: Option<TextBoxHorizontalAlign>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vertical_align_override: Option<TextBoxVerticalAlign>,
     #[serde(default)]
     pub transform: Transform,
 }
@@ -38,12 +41,14 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
         height,
         variant,
         use_main_color,
-        alignment_override,
+        horizontal_align_override,
+        vertical_align_override,
         transform,
     } = props.read_cloned_or_default();
     let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
     let ThemedTextMaterial {
-        mut alignment,
+        mut horizontal_align,
+        mut vertical_align,
         direction,
         font,
     } = match shared_props.read::<ThemeProps>() {
@@ -54,8 +59,11 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
             .unwrap_or_default(),
         Err(_) => Default::default(),
     };
-    if let Some(alignment_override) = alignment_override {
-        alignment = alignment_override;
+    if let Some(horizontal_override) = horizontal_align_override {
+        horizontal_align = horizontal_override;
+    }
+    if let Some(alignment_override) = vertical_align_override {
+        vertical_align = alignment_override;
     }
     let color = match shared_props.read::<ThemeProps>() {
         Ok(props) => {
@@ -79,7 +87,8 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
         text,
         width,
         height,
-        alignment,
+        horizontal_align,
+        vertical_align,
         direction,
         font,
         color,

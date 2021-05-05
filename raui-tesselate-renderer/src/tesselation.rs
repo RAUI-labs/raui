@@ -1,7 +1,7 @@
 use crate::Index;
 use raui_core::{
     widget::{
-        unit::text::{TextBoxAlignment, TextBoxDirection},
+        unit::text::{TextBoxDirection, TextBoxHorizontalAlign, TextBoxVerticalAlign},
         WidgetId,
     },
     Scalar,
@@ -41,7 +41,8 @@ pub struct BatchExternalText {
     pub size: Scalar,
     pub color: Color,
     pub box_size: (Scalar, Scalar),
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    pub vertical_align: TextBoxVerticalAlign,
     pub direction: TextBoxDirection,
     pub matrix: [Scalar; 16],
 }
