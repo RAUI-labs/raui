@@ -11,7 +11,7 @@ use crate::{
         unit::area::AreaBoxNode,
         WidgetId, WidgetIdOrRef,
     },
-    MessageData, PropsData,
+    Integer, MessageData, PropsData, Scalar, UnsignedInteger,
 };
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +21,56 @@ fn is_false(v: &bool) -> bool {
 
 fn is_zero(v: &usize) -> bool {
     *v == 0
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TextInputMode {
+    Text,
+    Number,
+    Integer,
+    UnsignedInteger,
+}
+
+impl Default for TextInputMode {
+    fn default() -> Self {
+        Self::Text
+    }
+}
+
+impl TextInputMode {
+    pub fn is_text(&self) -> bool {
+        matches!(self, Self::Text)
+    }
+
+    pub fn is_number(&self) -> bool {
+        matches!(self, Self::Number)
+    }
+
+    pub fn is_integer(&self) -> bool {
+        matches!(self, Self::Integer)
+    }
+
+    pub fn is_unsigned_integer(&self) -> bool {
+        matches!(self, Self::UnsignedInteger)
+    }
+
+    pub fn process(&self, text: &str) -> Option<String> {
+        match self {
+            Self::Text => Some(text.to_owned()),
+            Self::Number => text.parse::<Scalar>().ok().map(|v| v.to_string()),
+            Self::Integer => text.parse::<Integer>().ok().map(|v| v.to_string()),
+            Self::UnsignedInteger => text.parse::<UnsignedInteger>().ok().map(|v| v.to_string()),
+        }
+    }
+
+    pub fn is_valid(&self, text: &str) -> bool {
+        match self {
+            Self::Text => true,
+            Self::Number => text.parse::<Scalar>().is_ok() || text == "-",
+            Self::Integer => text.parse::<Integer>().is_ok() || text == "-",
+            Self::UnsignedInteger => text.parse::<UnsignedInteger>().is_ok(),
+        }
+    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -39,6 +89,9 @@ pub struct TextInputProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     pub text: String,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "TextInputMode::is_text")]
+    pub mode: TextInputMode,
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -82,6 +135,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
 
     context.life_cycle.mount(|context| {
         let mut data = context.props.read_cloned_or_default::<TextInputProps>();
+        data.text = data.mode.process(&data.text).unwrap_or_default();
         data.focused = false;
         notify(
             &context,
@@ -110,8 +164,13 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                     if !c.is_control() {
                                         data.cursor_position =
                                             data.cursor_position.min(data.text.len());
+                                        let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, *c);
-                                        data.cursor_position += 1;
+                                        if data.mode.is_valid(&data.text) {
+                                            data.cursor_position += 1;
+                                        } else {
+                                            data.text = old;
+                                        }
                                     }
                                 }
                                 NavTextChange::MoveCursorLeft => {
@@ -145,8 +204,13 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                     if data.allow_new_line {
                                         data.cursor_position =
                                             data.cursor_position.min(data.text.len());
+                                        let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, '\n');
-                                        data.cursor_position += 1;
+                                        if data.mode.is_valid(&data.text) {
+                                            data.cursor_position += 1;
+                                        } else {
+                                            data.text = old;
+                                        }
                                     }
                                 }
                             }

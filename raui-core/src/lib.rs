@@ -19,8 +19,12 @@ pub type Scalar = f64;
 pub type Scalar = f32;
 #[cfg(feature = "integer64")]
 pub type Integer = i64;
+#[cfg(feature = "integer64")]
+pub type UnsignedInteger = u64;
 #[cfg(not(feature = "integer64"))]
 pub type Integer = i32;
+#[cfg(not(feature = "integer64"))]
+pub type UnsignedInteger = u32;
 
 pub use raui_derive::*;
 use serde::{de::DeserializeOwned, Serialize};
@@ -71,9 +75,9 @@ pub mod prelude {
             component::*,
             component::{
                 containers::{
-                    content_box::*, flex_box::*, grid_box::*, horizontal_box::*, portal_box::*,
-                    scroll_box::*, size_box::*, switch_box::*, variant_box::*, vertical_box::*,
-                    wrap_box::*,
+                    content_box::*, flex_box::*, grid_box::*, hidden_box::*, horizontal_box::*,
+                    portal_box::*, scroll_box::*, size_box::*, switch_box::*, variant_box::*,
+                    vertical_box::*, wrap_box::*,
                 },
                 image_box::*,
                 interactive::*,

@@ -1,6 +1,7 @@
 pub mod content_box;
 pub mod flex_box;
 pub mod grid_box;
+pub mod hidden_box;
 pub mod horizontal_box;
 pub mod portal_box;
 pub mod scroll_box;

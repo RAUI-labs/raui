@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ConfirmBoxProps {
     #[serde(default)]
-    pub open: bool,
-    #[serde(default)]
     pub text: String,
     #[serde(default)]
     pub notify: WidgetIdOrRef,
@@ -62,10 +60,7 @@ fn use_confirm_box(context: &mut WidgetContext) {
 pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext { id, key, props, .. } = context;
 
-    let ConfirmBoxProps { open, text, .. } = props.read_cloned_or_default();
-    if !open {
-        return widget! {()};
-    }
+    let ConfirmBoxProps { text, .. } = props.read_cloned_or_default();
 
     let list_props = Props::new(ContentBoxItemLayout {
         anchors: Rect {

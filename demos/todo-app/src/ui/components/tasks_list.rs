@@ -157,7 +157,6 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
     });
 
     let confirm_props = ConfirmBoxProps {
-        open: deleting,
         text: "Do you want to remove task?".to_owned(),
         notify: id.to_owned().into(),
     };
@@ -167,7 +166,9 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
             (#{"checkbox"} switch_button_paper: {checkbox_props})
             (#{"name"} text_paper: {name_props})
             (#{"delete"} icon_button_paper: {delete_props})
-            (#{"confirm"} confirm_box: {confirm_props})
+            (hidden_box: {HiddenBoxProps(!deleting)} {
+                content = (#{"confirm"} confirm_box: {confirm_props})
+            })
         ])
     }
 }

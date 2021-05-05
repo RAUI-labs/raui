@@ -33,6 +33,8 @@ pub struct TextFieldPaperProps {
     pub paper_theme: ThemedWidgetProps,
     #[serde(default = "TextFieldPaperProps::default_padding")]
     pub padding: Rect,
+    #[serde(default)]
+    pub password: Option<char>,
 }
 
 impl TextFieldPaperProps {
@@ -63,6 +65,7 @@ impl Default for TextFieldPaperProps {
             transform: Default::default(),
             paper_theme: Default::default(),
             padding: Self::default_padding(),
+            password: Default::default(),
         }
     }
 }
@@ -81,6 +84,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         transform,
         paper_theme,
         padding,
+        password,
     } = props.read_cloned_or_default();
     let TextInputProps {
         text,
@@ -88,7 +92,11 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         focused,
         ..
     } = props.read_cloned_or_default();
-    let text = text.trim();
+    let text = if let Some(c) = password {
+        std::iter::repeat(c).take(text.len()).collect()
+    } else {
+        text.trim().to_owned()
+    };
     let text = if text.is_empty() {
         hint
     } else if focused {

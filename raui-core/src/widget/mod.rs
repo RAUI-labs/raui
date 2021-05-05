@@ -346,6 +346,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::horizontal_box::HorizontalBoxProps>(
         "HorizontalBoxProps",
     );
+    app.register_props::<component::containers::hidden_box::HiddenBoxProps>("HiddenBoxProps");
     app.register_props::<component::containers::scroll_box::ScrollBoxOwner>("ScrollBoxOwner");
     app.register_props::<component::containers::scroll_box::SideScrollbarsProps>(
         "SideScrollbarsProps",
