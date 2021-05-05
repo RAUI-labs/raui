@@ -82,7 +82,9 @@ impl Default for ThemedImageMaterial {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ThemedTextMaterial {
     #[serde(default)]
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    #[serde(default)]
+    pub vertical_align: TextBoxVerticalAlign,
     #[serde(default)]
     pub direction: TextBoxDirection,
     #[serde(default)]

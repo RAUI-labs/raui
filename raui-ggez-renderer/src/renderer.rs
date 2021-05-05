@@ -9,7 +9,7 @@ use raui_core::{
     widget::{
         unit::{
             image::{ImageBoxImageScaling, ImageBoxMaterial},
-            text::TextBoxAlignment,
+            text::TextBoxHorizontalAlign,
             WidgetUnit,
         },
         utils::{lerp, Rect, Transform, Vec2},
@@ -455,10 +455,10 @@ impl<'a> GgezRenderer<'a> {
                         text.set_font(*resource, Scale::uniform(unit.font.size * mapping.scale()));
                         text.set_bounds(
                             [rect.width(), rect.height()],
-                            match unit.alignment {
-                                TextBoxAlignment::Left => Align::Left,
-                                TextBoxAlignment::Center => Align::Center,
-                                TextBoxAlignment::Right => Align::Right,
+                            match unit.horizontal_align {
+                                TextBoxHorizontalAlign::Left => Align::Left,
+                                TextBoxHorizontalAlign::Center => Align::Center,
+                                TextBoxHorizontalAlign::Right => Align::Right,
                             },
                         );
                         // NOTE:

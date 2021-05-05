@@ -5,7 +5,8 @@ use crate::{
         context::WidgetContext,
         node::WidgetNode,
         unit::text::{
-            TextBoxAlignment, TextBoxDirection, TextBoxFont, TextBoxNode, TextBoxSizeValue,
+            TextBoxDirection, TextBoxFont, TextBoxHorizontalAlign, TextBoxNode, TextBoxSizeValue,
+            TextBoxVerticalAlign,
         },
         utils::{Color, Transform},
     },
@@ -24,7 +25,9 @@ pub struct TextBoxProps {
     #[serde(default)]
     pub height: TextBoxSizeValue,
     #[serde(default)]
-    pub alignment: TextBoxAlignment,
+    pub horizontal_align: TextBoxHorizontalAlign,
+    #[serde(default)]
+    pub vertical_align: TextBoxVerticalAlign,
     #[serde(default)]
     pub direction: TextBoxDirection,
     #[serde(default)]
@@ -47,7 +50,8 @@ pub fn text_box(context: WidgetContext) -> WidgetNode {
         width,
         height,
         text,
-        alignment,
+        horizontal_align,
+        vertical_align,
         direction,
         font,
         mut color,
@@ -64,7 +68,8 @@ pub fn text_box(context: WidgetContext) -> WidgetNode {
             text,
             width,
             height,
-            alignment,
+            horizontal_align,
+            vertical_align,
             direction,
             font,
             color,
