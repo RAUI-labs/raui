@@ -16,9 +16,14 @@
 1. [Milestones](#milestones)
 
 ## About
-RAUI (_spelled as **"ra"** (Egiptian god) + **"oui"** (french for "yes")_) is heavely inspired by **React** declarative UI composition and **UE4 Slate** widget components system.
 
-The main idea behind RAUI architecture is to treat UI as another data that you transform into target renderable data format used by your rendering engine of choice.
+RAUI is a renderer agnostic UI system that is heavily inspired by **React**'s declarative UI composition and the **UE4 Slate** widget components system.
+
+> 🗣 **Pronunciation:** RAUI is pronounced like **"ra"** ( the Egyptian god ) + **"oui"** ( french for "yes" ) — [Audio Example][pronounciation].
+
+[pronounciation]: https://itinerarium.github.io/phoneme-synthesis/?w=/%27rawi/
+
+The main idea behind RAUI architecture is to treat UI as another data source that you transform into your target renderable data format used by your rendering engine of choice.
 
 ## Architecture
 
