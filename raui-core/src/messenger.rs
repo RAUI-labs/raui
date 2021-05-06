@@ -1,4 +1,4 @@
-//! Widget messaging types
+//! Widget messaging
 
 use crate::widget::WidgetId;
 use std::{any::Any, sync::mpsc::Sender};
