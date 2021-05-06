@@ -12,11 +12,11 @@ A `WidgetNode` represents any kind of widget in RAUI: `None`, `WidgetUnit`, or `
 
 ### `WidgetUnit`'s
 
-`WidgetUnit`'s are primitive widgets such as `TextBox`, `ImageBox`, or `FlexBox`. There are a small number of different kinds of `WidgetUnit`'s and it is the job of the RAUI rendering backend to be able to render the differnt kinds of `WidgetUnit`'s. They are the building-blocks for more complicated components.
+`WidgetUnit`'s are primitive widgets such as `TextBox`, `ImageBox`, or `FlexBox`. There are a small number of different kinds of `WidgetUnit`'s and it is the job of the RAUI rendering backends to be able to render each different kind of `WidgetUnit`. They are the building-blocks for more complicated components.
 
 ### `WidgetComponent`'s
 
-`WidgetComponent`'s are made out of functions that process their properties and child nodes and use that information to return a new `WidgetNode`. The returned `WidgetNode` can in turn be made up of other `WidgetComponent`'s or `WigetUnit`'s. This allows you to use components to compose other components and widget units together to create complicated UIs out of small, modular components.
+`WidgetComponent`'s are  functions that process their properties and child nodes and use that information to return a new `WidgetNode`. Components can combine other components and widget units to create complicated UIs out of small, modular components.
 
 ## Writing a Component
 
@@ -25,44 +25,7 @@ Now let's write our first component! Let's create a new module to put our UI cod
 **`ui.rs`:**
 
 ```rust
-// Include the RAUI prelude
-use raui::prelude::*;
-
-/// We create our own widget by making a function that takes a `WidgetContext`
-/// and that returns `WidgetNode`.
-pub fn my_first_widget(_ctx: WidgetContext) -> WidgetNode {
-    // We may do any amount of processing in the body of the function.
-
-    // For now we will simply be creating a text box properties struct that we
-    // will use to configure the `text_box` component.
-    let text_box_props = TextBoxProps {
-        text: "Hello world!".to_owned(),
-        color: Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-            a: 1.0,
-        },
-        font: TextBoxFont {
-            name: "verdana".to_owned(),
-            size: 32.0,
-        },
-        ..Default::default()
-    };
-
-    // And at the end of the function we return a `WidgetNode` which we can
-    // conveniently create with the `widget!` macro.
-    widget! {
-        (text_box: {text_box_props})
-        // ^          ^
-        // |          |
-        // |          ---- After the name of the widget component we pass in
-        // |               the component properties.
-        // |
-        // --- This is the name of the `text_box` widget component, which is a
-        //     part of the RAUI prelude
-    }
-}
+{{#include ./rust/02_your_first_widget.rs}}
 ```
 
 Then back in `main.rs` we need to include our new `ui` module:
@@ -85,7 +48,7 @@ impl App {
         // This is where we pass in our actual RAUI widget tree, specifying the
         // whole RAUI UI. The widget! macro is used to create widget nodes that
         // are used to represent widget trees.
-        // 
+        //
         // Here we create a widget node with `my_widget` as the only component in
         // it.
         let tree = widget! {
