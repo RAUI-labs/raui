@@ -49,6 +49,43 @@ fn is_arg_context(arg: &FnArg) -> Option<Ident> {
     }
 }
 
+// The links won't be broken when built in the context of the `raui` crate
+#[allow(rustdoc::broken_intra_doc_links)]
+/// An attribute macro that allows you to add hooks that will execute before your component body
+///
+/// > **See Also:** [`macro@post_hooks`] for an alternative that runs _after_ your component body
+///
+/// Hooks allow you to create reusable logic that can be applied to multiple components.
+///
+/// # Usage Example
+///
+/// ```rust,ignore
+/// # use raui::prelude::*;
+/// #[pre_hooks(use_button_notified_state)]
+/// pub fn image_button(mut context: WidgetContext) -> WidgetNode {
+///    // Do stuff and potentially use state added by the `use_button_notified_state` hook
+/// }
+/// ```
+///
+/// # Creating a Hook
+///
+/// Hooks are simply functions that take a mutable reference to the component's
+/// [`WidgetContext`][raui_core::widget::context::WidgetContext].
+///
+/// ```ignore
+/// pub fn use_button_notified_state(context: &mut WidgetContext) {
+///     // hook into the lifecycle of whatever widget this hook is applied to
+///     context.life_cycle.change(|context| {
+///         for msg in context.messenger.messages {
+///             // listen for button messages
+///             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+///                 // And modify the context state with the button info
+///                 let _ = context.state.write_with(msg.state);
+///             }
+///         }
+///     });
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn pre_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ItemFn {
@@ -78,6 +115,9 @@ pub fn pre_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     tokens.into()
 }
 
+/// Allows you to execute re-usable logic after your component body
+///
+/// See [`macro@pre_hooks`]
 #[proc_macro_attribute]
 pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ItemFn {
@@ -110,6 +150,29 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     tokens.into()
 }
 
+// The links won't be broken when built in the context of the `raui` crate
+#[allow(rustdoc::broken_intra_doc_links)]
+/// Derive macro for the [`PropsData`][raui_core::props::PropsData] trait
+///
+/// ```ignore
+/// #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+/// #[props_data(crate::props::PropsData)]
+/// #[prefab(crate::Prefab)]
+/// pub struct ButtonProps {
+///     #[serde(default)]
+///     #[serde(skip_serializing_if = "is_false")]
+///     pub selected: bool,
+///     #[serde(default)]
+///     #[serde(skip_serializing_if = "is_false")]
+///     pub trigger: bool,
+///     #[serde(default)]
+///     #[serde(skip_serializing_if = "is_false")]
+///     pub context: bool,
+///     #[serde(default)]
+///     #[serde(skip_serializing_if = "is_zero")]
+///     pub pointer: Vec2,
+/// }
+/// ```
 #[proc_macro_derive(PropsData, attributes(remote, props_data, prefab))]
 pub fn derive_props(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, attrs, .. } = parse_macro_input!(input as DeriveInput);
@@ -148,6 +211,17 @@ pub fn derive_props(input: TokenStream) -> TokenStream {
     tokens.into()
 }
 
+// The links won't be broken when built in the context of the `raui` crate
+#[allow(rustdoc::broken_intra_doc_links)]
+/// Derive macro for the [`MessageData`][raui_core::messenger::MessageData] trait
+///
+/// ```ignore
+/// #[derive(MessageData, Debug, Clone)]
+/// pub enum AppMessage {
+///     ShowPopup(usize),
+///     ClosePopup,
+/// }
+/// ```
 #[proc_macro_derive(MessageData, attributes(remote, message_data))]
 pub fn derive_message(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, attrs, .. } = parse_macro_input!(input as DeriveInput);

@@ -1,3 +1,5 @@
+//! Application foundation used to drive the RAUI interface
+
 use crate::{
     animator::{AnimationUpdate, Animator, AnimatorStates},
     interactive::InteractionsEngine,

@@ -1,3 +1,5 @@
+//! Renderer traits
+
 use crate::{
     layout::{CoordsMapping, Layout},
     widget::unit::WidgetUnit,

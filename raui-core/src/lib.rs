@@ -1,3 +1,5 @@
+//! The RAUI core types and components
+
 pub mod application;
 #[macro_use]
 pub mod messenger;
@@ -13,29 +15,51 @@ pub mod interactive;
 pub mod layout;
 pub mod signals;
 
+/// A floating point, scalar value define as a type alias to allow switching between 32 and 64 bit
+/// floats
 #[cfg(feature = "scalar64")]
 pub type Scalar = f64;
+/// A floating point, scalar value define as a type alias to allow switching between 32 and 64 bit
+/// floats
 #[cfg(not(feature = "scalar64"))]
 pub type Scalar = f32;
+
+/// An integer, scalar value define as a type alias to allow switching between 32 and 64 bit
+/// integers
 #[cfg(feature = "integer64")]
 pub type Integer = i64;
+/// An unsigned, integer, scalar value define as a type alias to allow switching between 32 and 64
+/// bit integers
 #[cfg(feature = "integer64")]
 pub type UnsignedInteger = u64;
+
+/// An integer, scalar value define as a type alias to allow switching between 32 and 64 bit
+/// integers
 #[cfg(not(feature = "integer64"))]
 pub type Integer = i32;
+/// An unsigned, integer, scalar value define as a type alias to allow switching between 32 and 64
+/// bit integers
 #[cfg(not(feature = "integer64"))]
 pub type UnsignedInteger = u32;
 
 pub use raui_derive::*;
 use serde::{de::DeserializeOwned, Serialize};
+
+#[doc(inline)]
 pub use serde_yaml::{Number as PrefabNumber, Value as PrefabValue};
 
+/// An error that can occur while processing a [`Prefab`]
 #[derive(Debug, Clone)]
 pub enum PrefabError {
     CouldNotSerialize(String),
     CouldNotDeserialize(String),
 }
 
+/// The [`Prefab`] trait is implemented for types that are able to translate to and from
+/// [`PrefabValue`]'s
+///
+/// [`PrefabValue`]'s can then, in turn, be serialized or deserialized for persistance, transfer, or
+/// other purposes.
 pub trait Prefab: Serialize + DeserializeOwned {
     fn from_prefab(data: PrefabValue) -> Result<Self, PrefabError> {
         match serde_yaml::from_value(data) {
@@ -52,12 +76,13 @@ pub trait Prefab: Serialize + DeserializeOwned {
     }
 }
 
+#[doc(hidden)]
 pub mod prelude {
     pub use crate::{
         animator::*,
         application::*,
         data_binding::*,
-        destruct, implement_message_data, implement_props_data,
+        implement_message_data, implement_props_data,
         interactive::default_interactions_engine::*,
         interactive::*,
         layout::default_layout_engine::*,
@@ -91,6 +116,6 @@ pub mod prelude {
             unit::{area::*, content::*, flex::*, grid::*, image::*, size::*, text::*},
             utils::*,
         },
-        widget_wrap, Integer, MessageData, Prefab, PrefabError, PropsData, Scalar,
+        Integer, MessageData, Prefab, PrefabError, PropsData, Scalar,
     };
 }

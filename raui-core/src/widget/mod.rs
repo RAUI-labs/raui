@@ -1,3 +1,5 @@
+//! Widget types and the core component collection
+
 pub mod component;
 pub mod context;
 pub mod node;
@@ -470,6 +472,22 @@ pub fn setup(app: &mut Application) {
     app.register_component("text_box", component::text_box::text_box);
 }
 
+/// Helper to manually create a [`WidgetComponent`][crate::widget::component::WidgetComponent]
+/// struct from a function.
+///
+/// Users will not usually need this macro, but it can be useful in some advanced cases or where you
+/// don't want to use the [`widget`] macro.
+///
+/// # Example
+///
+/// ```
+/// # use raui_core::prelude::*;
+/// let component: WidgetComponent = make_widget!(my_component);
+///
+/// fn my_component(context: WidgetContext) -> WidgetNode {
+///     todo!("Make an awesome widget")
+/// }
+/// ```
 #[macro_export]
 macro_rules! make_widget {
     ($type_id:path) => {{
@@ -479,6 +497,51 @@ macro_rules! make_widget {
     }};
 }
 
+/// Create a [`WidgetNode`] struct from a custom widget tree DSL
+///
+/// The `widget` macro is primarily used to construct widget trees as the return value of
+/// components.
+///
+/// # Example
+///
+/// ```rust
+/// # use raui_core::prelude::*;
+/// # fn my_component(_: WidgetContext) -> WidgetNode { todo!() }
+/// # fn component_1(_: WidgetContext) -> WidgetNode { todo!() }
+/// # fn popup(_: WidgetContext) -> WidgetNode { todo!() }
+/// # fn component_2(_: WidgetContext) -> WidgetNode { todo!() }
+/// # fn component_3(_: WidgetContext) -> WidgetNode { todo!() }
+/// # fn test() -> WidgetNode {
+/// # let my_component_props = Props::new(());
+/// # let my_component_shared_props = Props::new(());
+/// # let component_1_props = Props::new(());
+/// # let popup_props = Props::new(());
+/// # let component_2_props = Props::new(());
+/// # let component_3_props = Props::new(());
+///
+/// // You can create [`WidgetNode`]'s and assign them to variables
+/// let popup_widget = widget! {
+///     (popup: {popup_props})
+/// };
+///
+/// widget! {
+///     // parenthesis are used around components and they each _may_ have a key,
+///     // props, shared props, listed children, and/or named children. Everything is,
+///     // optional.
+///     (#{"widget_key"} my_component: {my_component_props} | {my_component_shared_props} {
+///         // named children
+///         content = (component_1: {component_1_props})
+///     } [
+///         // listed children
+///         (component_2: {component_2_props})
+///         (component_3: {component_3_props})
+///
+///         // You can also use `{variable_name}` syntax to expand variables into a widget
+///         {popup_widget}
+///     ])
+/// }
+/// # }
+/// ```
 #[macro_export]
 macro_rules! widget {
     {()} => ($crate::widget::node::WidgetNode::None);
@@ -550,7 +613,7 @@ macro_rules! widget {
             let mut named_slots = std::collections::HashMap::new();
             $(
                 $(
-                    let widget = $crate::widget_wrap!{$named_slot_widget};
+                    let widget = $crate::widget!{@wrap $named_slot_widget};
                     if widget.is_some() {
                         let name = stringify!($named_slot_name).to_owned();
                         named_slots.insert(name, widget);
@@ -564,7 +627,7 @@ macro_rules! widget {
             )?
             $(
                 $(
-                    let widget = $crate::widget_wrap!{$listed_slot_widget};
+                    let widget = $crate::widget!{@wrap $listed_slot_widget};
                     if widget.is_some() {
                         listed_slots.push(widget);
                     }
@@ -583,18 +646,16 @@ macro_rules! widget {
             $crate::widget::node::WidgetNode::Component(component)
         }
     };
-}
-
-#[macro_export]
-macro_rules! widget_wrap {
-    ({$expr:expr}) => {
+    (@wrap {$expr:expr}) => {
         $crate::widget::node::WidgetNode::from($expr)
     };
-    ($tree:tt) => {
+    (@wrap $tree:tt) => {
         $crate::widget!($tree)
     };
 }
 
+/// Helper to destructure a struct on one line
+#[deprecated = "This macro is unused and will be removed soon"]
 #[macro_export]
 macro_rules! destruct {
     {$type_id:path { $($prop:ident),+ } ($value:expr) => $code:block} => {
@@ -604,6 +665,29 @@ macro_rules! destruct {
     };
 }
 
+/// A helper for getting the named children out of a widget context
+///
+/// # Example
+///
+/// ```
+/// # use raui_core::prelude::*;
+/// fn my_component(context: WidgetContext) -> WidgetNode {
+///     // Destructure our context to get our named slots
+///     let WidgetContext {
+///         named_slots,
+///         ..
+///     } = context;
+///     // Unpack our named `body` slot
+///     unpack_named_slots!(named_slots => body);
+///
+///     widget! {
+///         (content_box {
+///             // insert our body slot in the content box
+///             content = {body}
+///         })
+///     }
+/// }
+/// ```
 #[macro_export]
 macro_rules! unpack_named_slots {
     ($map:expr => $name:ident) => {

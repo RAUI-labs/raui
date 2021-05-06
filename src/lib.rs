@@ -1,10 +1,17 @@
+//! RAUI is a renderer agnostic UI system that is heavily inspired by **React**'s declarative UI
+//! composition and the **UE4 Slate** widget components system.
+//! 
+//! See the [readme] for a more in-depth explanation.
+//! 
+//! [readme]: https://github.com/PsichiX/raui#raui-
+
 #[cfg(test)]
 mod tests;
 
-pub mod core {
-    pub use raui_core::*;
-}
+#[doc(inline)]
+pub use raui_core as core;
 
+/// RAUI renderer implementations
 pub mod renderer {
     #[cfg(feature = "material")]
     pub mod material {
@@ -37,6 +44,7 @@ pub mod renderer {
     }
 }
 
+#[doc(hidden)]
 pub mod prelude {
     #[cfg(feature = "material")]
     pub use raui_material::prelude::*;

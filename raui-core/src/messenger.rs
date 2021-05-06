@@ -1,3 +1,5 @@
+//! Widget messaging types
+
 use crate::widget::WidgetId;
 use std::{any::Any, sync::mpsc::Sender};
 
@@ -73,6 +75,8 @@ impl<'a> Messenger<'a> {
     }
 }
 
+/// Macro for implementing [`MessageData`]. You may prefer to use the [derive
+/// macro][`macro@crate::MessageData`] instead.
 #[macro_export]
 macro_rules! implement_message_data {
     ($type_name:ty) => {

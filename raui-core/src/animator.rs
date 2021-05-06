@@ -1,3 +1,5 @@
+//! Animation engine
+
 use crate::{messenger::MessageSender, widget::WidgetId, MessageData, Scalar};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::mpsc::Sender};
