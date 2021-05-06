@@ -28,7 +28,7 @@ pub fn title_bar(mut context: WidgetContext) -> WidgetNode {
         text,
         width: TextBoxSizeValue::Fill,
         height: TextBoxSizeValue::Exact(32.0),
-        alignment: TextBoxAlignment::Center,
+        horizontal_align: TextBoxHorizontalAlign::Center,
         font: TextBoxFont {
             name: "verdana".to_owned(),
             size: 32.0,
