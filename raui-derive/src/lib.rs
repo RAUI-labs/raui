@@ -151,6 +151,8 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
 
 // The links won't be broken when built in the context of the `raui` crate
 /// Derive macro for the [`PropsData`][raui_core::props::PropsData] trait
+/// 
+/// # Example
 ///
 /// ```ignore
 /// #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
@@ -158,16 +160,12 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
 /// #[prefab(crate::Prefab)]
 /// pub struct ButtonProps {
 ///     #[serde(default)]
-///     #[serde(skip_serializing_if = "is_false")]
 ///     pub selected: bool,
 ///     #[serde(default)]
-///     #[serde(skip_serializing_if = "is_false")]
 ///     pub trigger: bool,
 ///     #[serde(default)]
-///     #[serde(skip_serializing_if = "is_false")]
 ///     pub context: bool,
 ///     #[serde(default)]
-///     #[serde(skip_serializing_if = "is_zero")]
 ///     pub pointer: Vec2,
 /// }
 /// ```
@@ -211,6 +209,8 @@ pub fn derive_props(input: TokenStream) -> TokenStream {
 
 // The links won't be broken when built in the context of the `raui` crate
 /// Derive macro for the [`MessageData`][raui_core::messenger::MessageData] trait
+/// 
+/// # Example
 ///
 /// ```ignore
 /// #[derive(MessageData, Debug, Clone)]
