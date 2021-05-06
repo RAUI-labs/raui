@@ -10,5 +10,5 @@ edition = "2018"
 # The sdl2_bundled feature tells the crate to download and install SDL2 so you
 # don't have to have it installed
 tetra = { version = "0.6", features = [] }
-raui = { version = "0.30", path = "../../" }
-raui-tetra-renderer = { version = "0.30", path = "../../raui-tetra-renderer" }
+raui = { version = "0.34", path = "../../" }
+raui-tetra-renderer = { version = "0.34", path = "../../raui-tetra-renderer" }
