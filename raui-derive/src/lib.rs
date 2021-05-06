@@ -50,7 +50,6 @@ fn is_arg_context(arg: &FnArg) -> Option<Ident> {
 }
 
 // The links won't be broken when built in the context of the `raui` crate
-#[allow(rustdoc::broken_intra_doc_links)]
 /// An attribute macro that allows you to add hooks that will execute before your component body
 ///
 /// > **See Also:** [`macro@post_hooks`] for an alternative that runs _after_ your component body
@@ -151,7 +150,6 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 // The links won't be broken when built in the context of the `raui` crate
-#[allow(rustdoc::broken_intra_doc_links)]
 /// Derive macro for the [`PropsData`][raui_core::props::PropsData] trait
 ///
 /// ```ignore
@@ -212,7 +210,6 @@ pub fn derive_props(input: TokenStream) -> TokenStream {
 }
 
 // The links won't be broken when built in the context of the `raui` crate
-#[allow(rustdoc::broken_intra_doc_links)]
 /// Derive macro for the [`MessageData`][raui_core::messenger::MessageData] trait
 ///
 /// ```ignore
