@@ -104,3 +104,6 @@ members = [
   "demos/todo-app",
   "demos/in-game",
 ]
+
+[package.metadata.docs.rs]
+features = ["all"]
