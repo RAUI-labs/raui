@@ -106,8 +106,7 @@
 //!   - pointer to _component function_ (that process their data)
 //!   - unique _key_ (that is a part of widget ID and will be used to tell the system if it should
 //!     carry its _state_ to next processing run)
-//!   - boxed cloneable _properties_ data (if component is a function, then properties are function
-//!     arguments)
+//!   - boxed cloneable _properties_ data
 //!   - _listed slots_ (simply: widget children)
 //!   - _named slots_ (similar to listed slots: widget children, but these ones have names assigned
 //!     to them, so you can access them by name instead of by index)
