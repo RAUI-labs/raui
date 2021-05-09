@@ -33,8 +33,10 @@ impl GgezInteractionsEngine {
         Self::default()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn with_capacity(
         resize_listeners: usize,
+        relative_layout_listeners: usize,
         interactions_queue: usize,
         containers: usize,
         buttons: usize,
@@ -45,6 +47,7 @@ impl GgezInteractionsEngine {
         Self {
             engine: DefaultInteractionsEngine::with_capacity(
                 resize_listeners,
+                relative_layout_listeners,
                 interactions_queue,
                 containers,
                 buttons,

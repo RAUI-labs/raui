@@ -32,7 +32,7 @@ pub enum AppMessage {
 fn use_app(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<AppMessage>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     AppMessage::ShowPopup(index) => {
                         let _ = context.state.write(AppState {

@@ -4,5 +4,6 @@ pub mod horizontal_paper;
 pub mod modal_paper;
 pub mod paper;
 pub mod scroll_paper;
+pub mod text_tooltip_paper;
 pub mod vertical_paper;
 pub mod wrap_paper;

@@ -87,7 +87,7 @@ fn use_app(context: &mut WidgetContext) {
 
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<AppMessage>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     AppMessage::ToggleTheme => {
                         let mut data = match context.state.read::<AppState>() {
@@ -150,7 +150,7 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
     let idref = WidgetRef::new();
 
     let shared_props = Props::new(AppSharedProps { id: id.to_owned() })
-        .with(ModalsContainer(idref.clone()))
+        .with(PortalsContainer(idref.clone()))
         .with(theme)
         .with(theme_mode);
 

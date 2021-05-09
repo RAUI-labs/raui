@@ -18,11 +18,6 @@ impl ModalPaperProps {
     }
 }
 
-#[derive(PropsData, Default, Debug, Clone, Serialize, Deserialize)]
-#[props_data(raui_core::props::PropsData)]
-#[prefab(raui_core::Prefab)]
-pub struct ModalsContainer(#[serde(default)] pub WidgetRef);
-
 impl Default for ModalPaperProps {
     fn default() -> Self {
         Self {
@@ -46,7 +41,6 @@ pub fn modal_paper(context: WidgetContext) -> WidgetNode {
         shadow_shown,
         shadow_variant,
     } = props.read_cloned_or_default();
-    let ModalsContainer(modals_idref) = shared_props.read_cloned_or_default();
 
     let mut color = Color::transparent();
     if shadow_shown {
@@ -66,7 +60,7 @@ pub fn modal_paper(context: WidgetContext) -> WidgetNode {
     };
 
     widget! {
-        (#{key} portal_box: {PortalBoxProps(modals_idref)} {
+        (#{key} portal_box {
             content = (#{"container"} content_box [
                 (#{"shadow-barrier"} navigation_barrier {
                     content = (#{"shadow-image"} image_box: {shadow_image_props})

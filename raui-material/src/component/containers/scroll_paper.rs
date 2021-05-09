@@ -27,7 +27,7 @@ impl Default for SideScrollbarsPaperProps {
     }
 }
 
-pub fn nav_scroll_paper(context: WidgetContext) -> WidgetNode {
+pub fn scroll_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref,
         key,
@@ -47,7 +47,7 @@ pub fn nav_scroll_paper(context: WidgetContext) -> WidgetNode {
     }
 }
 
-pub fn nav_scroll_paper_side_scrollbars(context: WidgetContext) -> WidgetNode {
+pub fn scroll_paper_side_scrollbars(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref,
         key,

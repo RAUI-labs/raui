@@ -202,9 +202,9 @@ pub fn tasks_list(context: WidgetContext) -> WidgetNode {
     };
 
     widget! {
-        (#{key} nav_scroll_paper: {scroll_props} {
+        (#{key} scroll_paper: {scroll_props} {
             content = (#{"list"} vertical_box: {list_props} |[ tasks ]|)
-            scrollbars = (#{"scrollbars"} nav_scroll_paper_side_scrollbars)
+            scrollbars = (#{"scrollbars"} scroll_paper_side_scrollbars)
         })
     }
 }

@@ -104,14 +104,14 @@ pub fn use_button_notified_state(context: &mut WidgetContext) {
     });
 }
 
-#[pre_hooks(use_nav_button)]
+#[pre_hooks(use_nav_item, use_nav_button)]
 pub fn use_button(context: &mut WidgetContext) {
     fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
     where
         T: 'static + MessageData,
     {
-        if let Ok(notify) = context.props.read::<ButtonNotifyProps>() {
-            if let Some(to) = notify.0.read() {
+        if let Ok(ButtonNotifyProps(notify)) = context.props.read() {
+            if let Some(to) = notify.read() {
                 context.messenger.write(to, data);
             }
         }
@@ -122,8 +122,8 @@ pub fn use_button(context: &mut WidgetContext) {
             &context,
             ButtonNotifyMessage {
                 sender: context.id.to_owned(),
-                state: ButtonProps::default(),
-                prev: ButtonProps::default(),
+                state: Default::default(),
+                prev: Default::default(),
             },
         );
         let _ = context.state.write_with(ButtonProps::default());
@@ -134,7 +134,7 @@ pub fn use_button(context: &mut WidgetContext) {
         let prev = data;
         let mut dirty = false;
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     NavSignal::Select(_) => {
                         data.selected = true;
@@ -181,7 +181,7 @@ pub fn use_button(context: &mut WidgetContext) {
     });
 }
 
-#[pre_hooks(use_nav_item, use_button)]
+#[pre_hooks(use_button)]
 pub fn button(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,

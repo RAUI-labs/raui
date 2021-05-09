@@ -10,7 +10,7 @@ use crate::{
     widget::{
         context::WidgetContext,
         node::{WidgetNode, WidgetNodePrefab},
-        utils::Vec2,
+        utils::{Rect, Vec2},
         FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
     MessageData, PrefabValue, PropsData, Scalar,
@@ -95,6 +95,46 @@ pub fn use_resize_listener(context: &mut WidgetContext) {
 
     context.life_cycle.unmount(|context| {
         context.signals.write(ResizeListenerSignal::Unregister);
+    });
+}
+
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct RelativeLayoutProps {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
+    pub relative_to: WidgetIdOrRef,
+}
+
+#[derive(MessageData, Debug, Clone, PartialEq)]
+#[message_data(crate::messenger::MessageData)]
+pub enum RelativeLayoutListenerSignal {
+    /// (relative to id)
+    Register(WidgetId),
+    Unregister,
+    /// (outer box size, inner box rect)
+    Change(Vec2, Rect),
+}
+
+pub fn use_relative_layout_listener(context: &mut WidgetContext) {
+    context.life_cycle.mount(|context| {
+        if let Ok(props) = context.props.read::<RelativeLayoutProps>() {
+            if let Some(relative_to) = props.relative_to.read() {
+                context
+                    .signals
+                    .write(RelativeLayoutListenerSignal::Register(relative_to));
+            }
+        }
+    });
+
+    // TODO: when user will change widget IDs after mounting, we might want to re-register
+    // this widget with new IDs.
+
+    context.life_cycle.unmount(|context| {
+        context
+            .signals
+            .write(RelativeLayoutListenerSignal::Unregister);
     });
 }
 

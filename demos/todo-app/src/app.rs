@@ -64,7 +64,7 @@ impl TodoState {
 impl State for TodoState {
     fn update(&mut self, context: &mut Context) -> tetra::Result {
         for (_, msg) in self.ui.update(context) {
-            if let Some(msg) = msg.as_any().downcast_ref::<AppSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     AppSignal::Ready(id) => self.load(id),
                     AppSignal::Save(state) => Self::save(state),

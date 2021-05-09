@@ -5,10 +5,10 @@ use crate::{
     widget::{
         component::{
             interactive::navigation::{NavDirection, NavJump, NavScroll, NavSignal, NavType},
-            ResizeListenerSignal,
+            RelativeLayoutListenerSignal, ResizeListenerSignal,
         },
         unit::WidgetUnit,
-        utils::{lerp, Vec2},
+        utils::{lerp, Rect, Vec2},
         WidgetId,
     },
     Scalar,
@@ -71,6 +71,7 @@ impl DefaultInteractionsEngineResult {
 pub struct DefaultInteractionsEngine {
     pub deselect_when_no_button_found: bool,
     resize_listeners: HashMap<WidgetId, Vec2>,
+    relative_layout_listeners: HashMap<WidgetId, (WidgetId, Vec2, Rect)>,
     interactions_queue: VecDeque<Interaction>,
     containers: HashMap<WidgetId, HashSet<WidgetId>>,
     items_owners: HashMap<WidgetId, WidgetId>,
@@ -89,8 +90,10 @@ impl DefaultInteractionsEngine {
         Self::default()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn with_capacity(
         resize_listeners: usize,
+        relative_layout_listeners: usize,
         interactions_queue: usize,
         containers: usize,
         buttons: usize,
@@ -101,6 +104,7 @@ impl DefaultInteractionsEngine {
         Self {
             deselect_when_no_button_found: false,
             resize_listeners: HashMap::with_capacity(resize_listeners),
+            relative_layout_listeners: HashMap::with_capacity(relative_layout_listeners),
             interactions_queue: VecDeque::with_capacity(interactions_queue),
             containers: HashMap::with_capacity(containers),
             items_owners: Default::default(),
@@ -887,13 +891,14 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
         app: &mut Application,
     ) -> Result<DefaultInteractionsEngineResult, ()> {
         let mut to_resize = HashSet::new();
+        let mut to_relative_layout = HashSet::new();
         let mut to_select = None;
         let mut to_jump = HashMap::new();
         let mut to_focus = None;
         let mut to_send_axis = vec![];
         let mut to_send_custom = vec![];
         for (id, signal) in app.signals() {
-            if let Some(signal) = signal.as_any().downcast_ref::<ResizeListenerSignal>() {
+            if let Some(signal) = signal.as_any().downcast_ref() {
                 match signal {
                     ResizeListenerSignal::Register => {
                         if let Some(item) = app.layout_data().items.get(id) {
@@ -907,7 +912,26 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     }
                     _ => {}
                 }
-            } else if let Some(signal) = signal.as_any().downcast_ref::<NavSignal>() {
+            } else if let Some(signal) = signal.as_any().downcast_ref() {
+                match signal {
+                    RelativeLayoutListenerSignal::Register(relative_to) => {
+                        if let (Some(item), Some(rect)) = (
+                            app.layout_data().items.get(relative_to),
+                            app.layout_data().rect_relative_to(id, relative_to),
+                        ) {
+                            self.relative_layout_listeners.insert(
+                                id.to_owned(),
+                                (relative_to.to_owned(), item.local_space.size(), rect),
+                            );
+                            to_relative_layout.insert(id.to_owned());
+                        }
+                    }
+                    RelativeLayoutListenerSignal::Unregister => {
+                        self.relative_layout_listeners.remove(id);
+                    }
+                    _ => {}
+                }
+            } else if let Some(signal) = signal.as_any().downcast_ref() {
                 match signal {
                     NavSignal::Register(t) => match t {
                         NavType::Container => {
@@ -1008,11 +1032,32 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
         for (k, v) in &mut self.resize_listeners {
             if let Some(item) = app.layout_data().items.get(k) {
                 let size = item.local_space.size();
-                let dw = (v.x - size.x).abs();
-                let dh = (v.y - size.y).abs();
-                if to_resize.contains(k) || dw >= 1.0e-6 || dh >= 1.0e-6 {
+                if to_resize.contains(k)
+                    || (v.x - size.x).abs() >= 1.0e-6
+                    || (v.y - size.y).abs() >= 1.0e-6
+                {
                     app.send_message(k, ResizeListenerSignal::Change(size));
                     *v = size;
+                }
+            }
+        }
+        for (k, (r, s, v)) in &mut self.relative_layout_listeners {
+            if let (Some(item), Some(rect)) = (
+                app.layout_data().items.get(r),
+                app.layout_data().rect_relative_to(k, r),
+            ) {
+                let size = item.local_space.size();
+                if to_relative_layout.contains(k)
+                    || (s.x - size.x).abs() >= 1.0e-6
+                    || (s.y - size.y).abs() >= 1.0e-6
+                    || (v.left - rect.left).abs() >= 1.0e-6
+                    || (v.right - rect.right).abs() >= 1.0e-6
+                    || (v.top - rect.top).abs() >= 1.0e-6
+                    || (v.bottom - rect.bottom).abs() >= 1.0e-6
+                {
+                    app.send_message(k, RelativeLayoutListenerSignal::Change(size, rect));
+                    *s = size;
+                    *v = rect;
                 }
             }
         }

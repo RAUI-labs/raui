@@ -26,7 +26,7 @@ pub enum InventoryMessage {
 fn use_inventory(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<InventoryMessage>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     InventoryMessage::Prev => {
                         let mut data = match context.state.read::<InventoryState>() {
