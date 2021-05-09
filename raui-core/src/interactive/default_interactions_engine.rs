@@ -757,7 +757,7 @@ impl DefaultInteractionsEngine {
     }
 
     fn find_button(&self, app: &Application, x: Scalar, y: Scalar) -> Option<(WidgetId, Vec2)> {
-        self.find_button_inner(app, x, y, app.rendered_tree())
+        self.find_button_inner(app, x, y, app.rendered_tree(), app.layout_data().ui_space)
     }
 
     fn find_button_inner(
@@ -766,7 +766,11 @@ impl DefaultInteractionsEngine {
         x: Scalar,
         y: Scalar,
         unit: &WidgetUnit,
+        mut clip: Rect,
     ) -> Option<(WidgetId, Vec2)> {
+        if x < clip.left || x > clip.right || y < clip.top || y > clip.bottom {
+            return None;
+        }
         let mut result = None;
         if let Some(data) = unit.as_data() {
             if self.buttons.contains_key(data.id()) {
@@ -793,33 +797,38 @@ impl DefaultInteractionsEngine {
         }
         match unit {
             WidgetUnit::AreaBox(unit) => {
-                if let Some(id) = self.find_button_inner(app, x, y, &unit.slot) {
+                if let Some(id) = self.find_button_inner(app, x, y, &unit.slot, clip) {
                     result = Some(id);
                 }
             }
             WidgetUnit::ContentBox(unit) => {
+                if unit.clipping {
+                    if let Some(item) = app.layout_data().items.get(&unit.id) {
+                        clip = item.ui_space;
+                    }
+                }
                 for item in &unit.items {
-                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot) {
+                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot, clip) {
                         result = Some(id);
                     }
                 }
             }
             WidgetUnit::FlexBox(unit) => {
                 for item in &unit.items {
-                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot) {
+                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot, clip) {
                         result = Some(id);
                     }
                 }
             }
             WidgetUnit::GridBox(unit) => {
                 for item in &unit.items {
-                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot) {
+                    if let Some(id) = self.find_button_inner(app, x, y, &item.slot, clip) {
                         result = Some(id);
                     }
                 }
             }
             WidgetUnit::SizeBox(unit) => {
-                if let Some(id) = self.find_button_inner(app, x, y, &unit.slot) {
+                if let Some(id) = self.find_button_inner(app, x, y, &unit.slot, clip) {
                     result = Some(id);
                 }
             }
