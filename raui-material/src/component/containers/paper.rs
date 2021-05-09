@@ -2,31 +2,15 @@ use crate::theme::{ThemeColor, ThemeProps, ThemeVariant, ThemedImageMaterial, Th
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 #[props_data(raui_core::props::PropsData)]
 #[prefab(raui_core::Prefab)]
 pub struct PaperProps {
-    #[serde(default = "PaperProps::default_frame")]
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frame: Option<ImageBoxFrame>,
     #[serde(default)]
     pub variant: String,
-}
-
-impl PaperProps {
-    #[allow(clippy::unnecessary_wraps)]
-    fn default_frame() -> Option<ImageBoxFrame> {
-        Some(2.0.into())
-    }
-}
-
-impl Default for PaperProps {
-    fn default() -> Self {
-        Self {
-            frame: Self::default_frame(),
-            variant: Default::default(),
-        }
-    }
 }
 
 pub fn paper(context: WidgetContext) -> WidgetNode {

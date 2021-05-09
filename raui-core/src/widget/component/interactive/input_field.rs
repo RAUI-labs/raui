@@ -151,7 +151,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
         let mut data = context.state.read_cloned_or_default::<TextInputProps>();
         let mut dirty = false;
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     NavSignal::FocusTextInput(idref) => {
                         data.focused = idref.is_some();
@@ -242,7 +242,7 @@ pub fn use_input_field(context: &mut WidgetContext) {
             .state
             .map_or_default::<TextInputProps, _, _>(|s| s.focused);
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     NavSignal::Accept(true) => {
                         if !focused {

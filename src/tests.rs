@@ -197,7 +197,7 @@ fn test_hello_world() {
         context.life_cycle.change(|context| {
             println!("* BUTTON CHANGED: {}", context.id.key());
             for msg in context.messenger.messages {
-                if let Some(msg) = msg.as_any().downcast_ref::<ButtonAction>() {
+                if let Some(msg) = msg.as_any().downcast_ref() {
                     let pressed = match msg {
                         ButtonAction::Pressed => true,
                         ButtonAction::Released => false,
@@ -680,7 +680,7 @@ fn test_refs() {
     println!("* Process");
     application.forced_process();
     for (id, msg) in application.signals() {
-        if let Some(msg) = msg.as_any().downcast_ref::<bool>() {
+        if let Some(msg) = msg.as_any().downcast_ref() {
             if *msg {
                 println!("Registered app: {:?}", id);
                 appid = id.to_owned();

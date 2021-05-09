@@ -205,7 +205,7 @@ pub fn use_nav_jump_map(context: &mut WidgetContext) {
             _ => return,
         };
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     NavSignal::Up => {
                         if jump.up.is_some() {
@@ -263,7 +263,7 @@ pub fn use_nav_jump(context: &mut WidgetContext) {
         let looped = context.props.has::<NavJumpLooped>();
         let jump = context.props.read_cloned_or_default::<NavJumpMapProps>();
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<NavSignal>() {
+            if let Some(msg) = msg.as_any().downcast_ref() {
                 match (mode, msg) {
                     (NavJumpMode::Direction, NavSignal::Up) => {
                         if looped {

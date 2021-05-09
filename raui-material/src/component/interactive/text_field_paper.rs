@@ -111,7 +111,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
             format!("{}|", text)
         }
     } else {
-        text.to_owned()
+        text
     };
     let paper_variant = props.map_or_default::<PaperProps, _, _>(|p| p.variant.clone());
     let paper_props = props

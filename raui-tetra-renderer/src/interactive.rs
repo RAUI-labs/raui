@@ -27,7 +27,7 @@ pub struct TetraInteractionsEngine {
 
 impl Default for TetraInteractionsEngine {
     fn default() -> Self {
-        Self::with_capacity(32, 1024, 32, 32, 32, 32, 32)
+        Self::with_capacity(32, 32, 1024, 32, 32, 32, 32, 32)
     }
 }
 
@@ -44,8 +44,10 @@ impl TetraInteractionsEngine {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn with_capacity(
         resize_listeners: usize,
+        relative_layout_listeners: usize,
         interactions_queue: usize,
         containers: usize,
         buttons: usize,
@@ -56,6 +58,7 @@ impl TetraInteractionsEngine {
         Self {
             engine: DefaultInteractionsEngine::with_capacity(
                 resize_listeners,
+                relative_layout_listeners,
                 interactions_queue,
                 containers,
                 buttons,

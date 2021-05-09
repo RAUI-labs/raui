@@ -100,22 +100,16 @@ impl Layout {
     }
 
     pub fn rect_relative_to(&self, id: &WidgetId, to: &WidgetId) -> Option<Rect> {
-        if !id.path().starts_with(to.path()) {
-            return None;
-        }
-        let mut item = self.items.get(id)?;
-        let mut result = item.local_space;
-        while let Some(parent) = &item.parent {
-            if parent == to {
-                return Some(result);
-            }
-            item = self.items.get(parent)?;
-            result.left += item.local_space.left;
-            result.right += item.local_space.left;
-            result.top += item.local_space.top;
-            result.bottom += item.local_space.top;
-        }
-        Some(result)
+        let a = self.items.get(id)?;
+        let b = self.items.get(to)?;
+        let x = a.ui_space.left - b.ui_space.left;
+        let y = a.ui_space.top - b.ui_space.top;
+        Some(Rect {
+            left: x,
+            right: x + a.ui_space.width(),
+            top: y,
+            bottom: y + a.ui_space.height(),
+        })
     }
 }
 

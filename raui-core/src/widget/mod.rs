@@ -340,6 +340,8 @@ pub fn setup(app: &mut Application) {
     app.register_props::<f64>("f64");
     app.register_props::<bool>("bool");
     app.register_props::<String>("String");
+    app.register_props::<component::containers::anchor_box::AnchorProps>("AnchorProps");
+    app.register_props::<component::containers::anchor_box::PivotBoxProps>("PivotBoxProps");
     app.register_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
     app.register_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
     app.register_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
@@ -354,9 +356,10 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::scroll_box::SideScrollbarsState>(
         "SideScrollbarsState",
     );
-    app.register_props::<component::containers::portal_box::PortalBoxProps>("PortalBoxProps");
+    app.register_props::<component::containers::portal_box::PortalsContainer>("PortalsContainer");
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
+    app.register_props::<component::containers::tooltip_box::TooltipState>("TooltipState");
     app.register_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
     app.register_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
     app.register_props::<component::containers::wrap_box::WrapBoxProps>("WrapBoxProps");
@@ -389,6 +392,8 @@ pub fn setup(app: &mut Application) {
     app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
     app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
 
+    app.register_component("anchor_box", component::containers::anchor_box::anchor_box);
+    app.register_component("pivot_box", component::containers::anchor_box::pivot_box);
     app.register_component(
         "nav_content_box",
         component::containers::content_box::nav_content_box,
@@ -430,6 +435,14 @@ pub fn setup(app: &mut Application) {
         component::containers::switch_box::nav_switch_box,
     );
     app.register_component("switch_box", component::containers::switch_box::switch_box);
+    app.register_component(
+        "tooltip_box",
+        component::containers::tooltip_box::tooltip_box,
+    );
+    app.register_component(
+        "portals_tooltip_box",
+        component::containers::tooltip_box::portals_tooltip_box,
+    );
     app.register_component(
         "variant_box",
         component::containers::variant_box::variant_box,
