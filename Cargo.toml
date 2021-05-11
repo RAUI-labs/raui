@@ -104,7 +104,8 @@ members = [
   "demos/hello-world",
   "demos/todo-app",
   "demos/in-game",
-  "demos/guide",
+  "site/rust/guide_01",
+  "site/rust/guide_02",
 ]
 
 [package.metadata.docs.rs]

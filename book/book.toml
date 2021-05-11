@@ -1,9 +1,0 @@
-[book]
-authors = ["Zicklag"]
-language = "en"
-multilingual = false
-src = "src"
-title = "Raui Book"
-
-[build]
-build-dir = "build"

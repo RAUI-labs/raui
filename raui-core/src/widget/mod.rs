@@ -654,17 +654,6 @@ macro_rules! widget {
     };
 }
 
-/// Helper to destructure a struct on one line
-#[deprecated = "This macro is unused and will be removed soon"]
-#[macro_export]
-macro_rules! destruct {
-    {$type_id:path { $($prop:ident),+ } ($value:expr) => $code:block} => {
-        match $value {
-            $type_id { $( $prop ),+ , .. } => $code
-        }
-    };
-}
-
 /// A helper for getting the named children out of a widget context
 ///
 /// # Example
