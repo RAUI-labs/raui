@@ -666,6 +666,7 @@ macro_rules! widget {
 ///         named_slots,
 ///         ..
 ///     } = context;
+/// 
 ///     // Unpack our named `body` slot
 ///     unpack_named_slots!(named_slots => body);
 ///
@@ -676,6 +677,21 @@ macro_rules! widget {
 ///         })
 ///     }
 /// }
+/// ```
+/// 
+/// You can also unpack multiple slots at a time like this:
+/// 
+/// ```
+/// # use raui_core::prelude::*;
+/// # fn my_component(context: WidgetContext) -> WidgetNode {
+/// #    let WidgetContext {
+/// #        named_slots,
+/// #        ..
+/// #    } = context;
+/// // Unpack the `header`, `body`, and `footer` slots
+/// unpack_named_slots!(named_slots => { header, body, footer });
+/// #    widget!(())
+/// # }
 /// ```
 #[macro_export]
 macro_rules! unpack_named_slots {

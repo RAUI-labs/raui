@@ -136,6 +136,7 @@ impl<'a> Animator<'a> {
 }
 
 /// The amount of progress made for a value in an animation
+#[derive(Debug, Default, Clone, Copy)]
 pub struct AnimatedValueProgress {
     /// How far along this animation is from 0 to 1
     pub progress_factor: Scalar,

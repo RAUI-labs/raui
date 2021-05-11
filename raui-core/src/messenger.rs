@@ -75,8 +75,10 @@ impl<'a> Messenger<'a> {
     }
 }
 
-/// Macro for implementing [`MessageData`]. You may prefer to use the [derive
-/// macro][`macro@crate::MessageData`] instead.
+/// Macro for implementing [`MessageData`].
+///
+/// You may prefer to use the [derive macro][`macro@crate::MessageData`] instead, but in case of
+/// auto-implementing MessageData for remote or std types, this might be the macro you find useful.
 #[macro_export]
 macro_rules! implement_message_data {
     ($type_name:ty) => {
