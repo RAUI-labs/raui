@@ -1,6 +1,10 @@
 #![cfg(test)]
 
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    renderer::{html::HtmlRenderer, tesselate::prelude::TesselateRenderer},
+};
+
 use std::str::FromStr;
 
 #[test]
