@@ -13,6 +13,7 @@ use tetra::{
     time, window, Context, Event,
 };
 
+/// A host that manages a RAUI application in a Tetra game
 pub struct TetraSimpleHost {
     pub application: Application,
     pub resources: TetraResources,
@@ -20,35 +21,66 @@ pub struct TetraSimpleHost {
     pub scaling: CoordsMappingScaling,
 }
 
+/// A font that will be pre-loaded during the init of a [`TetraSimpleHost`]
+pub struct PreloadedFont<'a> {
+    /// The ID that will be used to reference the font in UI code
+    pub id: &'a str,
+    /// The size to load the font at
+    ///
+    /// Tetra will cache the font on the GPU, rendered at the given size
+    pub size: usize,
+    /// An additional scale to apply when rendering the font
+    pub scale: f32,
+    /// The path to the font file
+    pub path: &'a str,
+}
+
+/// A texture that will be pre-loaded during the init of a [`TetraSimpleHost`]
+pub struct PreloadedTexture<'a> {
+    /// The ID that will be used to reference the texture in UI code
+    pub id: &'a str,
+    /// The path to the texture image file
+    pub path: &'a str,
+}
+
 impl TetraSimpleHost {
-    /// F: (id, font size, font scale, path)
-    /// T: (id, path)
+    /// Create a new [`TetraSimpleHost`]
+    ///
+    /// # Preloading Textures and Fonts
+    ///
+    /// The `preload_fonts` and `preload_textures` parameters may be used to instruct the host to
+    /// load the given textures and fonts now before starting the app. Textures and fonts **do not**
+    /// have to be pre-loaded, in which case you would simply pass an empty slice ( `&[]` ) for each
+    /// argument.
+    ///
+    /// If you do not wish to pre-load the textures and fonts, you may simply supply the path to the
+    /// file when specifying images and fonts in the UI code and they will be loaded on-demand.
     pub fn new<'a, F, T, S>(
         context: &mut Context,
         tree: WidgetNode,
-        fonts: F,
-        textures: T,
+        preload_fonts: F,
+        preload_textures: T,
         setup: S,
     ) -> tetra::Result<Self>
     where
-        F: IntoIterator<Item = &'a (&'a str, usize, Scalar, &'a str)>,
-        T: IntoIterator<Item = &'a (&'a str, &'a str)>,
+        F: IntoIterator<Item = &'a PreloadedFont<'a>>,
+        T: IntoIterator<Item = &'a PreloadedTexture<'a>>,
         S: FnMut(&mut Application),
     {
         let mut resources = TetraResources::default();
-        for (id, size, scale, path) in fonts.into_iter() {
+        for font in preload_fonts.into_iter() {
             resources.fonts.insert(
-                format!("{}:{}", id, size),
+                format!("{}:{}", font.id, font.size),
                 (
-                    *scale,
-                    Font::vector(context, path, *size as Scalar * *scale)?,
+                    font.scale,
+                    Font::vector(context, font.path, font.size as Scalar * font.scale)?,
                 ),
             );
         }
-        for (id, path) in textures.into_iter() {
+        for texture in preload_textures.into_iter() {
             resources
                 .textures
-                .insert(id.to_string(), Texture::new(context, path)?);
+                .insert(texture.id.to_string(), Texture::new(context, texture.path)?);
         }
 
         let mut application = Application::new();
