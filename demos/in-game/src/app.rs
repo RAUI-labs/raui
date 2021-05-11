@@ -41,12 +41,20 @@ impl AppState {
         let fonts = assets
             .fonts
             .iter()
-            .map(|(k, (s, f, p))| (k.as_str(), *s, *f, p.as_str()))
+            .map(|(k, (s, f, p))| PreloadedFont {
+                id: k.as_str(),
+                size: *s,
+                scale: *f,
+                path: p.as_str(),
+            })
             .collect::<Vec<_>>();
         let textures = assets
             .images
             .iter()
-            .map(|(k, p)| (k.as_str(), p.as_str()))
+            .map(|(k, p)| PreloadedTexture {
+                id: k.as_str(),
+                path: p.as_str(),
+            })
             .collect::<Vec<_>>();
         let text = read_to_string("./resources/text.txt").expect("Could not load texts!");
         let mut markov = MarkovChain::new();

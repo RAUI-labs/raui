@@ -2,7 +2,10 @@ use crate::{resources::TetraResources, Error};
 use raui_core::{
     layout::{CoordsMapping, Layout},
     renderer::Renderer,
-    widget::{unit::WidgetUnit, utils::Vec2 as RauiVec2},
+    widget::{
+        unit::{image::ImageBoxMaterial, WidgetUnit},
+        utils::Vec2 as RauiVec2,
+    },
     Scalar,
 };
 use raui_tesselate_renderer::{
@@ -14,8 +17,8 @@ use tetra::{
         get_transform_matrix,
         mesh::{Mesh, VertexWinding},
         reset_scissor, set_scissor, set_transform_matrix,
-        text::Text,
-        Color, DrawParams, Rectangle,
+        text::{Font, Text},
+        Color, DrawParams, Rectangle, Texture,
     },
     math::{Mat4, Vec2},
     Context,
@@ -72,6 +75,65 @@ impl<'a> TetraRenderer<'a> {
             reset_scissor(self.context);
         }
     }
+
+    /// Loads any missing textures or fonts that have not been preloaded
+    fn try_load_missing_resources(&mut self, tree: &WidgetUnit) -> Result<(), Error> {
+        match tree {
+            WidgetUnit::AreaBox(area_box) => {
+                self.try_load_missing_resources(&area_box.slot)?;
+            }
+            WidgetUnit::ContentBox(content_box) => {
+                for item in &content_box.items {
+                    self.try_load_missing_resources(&item.slot)?;
+                }
+            }
+            WidgetUnit::FlexBox(flex_box) => {
+                for item in &flex_box.items {
+                    self.try_load_missing_resources(&item.slot)?;
+                }
+            }
+            WidgetUnit::GridBox(grid_box) => {
+                for item in &grid_box.items {
+                    self.try_load_missing_resources(&item.slot)?;
+                }
+            }
+            WidgetUnit::SizeBox(size_box) => {
+                self.try_load_missing_resources(&size_box.slot)?;
+            }
+            WidgetUnit::ImageBox(image_box) => match &image_box.material {
+                ImageBoxMaterial::Image(image) => {
+                    if !self.resources.textures.contains_key(&image.id) {
+                        self.resources.textures.insert(
+                            image.id.clone(),
+                            Texture::new(self.context, image.id.clone())
+                                .map_err(|e| Error::ImageResourceNotFound(e.to_string()))?,
+                        );
+                    }
+                }
+                ImageBoxMaterial::Color(_) | ImageBoxMaterial::Procedural(_) => {}
+            },
+            WidgetUnit::TextBox(text_box) => {
+                let font = &text_box.font;
+                if !self
+                    .resources
+                    .fonts
+                    .contains_key(&format!("{}:{}", font.name, font.size))
+                {
+                    self.resources.fonts.insert(
+                        format!("{}:{}", font.name, font.size),
+                        (
+                            1.0,
+                            Font::vector(self.context, font.name.clone(), font.size as Scalar)
+                                .map_err(|e| Error::FontResourceNotFound(e.to_string()))?,
+                        ),
+                    );
+                }
+            }
+            WidgetUnit::PortalBox(_) | WidgetUnit::None => {}
+        }
+
+        Ok(())
+    }
 }
 
 impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
@@ -81,6 +143,10 @@ impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
         mapping: &CoordsMapping,
         layout: &Layout,
     ) -> Result<(), Error> {
+        // Go through the widget tree and try to load any images and fonts that have not been loaded
+        // yet.
+        self.try_load_missing_resources(tree)?;
+
         self.clip_stack.clear();
         for (k, t) in &self.resources.textures {
             if let Some(v) = self.resources.image_sizes.get_mut(k) {
