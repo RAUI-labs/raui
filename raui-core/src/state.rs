@@ -1,3 +1,5 @@
+//! Widget state types
+
 use crate::props::{Props, PropsData, PropsError};
 use std::sync::mpsc::Sender;
 

@@ -1,3 +1,5 @@
+//! Widget property types
+
 use crate::{Prefab, PrefabError, PrefabValue};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -326,6 +328,11 @@ impl From<&Self> for Props {
     }
 }
 
+/// Macro for implementing [`PropsData`].
+///
+/// You may prefer to use the [derive macro][`macro@crate::PropsData`] instead, but in case of
+/// auto-implementing PropsData and Prefab traits for remote or std types, you might find this macro
+/// useful.
 #[macro_export]
 macro_rules! implement_props_data {
     ($type_name:ty) => {

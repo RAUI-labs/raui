@@ -100,9 +100,12 @@ members = [
   "raui-tesselate-renderer",
   "raui-tetra-renderer",
   "raui-yaml-renderer",
+  "raui-quick-start",
   "demos/hello-world",
   "demos/todo-app",
   "demos/in-game",
+  "site/rust/guide_01",
+  "site/rust/guide_02",
 ]
 
 [package.metadata.docs.rs]

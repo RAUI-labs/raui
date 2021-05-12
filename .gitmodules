@@ -1,0 +1,3 @@
+[submodule "site/themes/adidoks"]
+	path = site/themes/adidoks
+	url = https://github.com/RAUI-labs/raui_site_theme.git

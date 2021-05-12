@@ -1,0 +1,11 @@
+[package]
+name = "raui-quick-start"
+version = "0.34.0"
+edition = "2018"
+
+[dependencies]
+raui = { version = "0.34", path = "../" }
+raui-tetra-renderer = { version = "0.34", path = "../raui-tetra-renderer" }
+
+tetra = { version = "0.6", features = ["sdl2_bundled"] }
+derive_builder = "0.10.2"

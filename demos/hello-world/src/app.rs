@@ -23,11 +23,19 @@ impl AppState {
             ui: TetraSimpleHost::new(
                 context,
                 tree,
-                &[("verdana", 32, 1.0, "./resources/verdana.ttf")],
-                &[
-                    ("cat", "./resources/cat.jpg"),
-                    ("cats", "./resources/cats.jpg"),
-                ],
+                // We can preload certain resources if desired. In this case we preload a font. You
+                // can mix preloaded and on-demand loaded fonts and textures without any problems.
+                &[PreloadedFont {
+                    // In the UI code will use this name to refer to the preloaded font, instead of
+                    // the full file path
+                    id: "verdana",
+                    size: 32,
+                    scale: 1.0,
+                    path: "./resources/verdana.ttf",
+                }],
+                // Let's load our textures on demand. To do that we leave the preloaded textures
+                // empty. In the UI code we will refer to texture images using their full file path.
+                &[],
                 setup,
             )?,
         })

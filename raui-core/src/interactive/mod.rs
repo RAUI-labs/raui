@@ -1,3 +1,5 @@
+//! Interactivity traits
+
 pub mod default_interactions_engine;
 
 use crate::application::Application;

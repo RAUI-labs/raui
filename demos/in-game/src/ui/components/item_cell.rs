@@ -119,7 +119,7 @@ pub fn item_cell(mut context: WidgetContext) -> WidgetNode {
         let scale = lerp(
             1.0,
             1.5,
-            (animator.value_progress_or_zero("", "click") * PI).sin(),
+            (animator.value_progress_factor_or_zero("", "click") * PI).sin(),
         );
         let image_props = Props::new(ImageBoxProps {
             content_keep_aspect_ratio: Some(ImageBoxAspectRatio {

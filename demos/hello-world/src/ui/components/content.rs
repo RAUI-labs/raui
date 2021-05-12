@@ -8,7 +8,7 @@ pub fn content(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;
 
     let props0 = Props::new(ImageButtonProps {
-        image: "cat".to_owned(),
+        image: "./resources/cat.jpg".to_owned(),
         horizontal_alignment: 1.0,
     })
     .with(GridBoxItemLayout {
@@ -52,7 +52,7 @@ pub fn content(context: WidgetContext) -> WidgetNode {
     });
 
     let props2 = Props::new(ImageButtonProps {
-        image: "cats".to_owned(),
+        image: "./resources/cats.jpg".to_owned(),
         horizontal_alignment: 0.5,
     })
     .with(GridBoxItemLayout {

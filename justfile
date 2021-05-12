@@ -1,3 +1,8 @@
 # Bake the README.md from the template
 readme:
-    mdbakery --input README.template.md --output README.md
+    cargo readme > README.md
+    cargo readme > site/README.md
+
+# Print the documentation coverage for a crate in the workspace
+doc-coverage crate="raui-core":
+    cargo +nightly rustdoc -p {{crate}} -- -Z unstable-options --show-coverage
