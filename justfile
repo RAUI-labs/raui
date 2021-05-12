@@ -6,12 +6,3 @@ readme:
 # Print the documentation coverage for a crate in the workspace
 doc-coverage crate="raui-core":
     cargo +nightly rustdoc -p {{crate}} -- -Z unstable-options --show-coverage
-
-#
-# MDBook Jobs
-#
-
-# Run Rustfmt on the MDBook rust snippets
-book-rustfmt:
-    rustfmt book/src/rust/*.rs
-
