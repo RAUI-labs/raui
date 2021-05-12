@@ -17,15 +17,15 @@
 [`DefaultInteractionsEngine`]: https://docs.rs/raui/latest/raui/prelude/struct.DefaultInteractionsEngine.html
 
 ## Media
-- [`RAUI + Tetra In-Game`](https://github.com/PsichiX/raui/tree/master/demos/in-game)
+- [`RAUI + Tetra In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
   An example of an In-Game integration of RAUI with custom Material theme, using Tetra as a renderer.
 
-  ![RAUI + Tetra In-Game](https://github.com/PsichiX/raui/blob/master/media/raui-tetra-in-game-material-ui.gif?raw=true)
+  ![RAUI + Tetra In-Game](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-in-game-material-ui.gif?raw=true)
 
-- [`RAUI + Tetra todo app`](https://github.com/PsichiX/raui/tree/master/demos/todo-app)
+- [`RAUI + Tetra todo app`](https://github.com/RAUI-labs/raui/tree/master/demos/todo-app)
   An example of TODO app with Tetra renderer and dark theme Material component library.
 
-  ![RAUI + Tetra todo app](https://github.com/PsichiX/raui/blob/master/media/raui-tetra-todo-app-material-ui.gif?raw=true)
+  ![RAUI + Tetra todo app](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-todo-app-material-ui.gif?raw=true)
 
 ## Contribute
 Any contribution that improves quality of the RAUI toolset is highly appreciated.

@@ -68,7 +68,7 @@ timezone = "America/New_York"
 
 # Edit page on reposity or not
 edit_page = true
-docs_repo = "https://github.com/PsichiX/raui"
+docs_repo = "https://github.com/RAUI-labs/raui"
 repo_branch = "next"
 
 ## Math settings
@@ -148,7 +148,7 @@ url = "/docs/about/introduction/"
 url_button = "Get started"
 repo_version = "Hosted on GitHub."
 repo_license = "Open-source MIT License."
-repo_url = "https://github.com/PsichiX/raui"
+repo_url = "https://github.com/RAUI-labs/raui"
 
 [[extra.home.list]]
 title = "Use With Any Renderer! 🎮"

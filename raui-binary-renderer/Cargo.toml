@@ -1,16 +1,16 @@
 [package]
 name = "raui-binary-renderer"
-version = "0.34.0"
+version = "0.35.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for binary data format"
 readme = "../README.md"
 license = "MIT"
-repository = "https://github.com/PsichiX/raui"
+repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.34" }
+raui-core = { path = "../raui-core", version = "0.35" }
 serde = { version = "1", features = ["derive"] }
 bincode = "1"

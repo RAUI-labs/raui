@@ -1,12 +1,12 @@
 [package]
 name = "raui-core"
-version = "0.34.0"
+version = "0.35.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
 readme = "../README.md"
 license = "MIT"
-repository = "https://github.com/PsichiX/raui"
+repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
@@ -15,6 +15,6 @@ scalar64 = []
 integer64 = []
 
 [dependencies]
-raui-derive = { version = "0.34", path = "../raui-derive" }
+raui-derive = { version = "0.35", path = "../raui-derive" }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.8"

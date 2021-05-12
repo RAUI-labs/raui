@@ -96,4 +96,4 @@ There should be more to this guide but it isn't written yet! If you've gotten th
 
 If you need help or have questions, feel free to open up a [discussion] on GitHub. 👋
 
-[discussion]: https://github.com/PsichiX/raui/discussions
+[discussion]: https://github.com/RAUI-labs/raui/discussions

@@ -17,5 +17,5 @@ With this new blog section we will also be able to make development announcement
 
 We've made a lot of progress but there's still tons of work to do. If you find bugs, or have feature requests, don't hesitate to open a [GitHub issue][issue]! And if you have questions or comments feel free to open a [discussion].
 
-[issue]: https://github.com/PsichiX/raui/issues
-[discussion]: https://github.com/PsichiX/raui/discussions
+[issue]: https://github.com/RAUI-labs/raui/issues
+[discussion]: https://github.com/RAUI-labs/raui/discussions

@@ -1,16 +1,16 @@
 [package]
 name = "raui-capi"
-version = "0.34.0"
+version = "0.35.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI bindings for C language"
 readme = "../README.md"
 license = "MIT"
-repository = "https://github.com/PsichiX/raui"
+repository = "https://github.com/RAUI-labs/raui"
 publish = false
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.34" }
+raui-core = { path = "../raui-core", version = "0.35" }
 lazy_static = "1.4"
 libc = "0.2"
 
