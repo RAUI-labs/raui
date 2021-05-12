@@ -11,18 +11,24 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
+/// Allows customizing how an item in a [`content_box`] is laid out
+/// 
+/// [`content_box`]: crate::widget::component::containers::content_box::content_box
 #[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
 pub struct ContentBoxItemLayout {
     #[serde(default = "ContentBoxItemLayout::default_anchors")]
     pub anchors: Rect,
+    /// The margins to put on each side of the item
     #[serde(default)]
     pub margin: Rect,
     #[serde(default)]
     pub align: Vec2,
+    /// The amount to offset the item from where it would otherwise be laid out
     #[serde(default)]
     pub offset: Vec2,
+    /// The "Z" depth of the item
     #[serde(default)]
     pub depth: Scalar,
 }

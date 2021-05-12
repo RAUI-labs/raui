@@ -1,4 +1,92 @@
 //! Application foundation used to drive the RAUI interface
+//!
+//! An [`Application`] is the struct that pulls together all the pieces of a RAUI ui such as layout,
+//! interaction, animations, etc.
+//!
+//! In most cases users will not need to manually create and manage an [`Application`]. That will
+//! usually be handled by renderer integration crates like [`raui_tetra_renderer`].
+//!
+//! [`raui_tetra_renderer`]: https://docs.rs/raui-tetra-renderer/latest/raui_tetra_renderer/
+//!
+//! You _will_ need to interact with [`Application`] if you are building your own RAUI integration
+//! with another renderer or game engine.
+//!
+//! # Example
+//!
+//! ```rust
+//! # use raui_core::prelude::*;
+//! // Create the application
+//! let mut application = Application::new();
+//!
+//! // We need to run the "setup" functions for the application to register components and
+//! // properties if we want to support serialization of the UI. We pass it a function that
+//! // will do the actual registration
+//! application.setup(setup /* the core setup function from the RAUI prelude */);
+//!
+//! // If we used RAUI material we would also want to call it's setup ( but we don't need
+//! // it here )
+//! // application.setup(raui_material::setup);
+//!
+//! // Create the renderer. In this case we use the raw renderer that will return raw
+//! // [`WidgetUnit`]'s, but usually you would have a custom renderer for your game
+//! // engine or renderer.
+//! let mut renderer = RawRenderer;
+//!
+//! // Create the interactions engine. The default interactions engine covers typical
+//! // pointer + keyboard + gamepad navigation/interactions.
+//! let mut interactions = DefaultInteractionsEngine::new();
+//!
+//! // We create our widget tree
+//! let tree = widget! {
+//!     (#{"app"} nav_content_box [
+//!         (#{"button"} button: {NavItemActive} {
+//!             content = (#{"icon"} image_box)
+//!         })
+//!     ])
+//! };
+//!
+//! // We apply the tree to the application. This must be done again if we wish to change the
+//! // tree.
+//! application.apply(tree);
+//!
+//! // This and the following function calls would need to be called every frame
+//! loop {
+//!     // Telling the app to `process` will make it perform any necessary updates.
+//!     application.process();
+//!
+//!     // To properly handle layout we need to create a mapping of the screen coordinates to
+//!     // the RAUI coordinates. We would update this with the size of the window every frame.
+//!     let mapping = CoordsMapping::new(Rect {
+//!         left: 0.0,
+//!         right: 1024.0,
+//!         top: 0.0,
+//!         bottom: 576.0,
+//!     });
+//!
+//!     // We apply the application layout
+//!     application
+//!         // We use the default layout engine, but you could make your own layout engine
+//!         .layout(&mapping, &mut DefaultLayoutEngine)
+//!         .unwrap();
+//!
+//!     // we interact with UI by sending interaction messages to the engine. You would hook this
+//!     // up to whatever game engine or window event loop to perform the proper interactions when
+//!     // different events are emitted.
+//!     interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
+//!     interactions.interact(Interaction::PointerDown(
+//!         PointerButton::Trigger,
+//!         Vec2 { x: 200.0, y: 100.0 },
+//!     ));
+//!
+//!     // Since interactions engines require constructed layout to process interactions we
+//!     // have to process interactions after we layout the UI.
+//!     application.interact(&mut interactions).unwrap();
+//!
+//!     // Now we render the app, printing it's raw widget units
+//!     println!("{:?}", application.render(&mapping, &mut renderer).unwrap());
+//! #   break;
+//! }
+//! ```
 
 use crate::{
     animator::{AnimationUpdate, Animator, AnimatorStates},
@@ -48,27 +136,31 @@ use std::{
     },
 };
 
+/// Allows you to check or indicate that an [`Application`] has changed
+///
+/// A [`ChangeNotifier`] can be obtained from an application with the
+/// [`change_notifier()`][Application::change_notifier] method.
 #[derive(Debug, Default, Clone)]
 pub struct ChangeNotifier(Arc<AtomicBool>);
 
 impl ChangeNotifier {
-    pub fn new(changed: bool) -> Self {
-        Self(Arc::new(AtomicBool::new(changed)))
-    }
-
+    /// Mark the application as having changed, this will force the UI to re-render its components
     pub fn change(&mut self) {
         self.0.store(true, Ordering::Relaxed);
     }
 
+    /// Check whether or not the application has changed
     pub fn has_changed(&self) -> bool {
         self.0.load(Ordering::Relaxed)
     }
 
+    /// Get whether the application has changed and atomically set it's changed state to `false
     pub fn consume_change(&mut self) -> bool {
         self.0.swap(false, Ordering::Relaxed)
     }
 }
 
+/// Errors that can occur while interacting with an application
 #[derive(Debug, Clone)]
 pub enum ApplicationError {
     Prefab(PrefabError),
@@ -81,12 +173,24 @@ impl From<PrefabError> for ApplicationError {
     }
 }
 
+/// Indicates the reason that an [`Application`] state was invalidated and had to be re-rendered
+/// 
+/// You can get the last invalidation cause of an application using [`last_invalidation_cause`]
+/// 
+/// [`last_invalidation_cause`]: Application::last_invalidation_cause
 #[derive(Debug, Clone)]
 pub enum InvalidationCause {
+    /// Application not invalidated
     None,
+    /// Application update was forced by calling [`mark_dirty`]
+    /// 
+    /// [`mark_dirty`]: Application::mark_dirty
     Forced,
+    /// A widget's state changed
     StateChange(WidgetId),
+    /// A message was sent to a widget
     MessageReceived(WidgetId),
+    /// An animation is in progress for a widget
     AnimationInProgress(WidgetId),
 }
 
@@ -96,6 +200,9 @@ impl Default for InvalidationCause {
     }
 }
 
+/// Contains and orchestrates application layout, animations, interactions, etc.
+///
+/// See the [`application`][self] module for more information and examples.
 pub struct Application {
     component_mappings: HashMap<String, FnWidget>,
     props_registry: PropsRegistry,
@@ -113,6 +220,7 @@ pub struct Application {
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
     change_notifier: ChangeNotifier,
+    /// The amount of time between the last update, used when calculating animation progress
     pub animations_delta_time: Scalar,
 }
 
@@ -145,6 +253,29 @@ impl Application {
         }
     }
 
+    /// Setup the application with a given a setup function
+    ///
+    /// We need to run the `setup` function for the application to register components and
+    /// properties if we want to support serialization of the UI. We pass it a function that will do
+    /// the actual registration.
+    ///
+    /// > **Note:** RAUI will work fine without running any `setup` if UI serialization is not
+    /// > required.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # let mut application = Application::new();
+    /// application.setup(setup /* the core setup function from the RAUI prelude */);
+    /// ```
+    ///
+    /// If you use crates like the `raui_material` crate you will want to call it's setup function
+    /// as well.
+    ///
+    /// ```ignore
+    /// application.setup(raui_material::setup);
+    /// ```
     #[inline]
     pub fn setup<F>(&mut self, mut f: F)
     where
@@ -153,22 +284,75 @@ impl Application {
         (f)(self);
     }
 
+    /// Get the [`ChangeNotifier`] for the [`Application`]
+    ///
+    /// Having the [`ChangeNotifier`] allows you to check whether the application has changed and
+    /// allows you to force application updates by marking the app as changed.
+    /// 
+    /// [`ChangeNotifier`]s are also used to create [data bindingss][crate::data_binding].
     #[inline]
     pub fn change_notifier(&self) -> ChangeNotifier {
         self.change_notifier.clone()
     }
 
+    /// Register's a component under a string name used when serializing the UI
+    ///
+    /// This function is often used in [`setup`][Self::setup] functions for registering batches of
+    /// components.
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// fn my_widget(ctx: WidgetContext) -> WidgetNode {
+    ///     todo!("make awesome widget");
+    /// }
+    /// 
+    /// fn setup_widgets(app: &mut Application) {
+    ///     app.register_component("my_widget", my_widget);
+    /// }
+    /// 
+    /// let mut application = Application::new();
+    /// 
+    /// application.setup(setup_widgets);
+    /// ```
     #[inline]
     pub fn register_component(&mut self, type_name: &str, processor: FnWidget) {
         self.component_mappings
             .insert(type_name.to_owned(), processor);
     }
 
+    /// Unregisters a component
+    /// 
+    /// See [`register_component`][Self::register_component]
     #[inline]
     pub fn unregister_component(&mut self, type_name: &str) {
         self.component_mappings.remove(type_name);
     }
 
+    /// Register's a property type under a string name used when serializing the UI
+    ///
+    /// This function is often used in [`setup`][Self::setup] functions for registering batches of
+    /// properties.
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # use serde::{Serialize, Deserialize};
+    /// #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+    /// struct MyProp {
+    ///     awesome: bool,
+    /// }
+    /// 
+    /// fn setup_properties(app: &mut Application) {
+    ///     app.register_props::<MyProp>("MyProp");
+    /// }
+    /// 
+    /// let mut application = Application::new();
+    /// 
+    /// application.setup(setup_properties);
+    /// ```
     #[inline]
     pub fn register_props<T>(&mut self, name: &str)
     where
@@ -177,41 +361,51 @@ impl Application {
         self.props_registry.register_factory::<T>(name);
     }
 
+    /// Unregisters a property type
+    /// 
+    /// See [`register_props`][Self::register_props]
     #[inline]
     pub fn unregister_props(&mut self, name: &str) {
         self.props_registry.unregister_factory(name);
     }
 
+    /// Serialize the given [`Props`] to a [`PrefabValue`]
     #[inline]
     pub fn serialize_props(&self, props: &Props) -> Result<PrefabValue, PrefabError> {
         self.props_registry.serialize(props)
     }
 
+    /// Deserialize [`Props`] from a [`PrefabValue`]
     #[inline]
     pub fn deserialize_props(&self, data: PrefabValue) -> Result<Props, PrefabError> {
         self.props_registry.deserialize(data)
     }
 
+    /// Serialize a [`WidgetNode`] to a [`PrefabValue`]
     #[inline]
     pub fn serialize_node(&self, data: &WidgetNode) -> Result<PrefabValue, ApplicationError> {
         Ok(self.node_to_prefab(data)?.to_prefab()?)
     }
 
+    /// Deserialize a [`WidgetNode`] from a [`PrefabValue`]
     #[inline]
     pub fn deserialize_node(&self, data: PrefabValue) -> Result<WidgetNode, ApplicationError> {
         self.node_from_prefab(WidgetNodePrefab::from_prefab(data)?)
     }
 
+    /// Get the reason that the application state was last invalidated and caused to re-process
     #[inline]
     pub fn last_invalidation_cause(&self) -> &InvalidationCause {
         &self.last_invalidation_cause
     }
 
+    /// Return's `true` if the application needs to be re-processed
     #[inline]
     pub fn is_dirty(&self) -> bool {
         self.dirty
     }
 
+    /// Force mark the application as needing to re-process
     #[inline]
     pub fn mark_dirty(&mut self) {
         self.dirty = true;
@@ -222,16 +416,19 @@ impl Application {
         self.render_changed
     }
 
+    /// Get the [`WidgetNode`] for the application tree
     #[inline]
     pub fn tree(&self) -> &WidgetNode {
         &self.tree
     }
 
+    /// Get the application widget tree rendered to raw [`WidgetUnit`]'s
     #[inline]
     pub fn rendered_tree(&self) -> &WidgetUnit {
         &self.rendered_tree
     }
 
+    /// Get the application [`Layout`] data
     #[inline]
     pub fn layout_data(&self) -> &Layout {
         &self.layout
@@ -242,12 +439,14 @@ impl Application {
         self.layout.items.keys().any(|k| k == id)
     }
 
+    /// Update the application widget tree
     #[inline]
     pub fn apply(&mut self, tree: WidgetNode) {
         self.tree = tree;
         self.dirty = true;
     }
 
+    /// Render the application
     #[inline]
     pub fn render<R, T, E>(&self, mapping: &CoordsMapping, renderer: &mut R) -> Result<T, E>
     where
@@ -256,6 +455,8 @@ impl Application {
         renderer.render(&self.rendered_tree, mapping, &self.layout)
     }
 
+    /// Render the application, but only if something effecting the rendering has changed and it
+    /// _needs_ to be re-rendered
     #[inline]
     pub fn render_change<R, T, E>(
         &mut self,
@@ -272,6 +473,7 @@ impl Application {
         }
     }
 
+    /// Calculate application layout
     #[inline]
     pub fn layout<L, E>(&mut self, mapping: &CoordsMapping, layout_engine: &mut L) -> Result<(), E>
     where
@@ -281,6 +483,8 @@ impl Application {
         Ok(())
     }
 
+    /// Calculate application layout, but only if something effecting application layout has changed
+    /// and the layout _needs_ to be re-done
     #[inline]
     pub fn layout_change<L, E>(
         &mut self,
@@ -298,6 +502,7 @@ impl Application {
         }
     }
 
+    /// Perform interactions on the application using the given interaction engine
     #[inline]
     pub fn interact<I, R, E>(&mut self, interactions_engine: &mut I) -> Result<R, E>
     where
@@ -306,6 +511,7 @@ impl Application {
         interactions_engine.perform_interactions(self)
     }
 
+    /// Send a message to the given widget
     #[inline]
     pub fn send_message<T>(&mut self, id: &WidgetId, data: T)
     where
@@ -314,6 +520,7 @@ impl Application {
         self.send_message_raw(id, Box::new(data));
     }
 
+    /// Send raw message data to the given widget
     #[inline]
     pub fn send_message_raw(&mut self, id: &WidgetId, data: Message) {
         if let Some(list) = self.messages.get_mut(id) {
@@ -323,21 +530,26 @@ impl Application {
         }
     }
 
+    /// Get the list of [signals][crate::signals] that have been sent by widgets
     #[inline]
     pub fn signals(&self) -> &[Signal] {
         &self.signals
     }
 
+    /// Get the list of [signals][crate::signals] that have been sent by widgets, consuming the
+    /// current list so that further calls will not include previously sent signals
     #[inline]
     pub fn consume_signals(&mut self) -> Vec<Signal> {
         std::mem::take(&mut self.signals)
     }
 
+    /// Read the [`Props`] of a given widget
     #[inline]
     pub fn state_read(&self, id: &WidgetId) -> Option<&Props> {
         self.states.get(id)
     }
 
+    /// Set the props of a given widget
     #[inline]
     pub fn state_write(&mut self, id: &WidgetId, data: Props) {
         if self.states.contains_key(id) {
@@ -345,6 +557,8 @@ impl Application {
         }
     }
 
+    /// Get read access to the given widget's [`Props`] in a closure and update the widget's props
+    /// to the props that were returned by the closure
     pub fn state_mutate<F>(&mut self, id: &WidgetId, mut f: F)
     where
         F: FnMut(&Props) -> Props,
@@ -354,6 +568,8 @@ impl Application {
         }
     }
 
+    /// Get mutable access to the cloned [`Props`] of a widget in a closure and update the widget's
+    /// props to the value of the clone props after the closure modifies them
     pub fn state_mutate_cloned<F>(&mut self, id: &WidgetId, mut f: F)
     where
         F: FnMut(&mut Props),
@@ -364,12 +580,15 @@ impl Application {
         }
     }
 
+    /// [`process()`][Self::process] application, even if no changes have been detected
     #[inline]
     pub fn forced_process(&mut self) -> bool {
         self.dirty = true;
         self.process()
     }
 
+    /// Process the application, updating animations, applying state changes, handling widget
+    /// messages, etc.
     pub fn process(&mut self) -> bool {
         if self.change_notifier.consume_change() {
             self.dirty = true;
