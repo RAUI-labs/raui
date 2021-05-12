@@ -150,6 +150,35 @@ pub fn anchor_box(mut context: WidgetContext) -> WidgetNode {
     }}}
 }
 
+pub fn pivot_point_to_anchor(pivot: Vec2, anchor: &AnchorProps) -> Vec2 {
+    let x = if anchor.outer_box_size.x > 0.0 {
+        let v = lerp(
+            anchor.inner_box_rect.left,
+            anchor.inner_box_rect.right,
+            pivot.x,
+        );
+        v / anchor.outer_box_size.x
+    } else {
+        0.0
+    };
+    let y = if anchor.outer_box_size.y > 0.0 {
+        let v = lerp(
+            anchor.inner_box_rect.top,
+            anchor.inner_box_rect.bottom,
+            pivot.y,
+        );
+        v / anchor.outer_box_size.y
+    } else {
+        0.0
+    };
+    Vec2 { x, y }
+}
+
+/// (anchor point, align factor)
+pub fn pivot_to_anchor_and_align(pivot: &PivotBoxProps, anchor: &AnchorProps) -> (Vec2, Vec2) {
+    (pivot_point_to_anchor(pivot.pivot, anchor), pivot.align)
+}
+
 pub fn pivot_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,
@@ -159,23 +188,9 @@ pub fn pivot_box(context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    let AnchorProps {
-        outer_box_size,
-        inner_box_rect,
-    } = props.read_cloned_or_default();
-    let PivotBoxProps { pivot, align } = props.read_cloned_or_default();
-
-    let x = lerp(inner_box_rect.left, inner_box_rect.right, pivot.x);
-    let x = if outer_box_size.x > 0.0 {
-        x / outer_box_size.x
-    } else {
-        0.0
-    };
-    let y = if outer_box_size.y > 0.0 {
-        lerp(inner_box_rect.top, inner_box_rect.bottom, pivot.y) / outer_box_size.y
-    } else {
-        0.0
-    };
+    let anchor_props = props.read_cloned_or_default::<AnchorProps>();
+    let pivot_props = props.read_cloned_or_default::<PivotBoxProps>();
+    let (Vec2 { x, y }, align) = pivot_to_anchor_and_align(&pivot_props, &anchor_props);
 
     content.remap_props(|content_props| {
         let mut item_props = content_props.read_cloned_or_default::<ContentBoxItemLayout>();

@@ -4,8 +4,14 @@ pub mod theme;
 use raui_core::application::Application;
 
 pub fn setup(app: &mut Application) {
-    app.register_props::<component::containers::paper::PaperProps>("PaperProps");
+    app.register_props::<component::containers::context_paper::ContextPaperProps>(
+        "ContextPaperProps",
+    );
     app.register_props::<component::containers::modal_paper::ModalPaperProps>("ModalPaperProps");
+    app.register_props::<component::containers::paper::PaperProps>("PaperProps");
+    app.register_props::<component::containers::tooltip_paper::TooltipPaperProps>(
+        "TooltipPaperProps",
+    );
     app.register_props::<component::containers::scroll_paper::SideScrollbarsPaperProps>(
         "SideScrollbarsPaperProps",
     );
@@ -18,6 +24,10 @@ pub fn setup(app: &mut Application) {
     app.register_props::<theme::ThemedWidgetProps>("ThemedWidgetProps");
     app.register_props::<theme::ThemeProps>("ThemeProps");
 
+    app.register_component(
+        "context_paper",
+        component::containers::context_paper::context_paper,
+    );
     app.register_component(
         "nav_flex_paper",
         component::containers::flex_paper::nav_flex_paper,
@@ -52,6 +62,10 @@ pub fn setup(app: &mut Application) {
     app.register_component(
         "text_tooltip_paper",
         component::containers::text_tooltip_paper::text_tooltip_paper,
+    );
+    app.register_component(
+        "tooltip_paper",
+        component::containers::tooltip_paper::tooltip_paper,
     );
     app.register_component(
         "nav_vertical_paper",
@@ -92,8 +106,8 @@ pub mod prelude {
         component::{
             containers::{
                 flex_paper::*, grid_paper::*, horizontal_paper::*, modal_paper::*, paper::*,
-                scroll_paper::*, scroll_paper::*, text_tooltip_paper::*, vertical_paper::*,
-                wrap_paper::*,
+                scroll_paper::*, scroll_paper::*, text_tooltip_paper::*, tooltip_paper::*,
+                vertical_paper::*, wrap_paper::*,
             },
             icon_paper::*,
             interactive::{

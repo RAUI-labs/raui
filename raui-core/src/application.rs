@@ -863,7 +863,7 @@ impl Application {
         }
         let mut portals = Vec::with_capacity(count);
         Self::consume_portals(&mut root, &mut portals);
-        Self::inject_portals(&mut root, portals);
+        Self::inject_portals(&mut root, &mut portals);
         root
     }
 
@@ -938,78 +938,113 @@ impl Application {
         }
     }
 
-    fn inject_portals(unit: &mut WidgetUnit, mut portals: Vec<(WidgetId, PortalBoxSlot)>) {
+    fn inject_portals(unit: &mut WidgetUnit, portals: &mut Vec<(WidgetId, PortalBoxSlot)>) -> bool {
         if portals.is_empty() {
-            return;
+            return false;
         }
-        if let Some(data) = unit.as_data() {
-            if let Some(index) = portals.iter().position(|(id, _)| data.id() == id) {
+        while let Some(data) = unit.as_data() {
+            let found = portals.iter().position(|(id, _)| data.id() == id);
+            if let Some(index) = found {
                 let slot = portals.swap_remove(index).1;
                 match unit {
                     WidgetUnit::None
                     | WidgetUnit::PortalBox(_)
                     | WidgetUnit::ImageBox(_)
                     | WidgetUnit::TextBox(_) => {}
-                    WidgetUnit::AreaBox(b) => match slot {
-                        PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
-                        PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
-                        PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
-                        PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
-                    },
-                    WidgetUnit::ContentBox(b) => b.items.push(match slot {
-                        PortalBoxSlot::Slot(slot) => ContentBoxItem {
-                            slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::ContentItem(item) => item,
-                        PortalBoxSlot::FlexItem(item) => ContentBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::GridItem(item) => ContentBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                    }),
-                    WidgetUnit::FlexBox(b) => b.items.push(match slot {
-                        PortalBoxSlot::Slot(slot) => FlexBoxItem {
-                            slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::ContentItem(item) => FlexBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::FlexItem(item) => item,
-                        PortalBoxSlot::GridItem(item) => FlexBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                    }),
-                    WidgetUnit::GridBox(b) => b.items.push(match slot {
-                        PortalBoxSlot::Slot(slot) => GridBoxItem {
-                            slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::ContentItem(item) => GridBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::FlexItem(item) => GridBoxItem {
-                            slot: item.slot,
-                            ..Default::default()
-                        },
-                        PortalBoxSlot::GridItem(item) => item,
-                    }),
-                    WidgetUnit::SizeBox(b) => match slot {
-                        PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
-                        PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
-                        PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
-                        PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
-                    },
+                    WidgetUnit::AreaBox(b) => {
+                        match slot {
+                            PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
+                            PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                        }
+                        if !Self::inject_portals(&mut b.slot, portals) {
+                            return false;
+                        }
+                    }
+                    WidgetUnit::ContentBox(b) => {
+                        b.items.push(match slot {
+                            PortalBoxSlot::Slot(slot) => ContentBoxItem {
+                                slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::ContentItem(item) => item,
+                            PortalBoxSlot::FlexItem(item) => ContentBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::GridItem(item) => ContentBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                        });
+                        for item in &mut b.items {
+                            if !Self::inject_portals(&mut item.slot, portals) {
+                                return false;
+                            }
+                        }
+                    }
+                    WidgetUnit::FlexBox(b) => {
+                        b.items.push(match slot {
+                            PortalBoxSlot::Slot(slot) => FlexBoxItem {
+                                slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::ContentItem(item) => FlexBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::FlexItem(item) => item,
+                            PortalBoxSlot::GridItem(item) => FlexBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                        });
+                        for item in &mut b.items {
+                            if !Self::inject_portals(&mut item.slot, portals) {
+                                return false;
+                            }
+                        }
+                    }
+                    WidgetUnit::GridBox(b) => {
+                        b.items.push(match slot {
+                            PortalBoxSlot::Slot(slot) => GridBoxItem {
+                                slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::ContentItem(item) => GridBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::FlexItem(item) => GridBoxItem {
+                                slot: item.slot,
+                                ..Default::default()
+                            },
+                            PortalBoxSlot::GridItem(item) => item,
+                        });
+                        for item in &mut b.items {
+                            if !Self::inject_portals(&mut item.slot, portals) {
+                                return false;
+                            }
+                        }
+                    }
+                    WidgetUnit::SizeBox(b) => {
+                        match slot {
+                            PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
+                            PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                        }
+                        if !Self::inject_portals(&mut b.slot, portals) {
+                            return false;
+                        }
+                    }
                 }
+            } else {
+                break;
             }
         }
+        true
     }
 
     fn node_to_prefab(&self, data: &WidgetNode) -> Result<WidgetNodePrefab, ApplicationError> {
