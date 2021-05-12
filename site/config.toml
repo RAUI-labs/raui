@@ -1,7 +1,7 @@
 # The URL the site will be built for
-base_url = "https://PsichiX.github.io/raui"
+base_url = "https://RAUI-labs.github.io/raui"
 title = "RAUI"
-description = "Renderer agnostic UI written in Rust"
+description = "Renderer Agnostic User Interface written in Rust"
 theme = "adidoks"
 
 # The default language; used in feeds and search index
@@ -45,7 +45,7 @@ highlight_code = true
 # Put all your custom variables here
 author = "PsichiX"
 github = "https://github.com/PsichiX"
-# twitter = "https://twitter.com/aaranxu"
+twitter = "https://twitter.com/psichix"
 email = "psichix@gmail.com"
 
 # If running on netlify.app site, set to true
@@ -94,7 +94,7 @@ type = "Organization"
 logo = "logo-doks.png"
 twitter = ""
 linked_in = ""
-github = "https://github.com/PsichiX"
+github = "https://github.com/RAUI-labs"
 section = "blog" # see config.extra.main~url
 ## Sitelinks Search Box
 site_links_search_box = false
