@@ -13,6 +13,7 @@ exclude = [
   ".github/**",
   "demos/**",
   "media/**",
+  "site/**"
 ]
 
 [features]
