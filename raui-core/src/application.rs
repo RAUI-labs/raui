@@ -174,16 +174,16 @@ impl From<PrefabError> for ApplicationError {
 }
 
 /// Indicates the reason that an [`Application`] state was invalidated and had to be re-rendered
-/// 
+///
 /// You can get the last invalidation cause of an application using [`last_invalidation_cause`]
-/// 
+///
 /// [`last_invalidation_cause`]: Application::last_invalidation_cause
 #[derive(Debug, Clone)]
 pub enum InvalidationCause {
     /// Application not invalidated
     None,
     /// Application update was forced by calling [`mark_dirty`]
-    /// 
+    ///
     /// [`mark_dirty`]: Application::mark_dirty
     Forced,
     /// A widget's state changed
@@ -288,7 +288,7 @@ impl Application {
     ///
     /// Having the [`ChangeNotifier`] allows you to check whether the application has changed and
     /// allows you to force application updates by marking the app as changed.
-    /// 
+    ///
     /// [`ChangeNotifier`]s are also used to create [data bindingss][crate::data_binding].
     #[inline]
     pub fn change_notifier(&self) -> ChangeNotifier {
@@ -299,21 +299,21 @@ impl Application {
     ///
     /// This function is often used in [`setup`][Self::setup] functions for registering batches of
     /// components.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```
     /// # use raui_core::prelude::*;
     /// fn my_widget(ctx: WidgetContext) -> WidgetNode {
     ///     todo!("make awesome widget");
     /// }
-    /// 
+    ///
     /// fn setup_widgets(app: &mut Application) {
     ///     app.register_component("my_widget", my_widget);
     /// }
-    /// 
+    ///
     /// let mut application = Application::new();
-    /// 
+    ///
     /// application.setup(setup_widgets);
     /// ```
     #[inline]
@@ -323,7 +323,7 @@ impl Application {
     }
 
     /// Unregisters a component
-    /// 
+    ///
     /// See [`register_component`][Self::register_component]
     #[inline]
     pub fn unregister_component(&mut self, type_name: &str) {
@@ -334,9 +334,9 @@ impl Application {
     ///
     /// This function is often used in [`setup`][Self::setup] functions for registering batches of
     /// properties.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```
     /// # use raui_core::prelude::*;
     /// # use serde::{Serialize, Deserialize};
@@ -344,13 +344,13 @@ impl Application {
     /// struct MyProp {
     ///     awesome: bool,
     /// }
-    /// 
+    ///
     /// fn setup_properties(app: &mut Application) {
     ///     app.register_props::<MyProp>("MyProp");
     /// }
-    /// 
+    ///
     /// let mut application = Application::new();
-    /// 
+    ///
     /// application.setup(setup_properties);
     /// ```
     #[inline]
@@ -362,7 +362,7 @@ impl Application {
     }
 
     /// Unregisters a property type
-    /// 
+    ///
     /// See [`register_props`][Self::register_props]
     #[inline]
     pub fn unregister_props(&mut self, name: &str) {

@@ -8,7 +8,9 @@ fn main() {
     // We need to run the "setup" functions for the application to register components and
     // properties if we want to support serialization of the UI. We pass it a function that
     // will do the actual registration
-    application.setup(setup /* the core setup function, in the raui prelude */);
+    application.setup(
+        setup, /* the core setup function, in the raui prelude */
+    );
     // application.setup(raui_material::setup /* and the raui_material setup if we need it */);
 
     // Create the renderer. In this case we render the UI to YAML for simplicity, but usually

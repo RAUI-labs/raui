@@ -152,7 +152,7 @@ where
     }
 
     /// Use a closure to mutate the inner data and notify the [`ChangeNotifier`] ( if set )
-    /// 
+    ///
     /// This will return [`None`] and will **not** run the supplied closure if a lock to the inner
     /// data cannot be obtained due to lock [poisoning][RwLock#poisoning].
     ///
@@ -165,7 +165,7 @@ where
     /// let x = binding.mutate(|data| {
     ///     // Update the data
     ///     *data = true;
-    /// 
+    ///
     ///     *data
     /// });
     ///

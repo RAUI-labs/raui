@@ -9,7 +9,7 @@ fn main() {
         // Set the RAUI widget tree for our app
         .widget_tree(widget! {
             // UPDATE HERE
-            // 
+            //
             // Our app is the only widget we insert here. All other widgets
             // will go inside of our app
             (app)
@@ -22,13 +22,12 @@ fn main() {
         .expect("Error running RAUI app");
 }
 
-
 /// NEW
-/// 
+///
 /// We create our own widget by making a function that takes a `WidgetContext`
 /// and that returns `WidgetNode`.
 pub fn app(_ctx: WidgetContext) -> WidgetNode {
-    // Our _ctx variable starts with an underscore so rust doesn't complain 
+    // Our _ctx variable starts with an underscore so rust doesn't complain
     // that it is unused. We will be using the context later in the guide.
 
     // We may do any amount of processing in the body of the function.

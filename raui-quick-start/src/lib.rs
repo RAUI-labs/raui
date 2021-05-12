@@ -1,13 +1,13 @@
 //! Tiny library to get you started learning RAUI as quick as possible 🚀
-//! 
+//!
 //! # Example
-//! 
+//!
 //! ```no_run
 //! # use raui::prelude::*;
 //! # fn my_widget(_: WidgetContext) -> WidgetNode { widget!(()) }
 //! // Import the builder
 //! use raui_quick_start::RauiQuickStartBuilder;
-//! 
+//!
 //! // Create the builder
 //! RauiQuickStartBuilder::default()
 //!     // Set our window title

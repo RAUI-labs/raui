@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 /// Allows customizing how an item in a [`content_box`] is laid out
-/// 
+///
 /// [`content_box`]: crate::widget::component::containers::content_box::content_box
 #[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]

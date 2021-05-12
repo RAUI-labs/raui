@@ -55,7 +55,7 @@ pub fn nav_content_box(mut context: WidgetContext) -> WidgetNode {
 /// to all contained widgets and giving contained widgets more control over their layout inside of
 /// the box.
 ///
-/// # Transform & Clipping 
+/// # Transform & Clipping
 ///
 /// The transformation and clipping options on the [`content_box`] can be set by setting the
 /// [`ContentBoxProps`] on the component.
