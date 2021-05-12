@@ -1,3 +1,5 @@
+//! Data binding for integrating external data into the UI
+
 use crate::{application::ChangeNotifier, messenger::MessageData, props::PropsData, Prefab};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};

@@ -1,3 +1,5 @@
+//! Widget signal implementation
+
 use crate::{
     messenger::{Message, MessageData},
     widget::WidgetId,
