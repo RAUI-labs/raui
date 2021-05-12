@@ -137,6 +137,9 @@ use std::{
 };
 
 /// Allows you to check or indicate that an [`Application`] has changed
+///
+/// A [`ChangeNotifier`] can be obtained from an application with the
+/// [`change_notifier()`][Application::change_notifier] method.
 #[derive(Debug, Default, Clone)]
 pub struct ChangeNotifier(Arc<AtomicBool>);
 
@@ -285,6 +288,8 @@ impl Application {
     ///
     /// Having the [`ChangeNotifier`] allows you to check whether the application has changed and
     /// allows you to force application updates by marking the app as changed.
+    /// 
+    /// [`ChangeNotifier`]s are also used to create [data bindingss][crate::data_binding].
     #[inline]
     pub fn change_notifier(&self) -> ChangeNotifier {
         self.change_notifier.clone()
