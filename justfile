@@ -20,5 +20,11 @@ website-doc-tests:
     @set -e; \
     for file in $(find site/content/ -name '*.md'); do \
         echo "Testing: $file"; \
-        rustdoc --crate-name docs-test $file --test -L target/debug/deps; \
+        rustdoc \
+            --edition 2018 \
+            --extern raui \
+            --crate-name docs-test \
+            $file \
+            --test \
+            -L target/debug/deps; \
     done
