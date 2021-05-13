@@ -84,6 +84,10 @@ We are not limited to using just one struct for our property data. We could add 
 
 [`TextBoxProps`]: https://docs.rs/raui/0.34.0/raui/core/widget/component/text_box/struct.TextBoxProps.html
 
+> **Note:** You can download the [Verdana] font or use your own font to follow along. We chose to place it in a `resources/` folder adjacent to our `Cargo.toml` file in our Rust project, but you can place it wherever you like as long as you update the path to the font in the [`TextBoxProps`].
+
+[Verdana]: https://github.com/PsichiX/raui/raw/next/site/rust/guide_02/resources/verdana.ttf
+
 ## Summary
 
 Now that we've explained it all, go try it out! When you `cargo run` you should get a window displaying your "Hello World!".
