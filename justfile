@@ -1,3 +1,7 @@
+# List the just recipe list
+list:
+    just --list
+
 # Bake the README.md from the template
 readme:
     cargo readme > README.md
@@ -16,7 +20,7 @@ doc-coverage crate="raui-core":
 
 # Run the Rust doctests in the website docs
 website-doc-tests:
-    cargo build --features all -p raui
+    cargo build --features all -p raui --target-dir target/doctests
     @set -e; \
     for file in $(find site/content/ -name '*.md'); do \
         echo "Testing: $file"; \
@@ -26,5 +30,5 @@ website-doc-tests:
             --crate-name docs-test \
             $file \
             --test \
-            -L target/debug/deps; \
+            -L target/doctests/debug/deps; \
     done
