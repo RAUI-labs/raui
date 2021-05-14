@@ -2,7 +2,7 @@ use crate::ui::components::{
     color_rect::{color_rect, ColorRectProps},
     image_button::{image_button, ImageButtonProps},
 };
-use raui_core::prelude::*;
+use raui::prelude::*;
 
 pub fn content(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;

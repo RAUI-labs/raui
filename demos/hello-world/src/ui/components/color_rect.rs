@@ -1,4 +1,4 @@
-use raui_core::prelude::*;
+use raui::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
