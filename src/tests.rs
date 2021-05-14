@@ -706,6 +706,51 @@ fn test_refs() {
 }
 
 #[test]
+fn test_process_context() {
+    struct ReadableData(u8);
+    struct WriteableData(u8);
+
+    let mut application = Application::new();
+
+    fn my_component(ctx: WidgetContext) -> WidgetNode {
+        {
+            // Get an immutable reference to ReadableData
+            let readable = ctx.process_context.get::<ReadableData>().unwrap();
+            assert_eq!(readable.0, 5);
+        }
+
+        {
+            // Get a mutable reference to WritableData;
+            let writable = ctx.process_context.get_mut::<WriteableData>().unwrap();
+            assert_eq!(writable.0, 6);
+
+            // Write to the data
+            writable.0 = 7;
+        }
+
+        widget!(())
+    }
+
+    let tree = widget! {
+        (my_component)
+    };
+
+    application.apply(tree);
+
+    let readable = ReadableData(5);
+    let mut writable = WriteableData(6);
+
+    application.process_with_context(
+        ProcessContext::new()
+            .insert(&readable)
+            .insert_mut(&mut writable),
+    );
+
+    // Make sure data was actually mutated by UI tree
+    assert_eq!(writable.0, 7);
+}
+
+#[test]
 fn test_interactivity() {
     // [md-bakery: begin @ interactivity]
     let mut application = Application::new();
