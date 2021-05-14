@@ -1,3 +1,5 @@
+//! Theme-able RAUI components
+
 pub mod component;
 pub mod theme;
 
