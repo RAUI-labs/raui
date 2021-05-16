@@ -24,10 +24,10 @@
 //!     .expect("Error running RAUI app");
 //! ```
 
+use derive_builder::Builder;
 use raui::prelude::*;
 use raui_tetra_renderer::prelude::*;
-
-use derive_builder::Builder;
+use tetra::{input::Key, Event};
 
 /// The quick-start builder
 #[derive(Builder, Clone)]
@@ -116,6 +116,18 @@ impl tetra::State for App {
         event: tetra::Event,
     ) -> Result<(), tetra::TetraError> {
         self.ui.event(ctx, &event);
+        if let Event::KeyPressed { key: Key::F2 } = event {
+            println!("LAYOUT: {:#?}", self.ui.application.layout_data());
+        }
+        if let Event::KeyPressed { key: Key::F3 } = event {
+            println!("INTERACTIONS: {:#?}", self.ui.interactions);
+        }
+        if let Event::KeyPressed { key: Key::F4 } = event {
+            println!(
+                "INSPECT TREE: {:#?}",
+                self.ui.application.rendered_tree().inspect()
+            );
+        }
         Ok(())
     }
 }
