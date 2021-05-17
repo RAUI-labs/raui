@@ -22,6 +22,8 @@ The first container we'll look at is the [`content_box`]. Content boxes are simp
 
 A couple useful features of [`content_box`]s are that they can have a [transform][`contentboxprops::transform`] applied to them to scale, position, rotate, etc. the box and everything in it, and items inside them can specify [layout attributes][`contentboxitemlayout`] such as margin, alignment, and anchor.
 
+> **Note:** A content box's transform is purely a _visual_ effect and has no effect on the layout of the box or the regions used to detect clicks, hovers, etc. for the box or it's children. It is used primarily in animations and visual effects, not for general purpose positioning.
+
 In our demo app we've been working on, let's put our text in a content box so that we can set a small margin around our text.
 
 [`contentboxitemlayout`]: https://docs.rs/raui/latest/raui/core/widget/unit/content/struct.ContentBoxItemLayout.html
@@ -158,7 +160,7 @@ If we wanted to have them line up without overlapping we would use a [`flex_box`
 
 ## Flex Box
 
-Flex boxes in RAUI are somewhat similar to [CSS flexboxes][css_flexboxes], but they aren't necessarily going to work the same in all cases. Flex boxes lay things out in a row or a column depending on whether or not their _direction_. For convenience, RAUI has [`vertical_box`] and [`horizontal_box`] components that are simply [`flex_box`] component with their direction set to vertical or horizontal by default.
+Flex boxes in RAUI are similar to [CSS flexboxes][css_flexboxes]. Flex boxes lay things out in a row or a column depending on whether or not their _direction_. For convenience, RAUI has [`vertical_box`] and [`horizontal_box`] components that are simply [`flex_box`] component with their direction set to vertical or horizontal by default.
 
 [css_flexboxes]: https://www.w3schools.com/css/css3_flexbox.asp
 [`horizontal_box`]: https://docs.rs/raui/latest/raui/core/widget/component/containers/horizontal_box/fn.horizontal_box.html
