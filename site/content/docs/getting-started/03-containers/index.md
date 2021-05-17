@@ -152,7 +152,7 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
 
 > **Note:** You can download the demo cat image [here](https://github.com/PsichiX/raui/raw/master/site/rust/guide_03/resources/cats.jpg).
 
-Notice that the content box didn't make sure the was any "room" for the text or the image to sit side-by-side with each-other, it just stacked them right on top of each-other. Also
+Notice that the content box didn't make sure there was any "room" for the text or the image to sit side-by-side with each-other, it just stacked them right on top of each-other. Also
 
 If we wanted to have them line up without overlapping we would use a [`flex_box`].
 
@@ -161,6 +161,8 @@ If we wanted to have them line up without overlapping we would use a [`flex_box`
 ## Flex Box
 
 Flex boxes in RAUI are similar to [CSS flexboxes][css_flexboxes]. Flex boxes lay things out in a row or a column depending on whether or not their _direction_. For convenience, RAUI has [`vertical_box`] and [`horizontal_box`] components that are simply [`flex_box`] component with their direction set to vertical or horizontal by default.
+
+> **Note:** For a more in-depth explanation of how layout works in RAUI see [Layout in Depth](../../layout/layout-in-depth).
 
 [css_flexboxes]: https://www.w3schools.com/css/css3_flexbox.asp
 [`horizontal_box`]: https://docs.rs/raui/latest/raui/core/widget/component/containers/horizontal_box/fn.horizontal_box.html

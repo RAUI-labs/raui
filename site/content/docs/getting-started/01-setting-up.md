@@ -4,6 +4,7 @@ description = "Learn how to get a window setup so RAUI can render to it."
 draft = false
 weight = 1
 template = "docs/page.html"
+slug = "setting-up"
 
 [extra]
 lead = "First we're going to get a window setup so RAUI can render to it."
