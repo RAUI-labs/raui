@@ -608,15 +608,39 @@ impl Application {
         self.process_with_context(&mut Default::default())
     }
 
+    /// [Process][Self::process] the application and provide a custom [`ProcessContext`]
+    ///
     /// # Process Context
     ///
-    /// The `process_context` argument allows you to optionally provide the UI's components with
-    /// mutable or immutable access to application data. This allows RAUI hosts to provide the UI
-    /// with direct access to application data, if necessary, instead of using
-    /// [`DataBinding`][crate::data_binding::DataBinding]s.
+    /// The `process_context` argument allows you to provide the UI's components with mutable or
+    /// immutable access to application data. This grants powerful, direct control over the
+    /// application to the UI's widgets, but has some caveats and it is easy to fall into
+    /// anti-patterns when using.
     ///
-    /// This may also be used to facilitate different patterns of two-way communication between the
-    /// UI and the host by including channel senders or other types in the [`ProcessContext`].
+    /// You should consider carefully whether or not a process context is the best way to facilitate
+    /// your use-case before using this feature. See [caveats](#caveats) below for more explanation.
+    ///
+    /// ## Caveats
+    ///
+    /// RAUI provides other ways to facilitate UI integration with external data that should
+    /// generally be preferred over using a process context. The primary mechanisms are:
+    ///
+    /// - [`DataBinding`]s and widget [messages][crate::messenger], for having the application send
+    ///   data to widgets
+    /// - [signals][crate::signals] for having widgets send data to the application.
+    ///
+    /// The main difference between using a [`DataBinding`] and a process context is the fact that
+    /// RAUI is able to more granularly update the widget tree in response to data changes when
+    /// using [`DataBinding`], but it has no way to know know when data in a process context
+    /// changes.
+    ///
+    /// When you use a process context **you** are now responsible for either running
+    /// [`forced_process_with_context`][Self::forced_process_with_context] every frame to make sure
+    /// that the UI is always updated when the process context changes, or by manually calling
+    /// [`mark_dirty`][Self::mark_dirty] when the process context has changed to make sure that the
+    /// next `process_with_context()` call will actually update the application.
+    ///
+    /// [`DataBinding`]: crate::data_binding::DataBinding
     ///
     /// ## Example
     ///
