@@ -84,7 +84,7 @@ impl State for TodoState {
 
     fn draw(&mut self, context: &mut Context) -> tetra::Result {
         graphics::clear(context, Color::WHITE);
-        self.ui.draw(context)?;
+        self.ui.draw(context, PrintLogger)?;
         Ok(())
     }
 

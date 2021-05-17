@@ -93,7 +93,7 @@ impl State for AppState {
                 .scale([scale, scale].into());
             self.mockup_image.draw(context, params);
         }
-        self.ui.draw(context)?;
+        self.ui.draw(context, PrintLogger)?;
         Ok(())
     }
 

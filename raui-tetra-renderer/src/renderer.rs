@@ -3,10 +3,14 @@ use raui_core::{
     layout::{CoordsMapping, Layout},
     renderer::Renderer,
     widget::{
-        unit::{image::ImageBoxMaterial, WidgetUnit},
+        unit::{
+            image::ImageBoxMaterial,
+            text::{TextBoxDirection, TextBoxHorizontalAlign, TextBoxVerticalAlign},
+            WidgetUnit,
+        },
         utils::Vec2 as RauiVec2,
     },
-    Scalar,
+    LogKind, Logger, Scalar,
 };
 use raui_tesselate_renderer::{
     renderer::TesselateRenderer,
@@ -39,18 +43,26 @@ fn intersect_rects(parent: Rectangle<i32>, child: Rectangle<i32>) -> Rectangle<i
     parent
 }
 
-pub struct TetraRenderer<'a> {
+pub struct TetraRenderer<'a, L = ()>
+where
+    L: Logger,
+{
     context: &'a mut Context,
     resources: &'a mut TetraResources,
     clip_stack: Vec<Rectangle<i32>>,
+    pub logger: L,
 }
 
-impl<'a> TetraRenderer<'a> {
-    pub fn new(context: &'a mut Context, resources: &'a mut TetraResources) -> Self {
+impl<'a, L> TetraRenderer<'a, L>
+where
+    L: Logger,
+{
+    pub fn new(context: &'a mut Context, resources: &'a mut TetraResources, logger: L) -> Self {
         Self {
             context,
             resources,
             clip_stack: Vec::with_capacity(32),
+            logger,
         }
     }
 
@@ -136,7 +148,10 @@ impl<'a> TetraRenderer<'a> {
     }
 }
 
-impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
+impl<'a, L> Renderer<(), Error> for TetraRenderer<'a, L>
+where
+    L: Logger,
+{
     fn render(
         &mut self,
         tree: &WidgetUnit,
@@ -207,6 +222,36 @@ impl<'a> Renderer<(), Error> for TetraRenderer<'a> {
                 Batch::ExternalText(wid, text) => {
                     let id = format!("{}:{}", text.font, text.size as usize);
                     if let Some((font_scale, font)) = self.resources.fonts.get(&id).cloned() {
+                        if text.horizontal_align != TextBoxHorizontalAlign::Left {
+                            self.logger.log(
+                                LogKind::Warning,
+                                &format!(
+                                    "ExternalText: {:?} | Tetra renderer doesn't support non-default TextBoxHorizontalAlign: {:?}",
+                                    wid,
+                                    text.horizontal_align,
+                                )
+                            );
+                        }
+                        if text.vertical_align != TextBoxVerticalAlign::Top {
+                            self.logger.log(
+                                LogKind::Warning,
+                                &format!(
+                                    "ExternalText: {:?} | Tetra renderer doesn't support non-default TextBoxVerticalAlign: {:?}",
+                                    wid,
+                                    text.vertical_align,
+                                )
+                            );
+                        }
+                        if text.direction != TextBoxDirection::HorizontalLeftToRight {
+                            self.logger.log(
+                                LogKind::Warning,
+                                &format!(
+                                    "ExternalText: {:?} | Tetra renderer doesn't support non-default TextBoxDirection: {:?}",
+                                    wid,
+                                    text.direction,
+                                )
+                            );
+                        }
                         let old_matrix = get_transform_matrix(self.context);
                         let new_matrix = Mat4::from_col_array(text.matrix);
                         set_transform_matrix(self.context, new_matrix);

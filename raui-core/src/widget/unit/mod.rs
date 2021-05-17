@@ -87,18 +87,14 @@ impl WidgetUnit {
     }
 
     pub fn inspect(&self) -> Option<WidgetUnitInspectionNode> {
-        if let Some(data) = self.as_data() {
-            Some(WidgetUnitInspectionNode {
-                id: data.id().to_owned(),
-                children: data
-                    .get_children()
-                    .into_iter()
-                    .filter_map(|child| child.inspect())
-                    .collect::<Vec<_>>(),
-            })
-        } else {
-            None
-        }
+        self.as_data().map(|data| WidgetUnitInspectionNode {
+            id: data.id().to_owned(),
+            children: data
+                .get_children()
+                .into_iter()
+                .filter_map(|child| child.inspect())
+                .collect::<Vec<_>>(),
+        })
     }
 }
 

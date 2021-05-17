@@ -106,7 +106,7 @@ impl tetra::State for App {
         // Clear the screen white first
         tetra::graphics::clear(ctx, tetra::graphics::Color::WHITE);
         // Then draw the UI
-        self.ui.draw(ctx)?;
+        self.ui.draw(ctx, PrintLogger)?;
         Ok(())
     }
 
