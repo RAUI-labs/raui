@@ -1,7 +1,8 @@
 use crate::{
     tesselation::{
-        Batch, BatchClipRect, BatchExternalText, Color, Tesselation, TesselationVertices,
-        TesselationVerticesFormat, TesselationVerticesSliceMut,
+        Batch, BatchClipRect, BatchExternalText, Tesselation, TesselationVerticeInterleaved,
+        TesselationVertices, TesselationVerticesFormat, TesselationVerticesSeparated,
+        TesselationVerticesSeparatedSliceMut, TesselationVerticesSliceMut,
     },
     Error, Index,
 };
@@ -14,19 +15,18 @@ use raui_core::{
             text::TextBox,
             WidgetUnit,
         },
-        utils::{lerp, Color as RauiColor, Rect as RauiRect, Transform, Vec2 as RauiVec2},
+        utils::{lerp, Rect, Transform, Vec2},
     },
     Scalar,
 };
 use std::collections::{HashMap, VecDeque};
-use vek::{Mat2, Mat4, Vec2};
 
-fn raui_to_vec2(v: RauiVec2) -> Vec2<f32> {
-    Vec2::new(v.x, v.y)
+fn raui_to_vec2(v: Vec2) -> vek::Vec2<Scalar> {
+    vek::Vec2::new(v.x, v.y)
 }
 
-fn raui_to_color(v: RauiColor) -> Color {
-    Color(v.r, v.g, v.b, v.a)
+fn vec2_to_raui(v: vek::Vec2<Scalar>) -> Vec2 {
+    Vec2 { x: v.x, y: v.y }
 }
 
 pub trait TextTesselationEngine {
@@ -66,8 +66,8 @@ impl TextTesselationEngine for () {
                 horizontal_align: text.horizontal_align,
                 vertical_align: text.vertical_align,
                 direction: text.direction,
-                color: raui_to_color(text.color),
-                box_size: (layout.local_space.width(), layout.local_space.height()),
+                color: text.color,
+                box_size: layout.local_space.size(),
                 matrix,
             },
         );
@@ -83,9 +83,9 @@ where
     pub vertices_format: TesselationVerticesFormat,
     pub text_tesselation_engine: TTE,
     /// {image id: (atlas image id, inner rectangle)}
-    atlas_mapping: &'a HashMap<String, (String, RauiRect)>,
-    image_sizes: &'a HashMap<String, RauiVec2>,
-    transform_stack: VecDeque<Mat4<Scalar>>,
+    atlas_mapping: &'a HashMap<String, (String, Rect)>,
+    image_sizes: &'a HashMap<String, Vec2>,
+    transform_stack: VecDeque<vek::Mat4<Scalar>>,
 }
 
 impl<'a, TTE> TesselateRenderer<'a, TTE>
@@ -95,8 +95,8 @@ where
     pub fn new(
         vertices_format: TesselationVerticesFormat,
         text_tesselation_engine: TTE,
-        atlas_mapping: &'a HashMap<String, (String, RauiRect)>,
-        image_sizes: &'a HashMap<String, RauiVec2>,
+        atlas_mapping: &'a HashMap<String, (String, Rect)>,
+        image_sizes: &'a HashMap<String, Vec2>,
     ) -> Self {
         Self {
             vertices_format,
@@ -110,8 +110,8 @@ where
     pub fn with_capacity(
         vertices_format: TesselationVerticesFormat,
         text_tesselation_engine: TTE,
-        atlas_mapping: &'a HashMap<String, (String, RauiRect)>,
-        image_sizes: &'a HashMap<String, RauiVec2>,
+        atlas_mapping: &'a HashMap<String, (String, Rect)>,
+        image_sizes: &'a HashMap<String, Vec2>,
         transform_stack: usize,
     ) -> Self {
         Self {
@@ -123,25 +123,25 @@ where
         }
     }
 
-    fn push_transform(&mut self, transform: &Transform, rect: RauiRect) {
+    fn push_transform(&mut self, transform: &Transform, rect: Rect) {
         let size = rect.size();
-        let offset = Vec2::new(rect.left, rect.top);
-        let offset = Mat4::<f32>::translation_2d(offset);
-        let pivot = Vec2::new(
+        let offset = vek::Vec2::new(rect.left, rect.top);
+        let offset = vek::Mat4::<f32>::translation_2d(offset);
+        let pivot = vek::Vec2::new(
             lerp(0.0, size.x, transform.pivot.x),
             lerp(0.0, size.y, transform.pivot.y),
         );
-        let pivot = Mat4::<f32>::translation_2d(pivot);
+        let pivot = vek::Mat4::<f32>::translation_2d(pivot);
         let inv_pivot = pivot.inverted();
-        let align = Vec2::new(
+        let align = vek::Vec2::new(
             lerp(0.0, size.x, transform.align.x),
             lerp(0.0, size.y, transform.align.y),
         );
-        let align = Mat4::<f32>::translation_2d(align);
-        let translate = Mat4::<f32>::translation_2d(raui_to_vec2(transform.translation));
-        let rotate = Mat4::<f32>::rotation_z(transform.rotation);
-        let scale = Mat4::<f32>::scaling_3d(raui_to_vec2(transform.scale).with_z(1.0));
-        let skew = Mat4::<f32>::from(Mat2::new(
+        let align = vek::Mat4::<f32>::translation_2d(align);
+        let translate = vek::Mat4::<f32>::translation_2d(raui_to_vec2(transform.translation));
+        let rotate = vek::Mat4::<f32>::rotation_z(transform.rotation);
+        let scale = vek::Mat4::<f32>::scaling_3d(raui_to_vec2(transform.scale).with_z(1.0));
+        let skew = vek::Mat4::<f32>::from(vek::Mat2::new(
             1.0,
             transform.skew.y.tan(),
             transform.skew.x.tan(),
@@ -151,13 +151,13 @@ where
         self.push_matrix(matrix);
     }
 
-    fn push_transform_simple(&mut self, rect: RauiRect) {
-        let offset = Vec2::new(rect.left, rect.top);
-        let offset = Mat4::<f32>::translation_2d(offset);
+    fn push_transform_simple(&mut self, rect: Rect) {
+        let offset = vek::Vec2::new(rect.left, rect.top);
+        let offset = vek::Mat4::<f32>::translation_2d(offset);
         self.push_matrix(offset);
     }
 
-    fn push_matrix(&mut self, matrix: Mat4<f32>) {
+    fn push_matrix(&mut self, matrix: vek::Mat4<f32>) {
         let matrix = self.transform_stack.back().cloned().unwrap_or_default() * matrix;
         self.transform_stack.push_back(matrix);
     }
@@ -166,7 +166,7 @@ where
         self.transform_stack.pop_back();
     }
 
-    fn top_transform(&self) -> Mat4<f32> {
+    fn top_transform(&self) -> vek::Mat4<f32> {
         self.transform_stack.back().cloned().unwrap_or_default()
     }
 
@@ -181,31 +181,35 @@ where
 
     fn produce_color_triangles(
         &self,
-        size: RauiVec2,
+        size: Vec2,
         scale: Scalar,
         data: &ImageBoxColor,
         result: &mut Tesselation,
     ) {
         let matrix = self.top_transform();
-        let tl = matrix.mul_point(Vec2::new(0.0, 0.0));
-        let tr = matrix.mul_point(Vec2::new(size.x, 0.0));
-        let br = matrix.mul_point(Vec2::new(size.x, size.y));
-        let bl = matrix.mul_point(Vec2::new(0.0, size.y));
-        let c = raui_to_color(data.color);
+        let tl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(0.0, 0.0)));
+        let tr = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x, 0.0)));
+        let br = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x, size.y)));
+        let bl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(0.0, size.y)));
+        let c = data.color;
         let indices_start = result.indices.len();
         match &data.scaling {
             ImageBoxImageScaling::Stretch => {
                 let vertices_start = match &mut result.vertices {
-                    TesselationVertices::Separated(position, texcoord, color) => {
+                    TesselationVertices::Separated(TesselationVerticesSeparated {
+                        position,
+                        tex_coord,
+                        color,
+                    }) => {
                         let vertices_start = position.len();
-                        position.push(tl.into());
-                        position.push(tr.into());
-                        position.push(br.into());
-                        position.push(bl.into());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
+                        position.push(tl);
+                        position.push(tr);
+                        position.push(br);
+                        position.push(bl);
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
                         color.push(c);
                         color.push(c);
                         color.push(c);
@@ -214,10 +218,26 @@ where
                     }
                     TesselationVertices::Interleaved(data) => {
                         let vertices_start = data.len();
-                        data.push((tl.into(), Default::default(), c));
-                        data.push((tr.into(), Default::default(), c));
-                        data.push((br.into(), Default::default(), c));
-                        data.push((bl.into(), Default::default(), c));
+                        data.push(TesselationVerticeInterleaved::new(
+                            tl,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            tr,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            br,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            bl,
+                            Default::default(),
+                            c,
+                        ));
                         vertices_start as Index
                     }
                 };
@@ -247,53 +267,60 @@ where
                     d.top = size.y * d.top / m;
                     d.bottom = size.y * d.bottom / m;
                 }
-                let til = matrix.mul_point(Vec2::new(d.left, 0.0));
-                let tir = matrix.mul_point(Vec2::new(size.x - d.right, 0.0));
-                let itr = matrix.mul_point(Vec2::new(size.x, d.top));
-                let ibr = matrix.mul_point(Vec2::new(size.x, size.y - d.bottom));
-                let bir = matrix.mul_point(Vec2::new(size.x - d.right, size.y));
-                let bil = matrix.mul_point(Vec2::new(d.left, size.y));
-                let ibl = matrix.mul_point(Vec2::new(0.0, size.y - d.bottom));
-                let itl = matrix.mul_point(Vec2::new(0.0, d.top));
-                let itil = matrix.mul_point(Vec2::new(d.left, d.top));
-                let itir = matrix.mul_point(Vec2::new(size.x - d.right, d.top));
-                let ibir = matrix.mul_point(Vec2::new(size.x - d.right, size.y - d.bottom));
-                let ibil = matrix.mul_point(Vec2::new(d.left, size.y - d.bottom));
+                let til = vec2_to_raui(matrix.mul_point(vek::Vec2::new(d.left, 0.0)));
+                let tir = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x - d.right, 0.0)));
+                let itr = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x, d.top)));
+                let ibr = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x, size.y - d.bottom)));
+                let bir = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x - d.right, size.y)));
+                let bil = vec2_to_raui(matrix.mul_point(vek::Vec2::new(d.left, size.y)));
+                let ibl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(0.0, size.y - d.bottom)));
+                let itl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(0.0, d.top)));
+                let itil = vec2_to_raui(matrix.mul_point(vek::Vec2::new(d.left, d.top)));
+                let itir = vec2_to_raui(matrix.mul_point(vek::Vec2::new(size.x - d.right, d.top)));
+                let ibir = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(size.x - d.right, size.y - d.bottom)),
+                );
+                let ibil =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(d.left, size.y - d.bottom)));
                 let vertices_start = match &mut result.vertices {
-                    TesselationVertices::Separated(position, texcoord, color) => {
+                    TesselationVertices::Separated(TesselationVerticesSeparated {
+                        position,
+                        tex_coord,
+                        color,
+                    }) => {
                         let vertices_start = position.len();
-                        position.push(tl.into());
-                        position.push(til.into());
-                        position.push(tir.into());
-                        position.push(tr.into());
-                        position.push(itl.into());
-                        position.push(itil.into());
-                        position.push(itir.into());
-                        position.push(itr.into());
-                        position.push(ibl.into());
-                        position.push(ibil.into());
-                        position.push(ibir.into());
-                        position.push(ibr.into());
-                        position.push(bl.into());
-                        position.push(bil.into());
-                        position.push(bir.into());
-                        position.push(br.into());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
-                        texcoord.push(Default::default());
+                        position.push(tl);
+                        position.push(til);
+                        position.push(tir);
+                        position.push(tr);
+                        position.push(itl);
+                        position.push(itil);
+                        position.push(itir);
+                        position.push(itr);
+                        position.push(ibl);
+                        position.push(ibil);
+                        position.push(ibir);
+                        position.push(ibr);
+                        position.push(bl);
+                        position.push(bil);
+                        position.push(bir);
+                        position.push(br);
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
+                        tex_coord.push(Default::default());
                         color.push(c);
                         color.push(c);
                         color.push(c);
@@ -314,22 +341,86 @@ where
                     }
                     TesselationVertices::Interleaved(data) => {
                         let vertices_start = data.len();
-                        data.push((tl.into(), Default::default(), c));
-                        data.push((til.into(), Default::default(), c));
-                        data.push((tir.into(), Default::default(), c));
-                        data.push((tr.into(), Default::default(), c));
-                        data.push((itl.into(), Default::default(), c));
-                        data.push((itil.into(), Default::default(), c));
-                        data.push((itir.into(), Default::default(), c));
-                        data.push((itr.into(), Default::default(), c));
-                        data.push((ibl.into(), Default::default(), c));
-                        data.push((ibil.into(), Default::default(), c));
-                        data.push((ibir.into(), Default::default(), c));
-                        data.push((ibr.into(), Default::default(), c));
-                        data.push((bl.into(), Default::default(), c));
-                        data.push((bil.into(), Default::default(), c));
-                        data.push((bir.into(), Default::default(), c));
-                        data.push((br.into(), Default::default(), c));
+                        data.push(TesselationVerticeInterleaved::new(
+                            tl,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            til,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            tir,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            tr,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            itl,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            itil,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            itir,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            itr,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            ibl,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            ibil,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            ibir,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            ibr,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            bl,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            bil,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            bir,
+                            Default::default(),
+                            c,
+                        ));
+                        data.push(TesselationVerticeInterleaved::new(
+                            br,
+                            Default::default(),
+                            c,
+                        ));
                         vertices_start as Index
                     }
                 };
@@ -354,7 +445,7 @@ where
 
     fn produce_image_triangles(
         &self,
-        rect: RauiRect,
+        rect: Rect,
         scale: Scalar,
         data: &ImageBoxImage,
         result: &mut Tesselation,
@@ -363,7 +454,7 @@ where
             Some((id, rect)) => (id.to_owned(), *rect),
             None => (
                 data.id.to_owned(),
-                RauiRect {
+                Rect {
                     left: 0.0,
                     right: 1.0,
                     top: 0.0,
@@ -372,29 +463,45 @@ where
             ),
         };
         let matrix = self.top_transform();
-        let tl = matrix.mul_point(Vec2::new(rect.left, rect.top));
-        let tr = matrix.mul_point(Vec2::new(rect.right, rect.top));
-        let br = matrix.mul_point(Vec2::new(rect.right, rect.bottom));
-        let bl = matrix.mul_point(Vec2::new(rect.left, rect.bottom));
-        let ctl = Vec2::new(srect.left, srect.top);
-        let ctr = Vec2::new(srect.right, srect.top);
-        let cbr = Vec2::new(srect.right, srect.bottom);
-        let cbl = Vec2::new(srect.left, srect.bottom);
-        let c = raui_to_color(data.tint);
+        let tl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left, rect.top)));
+        let tr = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right, rect.top)));
+        let br = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right, rect.bottom)));
+        let bl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left, rect.bottom)));
+        let ctl = Vec2 {
+            x: srect.left,
+            y: srect.top,
+        };
+        let ctr = Vec2 {
+            x: srect.right,
+            y: srect.top,
+        };
+        let cbr = Vec2 {
+            x: srect.right,
+            y: srect.bottom,
+        };
+        let cbl = Vec2 {
+            x: srect.left,
+            y: srect.bottom,
+        };
+        let c = data.tint;
         let indices_start = result.indices.len();
         match &data.scaling {
             ImageBoxImageScaling::Stretch => {
                 let vertices_start = match &mut result.vertices {
-                    TesselationVertices::Separated(position, texcoord, color) => {
+                    TesselationVertices::Separated(TesselationVerticesSeparated {
+                        position,
+                        tex_coord,
+                        color,
+                    }) => {
                         let vertices_start = position.len();
-                        position.push(tl.into());
-                        position.push(tr.into());
-                        position.push(br.into());
-                        position.push(bl.into());
-                        texcoord.push(ctl.into());
-                        texcoord.push(ctr.into());
-                        texcoord.push(cbr.into());
-                        texcoord.push(cbl.into());
+                        position.push(tl);
+                        position.push(tr);
+                        position.push(br);
+                        position.push(bl);
+                        tex_coord.push(ctl);
+                        tex_coord.push(ctr);
+                        tex_coord.push(cbr);
+                        tex_coord.push(cbl);
                         color.push(c);
                         color.push(c);
                         color.push(c);
@@ -403,10 +510,10 @@ where
                     }
                     TesselationVertices::Interleaved(data) => {
                         let vertices_start = data.len();
-                        data.push((tl.into(), ctl.into(), c));
-                        data.push((tr.into(), ctr.into(), c));
-                        data.push((br.into(), cbr.into(), c));
-                        data.push((bl.into(), cbl.into(), c));
+                        data.push(TesselationVerticeInterleaved::new(tl, ctl, c));
+                        data.push(TesselationVerticeInterleaved::new(tr, ctr, c));
+                        data.push(TesselationVerticeInterleaved::new(br, cbr, c));
+                        data.push(TesselationVerticeInterleaved::new(bl, cbl, c));
                         vertices_start as Index
                     }
                 };
@@ -428,13 +535,13 @@ where
                     .map(|size| {
                         (
                             *size,
-                            RauiVec2 {
+                            Vec2 {
                                 x: 1.0 / size.x,
                                 y: 1.0 / size.y,
                             },
                         )
                     })
-                    .unwrap_or((RauiVec2 { x: 1.0, y: 1.0 }, RauiVec2 { x: 1.0, y: 1.0 }));
+                    .unwrap_or((Vec2 { x: 1.0, y: 1.0 }, Vec2 { x: 1.0, y: 1.0 }));
                 let mut d = frame.destination;
                 d.left *= scale;
                 d.right *= scale;
@@ -456,134 +563,156 @@ where
                     d.top = rect.height() * d.top / m;
                     d.bottom = rect.height() * d.bottom / m;
                 }
-                let til = matrix.mul_point(Vec2::new(rect.left + d.left, rect.top));
-                let tir = matrix.mul_point(Vec2::new(rect.right - d.right, rect.top));
-                let itr = matrix.mul_point(Vec2::new(rect.right, rect.top + d.top));
-                let ibr = matrix.mul_point(Vec2::new(rect.right, rect.bottom - d.bottom));
-                let bir = matrix.mul_point(Vec2::new(rect.right - d.right, rect.bottom));
-                let bil = matrix.mul_point(Vec2::new(rect.left + d.left, rect.bottom));
-                let ibl = matrix.mul_point(Vec2::new(rect.left, rect.bottom - d.bottom));
-                let itl = matrix.mul_point(Vec2::new(rect.left, rect.top + d.top));
-                let itil = matrix.mul_point(Vec2::new(rect.left + d.left, rect.top + d.top));
-                let itir = matrix.mul_point(Vec2::new(rect.right - d.right, rect.top + d.top));
-                let ibir =
-                    matrix.mul_point(Vec2::new(rect.right - d.right, rect.bottom - d.bottom));
-                let ibil = matrix.mul_point(Vec2::new(rect.left + d.left, rect.bottom - d.bottom));
-                let ctil = Vec2::new(
-                    lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    srect.top,
+                let til =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.top)));
+                let tir =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right - d.right, rect.top)));
+                let itr =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right, rect.top + d.top)));
+                let ibr = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.right, rect.bottom - d.bottom)),
                 );
-                let ctir = Vec2::new(
-                    lerp(
+                let bir = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.right - d.right, rect.bottom)),
+                );
+                let bil =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.bottom)));
+                let ibl = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.left, rect.bottom - d.bottom)),
+                );
+                let itl =
+                    vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left, rect.top + d.top)));
+                let itil = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.top + d.top)),
+                );
+                let itir = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.right - d.right, rect.top + d.top)),
+                );
+                let ibir = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.right - d.right, rect.bottom - d.bottom)),
+                );
+                let ibil = vec2_to_raui(
+                    matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.bottom - d.bottom)),
+                );
+                let ctil = Vec2 {
+                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    y: srect.top,
+                };
+                let ctir = Vec2 {
+                    x: lerp(
                         srect.left,
                         srect.right,
                         1.0 - frame.source.right * inv_size.x,
                     ),
-                    srect.top,
-                );
-                let citr = Vec2::new(
-                    srect.right,
-                    lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
-                );
-                let cibr = Vec2::new(
-                    srect.right,
-                    lerp(
+                    y: srect.top,
+                };
+                let citr = Vec2 {
+                    x: srect.right,
+                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                };
+                let cibr = Vec2 {
+                    x: srect.right,
+                    y: lerp(
                         srect.top,
                         srect.bottom,
                         1.0 - frame.source.bottom * inv_size.y,
                     ),
-                );
-                let cbir = Vec2::new(
-                    lerp(
+                };
+                let cbir = Vec2 {
+                    x: lerp(
                         srect.left,
                         srect.right,
                         1.0 - frame.source.right * inv_size.x,
                     ),
-                    srect.bottom,
-                );
-                let cbil = Vec2::new(
-                    lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    srect.bottom,
-                );
-                let cibl = Vec2::new(
-                    srect.left,
-                    lerp(
+                    y: srect.bottom,
+                };
+                let cbil = Vec2 {
+                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    y: srect.bottom,
+                };
+                let cibl = Vec2 {
+                    x: srect.left,
+                    y: lerp(
                         srect.top,
                         srect.bottom,
                         1.0 - frame.source.bottom * inv_size.y,
                     ),
-                );
-                let citl = Vec2::new(
-                    srect.left,
-                    lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
-                );
-                let citil = Vec2::new(
-                    lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
-                );
-                let citir = Vec2::new(
-                    lerp(
+                };
+                let citl = Vec2 {
+                    x: srect.left,
+                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                };
+                let citil = Vec2 {
+                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                };
+                let citir = Vec2 {
+                    x: lerp(
                         srect.left,
                         srect.right,
                         1.0 - frame.source.right * inv_size.x,
                     ),
-                    lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
-                );
-                let cibir = Vec2::new(
-                    lerp(
+                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                };
+                let cibir = Vec2 {
+                    x: lerp(
                         srect.left,
                         srect.right,
                         1.0 - frame.source.right * inv_size.x,
                     ),
-                    lerp(
+                    y: lerp(
                         srect.top,
                         srect.bottom,
                         1.0 - frame.source.bottom * inv_size.y,
                     ),
-                );
-                let cibil = Vec2::new(
-                    lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    lerp(
+                };
+                let cibil = Vec2 {
+                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    y: lerp(
                         srect.top,
                         srect.bottom,
                         1.0 - frame.source.bottom * inv_size.y,
                     ),
-                );
+                };
                 let vertices_start = match &mut result.vertices {
-                    TesselationVertices::Separated(position, texcoord, color) => {
+                    TesselationVertices::Separated(TesselationVerticesSeparated {
+                        position,
+                        tex_coord,
+                        color,
+                    }) => {
                         let vertices_start = position.len();
-                        position.push(tl.into());
-                        position.push(til.into());
-                        position.push(tir.into());
-                        position.push(tr.into());
-                        position.push(itl.into());
-                        position.push(itil.into());
-                        position.push(itir.into());
-                        position.push(itr.into());
-                        position.push(ibl.into());
-                        position.push(ibil.into());
-                        position.push(ibir.into());
-                        position.push(ibr.into());
-                        position.push(bl.into());
-                        position.push(bil.into());
-                        position.push(bir.into());
-                        position.push(br.into());
-                        texcoord.push(ctl.into());
-                        texcoord.push(ctil.into());
-                        texcoord.push(ctir.into());
-                        texcoord.push(ctr.into());
-                        texcoord.push(citl.into());
-                        texcoord.push(citil.into());
-                        texcoord.push(citir.into());
-                        texcoord.push(citr.into());
-                        texcoord.push(cibl.into());
-                        texcoord.push(cibil.into());
-                        texcoord.push(cibir.into());
-                        texcoord.push(cibr.into());
-                        texcoord.push(cbl.into());
-                        texcoord.push(cbil.into());
-                        texcoord.push(cbir.into());
-                        texcoord.push(cbr.into());
+                        position.push(tl);
+                        position.push(til);
+                        position.push(tir);
+                        position.push(tr);
+                        position.push(itl);
+                        position.push(itil);
+                        position.push(itir);
+                        position.push(itr);
+                        position.push(ibl);
+                        position.push(ibil);
+                        position.push(ibir);
+                        position.push(ibr);
+                        position.push(bl);
+                        position.push(bil);
+                        position.push(bir);
+                        position.push(br);
+                        tex_coord.push(ctl);
+                        tex_coord.push(ctil);
+                        tex_coord.push(ctir);
+                        tex_coord.push(ctr);
+                        tex_coord.push(citl);
+                        tex_coord.push(citil);
+                        tex_coord.push(citir);
+                        tex_coord.push(citr);
+                        tex_coord.push(cibl);
+                        tex_coord.push(cibil);
+                        tex_coord.push(cibir);
+                        tex_coord.push(cibr);
+                        tex_coord.push(cbl);
+                        tex_coord.push(cbil);
+                        tex_coord.push(cbir);
+                        tex_coord.push(cbr);
                         color.push(c);
                         color.push(c);
                         color.push(c);
@@ -604,22 +733,22 @@ where
                     }
                     TesselationVertices::Interleaved(data) => {
                         let vertices_start = data.len();
-                        data.push((tl.into(), ctl.into(), c));
-                        data.push((til.into(), ctil.into(), c));
-                        data.push((tir.into(), ctir.into(), c));
-                        data.push((tr.into(), ctr.into(), c));
-                        data.push((itl.into(), citl.into(), c));
-                        data.push((itil.into(), citil.into(), c));
-                        data.push((itir.into(), citir.into(), c));
-                        data.push((itr.into(), citr.into(), c));
-                        data.push((ibl.into(), cibl.into(), c));
-                        data.push((ibil.into(), cibil.into(), c));
-                        data.push((ibir.into(), cibir.into(), c));
-                        data.push((ibr.into(), cibr.into(), c));
-                        data.push((bl.into(), cbl.into(), c));
-                        data.push((bil.into(), cbil.into(), c));
-                        data.push((bir.into(), cbir.into(), c));
-                        data.push((br.into(), cbr.into(), c));
+                        data.push(TesselationVerticeInterleaved::new(tl, ctl, c));
+                        data.push(TesselationVerticeInterleaved::new(til, ctil, c));
+                        data.push(TesselationVerticeInterleaved::new(tir, ctir, c));
+                        data.push(TesselationVerticeInterleaved::new(tr, ctr, c));
+                        data.push(TesselationVerticeInterleaved::new(itl, citl, c));
+                        data.push(TesselationVerticeInterleaved::new(itil, citil, c));
+                        data.push(TesselationVerticeInterleaved::new(itir, citir, c));
+                        data.push(TesselationVerticeInterleaved::new(itr, citr, c));
+                        data.push(TesselationVerticeInterleaved::new(ibl, cibl, c));
+                        data.push(TesselationVerticeInterleaved::new(ibil, cibil, c));
+                        data.push(TesselationVerticeInterleaved::new(ibir, cibir, c));
+                        data.push(TesselationVerticeInterleaved::new(ibr, cibr, c));
+                        data.push(TesselationVerticeInterleaved::new(bl, cbl, c));
+                        data.push(TesselationVerticeInterleaved::new(bil, cbil, c));
+                        data.push(TesselationVerticeInterleaved::new(bir, cbir, c));
+                        data.push(TesselationVerticeInterleaved::new(br, cbr, c));
                         vertices_start as Index
                     }
                 };
@@ -759,7 +888,7 @@ where
                     self.push_transform(&unit.transform, local_space);
                     if unit.clipping {
                         result.batches.push(Batch::ClipPush(BatchClipRect {
-                            box_size: (local_space.width(), local_space.height()),
+                            box_size: local_space.size(),
                             matrix: self.top_transform().into_col_array(),
                         }));
                     }
@@ -832,7 +961,7 @@ where
                 ImageBoxMaterial::Image(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
                         let local_space = mapping.virtual_to_real_rect(item.local_space);
-                        let rect = RauiRect {
+                        let rect = Rect {
                             left: 0.0,
                             right: local_space.width(),
                             top: 0.0,
@@ -843,7 +972,7 @@ where
                                 .image_sizes
                                 .get(&image.id)
                                 .cloned()
-                                .unwrap_or(RauiVec2 { x: 1.0, y: 1.0 });
+                                .unwrap_or(Vec2 { x: 1.0, y: 1.0 });
                             let ox = rect.left;
                             let oy = rect.top;
                             let iw = rect.width();
@@ -855,7 +984,7 @@ where
                             let h = size.y * scale;
                             let ow = lerp(0.0, iw - w, aspect.horizontal_alignment);
                             let oh = lerp(0.0, ih - h, aspect.vertical_alignment);
-                            RauiRect {
+                            Rect {
                                 left: ox + ow,
                                 right: ox + ow + w,
                                 top: oy + oh,
@@ -888,19 +1017,28 @@ where
                         .resize(batches_start + batches, Default::default());
                     result.indices.resize(indices_start + indices, 0);
                     let vertices_start = match &mut result.vertices {
-                        TesselationVertices::Separated(position, texcoord, color) => {
+                        TesselationVertices::Separated(TesselationVerticesSeparated {
+                            position,
+                            tex_coord,
+                            color,
+                        }) => {
                             let vertices_start = position.len();
                             position.resize(vertices_start + vertices, Default::default());
-                            texcoord.resize(vertices_start + vertices, Default::default());
+                            tex_coord.resize(vertices_start + vertices, Default::default());
                             color.resize(vertices_start + vertices, Default::default());
                             self.text_tesselation_engine.tesselate(
                                 unit,
                                 item,
                                 matrix,
                                 TesselationVerticesSliceMut::Separated(
-                                    &mut position[vertices_start..(vertices_start + vertices)],
-                                    &mut texcoord[vertices_start..(vertices_start + vertices)],
-                                    &mut color[vertices_start..(vertices_start + vertices)],
+                                    TesselationVerticesSeparatedSliceMut {
+                                        position: &mut position
+                                            [vertices_start..(vertices_start + vertices)],
+                                        tex_coord: &mut tex_coord
+                                            [vertices_start..(vertices_start + vertices)],
+                                        color: &mut color
+                                            [vertices_start..(vertices_start + vertices)],
+                                    },
                                 ),
                                 &mut result.indices[indices_start..(indices_start + indices)],
                                 &mut result.batches[batches_start..(batches_start + batches)],
@@ -967,11 +1105,13 @@ where
         let (vertices, indices, batches) = self.count(tree, layout);
         let mut result = Tesselation {
             vertices: match self.vertices_format {
-                TesselationVerticesFormat::Separated => TesselationVertices::Separated(
-                    Vec::with_capacity(vertices),
-                    Vec::with_capacity(vertices),
-                    Vec::with_capacity(vertices),
-                ),
+                TesselationVerticesFormat::Separated => {
+                    TesselationVertices::Separated(TesselationVerticesSeparated {
+                        position: Vec::with_capacity(vertices),
+                        tex_coord: Vec::with_capacity(vertices),
+                        color: Vec::with_capacity(vertices),
+                    })
+                }
                 TesselationVerticesFormat::Interleaved => {
                     TesselationVertices::Interleaved(Vec::with_capacity(vertices))
                 }

@@ -6,7 +6,7 @@ use raui_core::{
     },
     Scalar,
 };
-use raui_tesselate_renderer::tesselation::Tesselation;
+use raui_tesselate_renderer::tesselation::{Tesselation, TesselationVerticeInterleaved};
 use std::collections::HashMap;
 use tetra::{
     graphics::{
@@ -89,13 +89,19 @@ impl MeshData {
             let vertices = match tesselation.vertices.as_interleaved() {
                 Some(vertices) => vertices
                     .iter()
-                    .map(|(p, t, c)| {
-                        Vertex::new(
-                            Vec2::new(p.0, p.1),
-                            Vec2::new(t.0, t.1),
-                            Color::rgba(c.0, c.1, c.2, c.3),
-                        )
-                    })
+                    .map(
+                        |TesselationVerticeInterleaved {
+                             position,
+                             tex_coord,
+                             color,
+                         }| {
+                            Vertex::new(
+                                Vec2::new(position.x, position.y),
+                                Vec2::new(tex_coord.x, tex_coord.y),
+                                Color::rgba(color.r, color.g, color.b, color.a),
+                            )
+                        },
+                    )
                     .collect::<Vec<_>>(),
                 None => return Err(Error::CannotUnpackVertices),
             };

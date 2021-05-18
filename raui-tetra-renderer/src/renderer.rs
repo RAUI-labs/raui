@@ -256,31 +256,32 @@ where
                         let new_matrix = Mat4::from_col_array(text.matrix);
                         set_transform_matrix(self.context, new_matrix);
                         let scale = mapping.scale();
-                        let box_size = (text.box_size.0 * font_scale, text.box_size.1 * font_scale);
+                        let w = text.box_size.x * font_scale;
+                        let h = text.box_size.y * font_scale;
                         let mut renderable = match self.resources.texts.remove(&wid) {
                             Some(mut renderable) => {
                                 renderable.set_content(text.text.as_str());
                                 renderable.set_font(font);
-                                renderable.set_max_width(Some(box_size.0));
+                                renderable.set_max_width(Some(w));
                                 renderable
                             }
-                            None => Text::wrapped(text.text.as_str(), font, box_size.0),
+                            None => Text::wrapped(text.text.as_str(), font, w),
                         };
                         let height = renderable
                             .get_bounds(self.context)
                             .map(|rect| rect.height)
-                            .unwrap_or(box_size.1);
+                            .unwrap_or(h);
                         let scale = if height > 0.0 {
-                            let f = (box_size.1 / height).min(1.0);
+                            let f = (h / height).min(1.0);
                             Vec2::new(scale / font_scale, scale * f / font_scale)
                         } else {
                             Vec2::default()
                         };
                         let params = DrawParams::new().scale(scale).color(Color::rgba(
-                            text.color.0,
-                            text.color.1,
-                            text.color.2,
-                            text.color.3,
+                            text.color.r,
+                            text.color.g,
+                            text.color.b,
+                            text.color.a,
                         ));
                         renderable.draw(self.context, params);
                         self.resources.texts.insert(wid, renderable);
@@ -292,9 +293,9 @@ where
                 Batch::ClipPush(clip) => {
                     let matrix = Mat4::from_col_array(clip.matrix);
                     let tl = matrix.mul_point(Vec2::new(0.0, 0.0));
-                    let tr = matrix.mul_point(Vec2::new(clip.box_size.0, 0.0));
-                    let br = matrix.mul_point(Vec2::new(clip.box_size.0, clip.box_size.1));
-                    let bl = matrix.mul_point(Vec2::new(0.0, clip.box_size.1));
+                    let tr = matrix.mul_point(Vec2::new(clip.box_size.x, 0.0));
+                    let br = matrix.mul_point(Vec2::new(clip.box_size.x, clip.box_size.y));
+                    let bl = matrix.mul_point(Vec2::new(0.0, clip.box_size.y));
                     let x = tl.x.min(tr.x).min(br.x).min(bl.x).round();
                     let y = tl.y.min(tr.y).min(br.y).min(bl.y).round();
                     let x2 = tl.x.max(tr.x).max(br.x).max(bl.x).round();

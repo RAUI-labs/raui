@@ -2,37 +2,13 @@ use crate::Index;
 use raui_core::{
     widget::{
         unit::text::{TextBoxDirection, TextBoxHorizontalAlign, TextBoxVerticalAlign},
+        utils::{Color, Vec2},
         WidgetId,
     },
     Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
-use vek::Vec2;
-
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-pub struct Position(pub Scalar, pub Scalar);
-
-impl From<Vec2<Scalar>> for Position {
-    fn from(v: Vec2<Scalar>) -> Self {
-        Self(v.x, v.y)
-    }
-}
-
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-pub struct TexCoord(pub Scalar, pub Scalar);
-
-impl From<Vec2<Scalar>> for TexCoord {
-    fn from(v: Vec2<Scalar>) -> Self {
-        Self(v.x, v.y)
-    }
-}
-
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
-pub struct Color(pub Scalar, pub Scalar, pub Scalar, pub Scalar);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct BatchExternalText {
@@ -40,7 +16,7 @@ pub struct BatchExternalText {
     pub font: String,
     pub size: Scalar,
     pub color: Color,
-    pub box_size: (Scalar, Scalar),
+    pub box_size: Vec2,
     pub horizontal_align: TextBoxHorizontalAlign,
     pub vertical_align: TextBoxVerticalAlign,
     pub direction: TextBoxDirection,
@@ -49,7 +25,7 @@ pub struct BatchExternalText {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct BatchClipRect {
-    pub box_size: (Scalar, Scalar),
+    pub box_size: Vec2,
     pub matrix: [Scalar; 16],
 }
 
@@ -88,23 +64,69 @@ impl Batch {
     }
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct TesselationVerticesSeparated {
+    pub position: Vec<Vec2>,
+    pub tex_coord: Vec<Vec2>,
+    pub color: Vec<Color>,
+}
+
+#[derive(Debug)]
+pub struct TesselationVerticesSeparatedSlice<'a> {
+    pub position: &'a [Vec2],
+    pub tex_coord: &'a [Vec2],
+    pub color: &'a [Color],
+}
+
+#[derive(Debug)]
+pub struct TesselationVerticesSeparatedSliceMut<'a> {
+    pub position: &'a mut [Vec2],
+    pub tex_coord: &'a mut [Vec2],
+    pub color: &'a mut [Color],
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct TesselationVerticeInterleaved {
+    pub position: Vec2,
+    pub tex_coord: Vec2,
+    pub color: Color,
+}
+
+impl TesselationVerticeInterleaved {
+    pub fn new(position: Vec2, tex_coord: Vec2, color: Color) -> Self {
+        TesselationVerticeInterleaved {
+            position,
+            tex_coord,
+            color,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TesselationVertices {
-    Separated(Vec<Position>, Vec<TexCoord>, Vec<Color>),
-    Interleaved(Vec<(Position, TexCoord, Color)>),
+    Separated(TesselationVerticesSeparated),
+    Interleaved(Vec<TesselationVerticeInterleaved>),
 }
 
 impl TesselationVertices {
-    pub fn as_separated(&self) -> Option<(&[Position], &[TexCoord], &[Color])> {
+    pub fn as_separated(&self) -> Option<TesselationVerticesSeparatedSlice> {
         match &self {
-            Self::Separated(p, t, c) => Some((p, t, c)),
+            Self::Separated(TesselationVerticesSeparated {
+                position,
+                tex_coord,
+                color,
+            }) => Some(TesselationVerticesSeparatedSlice {
+                position,
+                tex_coord,
+                color,
+            }),
             _ => None,
         }
     }
 
-    pub fn as_interleaved(&self) -> Option<&[(Position, TexCoord, Color)]> {
+    pub fn as_interleaved(&self) -> Option<&[TesselationVerticeInterleaved]> {
         match &self {
-            Self::Interleaved(d) => Some(d),
+            Self::Interleaved(data) => Some(data),
             _ => None,
         }
     }
@@ -112,8 +134,8 @@ impl TesselationVertices {
 
 #[derive(Debug)]
 pub enum TesselationVerticesSliceMut<'a> {
-    Separated(&'a mut [Position], &'a mut [TexCoord], &'a mut [Color]),
-    Interleaved(&'a mut [(Position, TexCoord, Color)]),
+    Separated(TesselationVerticesSeparatedSliceMut<'a>),
+    Interleaved(&'a mut [TesselationVerticeInterleaved]),
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
