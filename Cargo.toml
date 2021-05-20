@@ -107,6 +107,7 @@ members = [
   "demos/in-game",
   "site/rust/guide_01",
   "site/rust/guide_02",
+  "site/rust/guide_03",
 ]
 
 [package.metadata.docs.rs]

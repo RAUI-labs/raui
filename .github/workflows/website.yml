@@ -6,13 +6,23 @@ on:
   pull_request:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Install Just
+        run: curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
+      - name: Run Website Doc Tests
+        run: just website-doc-tests
+
   build:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/master'
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@master
-      - name: 'Build only' 
+      - name: Build only
         uses: shalzz/zola-deploy-action@master
         env:
           BUILD_DIR: site
@@ -23,9 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@master
-      - name: 'Build and Deploy'
+      - name: Build and Deploy
         uses: shalzz/zola-deploy-action@master
         env:
           PAGES_BRANCH: gh-pages
