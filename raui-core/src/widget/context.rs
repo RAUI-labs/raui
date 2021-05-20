@@ -1,6 +1,7 @@
 use crate::{
     animator::{Animator, AnimatorStates},
     messenger::{MessageSender, Messenger},
+    prelude::ProcessContext,
     props::Props,
     signals::SignalSender,
     state::State,
@@ -8,7 +9,7 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub struct WidgetContext<'a> {
+pub struct WidgetContext<'a, 'b> {
     pub id: &'a WidgetId,
     pub idref: Option<&'a WidgetRef>,
     pub key: &'a str,
@@ -19,9 +20,10 @@ pub struct WidgetContext<'a> {
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,
+    pub process_context: &'a mut ProcessContext<'b>,
 }
 
-impl<'a> WidgetContext<'a> {
+impl<'a, 'b> WidgetContext<'a, 'b> {
     pub fn take_named_slots(&mut self) -> HashMap<String, WidgetNode> {
         std::mem::take(&mut self.named_slots)
     }
@@ -43,7 +45,7 @@ impl<'a> WidgetContext<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for WidgetContext<'a> {
+impl<'a, 'b> std::fmt::Debug for WidgetContext<'a, 'b> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("WidgetContext")
             .field("id", &self.id)
@@ -56,7 +58,7 @@ impl<'a> std::fmt::Debug for WidgetContext<'a> {
     }
 }
 
-pub struct WidgetMountOrChangeContext<'a> {
+pub struct WidgetMountOrChangeContext<'a, 'b> {
     pub id: &'a WidgetId,
     pub props: &'a Props,
     pub shared_props: &'a Props,
@@ -64,11 +66,13 @@ pub struct WidgetMountOrChangeContext<'a> {
     pub messenger: Messenger<'a>,
     pub signals: SignalSender,
     pub animator: Animator<'a>,
+    pub process_context: &'a mut ProcessContext<'b>,
 }
 
-pub struct WidgetUnmountContext<'a> {
+pub struct WidgetUnmountContext<'a, 'b> {
     pub id: &'a WidgetId,
     pub state: &'a Props,
     pub messenger: &'a MessageSender,
     pub signals: SignalSender,
+    pub process_context: &'a mut ProcessContext<'b>,
 }

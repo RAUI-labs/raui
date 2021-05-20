@@ -50,6 +50,8 @@ use std::sync::{Arc, RwLock};
 
 /// Wraps internal data and optionally notifies an [`Application`][crate::application::Application]
 /// of changes to it
+/// 
+/// See [module docs][self] for a full example.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DataBinding<T>
 where

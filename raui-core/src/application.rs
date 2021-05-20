@@ -52,6 +52,10 @@
 //! // This and the following function calls would need to be called every frame
 //! loop {
 //!     // Telling the app to `process` will make it perform any necessary updates.
+//!     //
+//!     // We can also pass in a `ProcessContext` which allows us to provide the UI with
+//!     // mutable access to application data, but we just pass in a default context in
+//!     // this case.
 //!     application.process();
 //!
 //!     // To properly handle layout we need to create a mapping of the screen coordinates to
@@ -127,6 +131,7 @@ use crate::{
     Prefab, PrefabError, PrefabValue, Scalar,
 };
 use std::{
+    any::{Any, TypeId},
     collections::{HashMap, HashSet},
     convert::TryInto,
     sync::{
@@ -583,13 +588,104 @@ impl Application {
     /// [`process()`][Self::process] application, even if no changes have been detected
     #[inline]
     pub fn forced_process(&mut self) -> bool {
+        self.forced_process_with_context(&mut Default::default())
+    }
+
+    /// [`process()`][Self::process] application, even if no changes have been detected
+    #[inline]
+    pub fn forced_process_with_context<'a, 'b>(
+        &mut self,
+        process_context: &mut ProcessContext<'b>,
+    ) -> bool {
         self.dirty = true;
-        self.process()
+        self.process_with_context(process_context)
     }
 
     /// Process the application, updating animations, applying state changes, handling widget
     /// messages, etc.
+    #[inline]
     pub fn process(&mut self) -> bool {
+        self.process_with_context(&mut Default::default())
+    }
+
+    /// [Process][Self::process] the application and provide a custom [`ProcessContext`]
+    ///
+    /// # Process Context
+    ///
+    /// The `process_context` argument allows you to provide the UI's components with mutable or
+    /// immutable access to application data. This grants powerful, direct control over the
+    /// application to the UI's widgets, but has some caveats and it is easy to fall into
+    /// anti-patterns when using.
+    ///
+    /// You should consider carefully whether or not a process context is the best way to facilitate
+    /// your use-case before using this feature. See [caveats](#caveats) below for more explanation.
+    ///
+    /// ## Caveats
+    ///
+    /// RAUI provides other ways to facilitate UI integration with external data that should
+    /// generally be preferred over using a process context. The primary mechanisms are:
+    ///
+    /// - [`DataBinding`]s and widget [messages][crate::messenger], for having the application send
+    ///   data to widgets
+    /// - [signals][crate::signals] for having widgets send data to the application.
+    ///
+    /// The main difference between using a [`DataBinding`] and a process context is the fact that
+    /// RAUI is able to more granularly update the widget tree in response to data changes when
+    /// using [`DataBinding`], but it has no way to know know when data in a process context
+    /// changes.
+    ///
+    /// When you use a process context **you** are now responsible for either running
+    /// [`forced_process_with_context`][Self::forced_process_with_context] every frame to make sure
+    /// that the UI is always updated when the process context changes, or by manually calling
+    /// [`mark_dirty`][Self::mark_dirty] when the process context has changed to make sure that the
+    /// next `process_with_context()` call will actually update the application.
+    ///
+    /// [`DataBinding`]: crate::data_binding::DataBinding
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// /// Some sort of application data
+    /// ///
+    /// /// Pretend this data cannot be cloned because it has some special requirements.
+    /// struct AppData {
+    ///     counter: i32
+    /// }
+    ///
+    /// // Make our data
+    /// let mut app_data = AppData {
+    ///     counter: 0,
+    /// };
+    ///
+    /// let mut app = Application::new();
+    /// // Do application stuff like interactions, layout, etc...
+    ///
+    /// // Now when it is time to process our application we create a process context and we put
+    /// // a _mutable reference_ to our app data in the context. This means we don't have to have
+    /// // ownership of our `AppData` struct, which is useful when the UI event loop doesn't
+    /// // own the data it needs access to.
+    /// // Now we call `process` with our process context
+    /// app.process_with_context(ProcessContext::new().insert_mut(&mut app_data));
+    /// ```
+    ///
+    /// Now, in our components we can access the `AppData` through the widget's `WidgetContext`
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # struct AppData {
+    /// #    counter: i32
+    /// # }
+    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    ///     let app_data = ctx.process_context.get_mut::<AppData>().unwrap();
+    ///     let counter = &mut app_data.counter;
+    ///     *counter += 1;
+    ///
+    ///     // widget stuff...
+    /// #    widget!(())
+    /// }
+    /// ```
+    pub fn process_with_context<'a>(&mut self, process_context: &mut ProcessContext<'a>) -> bool {
         if self.change_notifier.consume_change() {
             self.dirty = true;
         }
@@ -640,6 +736,7 @@ impl Application {
             None,
             &message_sender,
             &signal_sender,
+            process_context,
         );
         self.states = states
             .into_iter()
@@ -657,6 +754,7 @@ impl Application {
                                 state,
                                 messenger,
                                 signals,
+                                process_context,
                             };
                             (closure)(context);
                         }
@@ -690,7 +788,7 @@ impl Application {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn process_node<'a>(
+    fn process_node<'a, 'b>(
         &mut self,
         node: WidgetNode,
         states: &'a HashMap<WidgetId, Props>,
@@ -702,6 +800,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        process_context: &mut ProcessContext<'b>,
     ) -> WidgetNode {
         match node {
             WidgetNode::None => node,
@@ -716,6 +815,7 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
+                process_context,
             ),
             WidgetNode::Unit(unit) => self.process_node_unit(
                 unit,
@@ -727,12 +827,13 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
+                process_context,
             ),
         }
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn process_node_component<'a>(
+    fn process_node_component<'a, 'b>(
         &mut self,
         component: WidgetComponent,
         states: &'a HashMap<WidgetId, Props>,
@@ -744,6 +845,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        process_context: &mut ProcessContext<'b>,
     ) -> WidgetNode {
         let WidgetComponent {
             processor,
@@ -796,6 +898,7 @@ impl Application {
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
+                    process_context,
                 };
                 ((processor)(context), false)
             }
@@ -814,6 +917,7 @@ impl Application {
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
+                    process_context,
                 };
                 let node = (processor)(context);
                 new_states.insert(id.clone(), state_data);
@@ -840,6 +944,7 @@ impl Application {
                             messenger,
                             signals,
                             animator,
+                            process_context,
                         };
                         (closure)(context);
                     }
@@ -863,6 +968,7 @@ impl Application {
                         messenger,
                         signals,
                         animator,
+                        process_context,
                     };
                     (closure)(context);
                 }
@@ -890,6 +996,7 @@ impl Application {
             Some(shared_props),
             message_sender,
             signal_sender,
+            process_context,
         );
         while let Ok(data) = state_receiver.try_recv() {
             self.state_changes.insert(id.to_owned(), data);
@@ -898,7 +1005,7 @@ impl Application {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn process_node_unit<'a>(
+    fn process_node_unit<'a, 'b>(
         &mut self,
         mut unit: WidgetUnitNode,
         states: &'a HashMap<WidgetId, Props>,
@@ -909,6 +1016,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        process_context: &mut ProcessContext<'b>,
     ) -> WidgetNode {
         match &mut unit {
             WidgetUnitNode::None | WidgetUnitNode::ImageBox(_) | WidgetUnitNode::TextBox(_) => {}
@@ -925,6 +1033,7 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
+                    process_context,
                 ));
             }
             WidgetUnitNode::PortalBox(unit) => match &mut *unit.slot {
@@ -941,6 +1050,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        process_context,
                     )
                 }
                 PortalBoxSlotNode::ContentItem(item) => {
@@ -956,6 +1066,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        process_context,
                     )
                 }
                 PortalBoxSlotNode::FlexItem(item) => {
@@ -971,6 +1082,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        process_context,
                     )
                 }
                 PortalBoxSlotNode::GridItem(item) => {
@@ -986,6 +1098,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        process_context,
                     )
                 }
             },
@@ -1007,6 +1120,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            process_context,
                         );
                         node
                     })
@@ -1030,6 +1144,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            process_context,
                         );
                         node
                     })
@@ -1053,6 +1168,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            process_context,
                         );
                         node
                     })
@@ -1071,6 +1187,7 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
+                    process_context,
                 ));
             }
         }
@@ -1740,5 +1857,94 @@ impl Application {
             color: data.color,
             transform: data.transform,
         })
+    }
+}
+
+/// Allows you to get mutable or immutable references to data exposed by the host of the RAUI
+/// application
+///
+/// This allows RAUI hosts to provide the UI with direct access to application data, if necessary,
+/// instead of using [`DataBinding`][crate::data_binding::DataBinding]s.
+///
+/// See [`Application::process`] for more information.
+#[derive(Debug, Default)]
+pub struct ProcessContext<'a> {
+    mutable: HashMap<TypeId, &'a mut dyn Any>,
+    immutable: HashMap<TypeId, &'a dyn Any>,
+}
+
+impl<'a> ProcessContext<'a> {
+    /// Create an empty [`ProcessContext`]
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// Can be used to get mutable access to application data provided by the RAUI host.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # struct AppData {
+    /// #    counter: i32
+    /// # }
+    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    ///     let app_data = ctx.process_context.get_mut::<AppData>().unwrap();
+    ///     let counter = &mut app_data.counter;
+    ///     *counter += 1;
+    ///
+    ///     // widget stuff...
+    /// #    widget!(())
+    /// }
+    /// ```
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.mutable
+            .get_mut(&TypeId::of::<T>())
+            .map(|x| x.downcast_mut())
+            .flatten()
+    }
+
+    /// Allows RAUI hosts to add mutable references to application data to the
+    /// [`process_context`][crate::widget::context::WidgetContext::process_context`] that is
+    /// available to widget components.
+    ///
+    /// See [`Application::process`] for more information.
+    pub fn insert_mut<T: 'static>(&mut self, item: &'a mut T) -> &mut Self {
+        self.mutable.insert(TypeId::of::<T>(), item);
+        self
+    }
+
+    /// Can be used to get immutable access to application data provided by the RAUI host.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # struct AppData {
+    /// #    counter: i32
+    /// # }
+    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    ///     let app_data = ctx.process_context.get::<AppData>().unwrap();
+    ///     let counter = app_data.counter;
+    ///
+    ///     // widget stuff...
+    /// #    widget!(())
+    /// }
+    /// ```
+    pub fn get<T: 'static>(&mut self) -> Option<&T> {
+        self.immutable
+            .get(&TypeId::of::<T>())
+            .map(|x| x.downcast_ref())
+            .flatten()
+    }
+
+    /// Allows RAUI hosts to add immutable references to application data to the
+    /// [`process_context`][crate::widget::context::WidgetContext::process_context`] that is
+    /// available to widget components.
+    ///
+    /// See [`Application::process`] for more information.
+    pub fn insert<T: 'static>(&mut self, item: &'a T) -> &mut Self {
+        self.immutable.insert(TypeId::of::<T>(), item);
+        self
     }
 }

@@ -7,13 +7,13 @@ env:
 
 jobs:
   build:
-
-    runs-on: windows-latest
-
-    # until we figure out how to make bundled sdl2 dependency compile we just exclude projects that use it
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install alsa and udev
+      run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
     - name: Build
-      run: cargo build --all --verbose --exclude hello-world --exclude in-game --exclude todo-app --exclude raui-tetra-renderer --exclude guide
+      run: cargo build --all --features all
     - name: Run tests
-      run: cargo test --all --features all --verbose --exclude hello-world --exclude in-game --exclude todo-app --exclude raui-tetra-renderer
+      run: cargo test --all --features all 
