@@ -181,7 +181,7 @@ impl Default for CoordsMappingScaling {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CoordsMapping {
     #[serde(default)]
-    scale: Scalar,
+    scale: Vec2,
     #[serde(default)]
     offset: Vec2,
     #[serde(default)]
@@ -199,7 +199,7 @@ impl Default for CoordsMapping {
 impl CoordsMapping {
     pub fn new(real_area: Rect) -> Self {
         Self {
-            scale: 1.0,
+            scale: 1.0.into(),
             offset: Vec2::default(),
             real_area,
             virtual_area: Rect {
@@ -218,13 +218,15 @@ impl CoordsMapping {
                 let vh = size.y;
                 let rw = real_area.width();
                 let rh = real_area.height();
-                let va = vw / vh;
-                let ra = rw / rh;
-                let scale = if va >= ra { rw / vw } else { rh / vh };
-                let w = vw * scale;
-                let h = vh * scale;
+                let scale_x = rw / vw;
+                let scale_y = rh / vh;
+                let w = vw * scale_x;
+                let h = vh * scale_y;
                 Self {
-                    scale,
+                    scale: Vec2 {
+                        x: scale_x,
+                        y: scale_y,
+                    },
                     offset: Vec2 {
                         x: (rw - w) * 0.5,
                         y: (rh - h) * 0.5,
@@ -244,7 +246,7 @@ impl CoordsMapping {
                 let scale = rw / vw;
                 let vh = rh / scale;
                 Self {
-                    scale,
+                    scale: scale.into(),
                     offset: Vec2::default(),
                     real_area,
                     virtual_area: Rect {
@@ -261,7 +263,7 @@ impl CoordsMapping {
                 let scale = rh / vh;
                 let vw = rw / scale;
                 Self {
-                    scale,
+                    scale: scale.into(),
                     offset: Vec2::default(),
                     real_area,
                     virtual_area: Rect {
@@ -287,7 +289,7 @@ impl CoordsMapping {
                 }
             }
             _ => Self {
-                scale: 1.0,
+                scale: 1.0.into(),
                 offset: Vec2::default(),
                 real_area,
                 virtual_area: Rect {
@@ -301,7 +303,7 @@ impl CoordsMapping {
     }
 
     #[inline]
-    pub fn scale(&self) -> Scalar {
+    pub fn scale(&self) -> Vec2 {
         self.scale
     }
 
@@ -318,36 +320,36 @@ impl CoordsMapping {
     #[inline]
     pub fn virtual_to_real_vec2(&self, coord: Vec2) -> Vec2 {
         Vec2 {
-            x: self.offset.x + (coord.x * self.scale),
-            y: self.offset.y + (coord.y * self.scale),
+            x: self.offset.x + (coord.x * self.scale.x),
+            y: self.offset.y + (coord.y * self.scale.y),
         }
     }
 
     #[inline]
     pub fn real_to_virtual_vec2(&self, coord: Vec2) -> Vec2 {
         Vec2 {
-            x: (coord.x - self.offset.x) / self.scale,
-            y: (coord.y - self.offset.y) / self.scale,
+            x: (coord.x - self.offset.x) / self.scale.x,
+            y: (coord.y - self.offset.y) / self.scale.y,
         }
     }
 
     #[inline]
     pub fn virtual_to_real_rect(&self, area: Rect) -> Rect {
         Rect {
-            left: self.offset.x + (area.left * self.scale),
-            right: self.offset.x + (area.right * self.scale),
-            top: self.offset.y + (area.top * self.scale),
-            bottom: self.offset.y + (area.bottom * self.scale),
+            left: self.offset.x + (area.left * self.scale.x),
+            right: self.offset.x + (area.right * self.scale.x),
+            top: self.offset.y + (area.top * self.scale.y),
+            bottom: self.offset.y + (area.bottom * self.scale.y),
         }
     }
 
     #[inline]
     pub fn real_to_virtual_rect(&self, area: Rect) -> Rect {
         Rect {
-            left: (area.left - self.offset.x) / self.scale,
-            right: (area.right - self.offset.x) / self.scale,
-            top: (area.top - self.offset.y) / self.scale,
-            bottom: (area.bottom - self.offset.y) / self.scale,
+            left: (area.left - self.offset.x) / self.scale.x,
+            right: (area.right - self.offset.x) / self.scale.x,
+            top: (area.top - self.offset.y) / self.scale.y,
+            bottom: (area.bottom - self.offset.y) / self.scale.y,
         }
     }
 }

@@ -182,7 +182,7 @@ where
     fn produce_color_triangles(
         &self,
         size: Vec2,
-        scale: Scalar,
+        scale: Vec2,
         data: &ImageBoxColor,
         result: &mut Tesselation,
     ) {
@@ -253,10 +253,10 @@ where
             }
             ImageBoxImageScaling::Frame(frame) => {
                 let mut d = frame.destination;
-                d.left *= scale;
-                d.right *= scale;
-                d.top *= scale;
-                d.bottom *= scale;
+                d.left *= scale.x;
+                d.right *= scale.x;
+                d.top *= scale.y;
+                d.bottom *= scale.y;
                 if d.left + d.right > size.x {
                     let m = d.left + d.right;
                     d.left = size.x * d.left / m;
@@ -446,7 +446,7 @@ where
     fn produce_image_triangles(
         &self,
         rect: Rect,
-        scale: Scalar,
+        scale: Vec2,
         data: &ImageBoxImage,
         result: &mut Tesselation,
     ) {
@@ -543,10 +543,10 @@ where
                     })
                     .unwrap_or((Vec2 { x: 1.0, y: 1.0 }, Vec2 { x: 1.0, y: 1.0 }));
                 let mut d = frame.destination;
-                d.left *= scale;
-                d.right *= scale;
-                d.top *= scale;
-                d.bottom *= scale;
+                d.left *= scale.x;
+                d.right *= scale.x;
+                d.top *= scale.y;
+                d.bottom *= scale.y;
                 if frame.frame_keep_aspect_ratio {
                     d.left = (frame.source.left * rect.height()) / source_size.y;
                     d.right = (frame.source.right * rect.height()) / source_size.y;

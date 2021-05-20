@@ -273,7 +273,7 @@ where
                             .unwrap_or(h);
                         let scale = if height > 0.0 {
                             let f = (h / height).min(1.0);
-                            Vec2::new(scale / font_scale, scale * f / font_scale)
+                            Vec2::new(scale.x / font_scale, scale.y * f / font_scale)
                         } else {
                             Vec2::default()
                         };
