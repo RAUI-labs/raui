@@ -13,6 +13,11 @@ pub struct PaperProps {
     pub variant: String,
 }
 
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
+pub struct PaperContentLayoutProps(pub ContentBoxItemLayout);
+
 pub fn paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref,
@@ -25,6 +30,18 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
 
     let paper_props = props.read_cloned_or_default::<PaperProps>();
     let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
+    let listed_slots = listed_slots
+        .into_iter()
+        .map(|mut item| {
+            item.remap_props(|mut props| {
+                if let Ok(PaperContentLayoutProps(layout)) = props.consume_unwrap_cloned() {
+                    props.write(layout);
+                }
+                props
+            });
+            item
+        })
+        .collect::<Vec<_>>();
 
     let items = match themed_props.variant {
         ThemeVariant::ContentOnly => listed_slots,

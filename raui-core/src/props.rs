@@ -97,7 +97,7 @@ where
         Box::new(self.clone())
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
@@ -119,12 +119,12 @@ where
         Box::new(self.clone())
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-pub trait PropsData: std::fmt::Debug + Send + Sync {
+pub trait PropsData: Any + std::fmt::Debug + Send + Sync {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
 }
@@ -164,6 +164,17 @@ impl Props {
             Ok(v)
         } else {
             Err(PropsError::HasNoDataOfType(type_name::<T>().to_owned()))
+        }
+    }
+
+    pub fn consume_unwrap_cloned<T>(&mut self) -> Result<T, PropsError>
+    where
+        T: 'static + PropsData + Clone,
+    {
+        if let Some(data) = self.consume::<T>()?.as_any().downcast_ref::<T>() {
+            Ok(data.clone())
+        } else {
+            Err(PropsError::CouldNotReadData)
         }
     }
 

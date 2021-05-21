@@ -593,7 +593,7 @@ impl Application {
 
     /// [`process()`][Self::process] application, even if no changes have been detected
     #[inline]
-    pub fn forced_process_with_context<'a, 'b>(
+    pub fn forced_process_with_context<'b>(
         &mut self,
         process_context: &mut ProcessContext<'b>,
     ) -> bool {
