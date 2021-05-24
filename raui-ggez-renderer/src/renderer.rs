@@ -112,10 +112,10 @@ impl<'a> GgezRenderer<'a> {
                                 builder.raw(vertices, indices, None);
                             }
                             ImageBoxImageScaling::Frame(frame) => {
-                                let vl = frame.destination.left * scale;
-                                let vr = frame.destination.right * scale;
-                                let vt = frame.destination.top * scale;
-                                let vb = frame.destination.bottom * scale;
+                                let vl = frame.destination.left * scale.x;
+                                let vr = frame.destination.right * scale.x;
+                                let vt = frame.destination.top * scale.y;
+                                let vb = frame.destination.bottom * scale.y;
                                 let vertices = &[
                                     graphics::Vertex {
                                         pos: [rect.left, rect.top],
@@ -309,10 +309,10 @@ impl<'a> GgezRenderer<'a> {
                                     let ft = frame.source.top / resource.height() as Scalar;
                                     let fb =
                                         1.0 - (frame.source.bottom / resource.height() as Scalar);
-                                    let vl = frame.destination.left * scale;
-                                    let vr = frame.destination.right * scale;
-                                    let vt = frame.destination.top * scale;
-                                    let vb = frame.destination.bottom * scale;
+                                    let vl = frame.destination.left * scale.x;
+                                    let vr = frame.destination.right * scale.x;
+                                    let vt = frame.destination.top * scale.y;
+                                    let vb = frame.destination.bottom * scale.y;
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
@@ -452,7 +452,10 @@ impl<'a> GgezRenderer<'a> {
                                 unit.color.a,
                             ),
                         ));
-                        text.set_font(*resource, Scale::uniform(unit.font.size * mapping.scale()));
+                        text.set_font(
+                            *resource,
+                            Scale::uniform(unit.font.size * mapping.scale().x),
+                        );
                         text.set_bounds(
                             [rect.width(), rect.height()],
                             match unit.horizontal_align {
