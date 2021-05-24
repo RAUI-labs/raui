@@ -165,7 +165,7 @@ impl LayoutEngine<()> for () {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum CoordsMappingScaling {
     None,
-    Fit(Vec2),
+    Stretch(Vec2),
     FitHorizontal(Scalar),
     FitVertical(Scalar),
     FitMinimum(Vec2),
@@ -213,7 +213,7 @@ impl CoordsMapping {
 
     pub fn new_scaling(real_area: Rect, scaling: CoordsMappingScaling) -> Self {
         match scaling {
-            CoordsMappingScaling::Fit(size) => {
+            CoordsMappingScaling::Stretch(size) => {
                 let vw = size.x;
                 let vh = size.y;
                 let rw = real_area.width();
