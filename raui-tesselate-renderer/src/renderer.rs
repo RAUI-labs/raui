@@ -126,22 +126,22 @@ where
     fn push_transform(&mut self, transform: &Transform, rect: Rect) {
         let size = rect.size();
         let offset = vek::Vec2::new(rect.left, rect.top);
-        let offset = vek::Mat4::<f32>::translation_2d(offset);
+        let offset = vek::Mat4::<Scalar>::translation_2d(offset);
         let pivot = vek::Vec2::new(
             lerp(0.0, size.x, transform.pivot.x),
             lerp(0.0, size.y, transform.pivot.y),
         );
-        let pivot = vek::Mat4::<f32>::translation_2d(pivot);
+        let pivot = vek::Mat4::<Scalar>::translation_2d(pivot);
         let inv_pivot = pivot.inverted();
         let align = vek::Vec2::new(
             lerp(0.0, size.x, transform.align.x),
             lerp(0.0, size.y, transform.align.y),
         );
-        let align = vek::Mat4::<f32>::translation_2d(align);
-        let translate = vek::Mat4::<f32>::translation_2d(raui_to_vec2(transform.translation));
-        let rotate = vek::Mat4::<f32>::rotation_z(transform.rotation);
-        let scale = vek::Mat4::<f32>::scaling_3d(raui_to_vec2(transform.scale).with_z(1.0));
-        let skew = vek::Mat4::<f32>::from(vek::Mat2::new(
+        let align = vek::Mat4::<Scalar>::translation_2d(align);
+        let translate = vek::Mat4::<Scalar>::translation_2d(raui_to_vec2(transform.translation));
+        let rotate = vek::Mat4::<Scalar>::rotation_z(transform.rotation);
+        let scale = vek::Mat4::<Scalar>::scaling_3d(raui_to_vec2(transform.scale).with_z(1.0));
+        let skew = vek::Mat4::<Scalar>::from(vek::Mat2::new(
             1.0,
             transform.skew.y.tan(),
             transform.skew.x.tan(),
@@ -153,12 +153,12 @@ where
 
     fn push_transform_simple(&mut self, rect: Rect) {
         let offset = vek::Vec2::new(rect.left, rect.top);
-        let offset = vek::Mat4::<f32>::translation_2d(offset);
+        let offset = vek::Mat4::<Scalar>::translation_2d(offset);
         self.push_matrix(offset);
     }
 
-    fn push_matrix(&mut self, matrix: vek::Mat4<f32>) {
-        let matrix = self.transform_stack.back().cloned().unwrap_or_default() * matrix;
+    fn push_matrix(&mut self, matrix: vek::Mat4<Scalar>) {
+        let matrix = self.top_transform() * matrix;
         self.transform_stack.push_back(matrix);
     }
 
@@ -166,7 +166,7 @@ where
         self.transform_stack.pop_back();
     }
 
-    fn top_transform(&self) -> vek::Mat4<f32> {
+    fn top_transform(&self) -> vek::Mat4<Scalar> {
         self.transform_stack.back().cloned().unwrap_or_default()
     }
 
@@ -862,14 +862,15 @@ where
         mapping: &CoordsMapping,
         layout: &Layout,
         result: &mut Tesselation,
+        local: bool,
     ) -> Result<(), Error> {
         match unit {
             WidgetUnit::None | WidgetUnit::PortalBox(_) => Ok(()),
             WidgetUnit::AreaBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform_simple(local_space);
-                    self.render_node(&unit.slot, mapping, layout, result)?;
+                    self.render_node(&unit.slot, mapping, layout, result, true)?;
                     self.pop_transform();
                     Ok(())
                 } else {
@@ -884,7 +885,7 @@ where
                         .map(|item| (item.layout.depth, item))
                         .collect::<Vec<_>>();
                     items.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
                     if unit.clipping {
                         result.batches.push(Batch::ClipPush(BatchClipRect {
@@ -893,7 +894,7 @@ where
                         }));
                     }
                     for (_, item) in items {
-                        self.render_node(&item.slot, mapping, layout, result)?;
+                        self.render_node(&item.slot, mapping, layout, result, true)?;
                     }
                     if unit.clipping {
                         result.batches.push(Batch::ClipPop);
@@ -906,10 +907,10 @@ where
             }
             WidgetUnit::FlexBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
                     for item in &unit.items {
-                        self.render_node(&item.slot, mapping, layout, result)?;
+                        self.render_node(&item.slot, mapping, layout, result, true)?;
                     }
                     self.pop_transform();
                     Ok(())
@@ -919,10 +920,10 @@ where
             }
             WidgetUnit::GridBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
                     for item in &unit.items {
-                        self.render_node(&item.slot, mapping, layout, result)?;
+                        self.render_node(&item.slot, mapping, layout, result, true)?;
                     }
                     self.pop_transform();
                     Ok(())
@@ -932,9 +933,9 @@ where
             }
             WidgetUnit::SizeBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
-                    self.render_node(&unit.slot, mapping, layout, result)?;
+                    self.render_node(&unit.slot, mapping, layout, result, true)?;
                     self.pop_transform();
                     Ok(())
                 } else {
@@ -944,7 +945,7 @@ where
             WidgetUnit::ImageBox(unit) => match &unit.material {
                 ImageBoxMaterial::Color(color) => {
                     if let Some(item) = layout.items.get(&unit.id) {
-                        let local_space = mapping.virtual_to_real_rect(item.local_space);
+                        let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                         self.push_transform(&unit.transform, local_space);
                         self.produce_color_triangles(
                             local_space.size(),
@@ -960,7 +961,7 @@ where
                 }
                 ImageBoxMaterial::Image(image) => {
                     if let Some(item) = layout.items.get(&unit.id) {
-                        let local_space = mapping.virtual_to_real_rect(item.local_space);
+                        let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                         let rect = Rect {
                             left: 0.0,
                             right: local_space.width(),
@@ -1005,7 +1006,7 @@ where
             },
             WidgetUnit::TextBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
-                    let local_space = mapping.virtual_to_real_rect(item.local_space);
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
                     let matrix = self.top_transform().into_col_array();
                     let (vertices, indices, batches) =
@@ -1119,7 +1120,7 @@ where
             indices: Vec::with_capacity(indices),
             batches: Vec::with_capacity(batches),
         };
-        self.render_node(tree, mapping, layout, &mut result)?;
+        self.render_node(tree, mapping, layout, &mut result, false)?;
         Ok(result)
     }
 }

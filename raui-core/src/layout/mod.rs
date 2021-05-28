@@ -81,7 +81,7 @@ impl Layout {
 
     pub fn virtual_to_real(&self, mapping: &CoordsMapping) -> Self {
         Self {
-            ui_space: mapping.virtual_to_real_rect(self.ui_space),
+            ui_space: mapping.virtual_to_real_rect(self.ui_space, false),
             items: self
                 .items
                 .iter()
@@ -92,7 +92,7 @@ impl Layout {
 
     pub fn real_to_virtual(&self, mapping: &CoordsMapping) -> Self {
         Self {
-            ui_space: mapping.real_to_virtual_rect(self.ui_space),
+            ui_space: mapping.real_to_virtual_rect(self.ui_space, false),
             items: self
                 .items
                 .iter()
@@ -138,16 +138,16 @@ pub struct LayoutItem {
 impl LayoutItem {
     pub fn virtual_to_real(&self, mapping: &CoordsMapping) -> Self {
         Self {
-            local_space: mapping.virtual_to_real_rect(self.local_space),
-            ui_space: mapping.virtual_to_real_rect(self.ui_space),
+            local_space: mapping.virtual_to_real_rect(self.local_space, true),
+            ui_space: mapping.virtual_to_real_rect(self.ui_space, false),
             parent: self.parent.to_owned(),
         }
     }
 
     pub fn real_to_virtual(&self, mapping: &CoordsMapping) -> Self {
         Self {
-            local_space: mapping.real_to_virtual_rect(self.local_space),
-            ui_space: mapping.real_to_virtual_rect(self.ui_space),
+            local_space: mapping.real_to_virtual_rect(self.local_space, true),
+            ui_space: mapping.real_to_virtual_rect(self.ui_space, false),
             parent: self.parent.to_owned(),
         }
     }
@@ -170,6 +170,7 @@ pub enum CoordsMappingScaling {
     FitVertical(Scalar),
     FitMinimum(Vec2),
     FitMaximum(Vec2),
+    FitToView(Vec2, bool),
 }
 
 impl Default for CoordsMappingScaling {
@@ -213,6 +214,17 @@ impl CoordsMapping {
 
     pub fn new_scaling(real_area: Rect, scaling: CoordsMappingScaling) -> Self {
         match scaling {
+            CoordsMappingScaling::None => Self {
+                scale: 1.0.into(),
+                offset: Vec2::default(),
+                real_area,
+                virtual_area: Rect {
+                    left: 0.0,
+                    right: real_area.width(),
+                    top: 0.0,
+                    bottom: real_area.height(),
+                },
+            },
             CoordsMappingScaling::Stretch(size) => {
                 let vw = size.x;
                 let vh = size.y;
@@ -288,17 +300,38 @@ impl CoordsMapping {
                     Self::new_scaling(real_area, CoordsMappingScaling::FitVertical(size.y))
                 }
             }
-            _ => Self {
-                scale: 1.0.into(),
-                offset: Vec2::default(),
-                real_area,
-                virtual_area: Rect {
-                    left: 0.0,
-                    right: real_area.width(),
-                    top: 0.0,
-                    bottom: real_area.height(),
-                },
-            },
+            CoordsMappingScaling::FitToView(size, keep_aspect_ratio) => {
+                let rw = real_area.width();
+                let rh = real_area.height();
+                let av = size.x / size.y;
+                let ar = rw / rh;
+                let (scale, vw, vh) = if keep_aspect_ratio {
+                    let vw = size.x;
+                    let vh = size.y;
+                    let scale = if ar >= av { rh / vh } else { rw / vw };
+                    (scale, vw, vh)
+                } else if ar >= av {
+                    (rh / size.y, size.x * rw / rh, size.y)
+                } else {
+                    (rw / size.x, size.x, size.y * rh / rw)
+                };
+                let w = vw * scale;
+                let h = vh * scale;
+                Self {
+                    scale: scale.into(),
+                    offset: Vec2 {
+                        x: (rw - w) * 0.5,
+                        y: (rh - h) * 0.5,
+                    },
+                    real_area,
+                    virtual_area: Rect {
+                        left: 0.0,
+                        right: vw,
+                        top: 0.0,
+                        bottom: vh,
+                    },
+                }
+            }
         }
     }
 
@@ -318,38 +351,70 @@ impl CoordsMapping {
     }
 
     #[inline]
-    pub fn virtual_to_real_vec2(&self, coord: Vec2) -> Vec2 {
-        Vec2 {
-            x: self.offset.x + (coord.x * self.scale.x),
-            y: self.offset.y + (coord.y * self.scale.y),
+    pub fn virtual_to_real_vec2(&self, coord: Vec2, local_space: bool) -> Vec2 {
+        if local_space {
+            Vec2 {
+                x: coord.x * self.scale.x,
+                y: coord.y * self.scale.y,
+            }
+        } else {
+            Vec2 {
+                x: self.offset.x + (coord.x * self.scale.x),
+                y: self.offset.y + (coord.y * self.scale.y),
+            }
         }
     }
 
     #[inline]
-    pub fn real_to_virtual_vec2(&self, coord: Vec2) -> Vec2 {
-        Vec2 {
-            x: (coord.x - self.offset.x) / self.scale.x,
-            y: (coord.y - self.offset.y) / self.scale.y,
+    pub fn real_to_virtual_vec2(&self, coord: Vec2, local_space: bool) -> Vec2 {
+        if local_space {
+            Vec2 {
+                x: coord.x / self.scale.x,
+                y: coord.y / self.scale.y,
+            }
+        } else {
+            Vec2 {
+                x: (coord.x - self.offset.x) / self.scale.x,
+                y: (coord.y - self.offset.y) / self.scale.y,
+            }
         }
     }
 
     #[inline]
-    pub fn virtual_to_real_rect(&self, area: Rect) -> Rect {
-        Rect {
-            left: self.offset.x + (area.left * self.scale.x),
-            right: self.offset.x + (area.right * self.scale.x),
-            top: self.offset.y + (area.top * self.scale.y),
-            bottom: self.offset.y + (area.bottom * self.scale.y),
+    pub fn virtual_to_real_rect(&self, area: Rect, local_space: bool) -> Rect {
+        if local_space {
+            Rect {
+                left: area.left * self.scale.x,
+                right: area.right * self.scale.x,
+                top: area.top * self.scale.y,
+                bottom: area.bottom * self.scale.y,
+            }
+        } else {
+            Rect {
+                left: self.offset.x + (area.left * self.scale.x),
+                right: self.offset.x + (area.right * self.scale.x),
+                top: self.offset.y + (area.top * self.scale.y),
+                bottom: self.offset.y + (area.bottom * self.scale.y),
+            }
         }
     }
 
     #[inline]
-    pub fn real_to_virtual_rect(&self, area: Rect) -> Rect {
-        Rect {
-            left: (area.left - self.offset.x) / self.scale.x,
-            right: (area.right - self.offset.x) / self.scale.x,
-            top: (area.top - self.offset.y) / self.scale.y,
-            bottom: (area.bottom - self.offset.y) / self.scale.y,
+    pub fn real_to_virtual_rect(&self, area: Rect, local_space: bool) -> Rect {
+        if local_space {
+            Rect {
+                left: area.left / self.scale.x,
+                right: area.right / self.scale.x,
+                top: area.top / self.scale.y,
+                bottom: area.bottom / self.scale.y,
+            }
+        } else {
+            Rect {
+                left: (area.left - self.offset.x) / self.scale.x,
+                right: (area.right - self.offset.x) / self.scale.x,
+                top: (area.top - self.offset.y) / self.scale.y,
+                bottom: (area.bottom - self.offset.y) / self.scale.y,
+            }
         }
     }
 }

@@ -80,7 +80,7 @@ impl<'a> GgezRenderer<'a> {
                     if let Some(item) = layout.items.get(&unit.id) {
                         let scale = mapping.scale();
                         let color = [image.color.r, image.color.g, image.color.b, image.color.a];
-                        let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let rect = mapping.virtual_to_real_rect(item.ui_space, false);
                         let (offset, rotation, scaling, rect) =
                             Self::transform_rect(rect, &unit.transform);
                         let mut builder = MeshBuilder::new();
@@ -271,7 +271,7 @@ impl<'a> GgezRenderer<'a> {
                             } else {
                                 item.ui_space
                             };
-                            let rect = mapping.virtual_to_real_rect(rect);
+                            let rect = mapping.virtual_to_real_rect(rect, false);
                             let (offset, rotation, scaling, rect) =
                                 Self::transform_rect(rect, &unit.transform);
                             let mut builder = MeshBuilder::new();
@@ -441,7 +441,7 @@ impl<'a> GgezRenderer<'a> {
             WidgetUnit::TextBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
                     if let Some(resource) = self.resources.fonts.get(&unit.font.name) {
-                        let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let rect = mapping.virtual_to_real_rect(item.ui_space, false);
                         let (offset, rotation, scaling, rect) =
                             Self::transform_rect(rect, &unit.transform);
                         let mut text = Text::new(TextFragment::new(unit.text.as_str()).color(

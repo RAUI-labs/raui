@@ -87,10 +87,13 @@ impl TetraInteractionsEngine {
     pub fn event(&mut self, context: &Context, event: &Event, mapping: &CoordsMapping) {
         match event {
             Event::MouseMoved { position, .. } => {
-                self.pointer_position = mapping.real_to_virtual_vec2(Vec2 {
-                    x: position.x,
-                    y: position.y,
-                });
+                self.pointer_position = mapping.real_to_virtual_vec2(
+                    Vec2 {
+                        x: position.x,
+                        y: position.y,
+                    },
+                    false,
+                );
                 self.engine
                     .interact(Interaction::PointerMove(self.pointer_position));
             }

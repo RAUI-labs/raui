@@ -61,10 +61,13 @@ impl GgezInteractionsEngine {
 
     pub fn update(&mut self, ctx: &mut Context, mapping: &CoordsMapping) {
         let mouse_pos = mouse::position(ctx);
-        let mouse_pos = mapping.real_to_virtual_vec2(Vec2 {
-            x: mouse_pos.x,
-            y: mouse_pos.y,
-        });
+        let mouse_pos = mapping.real_to_virtual_vec2(
+            Vec2 {
+                x: mouse_pos.x,
+                y: mouse_pos.y,
+            },
+            false,
+        );
         if (mouse_pos.x - self.pointer_position.x).abs() > 1.0e-6
             || (mouse_pos.y - self.pointer_position.y).abs() > 1.0e-6
         {
