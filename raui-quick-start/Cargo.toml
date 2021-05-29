@@ -1,6 +1,6 @@
 [package]
 name = "raui-quick-start"
-version = "0.35.0"
+version = "0.36.0"
 authors = ["zicklag"]
 edition = "2018"
 description = "RAUI quick start module for easier playground experience"
@@ -11,7 +11,7 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui = { version = "0.35", path = "../" }
-raui-tetra-renderer = { version = "0.35", path = "../raui-tetra-renderer" }
+raui = { version = "0.36", path = "../" }
+raui-tetra-renderer = { version = "0.36", path = "../raui-tetra-renderer" }
 tetra = { version = "0.6", features = ["sdl2_bundled"] }
 derive_builder = "0.10.2"

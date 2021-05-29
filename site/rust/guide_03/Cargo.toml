@@ -1,0 +1,13 @@
+[package]
+name = "guide_03"
+version = "0.1.0"
+authors = ["RAUI Contributors"]
+edition = "2018"
+
+publish = false
+
+[dependencies]
+# The main RAUI crate
+raui = { version = "0.36", path = "../../../" }
+# The RAUI quickstart crate will help us get our UI rendering as easy as possible
+raui-quick-start = { version = "0.36", path = "../../../raui-quick-start" }

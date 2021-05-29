@@ -80,6 +80,37 @@ pub trait Prefab: Serialize + DeserializeOwned {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum LogKind {
+    Info,
+    Warning,
+    Error,
+}
+
+/// Common logging interface that custom log engines should follow to enable their reusability
+/// across different modules that will log messages to text output targets.
+/// Objects that implement this trait should be considered text output targets, for example text
+/// streams, terminal, network-based loggers, even application screen.
+pub trait Logger {
+    /// Log message to this type of text output target.
+    ///
+    /// # Arguments
+    /// * `kind` - Kind of log message.
+    /// * `message` - Message string slice.
+    fn log(&mut self, _kind: LogKind, _message: &str) {}
+}
+
+impl Logger for () {}
+
+/// Prints log messages to terminal via println! macro.
+pub struct PrintLogger;
+
+impl Logger for PrintLogger {
+    fn log(&mut self, kind: LogKind, message: &str) {
+        println!("{:?} | {}", kind, message);
+    }
+}
+
 #[doc(hidden)]
 pub mod prelude {
     pub use crate::{
@@ -120,6 +151,6 @@ pub mod prelude {
             unit::{area::*, content::*, flex::*, grid::*, image::*, size::*, text::*},
             utils::*,
         },
-        Integer, MessageData, Prefab, PrefabError, PropsData, Scalar,
+        Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
     };
 }

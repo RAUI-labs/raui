@@ -1,4 +1,4 @@
-use raui_core::prelude::*;
+use raui::prelude::*;
 
 pub fn app(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

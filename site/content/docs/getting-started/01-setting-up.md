@@ -4,6 +4,7 @@ description = "Learn how to get a window setup so RAUI can render to it."
 draft = false
 weight = 1
 template = "docs/page.html"
+slug = "setting-up"
 
 [extra]
 lead = "First we're going to get a window setup so RAUI can render to it."
@@ -41,3 +42,5 @@ Go ahead and add the following to your `main.rs` file:
 We don't add any widgets yet, we'll get to that in the next step. At this point you should be able to `cargo run` and have a blank window pop up!
 
 OK, not that cool. We're not here for a blank window, so let's go put some GUI on the screen!
+
+> **Note:** You can find the full code for this chapter [here](https://github.com/RAUI-labs/raui/tree/master/site/rust/guide_01)

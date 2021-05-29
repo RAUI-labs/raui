@@ -1,0 +1,3 @@
+# Disable unwanted lints
+MD031: false # Spaces around codeblocks
+MD013: false # 80 char line length limit

@@ -2,8 +2,7 @@
 //!
 //! Signals are a way for widgets to send [messages][crate::messenger] to the RAUI
 //! [`Application`][crate::application::Application]. This can be used to create custom integrations
-//! with specific RAUI rendering backends by sending signals that the rendering backend will
-//! interpret and perform some action from.
+//! with the RAUI host or rendering backend.
 //!
 //! Signals may be sent using the [`SignalSender`] in the widget [change context][change_context] or
 //! [unmount context][unmount_context].

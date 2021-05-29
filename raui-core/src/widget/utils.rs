@@ -5,6 +5,7 @@ use std::{
     marker::PhantomData,
 };
 
+#[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Vec2 {
     #[serde(default)]
@@ -31,6 +32,7 @@ impl From<[Scalar; 2]> for Vec2 {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IntVec2 {
     #[serde(default)]
@@ -57,6 +59,7 @@ impl From<[Integer; 2]> for IntVec2 {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Rect {
     #[serde(default)]
@@ -144,6 +147,7 @@ impl Rect {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IntRect {
     #[serde(default)]
@@ -198,6 +202,7 @@ impl From<(Integer, Integer)> for IntRect {
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Color {
     #[serde(default)]

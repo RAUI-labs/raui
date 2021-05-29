@@ -80,7 +80,7 @@ impl<'a> GgezRenderer<'a> {
                     if let Some(item) = layout.items.get(&unit.id) {
                         let scale = mapping.scale();
                         let color = [image.color.r, image.color.g, image.color.b, image.color.a];
-                        let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let rect = mapping.virtual_to_real_rect(item.ui_space, false);
                         let (offset, rotation, scaling, rect) =
                             Self::transform_rect(rect, &unit.transform);
                         let mut builder = MeshBuilder::new();
@@ -112,10 +112,10 @@ impl<'a> GgezRenderer<'a> {
                                 builder.raw(vertices, indices, None);
                             }
                             ImageBoxImageScaling::Frame(frame) => {
-                                let vl = frame.destination.left * scale;
-                                let vr = frame.destination.right * scale;
-                                let vt = frame.destination.top * scale;
-                                let vb = frame.destination.bottom * scale;
+                                let vl = frame.destination.left * scale.x;
+                                let vr = frame.destination.right * scale.x;
+                                let vt = frame.destination.top * scale.y;
+                                let vb = frame.destination.bottom * scale.y;
                                 let vertices = &[
                                     graphics::Vertex {
                                         pos: [rect.left, rect.top],
@@ -271,7 +271,7 @@ impl<'a> GgezRenderer<'a> {
                             } else {
                                 item.ui_space
                             };
-                            let rect = mapping.virtual_to_real_rect(rect);
+                            let rect = mapping.virtual_to_real_rect(rect, false);
                             let (offset, rotation, scaling, rect) =
                                 Self::transform_rect(rect, &unit.transform);
                             let mut builder = MeshBuilder::new();
@@ -309,10 +309,10 @@ impl<'a> GgezRenderer<'a> {
                                     let ft = frame.source.top / resource.height() as Scalar;
                                     let fb =
                                         1.0 - (frame.source.bottom / resource.height() as Scalar);
-                                    let vl = frame.destination.left * scale;
-                                    let vr = frame.destination.right * scale;
-                                    let vt = frame.destination.top * scale;
-                                    let vb = frame.destination.bottom * scale;
+                                    let vl = frame.destination.left * scale.x;
+                                    let vr = frame.destination.right * scale.x;
+                                    let vt = frame.destination.top * scale.y;
+                                    let vb = frame.destination.bottom * scale.y;
                                     let vertices = &[
                                         graphics::Vertex {
                                             pos: [rect.left, rect.top],
@@ -441,7 +441,7 @@ impl<'a> GgezRenderer<'a> {
             WidgetUnit::TextBox(unit) => {
                 if let Some(item) = layout.items.get(&unit.id) {
                     if let Some(resource) = self.resources.fonts.get(&unit.font.name) {
-                        let rect = mapping.virtual_to_real_rect(item.ui_space);
+                        let rect = mapping.virtual_to_real_rect(item.ui_space, false);
                         let (offset, rotation, scaling, rect) =
                             Self::transform_rect(rect, &unit.transform);
                         let mut text = Text::new(TextFragment::new(unit.text.as_str()).color(
@@ -452,7 +452,10 @@ impl<'a> GgezRenderer<'a> {
                                 unit.color.a,
                             ),
                         ));
-                        text.set_font(*resource, Scale::uniform(unit.font.size * mapping.scale()));
+                        text.set_font(
+                            *resource,
+                            Scale::uniform(unit.font.size * mapping.scale().x),
+                        );
                         text.set_bounds(
                             [rect.width(), rect.height()],
                             match unit.horizontal_align {

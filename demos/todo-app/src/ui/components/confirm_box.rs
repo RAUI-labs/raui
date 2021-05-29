@@ -96,7 +96,6 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
         text,
         height: TextBoxSizeValue::Exact(24.0),
         variant: "title".to_owned(),
-        horizontal_align_override: Some(TextBoxHorizontalAlign::Center),
         ..Default::default()
     };
 
@@ -104,7 +103,6 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
         text: "YES".to_owned(),
         height: TextBoxSizeValue::Exact(24.0),
         variant: "title".to_owned(),
-        horizontal_align_override: Some(TextBoxHorizontalAlign::Center),
         ..Default::default()
     })
     .with(wrap_props.clone())
@@ -115,7 +113,6 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
         text: "NO".to_owned(),
         height: TextBoxSizeValue::Exact(24.0),
         variant: "title".to_owned(),
-        horizontal_align_override: Some(TextBoxHorizontalAlign::Center),
         ..Default::default()
     })
     .with(wrap_props.clone())

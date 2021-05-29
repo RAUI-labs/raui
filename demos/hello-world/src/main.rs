@@ -1,14 +1,21 @@
-mod app;
+use raui::prelude::*;
+use raui_quick_start::RauiQuickStartBuilder;
+
 mod ui;
 
-use crate::app::AppState;
-use tetra::ContextBuilder;
+use ui::components::{app::app, content::content, title_bar::title_bar};
 
-fn main() -> tetra::Result {
-    ContextBuilder::new("Hello, Tetra!", 800, 600)
-        .resizable(true)
-        .key_repeat(true)
-        .show_mouse(true)
-        .build()?
-        .run(|context| AppState::new(context))
+fn main() {
+    RauiQuickStartBuilder::default()
+        .window_title("Hello World!".to_owned())
+        .widget_tree(widget! {
+            (app {
+                title = (title_bar)
+                content = (content)
+            })
+        })
+        .build()
+        .unwrap()
+        .run()
+        .unwrap();
 }

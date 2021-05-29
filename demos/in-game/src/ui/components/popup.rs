@@ -39,6 +39,15 @@ pub fn popup(mut context: WidgetContext) -> WidgetNode {
             frame: None,
             ..Default::default()
         })
+        .with(PaperContentLayoutProps(ContentBoxItemLayout {
+            margin: Rect {
+                left: 20.0,
+                right: 20.0,
+                top: 20.0,
+                bottom: 20.0,
+            },
+            ..Default::default()
+        }))
         .with(VerticalBoxProps {
             separation: 10.0,
             ..Default::default()

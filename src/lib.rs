@@ -379,13 +379,12 @@ mod tests;
 #[doc(inline)]
 pub use raui_core as core;
 
+#[doc(inline)]
+#[cfg(feature = "material")]
+pub use raui_material as material;
+
 /// Renderer implementations
 pub mod renderer {
-    #[cfg(feature = "material")]
-    pub mod material {
-        pub use raui_material::*;
-    }
-
     #[cfg(feature = "binary")]
     pub mod binary {
         pub use raui_binary_renderer::*;

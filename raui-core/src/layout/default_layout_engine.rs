@@ -235,7 +235,7 @@ impl DefaultLayoutEngine {
                             child.local_space.right =
                                 size_available.x - left - new_main - item.layout.margin.right;
                         }
-                        new_main += rect.x;
+                        new_main += rect.x + item.layout.margin.left + item.layout.margin.right;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.height(),
@@ -256,7 +256,7 @@ impl DefaultLayoutEngine {
                             child.local_space.bottom =
                                 size_available.y - top - new_main - item.layout.margin.bottom;
                         }
-                        new_main += rect.y;
+                        new_main += rect.y + item.layout.margin.top + item.layout.margin.bottom;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.width(),
@@ -408,7 +408,7 @@ impl DefaultLayoutEngine {
                             child.local_space.right =
                                 size_available.x - left - new_main - item.layout.margin.right;
                         }
-                        new_main += rect.x;
+                        new_main += rect.x + item.layout.margin.left + item.layout.margin.right;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.height(),
@@ -429,7 +429,7 @@ impl DefaultLayoutEngine {
                             child.local_space.bottom =
                                 size_available.y - top - new_main - item.layout.margin.bottom;
                         }
-                        new_main += rect.y;
+                        new_main += rect.y + item.layout.margin.top + item.layout.margin.bottom;
                         let diff = lerp(
                             0.0,
                             cross_available - child.local_space.width(),

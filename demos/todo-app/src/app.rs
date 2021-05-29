@@ -9,7 +9,7 @@ use std::{
 };
 use tetra::{
     graphics::{self, Color},
-    input::{is_key_modifier_down, Key, KeyModifier},
+    input::Key,
     Context, Event, State,
 };
 
@@ -84,27 +84,23 @@ impl State for TodoState {
 
     fn draw(&mut self, context: &mut Context) -> tetra::Result {
         graphics::clear(context, Color::WHITE);
-        self.ui.draw(context)?;
+        self.ui.draw(context, PrintLogger)?;
         Ok(())
     }
 
     fn event(&mut self, context: &mut Context, event: Event) -> tetra::Result {
         self.ui.event(context, &event);
-        if let Event::KeyPressed { key: Key::P } = event {
-            if is_key_modifier_down(context, KeyModifier::Ctrl) {
-                println!("LAYOUT: {:#?}", self.ui.application.layout_data());
-                if is_key_modifier_down(context, KeyModifier::Shift) {
-                    println!("INTERACTIONS: {:#?}", self.ui.interactions);
-                }
-            }
+        if let Event::KeyPressed { key: Key::F2 } = event {
+            println!("LAYOUT: {:#?}", self.ui.application.layout_data());
         }
-        if let Event::KeyPressed { key: Key::I } = event {
-            if is_key_modifier_down(context, KeyModifier::Ctrl) {
-                println!(
-                    "INSPECT TREE: {:#?}",
-                    self.ui.application.rendered_tree().inspect()
-                );
-            }
+        if let Event::KeyPressed { key: Key::F3 } = event {
+            println!("INTERACTIONS: {:#?}", self.ui.interactions);
+        }
+        if let Event::KeyPressed { key: Key::F4 } = event {
+            println!(
+                "INSPECT TREE: {:#?}",
+                self.ui.application.rendered_tree().inspect()
+            );
         }
         Ok(())
     }

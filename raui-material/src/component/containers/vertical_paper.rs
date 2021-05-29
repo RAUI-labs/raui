@@ -10,9 +10,11 @@ pub fn nav_vertical_paper(context: WidgetContext) -> WidgetNode {
         ..
     } = context;
 
+    let inner_props = props.clone().without::<ContentBoxItemLayout>();
+
     widget! {
         (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"vertical"} nav_vertical_box: {props.clone()} |[ listed_slots ]|)
+            (#{"vertical"} nav_vertical_box: {inner_props} |[ listed_slots ]|)
         ])
     }
 }
@@ -26,9 +28,11 @@ pub fn vertical_paper(context: WidgetContext) -> WidgetNode {
         ..
     } = context;
 
+    let inner_props = props.clone().without::<ContentBoxItemLayout>();
+
     widget! {
         (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"vertical"} vertical_box: {props.clone()} |[ listed_slots ]|)
+            (#{"vertical"} vertical_box: {inner_props} |[ listed_slots ]|)
         ])
     }
 }

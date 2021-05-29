@@ -149,7 +149,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
     .with(ContentBoxItemLayout {
         margin: Rect {
             left: 10.0,
-            right: 0.0,
+            right: 10.0,
             top: 10.0,
             bottom: 10.0,
         },
@@ -194,10 +194,19 @@ pub fn tasks_list(context: WidgetContext) -> WidgetNode {
     let scroll_props = Props::new(NavContainerActive)
         .with(NavItemActive)
         .with(ScrollViewNotifyProps(id.to_owned().into()))
-        .with(ScrollViewRange::default());
+        .with(ScrollViewRange::default())
+        .with(PaperContentLayoutProps(ContentBoxItemLayout {
+            margin: Rect {
+                left: 10.0,
+                right: 10.0,
+                top: 10.0,
+                bottom: 10.0,
+            },
+            ..Default::default()
+        }));
 
     let list_props = VerticalBoxProps {
-        separation: 10.0,
+        separation: 30.0,
         ..Default::default()
     };
 

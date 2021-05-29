@@ -119,9 +119,11 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
         }
     };
 
-    widget! {(#{key} content_box: {props.clone()} | {shared_props} [
-        (#{"minimap"} minimap: {minimap_props})
-        (#{"inventory"} inventory: {inventory_props})
-        {popup}
-    ])}
+    widget! {
+        (#{key} content_box: {props.clone()} | {shared_props} [
+            (#{"minimap"} minimap: {minimap_props})
+            (#{"inventory"} inventory: {inventory_props})
+            {popup}
+        ])
+    }
 }

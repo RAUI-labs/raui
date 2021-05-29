@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.35.0"
+version = "0.36.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Renderer Agnostic User Interface"
@@ -45,41 +45,41 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.35" }
+raui-core = { path = "./raui-core", version = "0.36" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-tesselate-renderer]
 path = "./raui-tesselate-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dependencies.raui-yaml-renderer]
 path = "./raui-yaml-renderer"
-version = "0.35"
+version = "0.36"
 optional = true
 
 [dev-dependencies]
@@ -107,6 +107,7 @@ members = [
   "demos/in-game",
   "site/rust/guide_01",
   "site/rust/guide_02",
+  "site/rust/guide_03",
 ]
 
 [package.metadata.docs.rs]

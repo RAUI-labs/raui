@@ -6,7 +6,7 @@ use raui_core::{
     layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping, CoordsMappingScaling},
     signals::Signal,
     widget::{node::WidgetNode, utils::Rect},
-    Scalar,
+    Logger, Scalar,
 };
 use tetra::{
     graphics::{text::Font, Texture},
@@ -109,9 +109,12 @@ impl TetraSimpleHost {
         self.application.consume_signals()
     }
 
-    pub fn draw(&mut self, context: &mut Context) -> tetra::Result {
+    pub fn draw<L>(&mut self, context: &mut Context, logger: L) -> tetra::Result
+    where
+        L: Logger,
+    {
         let mapping = self.make_coords_mapping(context);
-        let mut renderer = TetraRenderer::new(context, &mut self.resources);
+        let mut renderer = TetraRenderer::new(context, &mut self.resources, logger);
         self.application.render(&mapping, &mut renderer)?;
         Ok(())
     }

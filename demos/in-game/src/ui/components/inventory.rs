@@ -72,7 +72,7 @@ pub fn inventory(mut context: WidgetContext) -> WidgetNode {
         frame: None,
         ..Default::default()
     })
-    .with(ContentBoxItemLayout {
+    .with(PaperContentLayoutProps(ContentBoxItemLayout {
         margin: Rect {
             left: 5.0,
             right: 5.0,
@@ -80,7 +80,7 @@ pub fn inventory(mut context: WidgetContext) -> WidgetNode {
             bottom: 4.0,
         },
         ..Default::default()
-    });
+    }));
     let shared_props = OwningInventoryProps(id.to_owned());
     let mut children = Vec::with_capacity(2 + data.count);
     children.push({

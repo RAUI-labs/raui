@@ -640,8 +640,8 @@ macro_rules! widget {
                 idref,
                 props,
                 shared_props,
-                named_slots,
                 listed_slots,
+                named_slots,
             };
             $crate::widget::node::WidgetNode::Component(component)
         }

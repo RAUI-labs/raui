@@ -46,10 +46,15 @@
 
 use crate::{application::ChangeNotifier, messenger::MessageData, props::PropsData, Prefab};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, RwLock};
+use std::{
+    any::Any,
+    sync::{Arc, RwLock},
+};
 
 /// Wraps internal data and optionally notifies an [`Application`][crate::application::Application]
 /// of changes to it
+///
+/// See [module docs][self] for a full example.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DataBinding<T>
 where
@@ -209,7 +214,7 @@ where
         Box::new(self.clone())
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
@@ -225,7 +230,7 @@ where
         Box::new(self.clone())
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }

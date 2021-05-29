@@ -10,9 +10,11 @@ pub fn nav_flex_paper(context: WidgetContext) -> WidgetNode {
         ..
     } = context;
 
+    let inner_props = props.clone().without::<ContentBoxItemLayout>();
+
     widget! {
         (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"flex"} nav_flex_box: {props.clone()} |[ listed_slots ]|)
+            (#{"flex"} nav_flex_box: {inner_props} |[ listed_slots ]|)
         ])
     }
 }
@@ -26,9 +28,11 @@ pub fn flex_paper(context: WidgetContext) -> WidgetNode {
         ..
     } = context;
 
+    let inner_props = props.clone().without::<ContentBoxItemLayout>();
+
     widget! {
         (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"flex"} flex_box: {props.clone()} |[ listed_slots ]|)
+            (#{"flex"} flex_box: {inner_props} |[ listed_slots ]|)
         ])
     }
 }

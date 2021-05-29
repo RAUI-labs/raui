@@ -1,4 +1,4 @@
-use raui_core::prelude::*;
+use raui::prelude::*;
 
 #[pre_hooks(use_button_notified_state, use_text_input_notified_state)]
 pub fn title_bar(mut context: WidgetContext) -> WidgetNode {
@@ -28,9 +28,8 @@ pub fn title_bar(mut context: WidgetContext) -> WidgetNode {
         text,
         width: TextBoxSizeValue::Fill,
         height: TextBoxSizeValue::Exact(32.0),
-        horizontal_align: TextBoxHorizontalAlign::Center,
         font: TextBoxFont {
-            name: "verdana".to_owned(),
+            name: "./resources/verdana.ttf".to_owned(),
             size: 32.0,
         },
         color: if trigger {

@@ -1,3 +1,5 @@
+//! Theme-able RAUI components
+
 pub mod component;
 pub mod theme;
 
@@ -9,6 +11,9 @@ pub fn setup(app: &mut Application) {
     );
     app.register_props::<component::containers::modal_paper::ModalPaperProps>("ModalPaperProps");
     app.register_props::<component::containers::paper::PaperProps>("PaperProps");
+    app.register_props::<component::containers::paper::PaperContentLayoutProps>(
+        "PaperContentLayoutProps",
+    );
     app.register_props::<component::containers::tooltip_paper::TooltipPaperProps>(
         "TooltipPaperProps",
     );

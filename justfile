@@ -1,7 +1,10 @@
+# List the just recipe list
+list:
+    just --list
+
 # Bake the README.md from the template
 readme:
     cargo readme > README.md
-    cargo readme > site/README.md
 
 # Mandatory checks to run before pushing changes to repository
 checks:
@@ -16,9 +19,15 @@ doc-coverage crate="raui-core":
 
 # Run the Rust doctests in the website docs
 website-doc-tests:
-    cargo build --features all -p raui
+    cargo build --features all -p raui --target-dir target/doctests
     @set -e; \
     for file in $(find site/content/ -name '*.md'); do \
         echo "Testing: $file"; \
-        rustdoc --crate-name docs-test $file --test -L target/debug/deps; \
+        rustdoc \
+            --edition 2018 \
+            --extern raui \
+            --crate-name docs-test \
+            $file \
+            --test \
+            -L target/doctests/debug/deps; \
     done
