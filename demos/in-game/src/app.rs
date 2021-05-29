@@ -64,8 +64,7 @@ impl AppState {
         };
         let tree = widget! { (#{"app"} app: {props}) };
         let mut ui = TetraSimpleHost::new(context, tree, &fonts, &textures, setup)?;
-        const SCALE: Scalar = 256.0;
-        ui.scaling = CoordsMappingScaling::FitToView(Vec2 { x: SCALE, y: SCALE }, false);
+        ui.scaling = CoordsMappingScaling::FitToView(256.0.into(), false);
         Ok(Self { ui, mockup_image })
     }
 }
