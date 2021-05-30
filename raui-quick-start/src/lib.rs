@@ -39,6 +39,8 @@ pub struct RauiQuickStart {
     window_size: (i32, i32),
     /// The RAUI widget tree
     widget_tree: WidgetNode,
+    /// Color of the window background.
+    clear_color: Color,
 }
 
 impl Default for RauiQuickStart {
@@ -47,6 +49,7 @@ impl Default for RauiQuickStart {
             window_title: "RAUI Quick Start".into(),
             window_size: (800, 600),
             widget_tree: widget!(()),
+            clear_color: Color::default(),
         }
     }
 }
@@ -64,7 +67,18 @@ impl RauiQuickStart {
             .show_mouse(true)
             .build()?
             // And run the Tetra game. We pass it a closure that returns our App
-            .run(|context| App::new(context, self.widget_tree))?;
+            .run(|context| {
+                App::new(
+                    context,
+                    self.widget_tree,
+                    tetra::graphics::Color::rgba(
+                        self.clear_color.r,
+                        self.clear_color.g,
+                        self.clear_color.b,
+                        self.clear_color.a,
+                    ),
+                )
+            })?;
 
         Ok(())
     }
@@ -77,10 +91,16 @@ struct App {
     /// `raui_tetra_renderer` crate and helps wrap some the of the setup
     /// necessary to use RAUI with Tetra.
     ui: TetraSimpleHost,
+    /// Color of the window background.
+    clear_color: tetra::graphics::Color,
 }
 
 impl App {
-    fn new(context: &mut tetra::Context, tree: WidgetNode) -> Result<Self, tetra::TetraError> {
+    fn new(
+        context: &mut tetra::Context,
+        tree: WidgetNode,
+        clear_color: tetra::graphics::Color,
+    ) -> Result<Self, tetra::TetraError> {
         // Finally we need to provide a setup function that will initialize the
         // RAUI application created by the TetraSimpleHost. We will use the
         // default setup function provided by RAUI.
@@ -89,6 +109,7 @@ impl App {
         Ok(Self {
             // Create a TetraSimpleHost out of all the pieces we assigned above
             ui: TetraSimpleHost::new(context, tree, &[], &[], setup)?,
+            clear_color,
         })
     }
 }
@@ -104,7 +125,7 @@ impl tetra::State for App {
 
     fn draw(&mut self, ctx: &mut tetra::Context) -> Result<(), tetra::TetraError> {
         // Clear the screen white first
-        tetra::graphics::clear(ctx, tetra::graphics::Color::WHITE);
+        tetra::graphics::clear(ctx, self.clear_color);
         // Then draw the UI
         self.ui.draw(ctx, PrintLogger)?;
         Ok(())

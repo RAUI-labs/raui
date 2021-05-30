@@ -42,6 +42,15 @@ impl FlexBoxItemLayout {
     fn default_shrink() -> Scalar {
         1.0
     }
+
+    pub fn cleared() -> Self {
+        Self {
+            fill: 0.0,
+            grow: 0.0,
+            shrink: 0.0,
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for FlexBoxItemLayout {

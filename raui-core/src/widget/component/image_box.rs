@@ -4,8 +4,10 @@ use crate::{
         component::WidgetAlpha,
         context::WidgetContext,
         node::WidgetNode,
-        unit::image::{ImageBoxAspectRatio, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue},
-        utils::Transform,
+        unit::image::{
+            ImageBoxAspectRatio, ImageBoxColor, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue,
+        },
+        utils::{Color, Transform},
     },
     PropsData,
 };
@@ -26,6 +28,18 @@ pub struct ImageBoxProps {
     pub material: ImageBoxMaterial,
     #[serde(default)]
     pub transform: Transform,
+}
+
+impl ImageBoxProps {
+    pub fn colored(color: Color) -> Self {
+        Self {
+            material: ImageBoxMaterial::Color(ImageBoxColor {
+                color,
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
+    }
 }
 
 pub fn image_box(context: WidgetContext) -> WidgetNode {
