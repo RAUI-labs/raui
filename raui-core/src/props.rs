@@ -377,5 +377,7 @@ implement_props_data!(u64);
 implement_props_data!(u128);
 implement_props_data!(f32);
 implement_props_data!(f64);
+implement_props_data!(isize);
+implement_props_data!(usize);
 implement_props_data!(bool);
 implement_props_data!(String);

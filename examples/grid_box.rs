@@ -2,9 +2,10 @@ use raui::prelude::*;
 use raui_quick_start::RauiQuickStartBuilder;
 
 fn main() {
-    let tree = make_widget!(flex_box)
-        .with_props(FlexBoxProps {
-            direction: FlexBoxDirection::VerticalBottomToTop,
+    let tree = make_widget!(grid_box)
+        .with_props(GridBoxProps {
+            cols: 2,
+            rows: 2,
             ..Default::default()
         })
         .listed_slot(
@@ -15,17 +16,13 @@ fn main() {
                     b: 0.25,
                     a: 1.0,
                 }))
-                .with_props(FlexBoxItemLayout {
-                    // basis sets exact size of the item in main axis.
-                    basis: Some(100.0),
-                    // weight of the item when its layout box has to grow.
-                    grow: 0.5,
-                    // weight of the item when its layout box has to shrink (0.0 means no shrinking).
-                    shrink: 0.0,
-                    // percentage of the item size in cross axis (here how much of horizontal space it fills).
-                    fill: 0.75,
-                    // tells how much to which side item is aligned when there is free space available.
-                    align: 1.0,
+                .with_props(GridBoxItemLayout {
+                    space_occupancy: IntRect {
+                        left: 0,
+                        right: 1,
+                        top: 0,
+                        bottom: 1,
+                    },
                     ..Default::default()
                 }),
         )
@@ -37,8 +34,13 @@ fn main() {
                     b: 0.25,
                     a: 1.0,
                 }))
-                .with_props(FlexBoxItemLayout {
-                    margin: 10.0.into(),
+                .with_props(GridBoxItemLayout {
+                    space_occupancy: IntRect {
+                        left: 1,
+                        right: 2,
+                        top: 0,
+                        bottom: 1,
+                    },
                     ..Default::default()
                 }),
         )
@@ -50,18 +52,19 @@ fn main() {
                     b: 1.0,
                     a: 1.0,
                 }))
-                .with_props(FlexBoxItemLayout {
-                    basis: Some(100.0),
-                    grow: 0.0,
-                    shrink: 0.5,
-                    fill: 0.5,
-                    align: 0.5,
+                .with_props(GridBoxItemLayout {
+                    space_occupancy: IntRect {
+                        left: 0,
+                        right: 2,
+                        top: 1,
+                        bottom: 2,
+                    },
                     ..Default::default()
                 }),
         );
 
     RauiQuickStartBuilder::default()
-        .window_title("Flex Box".to_owned())
+        .window_title("Grid Box".to_owned())
         .widget_tree(tree.into())
         .build()
         .unwrap()

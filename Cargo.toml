@@ -88,18 +88,6 @@ serde_json = "1"
 serde_yaml = "0.8"
 raui-quick-start = { path = "./raui-quick-start" }
 
-[[example]]
-name = "image_box_color"
-path = "./examples/image_box/color.rs"
-
-[[example]]
-name = "image_box_image"
-path = "./examples/image_box/image.rs"
-
-[[example]]
-name = "image_box_frame"
-path = "./examples/image_box/frame.rs"
-
 [workspace]
 members = [
   "raui-core",

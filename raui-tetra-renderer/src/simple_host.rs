@@ -2,7 +2,7 @@ use crate::{
     interactive::TetraInteractionsEngine, renderer::TetraRenderer, resources::TetraResources,
 };
 use raui_core::{
-    application::Application,
+    application::{Application, ProcessContext},
     layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping, CoordsMappingScaling},
     signals::Signal,
     widget::{node::WidgetNode, utils::Rect},
@@ -98,10 +98,23 @@ impl TetraSimpleHost {
         })
     }
 
+    #[inline]
     pub fn update(&mut self, context: &mut Context) -> Vec<Signal> {
+        let mut process_context = ();
+        self.update_with_context(context, &mut process_context)
+    }
+
+    pub fn update_with_context<T: 'static>(
+        &mut self,
+        context: &mut Context,
+        process_context: &mut T,
+    ) -> Vec<Signal> {
         self.interactions.update(context);
         self.application.animations_delta_time = time::get_delta_time(context).as_secs_f32();
-        if self.application.process() {
+        if self
+            .application
+            .process_with_context(ProcessContext::new().insert_mut(process_context))
+        {
             let mapping = self.make_coords_mapping(context);
             let _ = self.application.layout(&mapping, &mut DefaultLayoutEngine);
         }
