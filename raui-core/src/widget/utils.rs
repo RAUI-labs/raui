@@ -1,4 +1,4 @@
-use crate::{Integer, Scalar};
+use crate::{Integer, PropsData, Scalar};
 use serde::{Deserialize, Serialize};
 use std::{
     hash::{Hash, Hasher},
@@ -6,7 +6,9 @@ use std::{
 };
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct Vec2 {
     #[serde(default)]
     pub x: Scalar,
@@ -33,7 +35,9 @@ impl From<[Scalar; 2]> for Vec2 {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct IntVec2 {
     #[serde(default)]
     pub x: Integer,
@@ -60,7 +64,9 @@ impl From<[Integer; 2]> for IntVec2 {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct Rect {
     #[serde(default)]
     pub left: Scalar,
@@ -148,7 +154,9 @@ impl Rect {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct IntRect {
     #[serde(default)]
     pub left: Integer,
@@ -203,7 +211,9 @@ impl From<(Integer, Integer)> for IntRect {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct Color {
     #[serde(default)]
     pub r: Scalar,
@@ -237,7 +247,9 @@ impl Color {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct Transform {
     /// Rectangle center of mass. Values in range: <0;1>
     #[serde(default)]
