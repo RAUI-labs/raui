@@ -174,7 +174,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
 }
 
 pub fn tasks_list(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { id, key, props, .. } = context;
+    let WidgetContext { key, props, .. } = context;
 
     let TasksProps { tasks } = props.read_cloned_or_default();
 
@@ -193,7 +193,6 @@ pub fn tasks_list(context: WidgetContext) -> WidgetNode {
 
     let scroll_props = Props::new(NavContainerActive)
         .with(NavItemActive)
-        .with(ScrollViewNotifyProps(id.to_owned().into()))
         .with(ScrollViewRange::default())
         .with(PaperContentLayoutProps(ContentBoxItemLayout {
             margin: Rect {

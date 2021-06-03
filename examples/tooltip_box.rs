@@ -3,6 +3,8 @@
 use raui::prelude::*;
 use raui_quick_start::RauiQuickStartBuilder;
 
+// we mark app as an active navigable container to let all buttons down the tree register to the
+// navigation system so they can react on mouse hovering for example.
 #[pre_hooks(use_nav_container_active)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
     let idref = WidgetRef::new();
