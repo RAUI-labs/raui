@@ -23,7 +23,9 @@ fn is_zero(v: &usize) -> bool {
     *v == 0
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Copy, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub enum TextInputMode {
     Text,
     Number,
@@ -89,9 +91,6 @@ pub struct TextInputProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     pub text: String,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "TextInputMode::is_text")]
-    pub mode: TextInputMode,
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -135,7 +134,9 @@ pub fn use_text_input(context: &mut WidgetContext) {
 
     context.life_cycle.mount(|context| {
         let mut data = context.props.read_cloned_or_default::<TextInputProps>();
-        data.text = data.mode.process(&data.text).unwrap_or_default();
+        if let Ok(mode) = context.props.read::<TextInputMode>() {
+            data.text = mode.process(&data.text).unwrap_or_default();
+        }
         data.focused = false;
         notify(
             &context,
@@ -166,10 +167,12 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                             data.cursor_position.min(data.text.len());
                                         let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, *c);
-                                        if data.mode.is_valid(&data.text) {
-                                            data.cursor_position += 1;
-                                        } else {
-                                            data.text = old;
+                                        if let Ok(mode) = context.props.read::<TextInputMode>() {
+                                            if mode.is_valid(&data.text) {
+                                                data.cursor_position += 1;
+                                            } else {
+                                                data.text = old;
+                                            }
                                         }
                                     }
                                 }
@@ -206,10 +209,12 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                             data.cursor_position.min(data.text.len());
                                         let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, '\n');
-                                        if data.mode.is_valid(&data.text) {
-                                            data.cursor_position += 1;
-                                        } else {
-                                            data.text = old;
+                                        if let Ok(mode) = context.props.read::<TextInputMode>() {
+                                            if mode.is_valid(&data.text) {
+                                                data.cursor_position += 1;
+                                            } else {
+                                                data.text = old;
+                                            }
                                         }
                                     }
                                 }

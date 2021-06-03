@@ -368,6 +368,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::image_box::ImageBoxProps>("ImageBoxProps");
     app.register_props::<component::interactive::button::ButtonProps>("ButtonProps");
     app.register_props::<component::interactive::button::ButtonNotifyProps>("ButtonNotifyProps");
+    app.register_props::<component::interactive::input_field::TextInputMode>("TextInputMode");
     app.register_props::<component::interactive::input_field::TextInputProps>("TextInputProps");
     app.register_props::<component::interactive::input_field::TextInputNotifyProps>(
         "TextInputNotifyProps",
