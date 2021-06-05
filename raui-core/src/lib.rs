@@ -137,7 +137,8 @@ pub mod prelude {
                 containers::{
                     anchor_box::*, content_box::*, context_box::*, flex_box::*, grid_box::*,
                     hidden_box::*, horizontal_box::*, portal_box::*, scroll_box::*, size_box::*,
-                    switch_box::*, tooltip_box::*, variant_box::*, vertical_box::*, wrap_box::*,
+                    switch_box::*, tabs_box::*, tooltip_box::*, variant_box::*, vertical_box::*,
+                    wrap_box::*,
                 },
                 image_box::*,
                 interactive::*,

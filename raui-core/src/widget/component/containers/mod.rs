@@ -11,6 +11,7 @@ pub mod portal_box;
 pub mod scroll_box;
 pub mod size_box;
 pub mod switch_box;
+pub mod tabs_box;
 pub mod tooltip_box;
 pub mod variant_box;
 pub mod vertical_box;

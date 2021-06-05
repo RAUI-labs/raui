@@ -361,6 +361,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::portal_box::PortalsContainer>("PortalsContainer");
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
+    app.register_props::<component::containers::tabs_box::TabsBoxProps>("TabsBoxProps");
     app.register_props::<component::containers::tooltip_box::TooltipState>("TooltipState");
     app.register_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
     app.register_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
@@ -438,6 +439,10 @@ pub fn setup(app: &mut Application) {
         component::containers::switch_box::nav_switch_box,
     );
     app.register_component("switch_box", component::containers::switch_box::switch_box);
+    app.register_component(
+        "nav_tabs_box",
+        component::containers::tabs_box::nav_tabs_box,
+    );
     app.register_component(
         "tooltip_box",
         component::containers::tooltip_box::tooltip_box,

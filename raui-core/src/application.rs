@@ -803,7 +803,7 @@ impl Application {
         process_context: &mut ProcessContext<'b>,
     ) -> WidgetNode {
         match node {
-            WidgetNode::None => node,
+            WidgetNode::None | WidgetNode::Tuple(_) => node,
             WidgetNode::Component(component) => self.process_node_component(
                 component,
                 states,
@@ -1392,6 +1392,7 @@ impl Application {
                 WidgetNodePrefab::Component(self.component_to_prefab(data)?)
             }
             WidgetNode::Unit(data) => WidgetNodePrefab::Unit(self.unit_to_prefab(data)?),
+            WidgetNode::Tuple(data) => WidgetNodePrefab::Tuple(self.tuple_to_prefab(data)?),
         })
     }
 
@@ -1457,6 +1458,15 @@ impl Application {
                 WidgetUnitNodePrefab::TextBox(self.text_box_to_prefab(data)?)
             }
         })
+    }
+
+    fn tuple_to_prefab(
+        &self,
+        data: &[WidgetNode],
+    ) -> Result<Vec<WidgetNodePrefab>, ApplicationError> {
+        data.iter()
+            .map(|node| self.node_to_prefab(node))
+            .collect::<Result<_, _>>()
     }
 
     fn area_box_to_prefab(
@@ -1628,6 +1638,7 @@ impl Application {
                 WidgetNode::Component(self.component_from_prefab(data)?)
             }
             WidgetNodePrefab::Unit(data) => WidgetNode::Unit(self.unit_from_prefab(data)?),
+            WidgetNodePrefab::Tuple(data) => WidgetNode::Tuple(self.tuple_from_prefab(data)?),
         })
     }
 
@@ -1695,6 +1706,15 @@ impl Application {
                 WidgetUnitNode::TextBox(self.text_box_from_prefab(data)?)
             }
         })
+    }
+
+    fn tuple_from_prefab(
+        &self,
+        data: Vec<WidgetNodePrefab>,
+    ) -> Result<Vec<WidgetNode>, ApplicationError> {
+        data.into_iter()
+            .map(|data| self.node_from_prefab(data))
+            .collect::<Result<_, _>>()
     }
 
     fn area_box_from_prefab(

@@ -121,7 +121,7 @@ impl TryFrom<WidgetNode> for WidgetUnit {
 
     fn try_from(node: WidgetNode) -> Result<Self, Self::Error> {
         match node {
-            WidgetNode::None => Ok(Self::None),
+            WidgetNode::None | WidgetNode::Tuple(_) => Ok(Self::None),
             WidgetNode::Component(_) => Err(()),
             WidgetNode::Unit(u) => Self::try_from(u),
         }
