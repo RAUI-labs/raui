@@ -21,6 +21,9 @@ pub fn setup(app: &mut Application) {
         "SideScrollbarsPaperProps",
     );
     app.register_props::<component::icon_paper::IconPaperProps>("IconPaperProps");
+    app.register_props::<component::interactive::button_paper::ButtonPaperOverrideStyle>(
+        "ButtonPaperOverrideStyle",
+    );
     app.register_props::<component::interactive::text_field_paper::TextFieldPaperProps>(
         "TextFieldPaperProps",
     );

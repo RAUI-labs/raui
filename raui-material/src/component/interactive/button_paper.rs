@@ -3,6 +3,23 @@ use crate::{
     theme::{ThemeColor, ThemeProps, ThemeVariant, ThemedImageMaterial, ThemedWidgetProps},
 };
 use raui_core::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(PropsData, Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
+pub enum ButtonPaperOverrideStyle {
+    None,
+    Default,
+    Selected,
+    Triggered,
+}
+
+impl Default for ButtonPaperOverrideStyle {
+    fn default() -> Self {
+        Self::None
+    }
+}
 
 fn button_paper_content(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
@@ -14,9 +31,16 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    let button_props = props.read_cloned_or_default::<ButtonProps>();
+    let mut button_props = props.read_cloned_or_default::<ButtonProps>();
     let paper_props = props.read_cloned_or_default::<PaperProps>();
     let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
+    let override_style = props.read_cloned_or_default::<ButtonPaperOverrideStyle>();
+
+    if override_style != ButtonPaperOverrideStyle::None {
+        button_props.selected = override_style == ButtonPaperOverrideStyle::Selected;
+        button_props.trigger = override_style == ButtonPaperOverrideStyle::Triggered;
+        button_props.context = false;
+    }
 
     let items = match themed_props.variant {
         ThemeVariant::ContentOnly => vec![content],

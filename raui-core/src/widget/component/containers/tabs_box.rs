@@ -62,6 +62,16 @@ pub struct TabsState {
     pub active_index: usize,
 }
 
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct TabPlateProps {
+    #[serde(default)]
+    pub active: bool,
+    #[serde(default)]
+    pub index: usize,
+}
+
 impl TabsBoxProps {
     fn to_main_props(&self) -> FlexBoxProps {
         FlexBoxProps {
@@ -147,7 +157,13 @@ pub fn nav_tabs_box(mut context: WidgetContext) -> WidgetNode {
     let mut contents = Vec::with_capacity(listed_slots.len());
 
     for (index, item) in listed_slots.into_iter().enumerate() {
-        let [tab, content] = item.unpack_tuple();
+        let [mut tab, content] = item.unpack_tuple();
+        tab.remap_props(|props| {
+            props.with(TabPlateProps {
+                active: active_index == index,
+                index,
+            })
+        });
         let props = Props::new(NavItemActive).with(ButtonNotifyProps(id.to_owned().into()));
         tabs.push(widget! {
             (#{index} button: {props} {

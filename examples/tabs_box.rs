@@ -18,13 +18,13 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
             // first tiple item is always the tab plate that's gonna be put on tabs bar (it's gonna
             // be wrapped with button component so it's better to not put other buttons in tab plate
             // widget tree).
-            make_widget!(image_box)
-                .with_props(ImageBoxProps::colored(Color {
+            make_widget!(tab_plate)
+                .with_props(Color {
                     r: 1.0,
                     g: 0.25,
                     b: 0.25,
                     a: 1.0,
-                }))
+                })
                 .into(),
             // second tuple item is always the tab contents (all tabs contents are put into inner
             // switch box so we make sure there is always only one tab content present at a time).
@@ -38,13 +38,13 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 .into(),
         ]))
         .listed_slot(WidgetNode::pack_tuple([
-            make_widget!(image_box)
-                .with_props(ImageBoxProps::colored(Color {
+            make_widget!(tab_plate)
+                .with_props(Color {
                     r: 0.25,
                     g: 1.0,
                     b: 0.25,
                     a: 1.0,
-                }))
+                })
                 .into(),
             make_widget!(image_box)
                 .with_props(ImageBoxProps::colored(Color {
@@ -56,13 +56,13 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 .into(),
         ]))
         .listed_slot(WidgetNode::pack_tuple([
-            make_widget!(image_box)
-                .with_props(ImageBoxProps::colored(Color {
+            make_widget!(tab_plate)
+                .with_props(Color {
                     r: 0.25,
                     g: 0.25,
                     b: 1.0,
                     a: 1.0,
-                }))
+                })
                 .into(),
             make_widget!(image_box)
                 .with_props(ImageBoxProps::colored(Color {
@@ -73,6 +73,19 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 }))
                 .into(),
         ]))
+        .into()
+}
+
+fn tab_plate(ctx: WidgetContext) -> WidgetNode {
+    let mut color = ctx.props.read_cloned_or_default::<Color>();
+    if !ctx.props.read_cloned_or_default::<TabPlateProps>().active {
+        color.r *= 0.5;
+        color.g *= 0.5;
+        color.b *= 0.5;
+    }
+
+    make_widget!(image_box)
+        .with_props(ImageBoxProps::colored(color))
         .into()
 }
 

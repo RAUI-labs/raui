@@ -362,6 +362,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
     app.register_props::<component::containers::tabs_box::TabsBoxProps>("TabsBoxProps");
+    app.register_props::<component::containers::tabs_box::TabPlateProps>("TabPlateProps");
     app.register_props::<component::containers::tooltip_box::TooltipState>("TooltipState");
     app.register_props::<component::containers::variant_box::VariantBoxProps>("VariantBoxProps");
     app.register_props::<component::containers::vertical_box::VerticalBoxProps>("VerticalBoxProps");
