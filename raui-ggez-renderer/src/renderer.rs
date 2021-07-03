@@ -257,7 +257,11 @@ impl<'a> GgezRenderer<'a> {
                                 let ih = item.ui_space.height();
                                 let ra = rw / rh;
                                 let ia = iw / ih;
-                                let scale = if ra >= ia { iw / rw } else { ih / rh };
+                                let scale = if (ra >= ia) != aspect.outside {
+                                    iw / rw
+                                } else {
+                                    ih / rh
+                                };
                                 let w = rw * scale;
                                 let h = rh * scale;
                                 let ow = lerp(0.0, iw - w, aspect.horizontal_alignment);

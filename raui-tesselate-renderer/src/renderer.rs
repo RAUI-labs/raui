@@ -980,7 +980,11 @@ where
                             let ih = rect.height();
                             let ra = size.x / size.y;
                             let ia = iw / ih;
-                            let scale = if ra >= ia { iw / size.x } else { ih / size.y };
+                            let scale = if (ra >= ia) != aspect.outside {
+                                iw / size.x
+                            } else {
+                                ih / size.y
+                            };
                             let w = size.x * scale;
                             let h = size.y * scale;
                             let ow = lerp(0.0, iw - w, aspect.horizontal_alignment);

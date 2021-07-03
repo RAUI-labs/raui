@@ -255,6 +255,18 @@ impl WidgetComponent {
         let props = std::mem::take(&mut self.props);
         self.props = (f)(props);
     }
+
+    pub fn remap_shared_props<F>(&mut self, mut f: F)
+    where
+        F: FnMut(Props) -> Props,
+    {
+        if let Some(shared_props) = &mut self.shared_props {
+            let props = std::mem::take(shared_props);
+            *shared_props = (f)(props);
+        } else {
+            self.shared_props = Some((f)(Default::default()));
+        }
+    }
 }
 
 impl std::fmt::Debug for WidgetComponent {

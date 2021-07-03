@@ -140,6 +140,8 @@ pub struct ImageBoxAspectRatio {
     pub horizontal_alignment: Scalar,
     #[serde(default)]
     pub vertical_alignment: Scalar,
+    #[serde(default)]
+    pub outside: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

@@ -1024,6 +1024,7 @@ fn test_tesselation() {
                         content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
                             horizontal_alignment: 0.0,
                             vertical_alignment: 0.5,
+                            outside: false,
                         }),
                         ..Default::default()
                     })
@@ -1047,6 +1048,7 @@ fn test_tesselation() {
                         content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
                             horizontal_alignment: 1.0,
                             vertical_alignment: 0.5,
+                            outside: false,
                         }),
                         ..Default::default()
                     })

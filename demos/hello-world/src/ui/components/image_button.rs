@@ -68,6 +68,7 @@ pub fn image_button(mut context: WidgetContext) -> WidgetNode {
         content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
             horizontal_alignment,
             vertical_alignment: 0.5,
+            outside: false,
         }),
         transform: Transform {
             pivot: Vec2 { x: 0.5, y: 0.5 },

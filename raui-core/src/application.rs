@@ -1889,6 +1889,7 @@ impl Application {
 /// See [`Application::process`] for more information.
 #[derive(Debug, Default)]
 pub struct ProcessContext<'a> {
+    owned: HashMap<TypeId, Box<dyn Any>>,
     mutable: HashMap<TypeId, &'a mut dyn Any>,
     immutable: HashMap<TypeId, &'a dyn Any>,
 }
@@ -1951,7 +1952,7 @@ impl<'a> ProcessContext<'a> {
     /// #    widget!(())
     /// }
     /// ```
-    pub fn get<T: 'static>(&mut self) -> Option<&T> {
+    pub fn get<T: 'static>(&self) -> Option<&T> {
         self.immutable
             .get(&TypeId::of::<T>())
             .map(|x| x.downcast_ref())
@@ -1966,5 +1967,70 @@ impl<'a> ProcessContext<'a> {
     pub fn insert<T: 'static>(&mut self, item: &'a T) -> &mut Self {
         self.immutable.insert(TypeId::of::<T>(), item);
         self
+    }
+
+    /// Can be used to get immutable access to owned objects available for current application
+    /// processing run provided by the RAUI host.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # struct AppData {
+    /// #    counter: i32
+    /// # }
+    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    ///     let app_data = ctx.process_context.owned_ref::<AppData>().unwrap();
+    ///     let counter = app_data.counter;
+    ///
+    ///     // widget stuff...
+    /// #    widget!(())
+    /// }
+    /// ```
+    pub fn owned_ref<T: 'static>(&self) -> Option<&T> {
+        self.owned
+            .get(&TypeId::of::<T>())
+            .map(|x| x.downcast_ref())
+            .flatten()
+    }
+
+    /// Can be used to get mutable access to owned objects available for current application
+    /// processing run provided by the RAUI host.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use raui_core::prelude::*;
+    /// # struct AppData {
+    /// #    counter: i32
+    /// # }
+    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    ///     let app_data = ctx.process_context.owned_mut::<AppData>().unwrap();
+    ///     let counter = app_data.counter;
+    ///
+    ///     // widget stuff...
+    /// #    widget!(())
+    /// }
+    /// ```
+    pub fn owned_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.owned
+            .get_mut(&TypeId::of::<T>())
+            .map(|x| x.downcast_mut())
+            .flatten()
+    }
+
+    /// Allows RAUI hosts to add owned objects to application data to the
+    /// [`process_context`][crate::widget::context::WidgetContext::process_context`] that is
+    /// available to widget components.
+    pub fn insert_owned<T: 'static>(&mut self, item: T) -> &mut Self {
+        self.owned.insert(TypeId::of::<T>(), Box::new(item));
+        self
+    }
+
+    pub fn has<T: 'static>(&self) -> bool {
+        let t = TypeId::of::<T>();
+        self.owned.contains_key(&t)
+            || self.immutable.contains_key(&t)
+            || self.mutable.contains_key(&t)
     }
 }

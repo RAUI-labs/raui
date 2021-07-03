@@ -13,6 +13,9 @@ fn main() {
             horizontal_alignment: 0.5,
             // vertical alignment of the content relative to the vertical free space.
             vertical_alignment: 0.5,
+            // if set to true then content instead of getting smaller to fit inside the layout box,
+            // it will "leak" outside of the layout box.
+            outside: true,
         }),
         ..Default::default()
     });

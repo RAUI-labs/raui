@@ -85,6 +85,34 @@ impl WidgetNode {
         }
     }
 
+    pub fn shared_props(&self) -> Option<&Props> {
+        match self {
+            Self::Component(c) => c.shared_props.as_ref(),
+            _ => None,
+        }
+    }
+
+    pub fn shared_props_mut(&mut self) -> Option<&mut Props> {
+        match self {
+            Self::Component(c) => {
+                if c.shared_props.is_none() {
+                    c.shared_props = Some(Default::default());
+                }
+                c.shared_props.as_mut()
+            }
+            _ => None,
+        }
+    }
+
+    pub fn remap_shared_props<F>(&mut self, f: F)
+    where
+        F: FnMut(Props) -> Props,
+    {
+        if let Self::Component(c) = self {
+            c.remap_shared_props(f);
+        }
+    }
+
     pub fn pack_tuple<const N: usize>(data: [WidgetNode; N]) -> Self {
         Self::Tuple(data.into())
     }
