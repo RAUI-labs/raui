@@ -1,6 +1,10 @@
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(not(feature = "scalar64"))]
+use std::f32::consts::PI;
+#[cfg(feature = "scalar64")]
+use std::f64::consts::PI;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeColor {
@@ -265,7 +269,7 @@ pub fn contrast_color(base_color: Color) -> Color {
 }
 
 pub fn fluid_polarize(v: Scalar) -> Scalar {
-    (v - 0.5 * std::f32::consts::PI).sin() * 0.5 + 0.5
+    (v - 0.5 * PI).sin() * 0.5 + 0.5
 }
 
 pub fn fluid_polarize_color(color: Color) -> Color {

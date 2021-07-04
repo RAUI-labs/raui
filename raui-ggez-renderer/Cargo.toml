@@ -1,6 +1,6 @@
 [package]
 name = "raui-ggez-renderer"
-version = "0.38.0"
+version = "0.38.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for GGEZ game engine"
