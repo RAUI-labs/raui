@@ -1,6 +1,6 @@
 [package]
 name = "raui-json-renderer"
-version = "0.38.1"
+version = "0.38.2"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "RAUI renderer for JSON format"
