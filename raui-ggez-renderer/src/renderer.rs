@@ -1,6 +1,6 @@
 use crate::{resources::GgezResources, Error};
 use ggez::{
-    graphics::{self, Align, MeshBuilder, Scale, Text, TextFragment},
+    graphics::{self, Align, MeshBuilder, PxScale, Text, TextFragment},
     Context,
 };
 use raui_core::{
@@ -109,7 +109,9 @@ impl<'a> GgezRenderer<'a> {
                                     },
                                 ];
                                 let indices = &[0, 1, 2, 2, 3, 0];
-                                builder.raw(vertices, indices, None);
+                                builder.raw(vertices, indices, None).map_err(|_| {
+                                    Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                })?;
                             }
                             ImageBoxImageScaling::Frame(frame) => {
                                 let vl = frame.destination.left * scale.x;
@@ -204,7 +206,9 @@ impl<'a> GgezRenderer<'a> {
                                         9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13, 12, 8, 9,
                                         10, 14, 14, 13, 9, 10, 11, 15, 15, 14, 10,
                                     ];
-                                    builder.raw(vertices, indices, None);
+                                    builder.raw(vertices, indices, None).map_err(|_| {
+                                        Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                    })?;
                                 } else {
                                     let indices = &[
                                         0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2, 4, 5,
@@ -212,7 +216,9 @@ impl<'a> GgezRenderer<'a> {
                                         13, 13, 12, 8, 9, 10, 14, 14, 13, 9, 10, 11, 15, 15, 14,
                                         10,
                                     ];
-                                    builder.raw(vertices, indices, None);
+                                    builder.raw(vertices, indices, None).map_err(|_| {
+                                        Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                    })?;
                                 }
                             }
                         }
@@ -304,7 +310,11 @@ impl<'a> GgezRenderer<'a> {
                                         },
                                     ];
                                     let indices = &[0, 1, 2, 2, 3, 0];
-                                    builder.raw(vertices, indices, Some(resource.clone()));
+                                    builder
+                                        .raw(vertices, indices, Some(resource.clone()))
+                                        .map_err(|_| {
+                                            Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                        })?;
                                 }
                                 ImageBoxImageScaling::Frame(frame) => {
                                     let fl = frame.source.left / resource.width() as Scalar;
@@ -405,7 +415,11 @@ impl<'a> GgezRenderer<'a> {
                                             4, 5, 9, 9, 8, 4, 6, 7, 11, 11, 10, 6, 8, 9, 13, 13,
                                             12, 8, 9, 10, 14, 14, 13, 9, 10, 11, 15, 15, 14, 10,
                                         ];
-                                        builder.raw(vertices, indices, Some(resource.clone()));
+                                        builder
+                                            .raw(vertices, indices, Some(resource.clone()))
+                                            .map_err(|_| {
+                                                Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                            })?;
                                     } else {
                                         let indices = &[
                                             0, 1, 5, 5, 4, 0, 1, 2, 6, 6, 5, 1, 2, 3, 7, 7, 6, 2,
@@ -413,7 +427,11 @@ impl<'a> GgezRenderer<'a> {
                                             6, 8, 9, 13, 13, 12, 8, 9, 10, 14, 14, 13, 9, 10, 11,
                                             15, 15, 14, 10,
                                         ];
-                                        builder.raw(vertices, indices, Some(resource.clone()));
+                                        builder
+                                            .raw(vertices, indices, Some(resource.clone()))
+                                            .map_err(|_| {
+                                                Error::CouldNotBuildImageMesh(unit.id.to_owned())
+                                            })?;
                                     }
                                 }
                             }
@@ -456,10 +474,7 @@ impl<'a> GgezRenderer<'a> {
                                 unit.color.a,
                             ),
                         ));
-                        text.set_font(
-                            *resource,
-                            Scale::uniform(unit.font.size * mapping.scale().x),
-                        );
+                        text.set_font(*resource, PxScale::from(unit.font.size * mapping.scale().x));
                         text.set_bounds(
                             [rect.width(), rect.height()],
                             match unit.horizontal_align {
@@ -476,25 +491,13 @@ impl<'a> GgezRenderer<'a> {
                             .rotation(rotation)
                             .scale([scaling.x, scaling.y])
                             .dest([offset.x, offset.y]);
-                        if graphics::draw_queued_text(
+                        graphics::draw_queued_text(
                             self.context,
                             params,
                             None,
                             graphics::FilterMode::Linear,
                         )
-                        .is_ok()
-                        {
-                            // NOTE: yeah, we have to pop transforms after text rendering bc
-                            // otherwise they just apply tot he next drawable somehow.
-                            graphics::pop_transform(self.context);
-                            if graphics::apply_transformations(self.context).is_ok() {
-                                Ok(())
-                            } else {
-                                Err(Error::CouldNotDrawImage(unit.id.to_owned()))
-                            }
-                        } else {
-                            Err(Error::CouldNotDrawImage(unit.id.to_owned()))
-                        }
+                        .map_err(|_| Error::CouldNotDrawImage(unit.id.to_owned()))
                     } else {
                         Err(Error::ImageResourceNotFound(
                             unit.id.to_owned(),
