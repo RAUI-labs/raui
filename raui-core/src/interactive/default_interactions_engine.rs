@@ -701,13 +701,13 @@ impl DefaultInteractionsEngine {
                     }
 
                     match scroll {
-                        NavScroll::Factor(v, relative) => factor(self, app, &id, v, relative),
+                        NavScroll::Factor(v, relative) => factor(self, app, id, v, relative),
                         NavScroll::DirectFactor(idref, v, relative) => {
                             if let Some(id) = idref.read() {
                                 factor(self, app, &id, v, relative);
                             }
                         }
-                        NavScroll::Units(v, relative) => units(self, app, &id, v, relative),
+                        NavScroll::Units(v, relative) => units(self, app, id, v, relative),
                         NavScroll::DirectUnits(idref, v, relative) => {
                             if let Some(id) = idref.read() {
                                 units(self, app, &id, v, relative);

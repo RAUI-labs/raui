@@ -53,7 +53,7 @@ impl WidgetNode {
 
     pub fn as_tuple(&self) -> Option<&[WidgetNode]> {
         match self {
-            Self::Tuple(v) => Some(&v),
+            Self::Tuple(v) => Some(v),
             _ => None,
         }
     }

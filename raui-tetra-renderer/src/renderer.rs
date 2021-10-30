@@ -16,6 +16,7 @@ use raui_tesselate_renderer::{
     renderer::TesselateRenderer,
     tesselation::{Batch, TesselationVerticesFormat},
 };
+use std::collections::hash_map::Entry;
 use tetra::{
     graphics::{
         get_transform_matrix,
@@ -126,19 +127,16 @@ where
             },
             WidgetUnit::TextBox(text_box) => {
                 let font = &text_box.font;
-                if !self
+                if let Entry::Vacant(entry) = self
                     .resources
                     .fonts
-                    .contains_key(&format!("{}:{}", font.name, font.size))
+                    .entry(format!("{}:{}", font.name, font.size))
                 {
-                    self.resources.fonts.insert(
-                        format!("{}:{}", font.name, font.size),
-                        (
-                            1.0,
-                            Font::vector(self.context, font.name.clone(), font.size as Scalar)
-                                .map_err(|e| Error::FontResourceNotFound(e.to_string()))?,
-                        ),
-                    );
+                    entry.insert((
+                        1.0,
+                        Font::vector(self.context, font.name.clone(), font.size as Scalar)
+                            .map_err(|e| Error::FontResourceNotFound(e.to_string()))?,
+                    ));
                 }
             }
             WidgetUnit::PortalBox(_) | WidgetUnit::None => {}

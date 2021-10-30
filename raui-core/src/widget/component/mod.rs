@@ -240,11 +240,31 @@ impl WidgetComponent {
         self
     }
 
+    pub fn listed_slots<I, T>(mut self, v: I) -> Self
+    where
+        I: Iterator<Item = T>,
+        T: Into<WidgetNode>,
+    {
+        self.listed_slots.extend(v.map(|v| v.into()));
+        self
+    }
+
     pub fn named_slot<T>(mut self, k: &str, v: T) -> Self
     where
         T: Into<WidgetNode>,
     {
         self.named_slots.insert(k.to_owned(), v.into());
+        self
+    }
+
+    pub fn named_slots<I, K, T>(mut self, v: I) -> Self
+    where
+        I: Iterator<Item = (K, T)>,
+        K: ToString,
+        T: Into<WidgetNode>,
+    {
+        self.named_slots
+            .extend(v.map(|(k, v)| (k.to_string(), v.into())));
         self
     }
 

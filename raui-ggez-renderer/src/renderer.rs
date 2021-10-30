@@ -56,7 +56,7 @@ impl<'a> GgezRenderer<'a> {
                     .iter()
                     .map(|item| (item.layout.depth, item))
                     .collect::<Vec<_>>();
-                items.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+                items.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
                 for (_, item) in items {
                     self.render_node(&item.slot, mapping, layout)?;
                 }

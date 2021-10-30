@@ -713,7 +713,7 @@ impl Application {
         let (message_sender, message_receiver) = channel();
         let message_sender = MessageSender::new(message_sender);
         for (k, a) in &mut self.animators {
-            a.process(self.animations_delta_time, &k, &message_sender);
+            a.process(self.animations_delta_time, k, &message_sender);
         }
         self.dirty = false;
         let old_states = std::mem::take(&mut self.states);
@@ -1488,7 +1488,7 @@ impl Application {
             id: data.id.to_owned(),
             slot: Box::new(match &*data.slot {
                 PortalBoxSlotNode::Slot(slot) => {
-                    PortalBoxSlotNodePrefab::Slot(self.node_to_prefab(&slot)?)
+                    PortalBoxSlotNodePrefab::Slot(self.node_to_prefab(slot)?)
                 }
                 PortalBoxSlotNode::ContentItem(item) => {
                     PortalBoxSlotNodePrefab::ContentItem(ContentBoxItemNodePrefab {

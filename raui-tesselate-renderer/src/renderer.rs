@@ -884,7 +884,7 @@ where
                         .iter()
                         .map(|item| (item.layout.depth, item))
                         .collect::<Vec<_>>();
-                    items.sort_by(|(a, _), (b, _)| a.partial_cmp(&b).unwrap());
+                    items.sort_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
                     let local_space = mapping.virtual_to_real_rect(item.local_space, local);
                     self.push_transform(&unit.transform, local_space);
                     if unit.clipping {

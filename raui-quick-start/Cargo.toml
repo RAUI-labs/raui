@@ -1,6 +1,6 @@
 [package]
 name = "raui-quick-start"
-version = "0.38.2"
+version = "0.38.3"
 authors = ["zicklag"]
 edition = "2018"
 description = "RAUI quick start module for easier playground experience"

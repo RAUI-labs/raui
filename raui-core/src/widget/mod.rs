@@ -57,7 +57,7 @@ impl WidgetId {
         let depth = path.len();
         let count = type_name.len() + 1 + path.iter().map(|part| 1 + part.len()).sum::<usize>();
         let mut id = String::with_capacity(count);
-        id.push_str(&type_name);
+        id.push_str(type_name);
         id.push(':');
         for (i, part) in path.iter().enumerate() {
             if part.len() >= 256 {
@@ -67,7 +67,7 @@ impl WidgetId {
                 );
             }
             id.push('/');
-            id.push_str(&part);
+            id.push_str(part);
         }
         Self {
             id,
