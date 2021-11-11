@@ -13,4 +13,4 @@ categories = ["gui", "rendering::graphics-api"]
 [dependencies]
 raui-core = { path = "../raui-core", version = "0.38" }
 serde = { version = "1", features = ["derive"] }
-ggez = "0.5"
+ggez = "0.7"
