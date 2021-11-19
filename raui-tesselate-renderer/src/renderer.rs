@@ -595,84 +595,52 @@ where
                     matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.bottom - d.bottom)),
                 );
                 let ctil = Vec2 {
-                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    x: srect.left + frame.source.left * inv_size.x,
                     y: srect.top,
                 };
                 let ctir = Vec2 {
-                    x: lerp(
-                        srect.left,
-                        srect.right,
-                        1.0 - frame.source.right * inv_size.x,
-                    ),
+                    x: srect.right - frame.source.right * inv_size.x,
                     y: srect.top,
                 };
                 let citr = Vec2 {
                     x: srect.right,
-                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                    y: srect.top + frame.source.top * inv_size.y,
                 };
                 let cibr = Vec2 {
                     x: srect.right,
-                    y: lerp(
-                        srect.top,
-                        srect.bottom,
-                        1.0 - frame.source.bottom * inv_size.y,
-                    ),
+                    y: srect.bottom - frame.source.bottom * inv_size.y,
                 };
                 let cbir = Vec2 {
-                    x: lerp(
-                        srect.left,
-                        srect.right,
-                        1.0 - frame.source.right * inv_size.x,
-                    ),
+                    x: srect.right - frame.source.right * inv_size.x,
                     y: srect.bottom,
                 };
                 let cbil = Vec2 {
-                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
+                    x: srect.left + frame.source.left * inv_size.x,
                     y: srect.bottom,
                 };
                 let cibl = Vec2 {
                     x: srect.left,
-                    y: lerp(
-                        srect.top,
-                        srect.bottom,
-                        1.0 - frame.source.bottom * inv_size.y,
-                    ),
+                    y: srect.bottom - frame.source.bottom * inv_size.y,
                 };
                 let citl = Vec2 {
                     x: srect.left,
-                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                    y: srect.top + frame.source.top * inv_size.y,
                 };
                 let citil = Vec2 {
-                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                    x: srect.left + frame.source.left * inv_size.x,
+                    y: srect.top + frame.source.top * inv_size.y,
                 };
                 let citir = Vec2 {
-                    x: lerp(
-                        srect.left,
-                        srect.right,
-                        1.0 - frame.source.right * inv_size.x,
-                    ),
-                    y: lerp(srect.top, srect.bottom, frame.source.top * inv_size.y),
+                    x: srect.right - frame.source.right * inv_size.x,
+                    y: srect.top + frame.source.top * inv_size.y,
                 };
                 let cibir = Vec2 {
-                    x: lerp(
-                        srect.left,
-                        srect.right,
-                        1.0 - frame.source.right * inv_size.x,
-                    ),
-                    y: lerp(
-                        srect.top,
-                        srect.bottom,
-                        1.0 - frame.source.bottom * inv_size.y,
-                    ),
+                    x: srect.right - frame.source.right * inv_size.x,
+                    y: srect.bottom - frame.source.bottom * inv_size.y,
                 };
                 let cibil = Vec2 {
-                    x: lerp(srect.left, srect.right, frame.source.left * inv_size.x),
-                    y: lerp(
-                        srect.top,
-                        srect.bottom,
-                        1.0 - frame.source.bottom * inv_size.y,
-                    ),
+                    x: srect.left + frame.source.left * inv_size.x,
+                    y: srect.bottom - frame.source.bottom * inv_size.y,
                 };
                 let vertices_start = match &mut result.vertices {
                     TesselationVertices::Separated(TesselationVerticesSeparated {
