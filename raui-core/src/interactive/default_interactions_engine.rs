@@ -139,21 +139,11 @@ impl DefaultInteractionsEngine {
     }
 
     pub fn selected_button(&self, tracked: bool) -> Option<&WidgetId> {
-        match self
-            .selected_chain
+        self.selected_chain
             .iter()
             .rev()
             .find(|id| self.buttons.contains_key(id))
-        {
-            Some(id) => {
-                if !tracked || *self.buttons.get(id).unwrap() {
-                    Some(id)
-                } else {
-                    None
-                }
-            }
-            None => None,
-        }
+            .filter(|&id| !tracked || *self.buttons.get(id).unwrap())
     }
 
     pub fn selected_scroll_view(&self) -> Option<&WidgetId> {
@@ -838,16 +828,10 @@ impl DefaultInteractionsEngine {
     }
 
     fn does_hover_widget(&self, app: &Application, x: Scalar, y: Scalar) -> bool {
-        self.does_hover_widget_inner(app, x, y, app.rendered_tree())
+        Self::does_hover_widget_inner(app, x, y, app.rendered_tree())
     }
 
-    fn does_hover_widget_inner(
-        &self,
-        app: &Application,
-        x: Scalar,
-        y: Scalar,
-        unit: &WidgetUnit,
-    ) -> bool {
+    fn does_hover_widget_inner(app: &Application, x: Scalar, y: Scalar, unit: &WidgetUnit) -> bool {
         if let Some(data) = unit.as_data() {
             if let Some(layout) = app.layout_data().items.get(data.id()) {
                 let rect = layout.ui_space;
@@ -858,33 +842,33 @@ impl DefaultInteractionsEngine {
         }
         match unit {
             WidgetUnit::AreaBox(unit) => {
-                if self.does_hover_widget_inner(app, x, y, &unit.slot) {
+                if Self::does_hover_widget_inner(app, x, y, &unit.slot) {
                     return true;
                 }
             }
             WidgetUnit::ContentBox(unit) => {
                 for item in &unit.items {
-                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                    if Self::does_hover_widget_inner(app, x, y, &item.slot) {
                         return true;
                     }
                 }
             }
             WidgetUnit::FlexBox(unit) => {
                 for item in &unit.items {
-                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                    if Self::does_hover_widget_inner(app, x, y, &item.slot) {
                         return true;
                     }
                 }
             }
             WidgetUnit::GridBox(unit) => {
                 for item in &unit.items {
-                    if self.does_hover_widget_inner(app, x, y, &item.slot) {
+                    if Self::does_hover_widget_inner(app, x, y, &item.slot) {
                         return true;
                     }
                 }
             }
             WidgetUnit::SizeBox(unit) => {
-                if self.does_hover_widget_inner(app, x, y, &unit.slot) {
+                if Self::does_hover_widget_inner(app, x, y, &unit.slot) {
                     return true;
                 }
             }

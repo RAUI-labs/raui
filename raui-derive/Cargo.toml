@@ -1,6 +1,6 @@
 [package]
 name = "raui-derive"
-version = "0.38.4"
+version = "0.40.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2018"
 description = "Macros for Renderer Agnostic User Interface"

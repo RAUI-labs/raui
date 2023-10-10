@@ -1,15 +1,15 @@
 use crate::{
     animator::{Animator, AnimatorStates},
     messenger::{MessageSender, Messenger},
-    prelude::ProcessContext,
     props::Props,
     signals::SignalSender,
     state::State,
+    view_model::ViewModelCollection,
     widget::{node::WidgetNode, WidgetId, WidgetLifeCycle, WidgetRef},
 };
 use std::collections::HashMap;
 
-pub struct WidgetContext<'a, 'b> {
+pub struct WidgetContext<'a> {
     pub id: &'a WidgetId,
     pub idref: Option<&'a WidgetRef>,
     pub key: &'a str,
@@ -20,10 +20,10 @@ pub struct WidgetContext<'a, 'b> {
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,
-    pub process_context: &'a mut ProcessContext<'b>,
+    pub view_models: &'a mut ViewModelCollection,
 }
 
-impl<'a, 'b> WidgetContext<'a, 'b> {
+impl<'a> WidgetContext<'a> {
     pub fn take_named_slots(&mut self) -> HashMap<String, WidgetNode> {
         std::mem::take(&mut self.named_slots)
     }
@@ -45,7 +45,7 @@ impl<'a, 'b> WidgetContext<'a, 'b> {
     }
 }
 
-impl<'a, 'b> std::fmt::Debug for WidgetContext<'a, 'b> {
+impl<'a> std::fmt::Debug for WidgetContext<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("WidgetContext")
             .field("id", &self.id)
@@ -58,7 +58,7 @@ impl<'a, 'b> std::fmt::Debug for WidgetContext<'a, 'b> {
     }
 }
 
-pub struct WidgetMountOrChangeContext<'a, 'b> {
+pub struct WidgetMountOrChangeContext<'a> {
     pub id: &'a WidgetId,
     pub props: &'a Props,
     pub shared_props: &'a Props,
@@ -66,13 +66,13 @@ pub struct WidgetMountOrChangeContext<'a, 'b> {
     pub messenger: Messenger<'a>,
     pub signals: SignalSender,
     pub animator: Animator<'a>,
-    pub process_context: &'a mut ProcessContext<'b>,
+    pub view_models: &'a mut ViewModelCollection,
 }
 
-pub struct WidgetUnmountContext<'a, 'b> {
+pub struct WidgetUnmountContext<'a> {
     pub id: &'a WidgetId,
     pub state: &'a Props,
     pub messenger: &'a MessageSender,
     pub signals: SignalSender,
-    pub process_context: &'a mut ProcessContext<'b>,
+    pub view_models: &'a mut ViewModelCollection,
 }

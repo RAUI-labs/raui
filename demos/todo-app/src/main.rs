@@ -10,5 +10,5 @@ fn main() -> tetra::Result {
         .key_repeat(true)
         .show_mouse(true)
         .build()?
-        .run(|context| TodoState::new(context))
+        .run(TodoState::new)
 }

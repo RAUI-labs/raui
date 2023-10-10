@@ -6,12 +6,24 @@ list:
 readme:
     cargo readme > README.md
 
+format:
+    cargo fmt --all
+
+build:
+    cargo build --all
+
+clippy:
+    cargo clippy --all
+
+test:
+    cargo test --all --features all
+
 # Mandatory checks to run before pushing changes to repository
 checks:
-    cargo fmt --all
-    cargo build --all
-    cargo clippy --all
-    cargo test --all --features all
+    just format
+    just build
+    just clippy
+    just test
 
 # Print the documentation coverage for a crate in the workspace
 doc-coverage crate="raui-core":

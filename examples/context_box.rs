@@ -6,10 +6,17 @@ use raui_quick_start::{
     RauiQuickStartBuilder,
 };
 
+const DATA: &str = "data";
+
 fn app(ctx: WidgetContext) -> WidgetNode {
     let idref = WidgetRef::new();
-    // get reference to app data to apply individual context box state.
-    let data = ctx.process_context.get_mut::<[bool; 3]>().unwrap();
+    // we read value from view model created with app builder.
+    let data = ctx
+        .view_models
+        .get_mut(DATA)
+        .unwrap()
+        .read::<(bool, bool, bool)>()
+        .unwrap();
 
     make_widget!(content_box)
         .idref(idref.clone())
@@ -25,7 +32,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
                         // clear this flex box item layout (no frowing, shrinking or filling).
                         .with_props(FlexBoxItemLayout::cleared())
                         // pass context box state read from app data.
-                        .with_props(data[0])
+                        .with_props(data.0)
                         // set icon color.
                         .with_props(Color {
                             r: 1.0,
@@ -42,7 +49,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
                 .listed_slot(
                     make_widget!(icon)
                         .with_props(FlexBoxItemLayout::cleared())
-                        .with_props(data[1])
+                        .with_props(data.1)
                         .with_props(Color {
                             r: 0.25,
                             g: 1.0,
@@ -57,7 +64,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
                 .listed_slot(
                     make_widget!(icon)
                         .with_props(FlexBoxItemLayout::cleared())
-                        .with_props(data[2])
+                        .with_props(data.2)
                         .with_props(Color {
                             r: 0.25,
                             g: 0.25,
@@ -125,27 +132,33 @@ fn main() {
         .widget_tree(make_widget!(app).into())
         .build()
         .unwrap()
-        .on_event(|_, event, app_data| match event {
-            Event::KeyPressed { key: Key::Num1 } => {
-                // change state of given context box in app data.
-                let data = app_data.downcast_mut::<[bool; 3]>().unwrap();
-                data[0] = !data[0];
-                // we return `true` which marks RAUI app as dirty (needs to process tree).
-                true
+        .on_event(|_, event, view_models| {
+            let mut data = view_models
+                .get_mut(DATA)
+                .unwrap()
+                .write::<(bool, bool, bool)>()
+                .unwrap();
+
+            match event {
+                Event::KeyPressed { key: Key::Num1 } => {
+                    // change state of given context box in app data.
+                    data.0 = !data.0;
+                    // we return `true` which marks RAUI app as dirty (needs to process tree).
+                    true
+                }
+                Event::KeyPressed { key: Key::Num2 } => {
+                    data.1 = !data.1;
+                    true
+                }
+                Event::KeyPressed { key: Key::Num3 } => {
+                    data.2 = !data.2;
+                    true
+                }
+                _ => false,
             }
-            Event::KeyPressed { key: Key::Num2 } => {
-                let data = app_data.downcast_mut::<[bool; 3]>().unwrap();
-                data[1] = !data[1];
-                true
-            }
-            Event::KeyPressed { key: Key::Num3 } => {
-                let data = app_data.downcast_mut::<[bool; 3]>().unwrap();
-                data[2] = !data[2];
-                true
-            }
-            _ => false,
         })
-        // we use array of 3 bools as app data, that will represent state of individual context box.
-        .run_with_app_data([false, true, false])
+        // we use tuple of 3 bools that will represent state of individual context box.
+        .view_model(DATA, (false, true, false))
+        .run()
         .unwrap();
 }

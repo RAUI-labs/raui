@@ -4,9 +4,16 @@ use raui_quick_start::{
     RauiQuickStartBuilder,
 };
 
+const DATA: &str = "data";
+
 fn app(ctx: WidgetContext) -> WidgetNode {
-    // we read value from process context which is stored in app data passed to the app builder.
-    let variant_name = ctx.process_context.get_mut::<String>().cloned();
+    // we read value from view model created with app builder.
+    let variant_name = ctx
+        .view_models
+        .get(DATA)
+        .unwrap()
+        .read::<String>()
+        .map(|value| value.to_owned());
 
     make_widget!(variant_box)
         .with_props(VariantBoxProps { variant_name })
@@ -46,24 +53,32 @@ fn main() {
         .widget_tree(make_widget!(app).into())
         .build()
         .unwrap()
-        .on_event(|_, event, app_data| match event {
-            Event::KeyPressed { key: Key::A } => {
-                // we modify app data with value that represent active variant name.
-                *app_data.downcast_mut::<String>().unwrap() = "A".to_owned();
-                // we return `true` which marks RAUI app as dirty (needs to process tree).
-                true
+        .on_event(|_, event, view_models| {
+            let mut data = view_models
+                .get_mut(DATA)
+                .unwrap()
+                .write::<String>()
+                .unwrap();
+
+            match event {
+                Event::KeyPressed { key: Key::A } => {
+                    // we modify app data with value that represent active variant name.
+                    *data = "A".to_owned();
+                    // we return `true` which marks RAUI app as dirty (needs to process tree).
+                    true
+                }
+                Event::KeyPressed { key: Key::B } => {
+                    *data = "B".to_owned();
+                    true
+                }
+                Event::KeyPressed { key: Key::C } => {
+                    *data = "C".to_owned();
+                    true
+                }
+                _ => false,
             }
-            Event::KeyPressed { key: Key::B } => {
-                *app_data.downcast_mut::<String>().unwrap() = "B".to_owned();
-                true
-            }
-            Event::KeyPressed { key: Key::C } => {
-                *app_data.downcast_mut::<String>().unwrap() = "C".to_owned();
-                true
-            }
-            _ => false,
         })
-        // run app with app data that is read by RAUI and mutated by app events.
-        .run_with_app_data("A".to_owned())
+        .view_model("data", "A".to_owned())
+        .run()
         .unwrap();
 }

@@ -17,10 +17,11 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use std::{
+    borrow::Cow,
     collections::hash_map::DefaultHasher,
     convert::TryFrom,
     hash::{Hash, Hasher},
-    ops::Deref,
+    ops::{Deref, Range},
     str::FromStr,
     sync::{Arc, RwLock},
 };
@@ -34,46 +35,49 @@ impl From<WidgetId> for WidgetIdDef {
     }
 }
 
-#[derive(PropsData, Default, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Default, Clone, Serialize, Deserialize)]
 #[serde(try_from = "WidgetIdDef")]
 #[serde(into = "WidgetIdDef")]
 pub struct WidgetId {
     id: String,
-    type_name_len: u8,
-    key_len: u8,
-    depth: usize,
+    type_name: Range<usize>,
+    parts: Vec<Range<usize>>,
 }
 
 impl WidgetId {
-    pub fn new(type_name: &str, path: &[String]) -> Self {
-        if type_name.len() >= 256 {
-            panic!(
-                "WidgetId `type_name` (\"{}\") cannot be longer than 255 characters!",
-                type_name
-            );
+    pub fn new(type_name: &str, path: &[Cow<'_, str>]) -> Self {
+        if path.is_empty() {
+            return Self {
+                id: format!("{}:", type_name),
+                type_name: 0..type_name.as_bytes().len(),
+                parts: Default::default(),
+            };
         }
-        let type_name_len = type_name.len() as u8;
-        let key_len = path.last().map(|p| p.len()).unwrap_or_default() as u8;
-        let depth = path.len();
-        let count = type_name.len() + 1 + path.iter().map(|part| 1 + part.len()).sum::<usize>();
-        let mut id = String::with_capacity(count);
-        id.push_str(type_name);
-        id.push(':');
-        for (i, part) in path.iter().enumerate() {
-            if part.len() >= 256 {
-                panic!(
-                    "WidgetId `path[{}]` (\"{}\") cannot be longer than 255 characters!",
-                    i, part
-                );
-            }
-            id.push('/');
-            id.push_str(part);
-        }
+        let count = type_name.as_bytes().len()
+            + b":".len()
+            + path.iter().map(|part| part.as_bytes().len()).sum::<usize>()
+            + path.len().saturating_sub(1) * b"/".len();
+        let mut result = String::with_capacity(count);
+        let mut position = result.as_bytes().len();
+        result.push_str(type_name);
+        let type_name = position..result.as_bytes().len();
+        result.push(':');
+        let parts = path
+            .iter()
+            .enumerate()
+            .map(|(index, part)| {
+                if index > 0 {
+                    result.push('/');
+                }
+                position = result.as_bytes().len();
+                result.push_str(part);
+                position..result.as_bytes().len()
+            })
+            .collect::<Vec<_>>();
         Self {
-            id,
-            type_name_len,
-            key_len,
-            depth,
+            id: result,
+            type_name,
+            parts,
         }
     }
 
@@ -84,27 +88,44 @@ impl WidgetId {
 
     #[inline]
     pub fn depth(&self) -> usize {
-        self.depth
+        self.parts.len()
     }
 
     #[inline]
     pub fn type_name(&self) -> &str {
-        &self.id.as_str()[0..self.type_name_len as usize]
+        &self.id.as_str()[self.type_name.clone()]
     }
 
     #[inline]
     pub fn path(&self) -> &str {
-        &self.id.as_str()[(self.type_name_len as usize + 2)..]
+        &self.id.as_str()[self.parts.first().unwrap().start..self.parts.last().unwrap().end]
     }
 
     #[inline]
     pub fn key(&self) -> &str {
-        &self.id[(self.id.len() - self.key_len as usize)..]
+        &self.id[self.parts.last().cloned().unwrap()]
     }
 
     #[inline]
-    pub fn parts(&self) -> impl Iterator<Item = &str> {
-        self.id[(self.type_name_len as usize + 2)..].split('/')
+    pub fn part(&self, index: usize) -> Option<&str> {
+        self.parts.get(index).cloned().map(|range| &self.id[range])
+    }
+
+    #[inline]
+    pub fn range(&self, from_inclusive: usize, to_exclusive: usize) -> &str {
+        let start = from_inclusive.min(self.parts.len().saturating_sub(1));
+        let end = to_exclusive
+            .saturating_sub(1)
+            .max(start)
+            .min(self.parts.len().saturating_sub(1));
+        let start = self.parts[start].start;
+        let end = self.parts[end].end;
+        &self.id[start..end]
+    }
+
+    #[inline]
+    pub fn parts(&self) -> impl Iterator<Item = &str> + '_ {
+        self.parts.iter().cloned().map(move |range| &self.id[range])
     }
 
     pub fn hashed_value(&self) -> u64 {
@@ -112,26 +133,21 @@ impl WidgetId {
         self.hash(&mut hasher);
         hasher.finish()
     }
+}
 
-    pub fn common_parts<'a>(a: &'a Self, b: &'a Self) -> impl Iterator<Item = &'a str> {
-        a.parts()
-            .zip(b.parts())
-            .take_while(|(a, b)| a == b)
-            .map(|(a, _)| a)
-    }
-
-    pub fn common_path(a: &Self, b: &Self) -> String {
-        let mut result = String::with_capacity(a.path().len().max(b.path().len()));
-        for (a, b) in a.parts().zip(b.parts()) {
-            if a != b {
-                break;
-            }
-            result.push('/');
-            result.push_str(a);
-        }
-        result
+impl Hash for WidgetId {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
+
+impl PartialEq for WidgetId {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for WidgetId {}
 
 impl Deref for WidgetId {
     type Target = str;
@@ -153,8 +169,8 @@ impl FromStr for WidgetId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some(index) = s.find(':') {
             let type_name = s[..index].to_owned();
-            let rest = &s[(index + 2)..];
-            let path = rest.split('/').map(|p| p.to_owned()).collect::<Vec<_>>();
+            let rest = &s[(index + 1)..];
+            let path = rest.split('/').map(Cow::Borrowed).collect::<Vec<_>>();
             Ok(Self::new(&type_name, &path))
         } else {
             Err(())
@@ -163,6 +179,23 @@ impl FromStr for WidgetId {
 }
 
 impl std::fmt::Debug for WidgetId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WidgetId")
+            .field("id", &self.id)
+            .field("type_name", &&self.id[self.type_name.clone()])
+            .field(
+                "parts",
+                &self
+                    .parts
+                    .iter()
+                    .map(|part| &self.id[part.clone()])
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
+    }
+}
+
+impl std::fmt::Display for WidgetId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_ref())
     }
@@ -176,6 +209,84 @@ impl TryFrom<WidgetIdDef> for WidgetId {
             Ok(id) => Ok(id),
             Err(_) => Err(format!("Could not parse id: `{}`", id.0)),
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WidgetIdCommon {
+    id: Option<WidgetId>,
+    count: usize,
+}
+
+impl Default for WidgetIdCommon {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: usize::MAX,
+        }
+    }
+}
+
+impl WidgetIdCommon {
+    pub fn new<'a>(iter: impl Iterator<Item = &'a WidgetId>) -> Self {
+        let mut result = Self::default();
+        for id in iter {
+            result.include(id);
+        }
+        result
+    }
+
+    pub fn include(&mut self, id: &WidgetId) -> &mut Self {
+        if self.id.is_none() {
+            self.id = Some(id.to_owned());
+            self.count = id.depth();
+            return self;
+        }
+        if let Some(source) = self.id.as_ref() {
+            for index in 0..self.count.min(id.depth()) {
+                if source.part(index) != id.part(index) {
+                    self.count = index;
+                    return self;
+                }
+            }
+        }
+        self
+    }
+
+    pub fn include_other(&mut self, other: &Self) -> &mut Self {
+        if let Some(id) = other.id.as_ref() {
+            if self.id.is_none() {
+                self.id = Some(id.to_owned());
+                self.count = other.count;
+                return self;
+            }
+            if let Some(source) = self.id.as_ref() {
+                for index in 0..self.count.min(other.count) {
+                    if source.part(index) != id.part(index) {
+                        self.count = index;
+                        return self;
+                    }
+                }
+            }
+        }
+        self
+    }
+
+    pub fn is_valid(&self) -> bool {
+        self.id.is_some()
+    }
+
+    pub fn parts(&self) -> Option<impl Iterator<Item = &str>> {
+        self.id
+            .as_ref()
+            .map(|id| (0..self.count).map_while(move |index| id.part(index)))
+    }
+
+    pub fn path(&self) -> Option<&str> {
+        self.id
+            .as_ref()
+            .map(|id| id.range(0, self.count))
+            .filter(|id| !id.is_empty())
     }
 }
 
@@ -282,8 +393,11 @@ pub type FnWidget = fn(WidgetContext) -> WidgetNode;
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
+    #[allow(clippy::type_complexity)]
     mount: Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+    #[allow(clippy::type_complexity)]
     change: Vec<Box<dyn FnMut(WidgetMountOrChangeContext) + Send + Sync>>,
+    #[allow(clippy::type_complexity)]
     unmount: Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>,
 }
 
@@ -736,11 +850,23 @@ mod tests {
 
     #[test]
     fn test_widget_id() {
-        let id = WidgetId::new("type", &["parent".to_owned(), "me".to_owned()]);
-        assert_eq!(id.to_string(), "type:/parent/me".to_owned());
+        let id = WidgetId::new("type", &["parent".into(), "me".into()]);
+        assert_eq!(id.to_string(), "type:parent/me".to_owned());
         assert_eq!(id.type_name(), "type");
         assert_eq!(id.parts().next().unwrap(), "parent");
         assert_eq!(id.key(), "me");
         assert_eq!(id.clone(), id);
+
+        let a = WidgetId::from_str("a:root/a").unwrap();
+        let b = WidgetId::from_str("b:root/b").unwrap();
+        let mut common = WidgetIdCommon::default();
+        assert_eq!(common.path(), None);
+        common.include(&a);
+        assert_eq!(common.path(), Some("root/a"));
+        let mut common = WidgetIdCommon::default();
+        common.include(&b);
+        assert_eq!(common.path(), Some("root/b"));
+        common.include(&a);
+        assert_eq!(common.path(), Some("root"));
     }
 }

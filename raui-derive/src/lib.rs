@@ -34,7 +34,7 @@ fn unpack_context(ty: &Type, pat: &Pat) -> Option<Ident> {
             }
         }
         Type::Reference(TypeReference { elem, .. }) => {
-            return unpack_context(&**elem, pat);
+            return unpack_context(elem, pat);
         }
         _ => {}
     }
@@ -43,7 +43,7 @@ fn unpack_context(ty: &Type, pat: &Pat) -> Option<Ident> {
 
 fn is_arg_context(arg: &FnArg) -> Option<Ident> {
     if let FnArg::Typed(pat) = arg {
-        unpack_context(&*pat.ty, &*pat.pat)
+        unpack_context(&pat.ty, &pat.pat)
     } else {
         None
     }
@@ -107,7 +107,7 @@ pub fn pre_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     let tokens = quote! {
         #(#attrs)*
         #vis #sig {
-            #(#hooks)*
+            #({#hooks})*
             #block
         }
     };
@@ -142,7 +142,7 @@ pub fn post_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
             let result = {
                 #block
             };
-            #(#hooks)*
+            #({#hooks})*
             result
         }
     };

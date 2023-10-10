@@ -4,14 +4,17 @@ use raui_quick_start::{
     RauiQuickStartBuilder,
 };
 
+const DATA: &str = "data";
+
 fn app(ctx: WidgetContext) -> WidgetNode {
-    // we read value from process context which is stored in app data passed to the app builder.
+    // we read value from view model created with app builder.
     let active_index = ctx
-        .process_context
-        .get_mut::<usize>()
-        .copied()
-        .unwrap_or_default()
-        % 3;
+        .view_models
+        .get_mut(DATA)
+        .unwrap()
+        .read::<usize>()
+        .map(|value| *value % 3)
+        .unwrap_or_default();
 
     make_widget!(switch_box)
         .with_props(SwitchBoxProps {
@@ -51,24 +54,28 @@ fn main() {
         .widget_tree(make_widget!(app).into())
         .build()
         .unwrap()
-        .on_event(|_, event, app_data| match event {
-            Event::KeyPressed { key: Key::Num1 } => {
-                // we modify app data with value that represent active switch index.
-                *app_data.downcast_mut::<usize>().unwrap() = 0;
-                // we return `true` which marks RAUI app as dirty (needs to process tree).
-                true
+        .on_event(|_, event, view_models| {
+            let mut data = view_models.get_mut(DATA).unwrap().write::<usize>().unwrap();
+
+            match event {
+                Event::KeyPressed { key: Key::Num1 } => {
+                    // we modify app data with value that represent active switch index.
+                    *data = 0;
+                    // we return `true` which marks RAUI app as dirty (needs to process tree).
+                    true
+                }
+                Event::KeyPressed { key: Key::Num2 } => {
+                    *data = 1;
+                    true
+                }
+                Event::KeyPressed { key: Key::Num3 } => {
+                    *data = 2;
+                    true
+                }
+                _ => false, // we return `false` to tell nothing changed.
             }
-            Event::KeyPressed { key: Key::Num2 } => {
-                *app_data.downcast_mut::<usize>().unwrap() = 1;
-                true
-            }
-            Event::KeyPressed { key: Key::Num3 } => {
-                *app_data.downcast_mut::<usize>().unwrap() = 2;
-                true
-            }
-            _ => false, // we return `false` to tell nothing changed.
         })
-        // run app with app data that is read by RAUI and mutated by app events.
-        .run_with_app_data(0usize)
+        .view_model("data", 0usize)
+        .run()
         .unwrap();
 }

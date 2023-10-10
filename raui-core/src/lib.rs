@@ -14,10 +14,10 @@ pub mod state;
 #[macro_use]
 pub mod widget;
 pub mod animator;
-pub mod data_binding;
 pub mod interactive;
 pub mod layout;
 pub mod signals;
+pub mod view_model;
 
 /// A floating point, scalar value define as a type alias to allow switching between 32 and 64 bit
 /// floats
@@ -116,7 +116,6 @@ pub mod prelude {
     pub use crate::{
         animator::*,
         application::*,
-        data_binding::*,
         implement_message_data, implement_props_data,
         interactive::default_interactions_engine::*,
         interactive::*,
@@ -129,7 +128,9 @@ pub mod prelude {
         renderer::*,
         signals::*,
         state::*,
-        unpack_named_slots, widget,
+        unpack_named_slots,
+        view_model::*,
+        widget,
         widget::*,
         widget::{
             component::*,
