@@ -46,14 +46,25 @@ website-doc-tests:
 
 publish:
     cargo publish --no-verify --manifest-path ./raui-derive/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-core/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-material/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-binary-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-json-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-yaml-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-ron-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-html-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-tesselate-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-tetra-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-ggez-renderer/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-quick-start/Cargo.toml
