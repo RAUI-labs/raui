@@ -42,11 +42,8 @@ RAUI is still in early development phase, so prepare for these changes until v1.
 - [ ] Integrate RAUI into one public open source Rust game.
 - [ ] Write documentation.
 - [ ] Write MD book about how to use RAUI properly and make UI efficient.
-- [ ] Props feature starts to look more like a micro ECS - make use of that and make custom allocator for them that would optimize frequent props creation/cloning (to clarify: it is not about using an actual ECS to store props, it is more about to figure out how ECS principles might help design efficient props allocator to avoid frequent props cloning).
 - [ ] Implement VDOM diffing algorithm for tree rebuilding optimizations.
 - [ ] Find a solution (or make it a feature) for moving from trait objects data into strongly typed data for properties and states.
-- [ ] Make WASM/JS API bindings.
-- [ ] Make C API bindings.
 
 Things that now are done:
 - [x] Add suport for layouting.
@@ -67,3 +64,4 @@ Things that now are done:
 - [x] Move from `widget_component!` and `widget_hook!` macro rules to `pre_hooks` and `post_hooks` function attributes.
 - [x] Add derive `PropsData` and `MessageData` procedural macros to gradually replace the need to call `implement_props_data!` and `implement_message_data!` macros.
 - [x] Add support for portals - an easy way to "teleport" sub-tree into another tree node (useful for modals and drag & drop).
+- [x] Add support for View-Model for sharing data between host app and UI.
