@@ -71,4 +71,6 @@ publish:
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-tetra-renderer/Cargo.toml
     sleep 1
+    cargo publish --no-verify --manifest-path ./raui/Cargo.toml
+    sleep 1
     cargo publish --no-verify --manifest-path ./raui-quick-start/Cargo.toml
