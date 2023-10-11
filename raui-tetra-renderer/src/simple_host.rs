@@ -83,7 +83,7 @@ impl TetraSimpleHost {
                 .insert(texture.id.to_string(), Texture::new(context, texture.path)?);
         }
 
-        let mut application = Application::new();
+        let mut application = Application::default();
         application.setup(setup);
         application.apply(tree);
 

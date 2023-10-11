@@ -1,6 +1,0 @@
-include_guard = "__raui_capi__"
-include_version = true
-braces = "NextLine"
-line_length = 80
-tab_width = 2
-style = "Type"

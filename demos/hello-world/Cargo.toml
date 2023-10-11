@@ -2,10 +2,10 @@
 name = "hello-world"
 version = "0.1.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-raui = { version = "0.40", path = "../../" }
-raui-quick-start = { version = "0.40", path = "../../raui-quick-start" }
+raui = { version = "0.41", path = "../../" }
+raui-quick-start = { version = "0.41", path = "../../raui-quick-start" }

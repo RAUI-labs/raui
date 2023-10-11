@@ -13,9 +13,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
     // we read value from view model created with app builder.
     let data = ctx
         .view_models
-        .get_mut(DATA)
-        .unwrap()
-        .read::<(bool, bool, bool)>()
+        .view_model::<(bool, bool, bool)>(DATA)
         .unwrap();
 
     make_widget!(content_box)

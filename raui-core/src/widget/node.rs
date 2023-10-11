@@ -10,8 +10,9 @@ use serde::{Deserialize, Serialize};
 use std::mem::MaybeUninit;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum WidgetNode {
+    #[default]
     None,
     Component(WidgetComponent),
     Unit(WidgetUnitNode),
@@ -135,12 +136,6 @@ impl WidgetNode {
     }
 }
 
-impl Default for WidgetNode {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
 impl From<()> for WidgetNode {
     fn from(_: ()) -> Self {
         Self::None
@@ -177,18 +172,13 @@ impl<const N: usize> From<[WidgetNode; N]> for WidgetNode {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub(crate) enum WidgetNodePrefab {
+    #[default]
     None,
     Component(WidgetComponentPrefab),
     Unit(WidgetUnitNodePrefab),
     Tuple(Vec<WidgetNodePrefab>),
-}
-
-impl Default for WidgetNodePrefab {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl Prefab for WidgetNodePrefab {}

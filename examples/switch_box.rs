@@ -10,9 +10,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
     // we read value from view model created with app builder.
     let active_index = ctx
         .view_models
-        .get_mut(DATA)
-        .unwrap()
-        .read::<usize>()
+        .view_model::<usize>(DATA)
         .map(|value| *value % 3)
         .unwrap_or_default();
 

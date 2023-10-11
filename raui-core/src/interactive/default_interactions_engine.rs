@@ -21,19 +21,14 @@ pub enum PointerButton {
     Context,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum Interaction {
+    #[default]
     None,
     Navigate(NavSignal),
     PointerDown(PointerButton, Vec2),
     PointerUp(PointerButton, Vec2),
     PointerMove(Vec2),
-}
-
-impl Default for Interaction {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl Interaction {

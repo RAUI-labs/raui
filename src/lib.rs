@@ -34,7 +34,7 @@
 //! });
 //!
 //! // Application is UI host.
-//! let mut application = Application::new();
+//! let mut application = Application::default();
 //! // we use setup functions to register component and props mappings for serialization.
 //! application.setup(setup);
 //! // we can also register them at any time one by one.
@@ -286,7 +286,7 @@
 //! # use raui::prelude::*;
 //! # let tree = widget!(());
 //! # let mapping = CoordsMapping::new(Rect::default());
-//! let mut application = Application::new();
+//! let mut application = Application::default();
 //! let mut layout_engine = DefaultLayoutEngine;
 //! application.apply(tree);
 //! application.forced_process();
@@ -337,7 +337,7 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! let mut application = Application::new();
+//! let mut application = Application::default();
 //! // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
 //! let mut interactions = DefaultInteractionsEngine::new();
 //! // we interact with UI by sending interaction messages to the engine.

@@ -4,7 +4,7 @@ use crate::{
     props::Props,
     signals::SignalSender,
     state::State,
-    view_model::ViewModelCollection,
+    view_model::ViewModelCollectionView,
     widget::{node::WidgetNode, WidgetId, WidgetLifeCycle, WidgetRef},
 };
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ pub struct WidgetContext<'a> {
     pub life_cycle: &'a mut WidgetLifeCycle,
     pub named_slots: HashMap<String, WidgetNode>,
     pub listed_slots: Vec<WidgetNode>,
-    pub view_models: &'a mut ViewModelCollection,
+    pub view_models: ViewModelCollectionView<'a>,
 }
 
 impl<'a> WidgetContext<'a> {
@@ -66,7 +66,7 @@ pub struct WidgetMountOrChangeContext<'a> {
     pub messenger: Messenger<'a>,
     pub signals: SignalSender,
     pub animator: Animator<'a>,
-    pub view_models: &'a mut ViewModelCollection,
+    pub view_models: ViewModelCollectionView<'a>,
 }
 
 pub struct WidgetUnmountContext<'a> {
@@ -74,5 +74,5 @@ pub struct WidgetUnmountContext<'a> {
     pub state: &'a Props,
     pub messenger: &'a MessageSender,
     pub signals: SignalSender,
-    pub view_models: &'a mut ViewModelCollection,
+    pub view_models: ViewModelCollectionView<'a>,
 }

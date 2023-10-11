@@ -5,20 +5,15 @@ use crate::{
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(PropsData, Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[props_data(raui_core::props::PropsData)]
 #[prefab(raui_core::Prefab)]
 pub enum ButtonPaperOverrideStyle {
+    #[default]
     None,
     Default,
     Selected,
     Triggered,
-}
-
-impl Default for ButtonPaperOverrideStyle {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 fn button_paper_content(context: WidgetContext) -> WidgetNode {

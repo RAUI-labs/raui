@@ -288,7 +288,7 @@ fn test_hello_world() {
     });
 
     // Application is UI host.
-    let mut application = Application::new();
+    let mut application = Application::default();
     // we use setup functions to register component and props mappings for serialization.
     application.setup(setup);
     // we can also register them at any time one by one.
@@ -465,7 +465,7 @@ fn test_layout_no_wrap() {
     }}};
 
     // [md-bakery: begin @ layouting]
-    let mut application = Application::new();
+    let mut application = Application::default();
     application.apply(tree);
     application.forced_process();
     println!(
@@ -542,7 +542,7 @@ fn test_layout_wrapping() {
         }
     }}};
 
-    let mut application = Application::new();
+    let mut application = Application::default();
     application.apply(tree);
     application.forced_process();
     println!(
@@ -607,7 +607,7 @@ fn test_components() {
         ])
     };
 
-    let mut application = Application::new();
+    let mut application = Application::default();
     application.apply(tree);
     application.forced_process();
     println!(
@@ -678,7 +678,7 @@ fn test_refs() {
     }
 
     let mut appid = WidgetId::default();
-    let mut application = Application::new();
+    let mut application = Application::default();
     application.apply(widget! { (#{"app"} app) });
     println!("* Process");
     application.forced_process();
@@ -707,7 +707,7 @@ fn test_refs() {
 #[test]
 fn test_interactivity() {
     // [md-bakery: begin @ interactivity]
-    let mut application = Application::new();
+    let mut application = Application::default();
     // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
     let mut interactions = DefaultInteractionsEngine::new();
     // we interact with UI by sending interaction messages to the engine.
@@ -818,7 +818,7 @@ fn test_scroll_box() {
     }
 
     let mut button = WidgetId::default();
-    let mut application = Application::new();
+    let mut application = Application::default();
     let mut interactions = DefaultInteractionsEngine::default();
     interactions.deselect_when_no_button_found = true;
     application.apply(widget! { (#{"app"} app: {NavContainerActive}) });
@@ -913,7 +913,7 @@ fn test_immediate_mode() {
             .named_slot("content", make_text_box("text", text))
     }
 
-    let mut application = Application::new();
+    let mut application = Application::default();
     application.apply(
         make_app("app")
             .with_props(NavContainerActive)
@@ -926,7 +926,7 @@ fn test_immediate_mode() {
 #[test]
 #[cfg(feature = "tesselate")]
 fn test_tesselation() {
-    let mut application = Application::new();
+    let mut application = Application::default();
     let mut layout_engine = DefaultLayoutEngine::default();
     let atlas_mapping = Default::default();
     let image_sizes = Default::default();

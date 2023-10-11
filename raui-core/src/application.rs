@@ -16,7 +16,7 @@
 //! ```rust
 //! # use raui_core::prelude::*;
 //! // Create the application
-//! let mut application = Application::new();
+//! let mut application = Application::default();
 //!
 //! // We need to run the "setup" functions for the application to register components and
 //! // properties if we want to support serialization of the UI. We pass it a function that
@@ -93,6 +93,7 @@ use crate::{
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{Message, MessageData, MessageSender, Messages, Messenger},
+    prelude::ViewModelCollectionView,
     props::{Props, PropsData, PropsRegistry},
     renderer::Renderer,
     signals::{Signal, SignalSender},
@@ -123,10 +124,11 @@ use crate::{
             text::{TextBoxNode, TextBoxNodePrefab},
             WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
         },
-        FnWidget, WidgetId, WidgetLifeCycle,
+        FnWidget, WidgetId, WidgetIdCommon, WidgetLifeCycle,
     },
     Prefab, PrefabError, PrefabValue, Scalar,
 };
+use intuicio_data::type_hash::TypeHash;
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
@@ -157,16 +159,8 @@ pub enum InvalidationCause {
     /// Application not invalidated
     #[default]
     None,
-    /// Application update was forced by calling [`mark_dirty`]
-    ///
-    /// [`mark_dirty`]: Application::mark_dirty
-    Forced,
-    /// A widget's state changed
-    StateChange(WidgetId),
-    /// A message was sent to a widget
-    MessageReceived(WidgetId),
-    /// An animation is in progress for a widget
-    AnimationInProgress(WidgetId),
+    /// Application update caused by change in widgets common root.
+    CommonRootUpdate(WidgetIdCommon),
 }
 
 /// Contains and orchestrates application layout, animations, interactions, etc.
@@ -186,7 +180,7 @@ pub struct Application {
     pub view_models: ViewModelCollection,
     #[allow(clippy::type_complexity)]
     unmount_closures: HashMap<WidgetId, Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>>,
-    dirty: bool,
+    dirty: WidgetIdCommon,
     render_changed: bool,
     last_invalidation_cause: InvalidationCause,
     /// The amount of time between the last update, used when calculating animation progress
@@ -195,13 +189,6 @@ pub struct Application {
 
 impl Default for Application {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Application {
-    #[inline]
-    pub fn new() -> Self {
         Self {
             component_mappings: Default::default(),
             props_registry: Default::default(),
@@ -215,13 +202,15 @@ impl Application {
             signals: Default::default(),
             view_models: Default::default(),
             unmount_closures: Default::default(),
-            dirty: true,
+            dirty: Default::default(),
             render_changed: false,
             last_invalidation_cause: Default::default(),
             animations_delta_time: 0.0,
         }
     }
+}
 
+impl Application {
     /// Setup the application with a given a setup function
     ///
     /// We need to run the `setup` function for the application to register components and
@@ -235,7 +224,7 @@ impl Application {
     ///
     /// ```
     /// # use raui_core::prelude::*;
-    /// # let mut application = Application::new();
+    /// # let mut application = Application::default();
     /// application.setup(setup /* the core setup function from the RAUI prelude */);
     /// ```
     ///
@@ -270,7 +259,7 @@ impl Application {
     ///     app.register_component("my_widget", my_widget);
     /// }
     ///
-    /// let mut application = Application::new();
+    /// let mut application = Application::default();
     ///
     /// application.setup(setup_widgets);
     /// ```
@@ -307,7 +296,7 @@ impl Application {
     ///     app.register_props::<MyProp>("MyProp");
     /// }
     ///
-    /// let mut application = Application::new();
+    /// let mut application = Application::default();
     ///
     /// application.setup(setup_properties);
     /// ```
@@ -357,16 +346,16 @@ impl Application {
         &self.last_invalidation_cause
     }
 
-    /// Return's `true` if the application needs to be re-processed
+    /// Return's common root widget ID of widgets that has to be to be re-processed
     #[inline]
-    pub fn is_dirty(&self) -> bool {
-        self.dirty
+    pub fn dirty(&self) -> &WidgetIdCommon {
+        &self.dirty
     }
 
-    /// Force mark the application as needing to re-process
+    /// Force mark the application as needing to re-process its root
     #[inline]
     pub fn mark_dirty(&mut self) {
-        self.dirty = true;
+        self.dirty = WidgetIdCommon::new(WidgetId::empty());
     }
 
     #[inline]
@@ -400,8 +389,8 @@ impl Application {
     /// Update the application widget tree
     #[inline]
     pub fn apply(&mut self, tree: WidgetNode) {
+        self.mark_dirty();
         self.tree = tree;
-        self.dirty = true;
     }
 
     /// Render the application
@@ -541,7 +530,7 @@ impl Application {
     /// [`process()`][Self::process] application, even if no changes have been detected
     #[inline]
     pub fn forced_process(&mut self) -> bool {
-        self.dirty = true;
+        self.mark_dirty();
         self.process()
     }
 
@@ -570,7 +559,7 @@ impl Application {
     /// // This handle is valid as long as it's view-model is alive.
     /// let mut app_data = view_model.lazy::<AppData>().unwrap();
     ///
-    /// let mut app = Application::new();
+    /// let mut app = Application::default();
     /// app.view_models.insert(APP_DATA.to_owned(), view_model);
     /// // Do application stuff like interactions, layout, etc...
     ///
@@ -588,12 +577,10 @@ impl Application {
     /// # }
     /// # const APP_DATA: &str = "app-data";
     /// # const COUNTER: &str = "counter";
-    /// fn my_component(ctx: WidgetContext) -> WidgetNode {
+    /// fn my_component(mut ctx: WidgetContext) -> WidgetNode {
     ///     let mut data = ctx
     ///         .view_models
-    ///         .get_mut(APP_DATA)
-    ///         .unwrap()
-    ///         .write::<AppData>()
+    ///         .view_model_mut::<AppData>(APP_DATA)
     ///         .unwrap();
     ///     *data.counter += 1;
     ///
@@ -602,41 +589,35 @@ impl Application {
     /// }
     /// ```
     pub fn process(&mut self) -> bool {
-        if self.view_models.consume_notification() {
-            self.dirty = true;
-        }
+        self.dirty
+            .include_other(&self.view_models.consume_notified_common_root());
         self.animations_delta_time = self.animations_delta_time.max(0.0);
         self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
         let changed_states = std::mem::take(&mut self.state_changes);
+        for id in changed_states.keys() {
+            self.dirty.include(id);
+        }
         let mut messages = std::mem::take(&mut self.messages);
-        let changed_animators = self.animators.values().any(|a| a.in_progress());
-        if !self.dirty && changed_states.is_empty() && messages.is_empty() && !changed_animators {
+        for id in messages.keys() {
+            self.dirty.include(id);
+        }
+        for (id, animator) in &self.animators {
+            if animator.in_progress() {
+                self.dirty.include(id);
+            }
+        }
+        if !self.dirty.is_valid() {
             return false;
         }
-        if self.dirty {
-            self.last_invalidation_cause = InvalidationCause::Forced;
-        }
-        if let Some((id, _)) = self.animators.iter().find(|(_, a)| a.in_progress()) {
-            self.last_invalidation_cause = InvalidationCause::AnimationInProgress(id.to_owned());
-        }
-        if let Some((id, _)) = messages.iter().next() {
-            self.last_invalidation_cause = InvalidationCause::MessageReceived(id.to_owned());
-        }
-        if let Some((id, _)) = changed_states.iter().next() {
-            self.last_invalidation_cause = InvalidationCause::StateChange(id.to_owned());
-        }
+        self.last_invalidation_cause = InvalidationCause::CommonRootUpdate(self.dirty.to_owned());
         let (message_sender, message_receiver) = channel();
         let message_sender = MessageSender::new(message_sender);
         for (k, a) in &mut self.animators {
             a.process(self.animations_delta_time, k, &message_sender);
         }
-        self.dirty = false;
-        let old_states = std::mem::take(&mut self.states);
-        let states = old_states
-            .into_iter()
-            .chain(changed_states.into_iter())
-            .collect::<HashMap<_, _>>();
+        let mut states = std::mem::take(&mut self.states);
+        states.extend(changed_states);
         let (signal_sender, signal_receiver) = channel();
         let tree = self.tree.clone();
         let mut used_ids = HashSet::new();
@@ -652,6 +633,7 @@ impl Application {
             None,
             &message_sender,
             &signal_sender,
+            &Default::default(),
         );
         self.states = states
             .into_iter()
@@ -664,12 +646,16 @@ impl Application {
                         for mut closure in closures {
                             let messenger = &message_sender;
                             let signals = SignalSender::new(id.clone(), signal_sender.clone());
+                            let view_models = ViewModelCollectionView::new(
+                                &mut self.view_models,
+                                Default::default(),
+                            );
                             let context = WidgetUnmountContext {
                                 id,
                                 state,
                                 messenger,
                                 signals,
-                                view_models: &mut self.view_models,
+                                view_models,
                             };
                             (closure)(context);
                         }
@@ -694,7 +680,8 @@ impl Application {
         self.animators = std::mem::take(&mut self.animators)
             .into_iter()
             .filter_map(|(k, a)| if a.in_progress() { Some((k, a)) } else { None })
-            .collect::<HashMap<_, _>>();
+            .collect();
+        self.dirty = Default::default();
         if let Ok(tree) = rendered_tree.try_into() {
             self.rendered_tree = Self::teleport_portals(tree);
             true
@@ -716,6 +703,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         match node {
             WidgetNode::None | WidgetNode::Tuple(_) => node,
@@ -730,6 +718,7 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
+                master_view_model_defaults,
             ),
             WidgetNode::Unit(unit) => self.process_node_unit(
                 unit,
@@ -741,6 +730,7 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
+                master_view_model_defaults,
             ),
         }
     }
@@ -758,6 +748,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         let WidgetComponent {
             processor,
@@ -799,6 +790,10 @@ impl Application {
             Some(state) => {
                 let state = State::new(state, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
+                let view_models = ViewModelCollectionView::new(
+                    &mut self.view_models,
+                    master_view_model_defaults.to_owned(),
+                );
                 let context = WidgetContext {
                     id: &id,
                     idref: idref.as_ref(),
@@ -810,7 +805,7 @@ impl Application {
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
-                    view_models: &mut self.view_models,
+                    view_models,
                 };
                 ((processor)(context), false)
             }
@@ -818,6 +813,10 @@ impl Application {
                 let state_data = Props::default();
                 let state = State::new(&state_data, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
+                let view_models = ViewModelCollectionView::new(
+                    &mut self.view_models,
+                    master_view_model_defaults.to_owned(),
+                );
                 let context = WidgetContext {
                     id: &id,
                     idref: idref.as_ref(),
@@ -829,7 +828,7 @@ impl Application {
                     life_cycle: &mut life_cycle,
                     named_slots,
                     listed_slots,
-                    view_models: &mut self.view_models,
+                    view_models,
                 };
                 let node = (processor)(context);
                 new_states.insert(id.clone(), state_data);
@@ -848,6 +847,10 @@ impl Application {
                             self.animators.get(&id).unwrap_or(&default_animator_state),
                             AnimationUpdate::new(animation_sender.clone()),
                         );
+                        let view_models = ViewModelCollectionView::new(
+                            &mut self.view_models,
+                            master_view_model_defaults.to_owned(),
+                        );
                         let context = WidgetMountOrChangeContext {
                             id: &id,
                             props: &props,
@@ -856,7 +859,7 @@ impl Application {
                             messenger,
                             signals,
                             animator,
-                            view_models: &mut self.view_models,
+                            view_models,
                         };
                         (closure)(context);
                     }
@@ -872,6 +875,10 @@ impl Application {
                         self.animators.get(&id).unwrap_or(&default_animator_state),
                         AnimationUpdate::new(animation_sender.clone()),
                     );
+                    let view_models = ViewModelCollectionView::new(
+                        &mut self.view_models,
+                        master_view_model_defaults.to_owned(),
+                    );
                     let context = WidgetMountOrChangeContext {
                         id: &id,
                         props: &props,
@@ -880,7 +887,7 @@ impl Application {
                         messenger,
                         signals,
                         animator,
-                        view_models: &mut self.view_models,
+                        view_models,
                     };
                     (closure)(context);
                 }
@@ -908,6 +915,7 @@ impl Application {
             Some(shared_props),
             message_sender,
             signal_sender,
+            master_view_model_defaults,
         );
         while let Ok(data) = state_receiver.try_recv() {
             self.state_changes.insert(id.to_owned(), data);
@@ -927,6 +935,7 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
+        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         match &mut unit {
             WidgetUnitNode::None | WidgetUnitNode::ImageBox(_) | WidgetUnitNode::TextBox(_) => {}
@@ -943,6 +952,7 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
+                    master_view_model_defaults,
                 ));
             }
             WidgetUnitNode::PortalBox(unit) => match &mut *unit.slot {
@@ -959,6 +969,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::ContentItem(item) => {
@@ -974,6 +985,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::FlexItem(item) => {
@@ -989,6 +1001,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::GridItem(item) => {
@@ -1004,6 +1017,7 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
+                        master_view_model_defaults,
                     )
                 }
             },
@@ -1025,6 +1039,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1048,6 +1063,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1071,6 +1087,7 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
+                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1089,6 +1106,7 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
+                    master_view_model_defaults,
                 ));
             }
         }

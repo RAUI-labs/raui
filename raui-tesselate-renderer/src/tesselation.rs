@@ -29,8 +29,9 @@ pub struct BatchClipRect {
     pub matrix: [Scalar; 16],
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub enum Batch {
+    #[default]
     None,
     ColoredTriangles(Range<usize>),
     ImageTriangles(String, Range<usize>),
@@ -38,12 +39,6 @@ pub enum Batch {
     ExternalText(WidgetId, BatchExternalText),
     ClipPush(BatchClipRect),
     ClipPop,
-}
-
-impl Default for Batch {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl Batch {
@@ -138,16 +133,11 @@ pub enum TesselationVerticesSliceMut<'a> {
     Interleaved(&'a mut [TesselationVerticeInterleaved]),
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum TesselationVerticesFormat {
     Separated,
+    #[default]
     Interleaved,
-}
-
-impl Default for TesselationVerticesFormat {
-    fn default() -> Self {
-        Self::Interleaved
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

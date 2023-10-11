@@ -3,7 +3,7 @@ use raui::renderer::yaml::YamlRenderer;
 
 fn main() {
     // Create the application
-    let mut application = Application::new();
+    let mut application = Application::default();
 
     // We need to run the "setup" functions for the application to register components and
     // properties if we want to support serialization of the UI. We pass it a function that

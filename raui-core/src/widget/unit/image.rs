@@ -45,16 +45,11 @@ impl From<(Scalar, bool)> for ImageBoxFrame {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub enum ImageBoxImageScaling {
+    #[default]
     Stretch,
     Frame(ImageBoxFrame),
-}
-
-impl Default for ImageBoxImageScaling {
-    fn default() -> Self {
-        Self::Stretch
-    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -122,16 +117,11 @@ impl Default for ImageBoxMaterial {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum ImageBoxSizeValue {
+    #[default]
     Fill,
     Exact(Scalar),
-}
-
-impl Default for ImageBoxSizeValue {
-    fn default() -> Self {
-        Self::Fill
-    }
 }
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]

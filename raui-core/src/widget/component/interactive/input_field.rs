@@ -23,20 +23,15 @@ fn is_zero(v: &usize) -> bool {
     *v == 0
 }
 
-#[derive(PropsData, Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Copy, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
 pub enum TextInputMode {
+    #[default]
     Text,
     Number,
     Integer,
     UnsignedInteger,
-}
-
-impl Default for TextInputMode {
-    fn default() -> Self {
-        Self::Text
-    }
 }
 
 impl TextInputMode {

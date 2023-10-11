@@ -24,13 +24,13 @@ struct AppData {
 // BTW. We could omit unbinding, since widgets unbind automatically
 // on unmount, but this is here to showcase how to do it manually.
 fn use_app(ctx: &mut WidgetContext) {
-    ctx.life_cycle.mount(|ctx| {
+    ctx.life_cycle.mount(|mut ctx| {
         ctx.view_models
             .bindings(DATA, COUNTER)
             .unwrap()
             .bind(ctx.id.to_owned());
     });
-    ctx.life_cycle.unmount(|ctx| {
+    ctx.life_cycle.unmount(|mut ctx| {
         ctx.view_models
             .bindings(DATA, COUNTER)
             .unwrap()

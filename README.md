@@ -34,7 +34,7 @@ let mapping = CoordsMapping::new(Rect {
 });
 
 // Application is UI host.
-let mut application = Application::new();
+let mut application = Application::default();
 // we use setup functions to register component and props mappings for serialization.
 application.setup(setup);
 // we can also register them at any time one by one.
@@ -269,7 +269,7 @@ that does this in a generic way. If you find some part of its pipeline working d
 what you've expected, feel free to create your custom layout engine!
 
 ```rust
-let mut application = Application::new();
+let mut application = Application::default();
 let mut layout_engine = DefaultLayoutEngine;
 application.apply(tree);
 application.forced_process();
@@ -319,7 +319,7 @@ core::interactive::default_interactions_engine::DefaultInteractionsEngine
 layout before you perform interactions!**
 
 ```rust
-let mut application = Application::new();
+let mut application = Application::default();
 // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
 let mut interactions = DefaultInteractionsEngine::new();
 // we interact with UI by sending interaction messages to the engine.

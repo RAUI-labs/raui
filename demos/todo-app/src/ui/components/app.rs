@@ -9,16 +9,11 @@ use raui_core::prelude::*;
 use raui_material::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(PropsData, Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeMode {
     Light,
+    #[default]
     Dark,
-}
-
-impl Default for ThemeMode {
-    fn default() -> Self {
-        Self::Dark
-    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]

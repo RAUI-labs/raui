@@ -162,8 +162,9 @@ impl LayoutEngine<()> for () {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum CoordsMappingScaling {
+    #[default]
     None,
     Stretch(Vec2),
     FitHorizontal(Scalar),
@@ -171,12 +172,6 @@ pub enum CoordsMappingScaling {
     FitMinimum(Vec2),
     FitMaximum(Vec2),
     FitToView(Vec2, bool),
-}
-
-impl Default for CoordsMappingScaling {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

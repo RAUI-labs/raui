@@ -11,17 +11,12 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum SizeBoxSizeValue {
+    #[default]
     Content,
     Fill,
     Exact(Scalar),
-}
-
-impl Default for SizeBoxSizeValue {
-    fn default() -> Self {
-        Self::Content
-    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

@@ -6,30 +6,20 @@ use std::f32::consts::PI;
 #[cfg(feature = "scalar64")]
 use std::f64::consts::PI;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeColor {
+    #[default]
     Default,
     Primary,
     Secondary,
 }
 
-impl Default for ThemeColor {
-    fn default() -> Self {
-        Self::Default
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeVariant {
     ContentOnly,
+    #[default]
     Filled,
     Outline,
-}
-
-impl Default for ThemeVariant {
-    fn default() -> Self {
-        Self::Filled
-    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -70,17 +60,12 @@ pub struct ThemeColorsBundle {
     pub contrast: ThemeColors,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub enum ThemedImageMaterial {
+    #[default]
     Color,
     Image(ImageBoxImage),
     Procedural(ImageBoxProcedural),
-}
-
-impl Default for ThemedImageMaterial {
-    fn default() -> Self {
-        Self::Color
-    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

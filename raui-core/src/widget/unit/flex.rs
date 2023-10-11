@@ -92,18 +92,13 @@ pub struct FlexBoxItemNode {
     pub layout: FlexBoxItemLayout,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FlexBoxDirection {
+    #[default]
     HorizontalLeftToRight,
     HorizontalRightToLeft,
     VerticalTopToBottom,
     VerticalBottomToTop,
-}
-
-impl Default for FlexBoxDirection {
-    fn default() -> Self {
-        Self::HorizontalLeftToRight
-    }
 }
 
 impl FlexBoxDirection {

@@ -6,6 +6,7 @@ use intuicio_data::{
     type_hash::TypeHash,
 };
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet},
     ops::{Deref, DerefMut},
 };
@@ -71,7 +72,7 @@ impl ViewModelBindings {
     }
 
     fn rebuild_common_root(&mut self) {
-        self.common_root = WidgetIdCommon::new(self.widgets.iter());
+        self.common_root = WidgetIdCommon::from_iter(self.widgets.iter());
     }
 }
 
@@ -221,43 +222,10 @@ pub struct ViewModelCollection {
 }
 
 impl ViewModelCollection {
-    pub fn first_of_type<T: 'static>(&self) -> Option<&ViewModel> {
-        let type_hash = TypeHash::of::<T>();
-        self.inner
-            .values()
-            .find(|view_model| view_model.object.type_hash() == &type_hash)
-    }
-
-    pub fn first_of_type_mut<T: 'static>(&mut self) -> Option<&mut ViewModel> {
-        let type_hash = TypeHash::of::<T>();
-        self.inner
-            .values_mut()
-            .find(|view_model| view_model.object.type_hash() == &type_hash)
-    }
-
     pub fn unbind_all(&mut self, id: &WidgetId) {
         for view_model in self.inner.values_mut() {
             view_model.properties.unbind_all(id);
         }
-    }
-
-    pub fn bindings(
-        &mut self,
-        view_model: &str,
-        property: impl ToString,
-    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
-        self.inner
-            .get_mut(view_model)?
-            .properties
-            .bindings(property)
-    }
-
-    pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
-        self.inner.get(name)?.read::<T>()
-    }
-
-    pub fn view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
-        self.inner.get_mut(name)?.write::<T>()
     }
 
     pub fn remove_empty_bindings(&mut self) {
@@ -292,6 +260,82 @@ impl Deref for ViewModelCollection {
 impl DerefMut for ViewModelCollection {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
+    }
+}
+
+pub struct ViewModelCollectionView<'a> {
+    inner: &'a mut ViewModelCollection,
+    defaults: HashMap<TypeHash, Cow<'static, str>>,
+}
+
+impl<'a> ViewModelCollectionView<'a> {
+    pub fn new(
+        inner: &'a mut ViewModelCollection,
+        defaults: HashMap<TypeHash, Cow<'static, str>>,
+    ) -> Self {
+        Self { inner, defaults }
+    }
+
+    pub fn into_defaults(self) -> HashMap<TypeHash, Cow<'static, str>> {
+        self.defaults
+    }
+
+    pub fn collection(&'a mut self) -> &'a mut ViewModelCollection {
+        self.inner
+    }
+
+    pub fn bindings(
+        &mut self,
+        view_model: &str,
+        property: impl ToString,
+    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
+        self.inner
+            .get_mut(view_model)?
+            .properties
+            .bindings(property)
+    }
+
+    pub fn default_bindings<T: 'static>(
+        &mut self,
+        property: impl ToString,
+    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
+        let view_model = self.defaults.get(&TypeHash::of::<T>())?;
+        self.inner
+            .get_mut(view_model.as_ref())?
+            .properties
+            .bindings(property)
+    }
+
+    pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
+        self.inner.get(name)?.read::<T>()
+    }
+
+    pub fn default_view_model<T: 'static>(&self) -> Option<ValueReadAccess<T>> {
+        let name = self.defaults.get(&TypeHash::of::<T>())?;
+        self.inner.get(name.as_ref())?.read::<T>()
+    }
+
+    pub fn view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
+        self.inner.get_mut(name)?.write::<T>()
+    }
+
+    pub fn default_view_model_mut<T: 'static>(&mut self) -> Option<ValueWriteAccess<T>> {
+        let name = self.defaults.get(&TypeHash::of::<T>())?;
+        self.inner.get_mut(name.as_ref())?.write::<T>()
+    }
+
+    pub fn set_default<T: 'static>(&mut self, name: impl Into<Cow<'static, str>>) {
+        let name = name.into();
+        if let Some(view_model) = self.inner.get(name.as_ref()) {
+            let type_hash = TypeHash::of::<T>();
+            if view_model.object.type_hash() == &type_hash {
+                self.defaults.insert(type_hash, name);
+            }
+        }
+    }
+
+    pub fn unset_default<T: 'static>(&mut self) {
+        self.defaults.remove(&TypeHash::of::<T>());
     }
 }
 

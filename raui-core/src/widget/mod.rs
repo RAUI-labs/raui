@@ -45,6 +45,14 @@ pub struct WidgetId {
 }
 
 impl WidgetId {
+    pub fn empty() -> Self {
+        Self {
+            id: ":".to_owned(),
+            type_name: 0..0,
+            parts: Default::default(),
+        }
+    }
+
     pub fn new(type_name: &str, path: &[Cow<'_, str>]) -> Self {
         if path.is_empty() {
             return Self {
@@ -60,7 +68,7 @@ impl WidgetId {
         let mut result = String::with_capacity(count);
         let mut position = result.as_bytes().len();
         result.push_str(type_name);
-        let type_name = position..result.as_bytes().len();
+        let type_name = 0..result.as_bytes().len();
         result.push(':');
         let parts = path
             .iter()
@@ -77,6 +85,42 @@ impl WidgetId {
         Self {
             id: result,
             type_name,
+            parts,
+        }
+    }
+
+    pub fn push(&self, part: &str) -> Self {
+        let count = self.id.as_bytes().len() + b"/".len();
+        let mut result = String::with_capacity(count);
+        result.push_str(&self.id);
+        if self.depth() > 0 {
+            result.push('/');
+        }
+        let position = result.as_bytes().len();
+        result.push_str(part);
+        let parts = self
+            .parts
+            .iter()
+            .cloned()
+            .chain(std::iter::once(position..result.as_bytes().len()))
+            .collect();
+        Self {
+            id: result,
+            type_name: self.type_name.to_owned(),
+            parts,
+        }
+    }
+
+    pub fn pop(&self) -> Self {
+        let parts = self.parts[0..(self.parts.len().saturating_sub(1))].to_owned();
+        let result = if let Some(range) = parts.last() {
+            self.id[0..range.end].to_owned()
+        } else {
+            format!("{}:", self.type_name())
+        };
+        Self {
+            id: result,
+            type_name: self.type_name.to_owned(),
             parts,
         }
     }
@@ -98,12 +142,20 @@ impl WidgetId {
 
     #[inline]
     pub fn path(&self) -> &str {
-        &self.id.as_str()[self.parts.first().unwrap().start..self.parts.last().unwrap().end]
+        if self.parts.is_empty() {
+            &self.id.as_str()[0..0]
+        } else {
+            &self.id.as_str()[self.parts.first().unwrap().start..self.parts.last().unwrap().end]
+        }
     }
 
     #[inline]
     pub fn key(&self) -> &str {
-        &self.id[self.parts.last().cloned().unwrap()]
+        if self.parts.is_empty() {
+            &self.id.as_str()[0..0]
+        } else {
+            &self.id[self.parts.last().cloned().unwrap()]
+        }
     }
 
     #[inline]
@@ -111,8 +163,10 @@ impl WidgetId {
         self.parts.get(index).cloned().map(|range| &self.id[range])
     }
 
-    #[inline]
     pub fn range(&self, from_inclusive: usize, to_exclusive: usize) -> &str {
+        if self.parts.is_empty() {
+            return &self.id[0..0];
+        }
         let start = from_inclusive.min(self.parts.len().saturating_sub(1));
         let end = to_exclusive
             .saturating_sub(1)
@@ -121,6 +175,24 @@ impl WidgetId {
         let start = self.parts[start].start;
         let end = self.parts[end].end;
         &self.id[start..end]
+    }
+
+    pub fn is_subset_of(&self, other: &Self) -> bool {
+        for index in 0..self.depth() {
+            let a = self.part(index).unwrap();
+            let b = match other.part(index) {
+                Some(b) => b,
+                None => return false,
+            };
+            if a != b {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn is_superset_of(&self, other: &Self) -> bool {
+        other.is_subset_of(self)
     }
 
     #[inline]
@@ -228,12 +300,11 @@ impl Default for WidgetIdCommon {
 }
 
 impl WidgetIdCommon {
-    pub fn new<'a>(iter: impl Iterator<Item = &'a WidgetId>) -> Self {
-        let mut result = Self::default();
-        for id in iter {
-            result.include(id);
+    pub fn new(id: WidgetId) -> Self {
+        Self {
+            count: id.depth(),
+            id: Some(id),
         }
-        result
     }
 
     pub fn include(&mut self, id: &WidgetId) -> &mut Self {
@@ -290,6 +361,16 @@ impl WidgetIdCommon {
     }
 }
 
+impl<'a> FromIterator<&'a WidgetId> for WidgetIdCommon {
+    fn from_iter<T: IntoIterator<Item = &'a WidgetId>>(iter: T) -> Self {
+        let mut result = Self::default();
+        for id in iter {
+            result.include(id);
+        }
+        result
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct WidgetRefDef(pub Option<WidgetId>);
 
@@ -333,8 +414,9 @@ impl From<WidgetRefDef> for WidgetRef {
     }
 }
 
-#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 pub enum WidgetIdOrRef {
+    #[default]
     None,
     Id(WidgetId),
     Ref(WidgetRef),
@@ -362,12 +444,6 @@ impl WidgetIdOrRef {
             Self::Id(id) => Some(id.to_owned()),
             Self::Ref(idref) => idref.read(),
         }
-    }
-}
-
-impl Default for WidgetIdOrRef {
-    fn default() -> Self {
-        Self::None
     }
 }
 
@@ -850,6 +926,11 @@ mod tests {
 
     #[test]
     fn test_widget_id() {
+        let id = WidgetId::empty();
+        assert_eq!(id.type_name(), "");
+        assert_eq!(id.path(), "");
+        assert_eq!(id.depth(), 0);
+
         let id = WidgetId::new("type", &["parent".into(), "me".into()]);
         assert_eq!(id.to_string(), "type:parent/me".to_owned());
         assert_eq!(id.type_name(), "type");
@@ -868,5 +949,21 @@ mod tests {
         assert_eq!(common.path(), Some("root/b"));
         common.include(&a);
         assert_eq!(common.path(), Some("root"));
+
+        let id = WidgetId::from_str("type:parent/me").unwrap();
+        assert_eq!(&*id, "type:parent/me");
+        assert_eq!(id.path(), "parent/me");
+        let id = id.pop();
+        assert_eq!(&*id, "type:parent");
+        assert_eq!(id.path(), "parent");
+        let id = id.pop();
+        assert_eq!(&*id, "type:");
+        assert_eq!(id.path(), "");
+        let id = id.push("parent");
+        assert_eq!(&*id, "type:parent");
+        assert_eq!(id.path(), "parent");
+        let id = id.push("me");
+        assert_eq!(&*id, "type:parent/me");
+        assert_eq!(id.path(), "parent/me");
     }
 }

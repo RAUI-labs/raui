@@ -22,18 +22,13 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TabsBoxTabsLocation {
+    #[default]
     Top,
     Bottom,
     Left,
     Right,
-}
-
-impl Default for TabsBoxTabsLocation {
-    fn default() -> Self {
-        Self::Top
-    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]

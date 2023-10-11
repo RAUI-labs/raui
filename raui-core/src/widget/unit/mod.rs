@@ -44,8 +44,9 @@ pub trait WidgetUnitData {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub enum WidgetUnit {
+    #[default]
     None,
     AreaBox(AreaBox),
     PortalBox(PortalBox),
@@ -55,12 +56,6 @@ pub enum WidgetUnit {
     SizeBox(SizeBox),
     ImageBox(ImageBox),
     TextBox(TextBox),
-}
-
-impl Default for WidgetUnit {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl WidgetUnit {
@@ -128,8 +123,9 @@ impl TryFrom<WidgetNode> for WidgetUnit {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum WidgetUnitNode {
+    #[default]
     None,
     AreaBox(AreaBoxNode),
     PortalBox(PortalBoxNode),
@@ -139,12 +135,6 @@ pub enum WidgetUnitNode {
     SizeBox(SizeBoxNode),
     ImageBox(ImageBoxNode),
     TextBox(TextBoxNode),
-}
-
-impl Default for WidgetUnitNode {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl WidgetUnitNode {
@@ -237,8 +227,9 @@ implement_from_unit! {
     TextBoxNode => TextBox,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub(crate) enum WidgetUnitNodePrefab {
+    #[default]
     None,
     AreaBox(AreaBoxNodePrefab),
     PortalBox(PortalBoxNodePrefab),
@@ -248,10 +239,4 @@ pub(crate) enum WidgetUnitNodePrefab {
     SizeBox(SizeBoxNodePrefab),
     ImageBox(ImageBoxNodePrefab),
     TextBox(TextBoxNodePrefab),
-}
-
-impl Default for WidgetUnitNodePrefab {
-    fn default() -> Self {
-        Self::None
-    }
 }

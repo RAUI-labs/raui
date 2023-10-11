@@ -18,6 +18,12 @@ clippy:
 test:
     cargo test --all --features all
 
+example NAME:
+    cargo run --example {{NAME}}
+
+demo NAME="todo-app":
+    cd ./demos/{{NAME}} && cargo run
+
 # Mandatory checks to run before pushing changes to repository
 checks:
     just format
@@ -64,7 +70,5 @@ publish:
     cargo publish --no-verify --manifest-path ./raui-tesselate-renderer/Cargo.toml
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-tetra-renderer/Cargo.toml
-    sleep 1
-    cargo publish --no-verify --manifest-path ./raui-ggez-renderer/Cargo.toml
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-quick-start/Cargo.toml

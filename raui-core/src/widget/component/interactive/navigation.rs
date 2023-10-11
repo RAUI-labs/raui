@@ -44,9 +44,10 @@ pub enum NavType {
     ScrollViewContent,
 }
 
-#[derive(MessageData, Debug, Clone)]
+#[derive(MessageData, Debug, Default, Clone)]
 #[message_data(crate::messenger::MessageData)]
 pub enum NavSignal {
+    #[default]
     None,
     Register(NavType),
     Unregister(NavType),
@@ -70,18 +71,13 @@ pub enum NavSignal {
     Custom(WidgetIdOrRef, String),
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NavJumpMode {
+    #[default]
     Direction,
     StepHorizontal,
     StepVertical,
     StepPages,
-}
-
-impl Default for NavJumpMode {
-    fn default() -> Self {
-        Self::Direction
-    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -108,8 +104,9 @@ pub struct NavJumpMapProps {
     pub next: WidgetIdOrRef,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NavDirection {
+    #[default]
     None,
     Up,
     Down,
@@ -117,12 +114,6 @@ pub enum NavDirection {
     Right,
     Prev,
     Next,
-}
-
-impl Default for NavDirection {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -165,12 +156,6 @@ pub enum NavScroll {
     Widget(WidgetIdOrRef, Vec2),
     /// (factor, content to container ratio, relative)
     Change(Vec2, Vec2, bool),
-}
-
-impl Default for NavSignal {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 pub fn use_nav_container(context: &mut WidgetContext) {

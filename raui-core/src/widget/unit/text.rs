@@ -11,44 +11,29 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextBoxHorizontalAlign {
+    #[default]
     Left,
     Center,
     Right,
 }
 
-impl Default for TextBoxHorizontalAlign {
-    fn default() -> Self {
-        Self::Left
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextBoxVerticalAlign {
+    #[default]
     Top,
     Middle,
     Bottom,
 }
 
-impl Default for TextBoxVerticalAlign {
-    fn default() -> Self {
-        Self::Top
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextBoxDirection {
+    #[default]
     HorizontalLeftToRight,
     HorizontalRightToLeft,
     VerticalTopToBottom,
     VerticalBottomToTop,
-}
-
-impl Default for TextBoxDirection {
-    fn default() -> Self {
-        Self::HorizontalLeftToRight
-    }
 }
 
 impl TextBoxDirection {
@@ -77,16 +62,11 @@ pub struct TextBoxFont {
     pub size: Scalar,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum TextBoxSizeValue {
+    #[default]
     Fill,
     Exact(Scalar),
-}
-
-impl Default for TextBoxSizeValue {
-    fn default() -> Self {
-        Self::Fill
-    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
