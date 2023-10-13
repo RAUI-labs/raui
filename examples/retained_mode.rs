@@ -6,6 +6,7 @@
 
 use raui::prelude::*;
 use raui_quick_start::RauiQuickStartBuilder;
+use raui_retained::*;
 use std::any::Any;
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
