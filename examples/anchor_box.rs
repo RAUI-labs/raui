@@ -20,7 +20,7 @@ fn main() {
     // we create widget reference first so we can apply it to some widget and and reference
     //that widget in another place - basically what widget reference is, it is a way to read
     // some other widget ID in some other place outside the referenced widget scope.
-    let idref = WidgetRef::new();
+    let idref = WidgetRef::default();
 
     let tree = make_widget!(content_box)
         // we apply widget reference to the root content box so we can reference that root widget

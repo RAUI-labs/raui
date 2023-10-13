@@ -9,11 +9,7 @@
     {% set end = lines_count -%}
 {% endif -%}
 
-{% if not lang -%}
-    {% set lang = "rust" -%}
-{% endif -%}
-
-```{{lang}}
+```toml
 {{ lines | slice(start=start, end=end) | join(sep="
 ") | trim_end}}
 ```

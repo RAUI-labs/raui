@@ -61,8 +61,6 @@ publish:
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-json-renderer/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-yaml-renderer/Cargo.toml
-    sleep 1
     cargo publish --no-verify --manifest-path ./raui-ron-renderer/Cargo.toml
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-html-renderer/Cargo.toml

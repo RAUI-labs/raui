@@ -6,7 +6,7 @@ use raui_quick_start::RauiQuickStartBuilder;
 // we use this hook that receives anchor box state change and store that in this component state.
 #[pre_hooks(use_anchor_box_notified_state)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
-    let idref = WidgetRef::new();
+    let idref = WidgetRef::default();
 
     make_widget!(content_box)
         .idref(idref.clone())

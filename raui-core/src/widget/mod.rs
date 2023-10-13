@@ -389,8 +389,8 @@ impl From<WidgetRef> for WidgetRefDef {
 pub struct WidgetRef(#[serde(skip)] Arc<RwLock<Option<WidgetId>>>);
 
 impl WidgetRef {
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(id: WidgetId) -> Self {
+        Self(Arc::new(RwLock::new(Some(id))))
     }
 
     pub(crate) fn write(&mut self, id: WidgetId) {
@@ -405,6 +405,14 @@ impl WidgetRef {
         } else {
             None
         }
+    }
+
+    pub fn exists(&self) -> bool {
+        self.0
+            .read()
+            .ok()
+            .map(|data| data.is_some())
+            .unwrap_or_default()
     }
 }
 
@@ -465,7 +473,28 @@ impl From<WidgetRef> for WidgetIdOrRef {
     }
 }
 
-pub type FnWidget = fn(WidgetContext) -> WidgetNode;
+#[derive(Clone)]
+pub enum FnWidget {
+    Pointer(fn(WidgetContext) -> WidgetNode),
+    Closure(Arc<dyn Fn(WidgetContext) -> WidgetNode + Send + Sync>),
+}
+
+impl FnWidget {
+    pub fn pointer(value: fn(WidgetContext) -> WidgetNode) -> Self {
+        Self::Pointer(value)
+    }
+
+    pub fn closure(value: impl Fn(WidgetContext) -> WidgetNode + Send + Sync + 'static) -> Self {
+        Self::Closure(Arc::new(value))
+    }
+
+    pub fn call(&self, context: WidgetContext) -> WidgetNode {
+        match self {
+            Self::Pointer(value) => value(context),
+            Self::Closure(value) => value(context),
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct WidgetLifeCycle {
@@ -587,86 +616,119 @@ pub fn setup(app: &mut Application) {
     app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
     app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
 
-    app.register_component("anchor_box", component::containers::anchor_box::anchor_box);
-    app.register_component("pivot_box", component::containers::anchor_box::pivot_box);
+    app.register_component(
+        "anchor_box",
+        FnWidget::pointer(component::containers::anchor_box::anchor_box),
+    );
+    app.register_component(
+        "pivot_box",
+        FnWidget::pointer(component::containers::anchor_box::pivot_box),
+    );
     app.register_component(
         "nav_content_box",
-        component::containers::content_box::nav_content_box,
+        FnWidget::pointer(component::containers::content_box::nav_content_box),
     );
     app.register_component(
         "content_box",
-        component::containers::content_box::content_box,
+        FnWidget::pointer(component::containers::content_box::content_box),
     );
     app.register_component(
         "nav_flex_box",
-        component::containers::flex_box::nav_flex_box,
+        FnWidget::pointer(component::containers::flex_box::nav_flex_box),
     );
-    app.register_component("flex_box", component::containers::flex_box::flex_box);
+    app.register_component(
+        "flex_box",
+        FnWidget::pointer(component::containers::flex_box::flex_box),
+    );
     app.register_component(
         "nav_grid_box",
-        component::containers::grid_box::nav_grid_box,
+        FnWidget::pointer(component::containers::grid_box::nav_grid_box),
     );
-    app.register_component("grid_box", component::containers::grid_box::grid_box);
+    app.register_component(
+        "grid_box",
+        FnWidget::pointer(component::containers::grid_box::grid_box),
+    );
     app.register_component(
         "nav_horizontal_box",
-        component::containers::horizontal_box::nav_horizontal_box,
+        FnWidget::pointer(component::containers::horizontal_box::nav_horizontal_box),
     );
     app.register_component(
         "horizontal_box",
-        component::containers::horizontal_box::horizontal_box,
+        FnWidget::pointer(component::containers::horizontal_box::horizontal_box),
     );
     app.register_component(
         "nav_scroll_box",
-        component::containers::scroll_box::nav_scroll_box,
+        FnWidget::pointer(component::containers::scroll_box::nav_scroll_box),
     );
     app.register_component(
         "nav_scroll_box_side_scrollbars",
-        component::containers::scroll_box::nav_scroll_box_side_scrollbars,
+        FnWidget::pointer(component::containers::scroll_box::nav_scroll_box_side_scrollbars),
     );
-    app.register_component("portal_box", component::containers::portal_box::portal_box);
-    app.register_component("size_box", component::containers::size_box::size_box);
+    app.register_component(
+        "portal_box",
+        FnWidget::pointer(component::containers::portal_box::portal_box),
+    );
+    app.register_component(
+        "size_box",
+        FnWidget::pointer(component::containers::size_box::size_box),
+    );
     app.register_component(
         "nav_switch_box",
-        component::containers::switch_box::nav_switch_box,
+        FnWidget::pointer(component::containers::switch_box::nav_switch_box),
     );
-    app.register_component("switch_box", component::containers::switch_box::switch_box);
+    app.register_component(
+        "switch_box",
+        FnWidget::pointer(component::containers::switch_box::switch_box),
+    );
     app.register_component(
         "nav_tabs_box",
-        component::containers::tabs_box::nav_tabs_box,
+        FnWidget::pointer(component::containers::tabs_box::nav_tabs_box),
     );
     app.register_component(
         "tooltip_box",
-        component::containers::tooltip_box::tooltip_box,
+        FnWidget::pointer(component::containers::tooltip_box::tooltip_box),
     );
     app.register_component(
         "portals_tooltip_box",
-        component::containers::tooltip_box::portals_tooltip_box,
+        FnWidget::pointer(component::containers::tooltip_box::portals_tooltip_box),
     );
     app.register_component(
         "variant_box",
-        component::containers::variant_box::variant_box,
+        FnWidget::pointer(component::containers::variant_box::variant_box),
     );
     app.register_component(
         "nav_vertical_box",
-        component::containers::vertical_box::nav_vertical_box,
+        FnWidget::pointer(component::containers::vertical_box::nav_vertical_box),
     );
     app.register_component(
         "vertical_box",
-        component::containers::vertical_box::vertical_box,
+        FnWidget::pointer(component::containers::vertical_box::vertical_box),
     );
-    app.register_component("wrap_box", component::containers::wrap_box::wrap_box);
-    app.register_component("image_box", component::image_box::image_box);
-    app.register_component("button", component::interactive::button::button);
+    app.register_component(
+        "wrap_box",
+        FnWidget::pointer(component::containers::wrap_box::wrap_box),
+    );
+    app.register_component(
+        "image_box",
+        FnWidget::pointer(component::image_box::image_box),
+    );
+    app.register_component(
+        "button",
+        FnWidget::pointer(component::interactive::button::button),
+    );
     app.register_component(
         "text_input",
-        component::interactive::input_field::text_input,
+        FnWidget::pointer(component::interactive::input_field::text_input),
     );
     app.register_component(
         "input_field",
-        component::interactive::input_field::input_field,
+        FnWidget::pointer(component::interactive::input_field::input_field),
     );
-    app.register_component("space_box", component::space_box::space_box);
-    app.register_component("text_box", component::text_box::text_box);
+    app.register_component(
+        "space_box",
+        FnWidget::pointer(component::space_box::space_box),
+    );
+    app.register_component("text_box", FnWidget::pointer(component::text_box::text_box));
 }
 
 /// Helper to manually create a [`WidgetComponent`][crate::widget::component::WidgetComponent]
@@ -690,7 +752,10 @@ macro_rules! make_widget {
     ($type_id:path) => {{
         let processor = $type_id;
         let type_name = stringify!($type_id);
-        $crate::widget::component::WidgetComponent::new(processor, type_name)
+        $crate::widget::component::WidgetComponent::new(
+            $crate::widget::FnWidget::pointer(processor),
+            type_name,
+        )
     }};
 }
 
@@ -831,7 +896,7 @@ macro_rules! widget {
                 )*
             )?
             let component = $crate::widget::component::WidgetComponent {
-                processor,
+                processor: $crate::widget::FnWidget::pointer(processor),
                 type_name,
                 key,
                 idref,

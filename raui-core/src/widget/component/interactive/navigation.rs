@@ -491,7 +491,6 @@ pub fn navigation_barrier(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            renderer_effect: None,
         }
     }}}
 }

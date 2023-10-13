@@ -1,8 +1,8 @@
 use crate::widget::{WidgetId, WidgetIdCommon};
-pub use intuicio_data::managed::{Managed, ManagedLazy, ManagedRef, ManagedRefMut};
 use intuicio_data::{
     lifetime::{ValueReadAccess, ValueWriteAccess},
     managed::DynamicManaged,
+    managed::{Managed, ManagedLazy, ManagedRef, ManagedRefMut},
     type_hash::TypeHash,
 };
 use std::{
@@ -415,7 +415,7 @@ mod tests {
         });
         // handle to view-model data we can use to share around.
         // it stays alive as long as its view-model object.
-        let mut handle = view_model.lazy::<Foo>().unwrap();
+        let handle = view_model.lazy::<Foo>().unwrap();
         collection.insert(FOO_VIEW_MODEL.to_owned(), view_model);
 
         // unbound properties won't trigger notification until we bind widgets to them.

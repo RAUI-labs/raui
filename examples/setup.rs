@@ -1,5 +1,5 @@
 use raui::prelude::*;
-use raui::renderer::yaml::YamlRenderer;
+use raui::renderer::json::JsonRenderer;
 
 fn main() {
     // Create the application
@@ -15,11 +15,11 @@ fn main() {
 
     // Create the renderer. In this case we render the UI to YAML for simplicity, but usually
     // you would have a custom renderer for your game engine or renderer.
-    let mut renderer = YamlRenderer;
+    let mut renderer = JsonRenderer { pretty: true };
 
     // Create the interactions engine. The default interactions engine covers typical
     // pointer + keyboard + gamepad navigation/interactions.
-    let mut interactions = DefaultInteractionsEngine::new();
+    let mut interactions = DefaultInteractionsEngine::default();
 
     // We create our widget tree
     let tree = widget! {
@@ -68,7 +68,12 @@ fn main() {
         application.interact(&mut interactions).unwrap();
 
         // Now we render the app
-        println!("{}", application.render(&mapping, &mut renderer).unwrap());
+        println!(
+            "{}",
+            application
+                .render::<_, String, _>(&mapping, &mut renderer)
+                .unwrap()
+        );
 
         // Let's not actually loop infinitely for this example
         break;

@@ -38,7 +38,7 @@
 //! // we use setup functions to register component and props mappings for serialization.
 //! application.setup(setup);
 //! // we can also register them at any time one by one.
-//! application.register_component("app", app);
+//! application.register_component("app", FnWidget::pointer(app));
 //!
 //! // Widget tree is simply a set of nested widget nodes, usually made with special macros.
 //! let tree = widget! {
@@ -339,7 +339,7 @@
 //! # use raui::prelude::*;
 //! let mut application = Application::default();
 //! // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
-//! let mut interactions = DefaultInteractionsEngine::new();
+//! let mut interactions = DefaultInteractionsEngine::default();
 //! // we interact with UI by sending interaction messages to the engine.
 //! interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
 //! interactions.interact(Interaction::PointerDown(
@@ -405,16 +405,18 @@ pub mod renderer {
     pub mod tesselate {
         pub use raui_tesselate_renderer::*;
     }
-    #[cfg(feature = "yaml")]
-    pub mod yaml {
-        pub use raui_yaml_renderer::*;
-    }
 }
 
 #[doc(hidden)]
 pub mod prelude {
     #[cfg(feature = "material")]
     pub use raui_material::prelude::*;
+
+    #[cfg(feature = "retained")]
+    pub use raui_retained::*;
+
+    #[cfg(feature = "immediate")]
+    pub use raui_immediate::*;
 
     pub use raui_core::prelude::*;
 }

@@ -1,6 +1,6 @@
 +++
 title = "Docs"
-description = "The documents of the AdiDoks theme."
+description = "Documentation"
 weight = 1
 template = "docs/section.html"
 +++

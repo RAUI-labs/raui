@@ -199,7 +199,6 @@ pub fn button(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            renderer_effect: None,
         }
     }}}
 }

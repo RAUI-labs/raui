@@ -292,7 +292,7 @@ fn test_hello_world() {
     // we use setup functions to register component and props mappings for serialization.
     application.setup(setup);
     // we can also register them at any time one by one.
-    application.register_component("app", app);
+    application.register_component("app", FnWidget::pointer(app));
 
     // Widget tree is simply a set of nested widget nodes, usually made with special macros.
     let tree = widget! {
@@ -389,17 +389,13 @@ fn test_hello_world() {
     let d = application.deserialize_node(s).unwrap();
     println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
 
-    let s = serde_yaml::from_str::<serde_yaml::Value>(
-        r#"
-    Component:
-        type_name: app
-        key: app
-    "#,
+    let s = serde_json::from_str::<serde_json::Value>(
+        r#"{"Component":{"type_name":"app","key":"key"}}"#,
     )
     .unwrap();
     println!(
         "* SERIALIZED COMPONENT VALUE: {}",
-        serde_yaml::to_string(&s).unwrap()
+        serde_json::to_string(&s).unwrap()
     );
     let d = application.deserialize_node(s).unwrap();
     println!("* DESERIALIZED COMPONENT VALUE: {:#?}", d);
@@ -709,7 +705,7 @@ fn test_interactivity() {
     // [md-bakery: begin @ interactivity]
     let mut application = Application::default();
     // default interactions engine covers typical pointer + keyboard + gamepad navigation/interactions.
-    let mut interactions = DefaultInteractionsEngine::new();
+    let mut interactions = DefaultInteractionsEngine::default();
     // we interact with UI by sending interaction messages to the engine.
     interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
     interactions.interact(Interaction::PointerDown(

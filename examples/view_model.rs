@@ -70,7 +70,7 @@ fn main() {
     });
     // Get lazy shared reference to View-Model data for later use
     // on the host side of application.
-    let mut app_data = view_model.lazy::<AppData>().unwrap();
+    let app_data = view_model.lazy::<AppData>().unwrap();
 
     RauiQuickStartBuilder::default()
         .window_title("View-model".to_owned())

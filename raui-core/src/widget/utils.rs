@@ -1,9 +1,5 @@
 use crate::{Integer, PropsData, Scalar};
 use serde::{Deserialize, Serialize};
-use std::{
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-};
 
 #[repr(C)]
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
@@ -290,35 +286,6 @@ impl Transform {
         Vec2 { x: 1.0, y: 1.0 }
     }
 }
-
-#[derive(Debug, Default, Copy, Clone)]
-pub struct MemoryId<T>(usize, PhantomData<T>);
-
-impl<T> MemoryId<T> {
-    pub fn new(v: &T) -> Self {
-        Self(v as *const T as usize, PhantomData)
-    }
-}
-
-impl<T> From<&T> for MemoryId<T> {
-    fn from(v: &T) -> Self {
-        Self::new(v)
-    }
-}
-
-impl<T> Hash for MemoryId<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
-}
-
-impl<T> PartialEq for MemoryId<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-
-impl<T> Eq for MemoryId<T> {}
 
 #[inline]
 pub fn lerp(from: Scalar, to: Scalar, factor: Scalar) -> Scalar {

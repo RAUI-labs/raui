@@ -9,7 +9,7 @@ use raui_quick_start::{
 const DATA: &str = "data";
 
 fn app(ctx: WidgetContext) -> WidgetNode {
-    let idref = WidgetRef::new();
+    let idref = WidgetRef::default();
     // we read value from view model created with app builder.
     let data = ctx
         .view_models

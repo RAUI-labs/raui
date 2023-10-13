@@ -285,7 +285,6 @@ pub fn text_input(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            renderer_effect: None,
         }
     }}}
 }
@@ -309,7 +308,6 @@ pub fn input_field(mut context: WidgetContext) -> WidgetNode {
         AreaBoxNode {
             id: id.to_owned(),
             slot: Box::new(content),
-            renderer_effect: None,
         }
     }}}
 }

@@ -50,7 +50,9 @@ pub use raui_derive::*;
 use serde::{de::DeserializeOwned, Serialize};
 
 #[doc(inline)]
-pub use serde_yaml::{Number as PrefabNumber, Value as PrefabValue};
+pub use serde_json::{Number as PrefabNumber, Value as PrefabValue};
+
+pub use intuicio_data::{lifetime::*, managed::*};
 
 /// An error that can occur while processing a [`Prefab`]
 #[derive(Debug, Clone)]
@@ -66,14 +68,14 @@ pub enum PrefabError {
 /// other purposes.
 pub trait Prefab: Serialize + DeserializeOwned {
     fn from_prefab(data: PrefabValue) -> Result<Self, PrefabError> {
-        match serde_yaml::from_value(data) {
+        match serde_json::from_value(data) {
             Ok(result) => Ok(result),
             Err(error) => Err(PrefabError::CouldNotDeserialize(error.to_string())),
         }
     }
 
     fn to_prefab(&self) -> Result<PrefabValue, PrefabError> {
-        match serde_yaml::to_value(self) {
+        match serde_json::to_value(self) {
             Ok(result) => Ok(result),
             Err(error) => Err(PrefabError::CouldNotSerialize(error.to_string())),
         }
@@ -155,4 +157,5 @@ pub mod prelude {
         },
         Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
     };
+    pub use intuicio_data::{lifetime::*, managed::*};
 }

@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.41.0"
+version = "0.42.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Renderer Agnostic User Interface"
@@ -9,12 +9,7 @@ license = "MIT"
 repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
-exclude = [
-  ".github/**",
-  "demos/**",
-  "media/**",
-  "site/**"
-]
+exclude = [".github/**", "demos/**", "media/**", "site/**"]
 
 [features]
 scalar64 = [
@@ -28,78 +23,86 @@ integer64 = [
   "raui-tesselate-renderer/integer64",
 ]
 material = ["raui-material"]
+retained = ["raui-retained"]
+immediate = ["raui-immediate"]
 binary = ["raui-binary-renderer"]
 html = ["raui-html-renderer"]
 json = ["raui-json-renderer"]
 ron = ["raui-ron-renderer"]
 tesselate = ["raui-tesselate-renderer"]
-yaml = ["raui-yaml-renderer"]
 all = [
   "material",
+  "retained",
+  "immediate",
   "binary",
   "html",
   "json",
   "ron",
   "tesselate",
-  "yaml",
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.41" }
+raui-core = { path = "./raui-core", version = "0.42" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.41"
+version = "0.42"
+optional = true
+
+[dependencies.raui-retained]
+path = "./raui-retained"
+version = "0.42"
+optional = true
+
+[dependencies.raui-immediate]
+path = "./raui-immediate"
+version = "0.42"
 optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.41"
+version = "0.42"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.41"
+version = "0.42"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.41"
+version = "0.42"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.41"
+version = "0.42"
 optional = true
 
 [dependencies.raui-tesselate-renderer]
 path = "./raui-tesselate-renderer"
-version = "0.41"
-optional = true
-
-[dependencies.raui-yaml-renderer]
-path = "./raui-yaml-renderer"
-version = "0.41"
+version = "0.42"
 optional = true
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_yaml = "0.8"
+raui-retained = { path = "./raui-retained" }
 raui-quick-start = { path = "./raui-quick-start" }
 
 [workspace]
 members = [
-  "raui-core",
   "raui-derive",
+  "raui-core",
+  "raui-material",
+  "raui-retained",
+  "raui-immediate",
   "raui-binary-renderer",
   "raui-html-renderer",
   "raui-json-renderer",
-  "raui-material",
   "raui-ron-renderer",
   "raui-tesselate-renderer",
   "raui-tetra-renderer",
-  "raui-yaml-renderer",
   "raui-quick-start",
   "demos/hello-world",
   "demos/todo-app",

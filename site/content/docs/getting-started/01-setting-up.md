@@ -24,7 +24,7 @@ cargo new --bin my_project
 
 Then add the following dependencies to the `Cargo.toml`:
 
-{{ code_snippet(lang="toml", path="rust/guide_01/Cargo.toml", start=7) }}
+{{ toml_code_snippet(path="rust/guide_01/Cargo.toml", start=7) }}
 
 ## Initializing The Window
 
@@ -37,7 +37,7 @@ In most cases you will probably want to integrate RAUI with a game engine or oth
 
 Go ahead and add the following to your `main.rs` file:
 
-{{ code_snippet(path="rust/guide_01/src/main.rs") }}
+{{ rust_code_snippet(path="rust/guide_01/src/main.rs") }}
 
 We don't add any widgets yet, we'll get to that in the next step. At this point you should be able to `cargo run` and have a blank window pop up!
 

@@ -34,7 +34,7 @@
 //!
 //! // Create the interactions engine. The default interactions engine covers typical
 //! // pointer + keyboard + gamepad navigation/interactions.
-//! let mut interactions = DefaultInteractionsEngine::new();
+//! let mut interactions = DefaultInteractionsEngine::default();
 //!
 //! // We create our widget tree
 //! let tree = widget! {
@@ -133,7 +133,10 @@ use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     convert::TryInto,
-    sync::mpsc::{channel, Sender},
+    sync::{
+        mpsc::{channel, Sender},
+        Arc, RwLock,
+    },
 };
 
 /// Errors that can occur while interacting with an application
@@ -163,6 +166,17 @@ pub enum InvalidationCause {
     CommonRootUpdate(WidgetIdCommon),
 }
 
+#[derive(Clone)]
+pub struct ChangeNotifier(Arc<RwLock<HashSet<WidgetId>>>);
+
+impl ChangeNotifier {
+    pub fn notify(&self, id: WidgetId) {
+        if let Ok(mut ids) = self.0.write() {
+            ids.insert(id);
+        }
+    }
+}
+
 /// Contains and orchestrates application layout, animations, interactions, etc.
 ///
 /// See the [`application`][self] module for more information and examples.
@@ -178,6 +192,7 @@ pub struct Application {
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
     pub view_models: ViewModelCollection,
+    changes: ChangeNotifier,
     #[allow(clippy::type_complexity)]
     unmount_closures: HashMap<WidgetId, Vec<Box<dyn FnMut(WidgetUnmountContext) + Send + Sync>>>,
     dirty: WidgetIdCommon,
@@ -201,6 +216,7 @@ impl Default for Application {
             messages: Default::default(),
             signals: Default::default(),
             view_models: Default::default(),
+            changes: ChangeNotifier(Default::default()),
             unmount_closures: Default::default(),
             dirty: Default::default(),
             render_changed: false,
@@ -242,6 +258,10 @@ impl Application {
         (f)(self);
     }
 
+    pub fn notifier(&self) -> ChangeNotifier {
+        self.changes.clone()
+    }
+
     /// Register's a component under a string name used when serializing the UI
     ///
     /// This function is often used in [`setup`][Self::setup] functions for registering batches of
@@ -256,7 +276,7 @@ impl Application {
     /// }
     ///
     /// fn setup_widgets(app: &mut Application) {
-    ///     app.register_component("my_widget", my_widget);
+    ///     app.register_component("my_widget", FnWidget::pointer(my_widget));
     /// }
     ///
     /// let mut application = Application::default();
@@ -591,6 +611,11 @@ impl Application {
     pub fn process(&mut self) -> bool {
         self.dirty
             .include_other(&self.view_models.consume_notified_common_root());
+        if let Ok(mut ids) = self.changes.0.write() {
+            for id in ids.drain() {
+                self.dirty.include(&id);
+            }
+        }
         self.animations_delta_time = self.animations_delta_time.max(0.0);
         self.last_invalidation_cause = InvalidationCause::None;
         self.render_changed = false;
@@ -807,7 +832,7 @@ impl Application {
                     listed_slots,
                     view_models,
                 };
-                ((processor)(context), false)
+                (processor.call(context), false)
             }
             None => {
                 let state_data = Props::default();
@@ -830,7 +855,7 @@ impl Application {
                     listed_slots,
                     view_models,
                 };
-                let node = (processor)(context);
+                let node = processor.call(context);
                 new_states.insert(id.clone(), state_data);
                 (node, true)
             }
@@ -1395,7 +1420,6 @@ impl Application {
         Ok(AreaBoxNodePrefab {
             id: data.id.to_owned(),
             slot: Box::new(self.node_to_prefab(&data.slot)?),
-            renderer_effect: data.renderer_effect.to_owned(),
         })
     }
 
@@ -1567,7 +1591,7 @@ impl Application {
     ) -> Result<WidgetComponent, ApplicationError> {
         if let Some(processor) = self.component_mappings.get(&data.type_name) {
             Ok(WidgetComponent {
-                processor: *processor,
+                processor: processor.clone(),
                 type_name: data.type_name,
                 key: data.key,
                 idref: Default::default(),
@@ -1643,7 +1667,6 @@ impl Application {
         Ok(AreaBoxNode {
             id: data.id,
             slot: Box::new(self.node_from_prefab(*data.slot)?),
-            renderer_effect: data.renderer_effect,
         })
     }
 

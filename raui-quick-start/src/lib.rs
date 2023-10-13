@@ -128,8 +128,11 @@ impl RauiQuickStart {
     /// Run the app!
     ///
     /// Displays the window and runs the RAUI UI.
-    pub fn run(self) -> Result<(), tetra::TetraError> {
-        // Create a new tetra context, setting the wind,ow title and size
+    pub fn run_with(
+        self,
+        mut setup: impl FnMut(&mut Application),
+    ) -> Result<(), tetra::TetraError> {
+        // Create a new tetra context, setting the window title and size
         tetra::ContextBuilder::new(&self.window_title, self.window_size.0, self.window_size.1)
             // Configure the tetra window options
             .resizable(true)
@@ -138,7 +141,7 @@ impl RauiQuickStart {
             .build()?
             // And run the Tetra game. We pass it a closure that returns our App
             .run(|context| {
-                App::new(
+                let mut app = App::new(
                     context,
                     self.widget_tree,
                     tetra::graphics::Color::rgba(
@@ -151,10 +154,16 @@ impl RauiQuickStart {
                     self.on_event,
                     self.on_draw,
                     self.view_models,
-                )
+                )?;
+                setup(&mut app.ui.application);
+                Ok(app)
             })?;
 
         Ok(())
+    }
+
+    pub fn run(self) -> Result<(), tetra::TetraError> {
+        self.run_with(|_| {})
     }
 }
 

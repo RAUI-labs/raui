@@ -24,7 +24,7 @@ Without further ado, let's make a widget!
 
 Update your `main.rs` file to look like this:
 
-{{ code_snippet(path="rust/guide_02/src/main.rs")}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs")}}
 
 There's plenty of comments in the above example, but there's a lot going on here so lets break it down piece by piece.
 
@@ -32,7 +32,7 @@ There's plenty of comments in the above example, but there's a lot going on here
 
 The first thing we changed was to add our app component to the widget tree in our `RauiQuickStartBuilder`.
 
-{{ code_snippet(path="rust/guide_02/src/main.rs", start=9, end=16)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=9, end=16)}}
 
 Every RAUI app has a root widget tree that holds the whole structure of application in it. It is essentially the "main" of the UI. In this case we set our widget to a single `app` component. This is the `app` component that we define in the function below.
 
@@ -42,7 +42,7 @@ Here we use the strategy of keeping our root widget tree very simple and putting
 
 Now we get to the definition of our `app` component:
 
-{{ code_snippet(path="rust/guide_02/src/main.rs", start=30, end=30)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=30, end=30)}}
 
 As we mentioned before, components are just normal Rust functions with a specific signature. Components are required to take a [`WidgetContext`] as an argument and they must return a [`WidgetNode`].
 
@@ -61,7 +61,7 @@ That brings us to what a **widget _node_** is. As we mentioned above, there are 
 
 We can see the [`widget!`] macro in action in our example:
 
-{{ code_snippet(path="rust/guide_02/src/main.rs", start=56, end=65)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=56, end=65)}}
 
 We use the widget macro to create a simple tree with a single [`text_box`] component in it and we apply our `text_box_props` to it to configure how the text box renders the text inside.
 
@@ -76,7 +76,7 @@ That brings us to the concept of **_properties_**. Properties are data, made up 
 
 In this case we created [`TextBoxProps`] data that we used to configure the [`text_box`] component.
 
-{{ code_snippet(path="rust/guide_02/src/main.rs", start=38, end=52)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=38, end=52)}}
 
 We use the properties to configure the font, content, and color of our text.
 

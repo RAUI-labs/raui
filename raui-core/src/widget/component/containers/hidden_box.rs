@@ -28,7 +28,6 @@ pub fn hidden_box(context: WidgetContext) -> WidgetNode {
             AreaBoxNode {
                 id: id.to_owned(),
                 slot: Box::new(content),
-                renderer_effect: None,
             }
         }}}
     }

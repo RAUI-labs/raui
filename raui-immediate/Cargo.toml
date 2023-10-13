@@ -1,9 +1,9 @@
 [package]
-name = "raui-ron-renderer"
+name = "raui-immediate"
 version = "0.42.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
-description = "RAUI renderer for RON format"
+description = "RAUI immediate mode UI layer"
 readme = "../README.md"
 license = "MIT"
 repository = "https://github.com/RAUI-labs/raui"
@@ -12,5 +12,3 @@ categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
 raui-core = { path = "../raui-core", version = "0.42" }
-serde = { version = "1", features = ["derive"] }
-ron = "0.6"

@@ -36,14 +36,6 @@ impl TetraInteractionsEngine {
         Vec2 { x: 10.0, y: 10.0 }
     }
 
-    pub fn new() -> Self {
-        Self {
-            engine: Default::default(),
-            single_scroll_units: Self::default_single_scroll_units(),
-            pointer_position: Default::default(),
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn with_capacity(
         resize_listeners: usize,

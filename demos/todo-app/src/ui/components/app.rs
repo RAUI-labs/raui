@@ -142,7 +142,7 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
     let (theme_mode, tasks) =
         state.map_or_default::<AppState, _, _>(|s| (s.theme, s.tasks.clone()));
     let theme = new_theme(theme_mode);
-    let idref = WidgetRef::new();
+    let idref = WidgetRef::default();
 
     let shared_props = Props::new(AppSharedProps { id: id.to_owned() })
         .with(PortalsContainer(idref.clone()))

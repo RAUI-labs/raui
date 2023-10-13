@@ -3,7 +3,7 @@
 pub mod component;
 pub mod theme;
 
-use raui_core::application::Application;
+use raui_core::{application::Application, widget::FnWidget};
 
 pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::context_paper::ContextPaperProps>(
@@ -34,79 +34,100 @@ pub fn setup(app: &mut Application) {
 
     app.register_component(
         "context_paper",
-        component::containers::context_paper::context_paper,
+        FnWidget::pointer(component::containers::context_paper::context_paper),
     );
     app.register_component(
         "nav_flex_paper",
-        component::containers::flex_paper::nav_flex_paper,
+        FnWidget::pointer(component::containers::flex_paper::nav_flex_paper),
     );
-    app.register_component("flex_paper", component::containers::flex_paper::flex_paper);
+    app.register_component(
+        "flex_paper",
+        FnWidget::pointer(component::containers::flex_paper::flex_paper),
+    );
     app.register_component(
         "nav_grid_paper",
-        component::containers::grid_paper::nav_grid_paper,
+        FnWidget::pointer(component::containers::grid_paper::nav_grid_paper),
     );
-    app.register_component("grid_paper", component::containers::grid_paper::grid_paper);
+    app.register_component(
+        "grid_paper",
+        FnWidget::pointer(component::containers::grid_paper::grid_paper),
+    );
     app.register_component(
         "nav_horizontal_paper",
-        component::containers::horizontal_paper::nav_horizontal_paper,
+        FnWidget::pointer(component::containers::horizontal_paper::nav_horizontal_paper),
     );
     app.register_component(
         "horizontal_paper",
-        component::containers::horizontal_paper::horizontal_paper,
+        FnWidget::pointer(component::containers::horizontal_paper::horizontal_paper),
     );
     app.register_component(
         "modal_paper",
-        component::containers::modal_paper::modal_paper,
+        FnWidget::pointer(component::containers::modal_paper::modal_paper),
     );
-    app.register_component("paper", component::containers::paper::paper);
+    app.register_component(
+        "paper",
+        FnWidget::pointer(component::containers::paper::paper),
+    );
     app.register_component(
         "scroll_paper",
-        component::containers::scroll_paper::scroll_paper,
+        FnWidget::pointer(component::containers::scroll_paper::scroll_paper),
     );
     app.register_component(
         "scroll_paper_side_scrollbars",
-        component::containers::scroll_paper::scroll_paper_side_scrollbars,
+        FnWidget::pointer(component::containers::scroll_paper::scroll_paper_side_scrollbars),
     );
     app.register_component(
         "text_tooltip_paper",
-        component::containers::text_tooltip_paper::text_tooltip_paper,
+        FnWidget::pointer(component::containers::text_tooltip_paper::text_tooltip_paper),
     );
     app.register_component(
         "tooltip_paper",
-        component::containers::tooltip_paper::tooltip_paper,
+        FnWidget::pointer(component::containers::tooltip_paper::tooltip_paper),
     );
     app.register_component(
         "nav_vertical_paper",
-        component::containers::vertical_paper::nav_vertical_paper,
+        FnWidget::pointer(component::containers::vertical_paper::nav_vertical_paper),
     );
     app.register_component(
         "vertical_paper",
-        component::containers::vertical_paper::vertical_paper,
+        FnWidget::pointer(component::containers::vertical_paper::vertical_paper),
     );
-    app.register_component("wrap_paper", component::containers::wrap_paper::wrap_paper);
-    app.register_component("icon_paper", component::icon_paper::icon_paper);
+    app.register_component(
+        "wrap_paper",
+        FnWidget::pointer(component::containers::wrap_paper::wrap_paper),
+    );
+    app.register_component(
+        "icon_paper",
+        FnWidget::pointer(component::icon_paper::icon_paper),
+    );
     app.register_component(
         "button_paper",
-        component::interactive::button_paper::button_paper,
+        FnWidget::pointer(component::interactive::button_paper::button_paper),
     );
     app.register_component(
         "icon_button_paper",
-        component::interactive::icon_button_paper::icon_button_paper,
+        FnWidget::pointer(component::interactive::icon_button_paper::icon_button_paper),
     );
     app.register_component(
         "switch_button_paper",
-        component::interactive::switch_button_paper::switch_button_paper,
+        FnWidget::pointer(component::interactive::switch_button_paper::switch_button_paper),
     );
     app.register_component(
         "text_button_paper",
-        component::interactive::text_button_paper::text_button_paper,
+        FnWidget::pointer(component::interactive::text_button_paper::text_button_paper),
     );
     app.register_component(
         "text_field_paper",
-        component::interactive::text_field_paper::text_field_paper,
+        FnWidget::pointer(component::interactive::text_field_paper::text_field_paper),
     );
-    app.register_component("switch_paper", component::switch_paper::switch_paper);
-    app.register_component("text_paper", component::text_paper::text_paper);
+    app.register_component(
+        "switch_paper",
+        FnWidget::pointer(component::switch_paper::switch_paper),
+    );
+    app.register_component(
+        "text_paper",
+        FnWidget::pointer(component::text_paper::text_paper),
+    );
 }
 
 pub mod prelude {

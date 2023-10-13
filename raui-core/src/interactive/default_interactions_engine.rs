@@ -81,10 +81,6 @@ pub struct DefaultInteractionsEngine {
 }
 
 impl DefaultInteractionsEngine {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn with_capacity(
         resize_listeners: usize,

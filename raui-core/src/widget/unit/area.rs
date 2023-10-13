@@ -1,19 +1,10 @@
-use crate::{
-    widget::{
-        node::{WidgetNode, WidgetNodePrefab},
-        unit::{WidgetUnit, WidgetUnitData},
-        WidgetId,
-    },
-    Scalar,
+use crate::widget::{
+    node::{WidgetNode, WidgetNodePrefab},
+    unit::{WidgetUnit, WidgetUnitData},
+    WidgetId,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct AreaBoxRendererEffect {
-    pub id: String,
-    pub params: [Scalar; 8],
-}
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AreaBox {
@@ -21,8 +12,6 @@ pub struct AreaBox {
     pub id: WidgetId,
     #[serde(default)]
     pub slot: Box<WidgetUnit>,
-    #[serde(default)]
-    pub renderer_effect: Option<AreaBoxRendererEffect>,
 }
 
 impl WidgetUnitData for AreaBox {
@@ -39,15 +28,10 @@ impl TryFrom<AreaBoxNode> for AreaBox {
     type Error = ();
 
     fn try_from(node: AreaBoxNode) -> Result<Self, Self::Error> {
-        let AreaBoxNode {
-            id,
-            slot,
-            renderer_effect,
-        } = node;
+        let AreaBoxNode { id, slot } = node;
         Ok(Self {
             id,
             slot: Box::new(WidgetUnit::try_from(*slot)?),
-            renderer_effect,
         })
     }
 }
@@ -56,7 +40,6 @@ impl TryFrom<AreaBoxNode> for AreaBox {
 pub struct AreaBoxNode {
     pub id: WidgetId,
     pub slot: Box<WidgetNode>,
-    pub renderer_effect: Option<AreaBoxRendererEffect>,
 }
 
 impl From<AreaBoxNode> for WidgetNode {
@@ -71,6 +54,4 @@ pub(crate) struct AreaBoxNodePrefab {
     pub id: WidgetId,
     #[serde(default)]
     pub slot: Box<WidgetNodePrefab>,
-    #[serde(default)]
-    pub renderer_effect: Option<AreaBoxRendererEffect>,
 }
