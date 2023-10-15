@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.42.0"
+version = "0.43.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Renderer Agnostic User Interface"
@@ -25,6 +25,7 @@ integer64 = [
 material = ["raui-material"]
 retained = ["raui-retained"]
 immediate = ["raui-immediate"]
+immediate-widgets = ["raui-immediate-widgets"]
 binary = ["raui-binary-renderer"]
 html = ["raui-html-renderer"]
 json = ["raui-json-renderer"]
@@ -34,6 +35,7 @@ all = [
   "material",
   "retained",
   "immediate",
+  "immediate-widgets",
   "binary",
   "html",
   "json",
@@ -42,52 +44,59 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.42" }
+raui-core = { path = "./raui-core", version = "0.43" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-retained]
 path = "./raui-retained"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-immediate]
 path = "./raui-immediate"
-version = "0.42"
+version = "0.43"
+optional = true
+
+[dependencies.raui-immediate-widgets]
+path = "./raui-immediate-widgets"
+version = "0.43"
 optional = true
 
 [dependencies.raui-binary-renderer]
 path = "./raui-binary-renderer"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-html-renderer]
 path = "./raui-html-renderer"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-ron-renderer]
 path = "./raui-ron-renderer"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dependencies.raui-tesselate-renderer]
 path = "./raui-tesselate-renderer"
-version = "0.42"
+version = "0.43"
 optional = true
 
 [dev-dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 raui-retained = { path = "./raui-retained" }
+raui-immediate = { path = "./raui-immediate" }
+raui-immediate-widgets = { path = "./raui-immediate-widgets" }
 raui-quick-start = { path = "./raui-quick-start" }
 
 [workspace]
@@ -97,6 +106,7 @@ members = [
   "raui-material",
   "raui-retained",
   "raui-immediate",
+  "raui-immediate-widgets",
   "raui-binary-renderer",
   "raui-html-renderer",
   "raui-json-renderer",

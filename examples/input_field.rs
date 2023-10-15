@@ -29,7 +29,7 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
 
     let mode = ctx.props.read_cloned_or_default::<TextInputMode>();
 
-    // input field is an evolution of input text and what changes is input field can be focused
+    // input field is an evolution of input text, what changes is input field can be focused
     // because it is input text plus button.
     make_widget!(input_field)
         // as usually we enable this navigation item.
@@ -68,34 +68,11 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
                     name: "./demos/hello-world/resources/verdana.ttf".to_owned(),
                     size: 32.0,
                 },
-                color: if trigger {
-                    Color {
-                        r: 1.0,
-                        g: 0.0,
-                        b: 0.0,
-                        a: 1.0,
-                    }
-                } else if selected {
-                    Color {
-                        r: 0.0,
-                        g: 1.0,
-                        b: 0.0,
-                        a: 1.0,
-                    }
-                } else if focused {
-                    Color {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 1.0,
-                        a: 1.0,
-                    }
-                } else {
-                    Color {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 0.0,
-                        a: 1.0,
-                    }
+                color: Color {
+                    r: Scalar::from(trigger),
+                    g: Scalar::from(selected),
+                    b: Scalar::from(focused),
+                    a: 1.0,
                 },
                 ..Default::default()
             }),

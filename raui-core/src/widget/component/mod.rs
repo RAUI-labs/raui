@@ -197,6 +197,14 @@ impl WidgetComponent {
         self
     }
 
+    pub fn maybe_idref<T>(mut self, v: Option<T>) -> Self
+    where
+        T: Into<WidgetRef>,
+    {
+        self.idref = v.map(|v| v.into());
+        self
+    }
+
     pub fn with_props<T>(mut self, v: T) -> Self
     where
         T: 'static + PropsData,

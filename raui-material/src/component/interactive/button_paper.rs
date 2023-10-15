@@ -159,6 +159,10 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
 }
 
 pub fn button_paper(context: WidgetContext) -> WidgetNode {
+    button_paper_impl(make_widget!(button), context)
+}
+
+pub fn button_paper_impl(component: WidgetComponent, context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref,
         key,
@@ -168,11 +172,16 @@ pub fn button_paper(context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    widget! {
-        (#{key} | {idref.cloned()} button: {props.clone()} {
-            content = (#{"content"} button_paper_content: {props.clone()} {
-                content = {content}
-            })
-        })
-    }
+    component
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot(
+            "content",
+            make_widget!(button_paper_content)
+                .key("content")
+                .merge_props(props.clone())
+                .named_slot("content", content),
+        )
+        .into()
 }

@@ -157,5 +157,5 @@ pub mod prelude {
         },
         Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
     };
-    pub use intuicio_data::{lifetime::*, managed::*};
+    pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
 }

@@ -200,18 +200,14 @@ impl<T: ViewState> ViewState for Button<T> {
             .named_slot(
                 "content",
                 make_widget!(content_box)
-                    .listed_slot(make_widget!(image_box).with_props(ImageBoxProps {
-                        material: ImageBoxMaterial::Color(ImageBoxColor {
-                            color: Color {
-                                r: 0.75,
-                                g: 0.75,
-                                b: 0.75,
-                                a: 1.0,
-                            },
-                            ..Default::default()
-                        }),
-                        ..Default::default()
-                    }))
+                    .listed_slot(make_widget!(image_box).with_props(ImageBoxProps::colored(
+                        Color {
+                            r: 0.75,
+                            g: 0.75,
+                            b: 0.75,
+                            a: 1.0,
+                        },
+                    )))
                     .listed_slot(self.content.component()),
             )
             .into()

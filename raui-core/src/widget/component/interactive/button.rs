@@ -48,7 +48,7 @@ pub struct ButtonNotifyProps(
     pub WidgetIdOrRef,
 );
 
-#[derive(MessageData, Debug, Clone)]
+#[derive(MessageData, Debug, Default, Clone)]
 #[message_data(crate::messenger::MessageData)]
 pub struct ButtonNotifyMessage {
     pub sender: WidgetId,

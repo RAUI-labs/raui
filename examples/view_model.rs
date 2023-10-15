@@ -77,7 +77,7 @@ fn main() {
         .widget_tree(make_widget!(app).into())
         .build()
         .unwrap()
-        .on_event(move |_, event, _| {
+        .on_event(move |_, _, event| {
             match event {
                 Event::KeyPressed { key: Key::Space } => {
                     // Here we use that shared reference to `AppData`

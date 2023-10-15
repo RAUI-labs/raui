@@ -32,11 +32,11 @@ use tetra::{input::Key, Event};
 pub use tetra;
 
 pub type RauiQuickStartOnUpdate =
-    Option<Box<dyn FnMut(&mut tetra::Context, &mut ViewModelCollection) -> bool>>;
+    Option<Box<dyn FnMut(&mut tetra::Context, &mut TetraSimpleHost) -> bool>>;
 pub type RauiQuickStartOnEvent =
-    Option<Box<dyn FnMut(&mut tetra::Context, tetra::Event, &mut ViewModelCollection) -> bool>>;
+    Option<Box<dyn FnMut(&mut tetra::Context, &mut TetraSimpleHost, tetra::Event) -> bool>>;
 pub type RauiQuickStartOnDraw =
-    Option<Box<dyn FnMut(&mut tetra::Context, &mut ViewModelCollection) -> bool>>;
+    Option<Box<dyn FnMut(&mut tetra::Context, &mut TetraSimpleHost) -> bool>>;
 
 /// The quick-start builder
 #[derive(Builder)]
@@ -82,7 +82,7 @@ impl Default for RauiQuickStart {
 impl RauiQuickStart {
     pub fn on_update<F>(mut self, f: F) -> Self
     where
-        F: FnMut(&mut tetra::Context, &mut ViewModelCollection) -> bool + 'static,
+        F: FnMut(&mut tetra::Context, &mut TetraSimpleHost) -> bool + 'static,
     {
         self.on_update = Some(Box::new(f));
         self
@@ -90,7 +90,7 @@ impl RauiQuickStart {
 
     pub fn on_event<F>(mut self, f: F) -> Self
     where
-        F: FnMut(&mut tetra::Context, tetra::Event, &mut ViewModelCollection) -> bool + 'static,
+        F: FnMut(&mut tetra::Context, &mut TetraSimpleHost, tetra::Event) -> bool + 'static,
     {
         self.on_event = Some(Box::new(f));
         self
@@ -98,7 +98,7 @@ impl RauiQuickStart {
 
     pub fn on_draw<F>(mut self, f: F) -> Self
     where
-        F: FnMut(&mut tetra::Context, &mut ViewModelCollection) -> bool + 'static,
+        F: FnMut(&mut tetra::Context, &mut TetraSimpleHost) -> bool + 'static,
     {
         self.on_draw = Some(Box::new(f));
         self
@@ -219,7 +219,7 @@ impl App {
 impl tetra::State for App {
     fn update(&mut self, ctx: &mut tetra::Context) -> Result<(), tetra::TetraError> {
         if let Some(callback) = &mut self.on_update {
-            if callback(ctx, &mut self.ui.application.view_models) {
+            if callback(ctx, &mut self.ui) {
                 self.ui.application.mark_dirty();
             }
         }
@@ -231,7 +231,7 @@ impl tetra::State for App {
         // Clear the screen white first
         tetra::graphics::clear(ctx, self.clear_color);
         if let Some(callback) = &mut self.on_draw {
-            if callback(ctx, &mut self.ui.application.view_models) {
+            if callback(ctx, &mut self.ui) {
                 self.ui.application.mark_dirty();
             }
         }
@@ -246,7 +246,7 @@ impl tetra::State for App {
         event: tetra::Event,
     ) -> Result<(), tetra::TetraError> {
         if let Some(callback) = &mut self.on_event {
-            if callback(ctx, event.clone(), &mut self.ui.application.view_models) {
+            if callback(ctx, &mut self.ui, event.clone()) {
                 self.ui.application.mark_dirty();
             }
         }

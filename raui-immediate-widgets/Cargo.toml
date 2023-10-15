@@ -1,21 +1,17 @@
 [package]
-name = "raui-core"
+name = "raui-immediate-widgets"
 version = "0.43.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
-description = "Renderer Agnostic User Interface"
+description = "Widgets library for RAUI immediate mode UI layer"
 readme = "../README.md"
 license = "MIT"
 repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
-[features]
-scalar64 = []
-integer64 = []
-
 [dependencies]
-raui-derive = { version = "0.43", path = "../raui-derive" }
+raui-core = { path = "../raui-core", version = "0.43" }
+raui-material = { path = "../raui-material", version = "0.43" }
+raui-immediate = { path = "../raui-immediate", version = "0.43" }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1.0"
-intuicio-data = "0.23"

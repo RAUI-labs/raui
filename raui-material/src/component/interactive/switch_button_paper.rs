@@ -2,13 +2,23 @@ use crate::component::{interactive::button_paper::button_paper, switch_paper::sw
 use raui_core::prelude::*;
 
 pub fn switch_button_paper(context: WidgetContext) -> WidgetNode {
+    switch_button_paper_impl(make_widget!(button_paper), context)
+}
+
+pub fn switch_button_paper_impl(component: WidgetComponent, context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref, key, props, ..
     } = context;
 
-    widget! {
-        (#{key} | {idref.cloned()} button_paper: {props.clone()} {
-            content = (#{"switch"} switch_paper: {props.clone()})
-        })
-    }
+    component
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot(
+            "content",
+            make_widget!(switch_paper)
+                .key("switch")
+                .merge_props(props.clone()),
+        )
+        .into()
 }

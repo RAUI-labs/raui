@@ -51,8 +51,10 @@ fn main() {
         .widget_tree(make_widget!(app).into())
         .build()
         .unwrap()
-        .on_event(|_, event, view_models| {
-            let mut data = view_models
+        .on_event(|_, host, event| {
+            let mut data = host
+                .application
+                .view_models
                 .get_mut(DATA)
                 .unwrap()
                 .write::<String>()

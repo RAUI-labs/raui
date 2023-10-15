@@ -147,13 +147,23 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
 }
 
 pub fn text_field_paper(context: WidgetContext) -> WidgetNode {
+    text_field_paper_impl(make_widget!(input_field), context)
+}
+
+pub fn text_field_paper_impl(component: WidgetComponent, context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref, key, props, ..
     } = context;
 
-    widget! {
-        (#{key} | {idref.cloned()} input_field: {props.clone()} {
-            content = (#{"content"} text_field_paper_content: {props.clone()})
-        })
-    }
+    component
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot(
+            "content",
+            make_widget!(text_field_paper_content)
+                .key("text")
+                .merge_props(props.clone()),
+        )
+        .into()
 }
