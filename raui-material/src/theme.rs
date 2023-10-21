@@ -1,10 +1,7 @@
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-#[cfg(not(feature = "scalar64"))]
 use std::f32::consts::PI;
-#[cfg(feature = "scalar64")]
-use std::f64::consts::PI;
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeColor {

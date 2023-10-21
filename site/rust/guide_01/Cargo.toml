@@ -8,7 +8,4 @@ publish = false
 
 [dependencies]
 # The main RAUI crate
-raui = { version = "0.43", path = "../../../" }
-# The RAUI quick start crate will help us get our window and rendering
-# setup as easy as possible
-raui-quick-start = { version = "0.43", path = "../../../raui-quick-start" }
+raui = { version = "0.44", path = "../../../", features = ["app"] }

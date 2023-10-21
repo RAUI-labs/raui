@@ -1,14 +1,22 @@
 // Make sure you have seen `portal_box` code example first, because this is an evolution of that.
 
 use raui::prelude::*;
-use raui_quick_start::{
-    tetra::{input::Key, Event},
-    RauiQuickStartBuilder,
-};
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 const DATA: &str = "data";
 
-fn app(ctx: WidgetContext) -> WidgetNode {
+fn use_app(ctx: &mut WidgetContext) {
+    ctx.life_cycle.mount(|mut ctx| {
+        ctx.view_models
+            .bindings(DATA, "")
+            .unwrap()
+            .bind(ctx.id.to_owned());
+    });
+}
+
+#[pre_hooks(use_app)]
+fn app(mut ctx: WidgetContext) -> WidgetNode {
     let idref = WidgetRef::default();
     // we read value from view model created with app builder.
     let data = ctx
@@ -125,40 +133,43 @@ fn icon(ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Context Box".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .on_event(|_, host, event| {
-            let mut data = host
-                .application
+    let app = DeclarativeApp::default()
+        .tree(make_widget!(app))
+        // we use tuple of 3 bools that will represent state of individual context box.
+        .view_model(DATA, ViewModel::new_object((false, true, false)))
+        .event(move |application, event| {
+            let mut data = application
                 .view_models
                 .get_mut(DATA)
                 .unwrap()
-                .write::<(bool, bool, bool)>()
+                .write_notified::<(bool, bool, bool)>()
                 .unwrap();
 
-            match event {
-                Event::KeyPressed { key: Key::Num1 } => {
-                    // change state of given context box in app data.
-                    data.0 = !data.0;
-                    // we return `true` which marks RAUI app as dirty (needs to process tree).
-                    true
+            if let Event::WindowEvent {
+                event: WindowEvent::KeyboardInput { input, .. },
+                ..
+            } = event
+            {
+                if input.state == ElementState::Pressed {
+                    if let Some(key) = input.virtual_keycode {
+                        match key {
+                            VirtualKeyCode::Key1 | VirtualKeyCode::Numpad1 => {
+                                // change state of given context box in app data.
+                                data.0 = !data.0;
+                            }
+                            VirtualKeyCode::Key2 | VirtualKeyCode::Numpad2 => {
+                                data.1 = !data.1;
+                            }
+                            VirtualKeyCode::Key3 | VirtualKeyCode::Numpad3 => {
+                                data.2 = !data.2;
+                            }
+                            _ => {}
+                        }
+                    }
                 }
-                Event::KeyPressed { key: Key::Num2 } => {
-                    data.1 = !data.1;
-                    true
-                }
-                Event::KeyPressed { key: Key::Num3 } => {
-                    data.2 = !data.2;
-                    true
-                }
-                _ => false,
             }
-        })
-        // we use tuple of 3 bools that will represent state of individual context box.
-        .view_model(DATA, (false, true, false))
-        .run()
-        .unwrap();
+            true
+        });
+
+    App::new(AppConfig::default().title("Context Box")).run(app);
 }

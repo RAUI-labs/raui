@@ -36,52 +36,56 @@ pub fn image_button(mut context: WidgetContext) -> WidgetNode {
     } else {
         Vec2 { x: 1.0, y: 1.0 }
     };
-    let image_props = ImageBoxProps {
-        material: ImageBoxMaterial::Image(ImageBoxImage {
-            id: image,
-            tint: if trigger {
-                Color {
-                    r: 0.0,
-                    g: 1.0,
-                    b: 0.0,
-                    a: 1.0,
-                }
-            } else if context {
-                Color {
-                    r: 1.0,
-                    g: 0.0,
-                    b: 0.0,
-                    a: 1.0,
-                }
-            } else if selected {
-                Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                    a: 0.85,
-                }
-            } else {
-                Color::default()
-            },
-            ..Default::default()
-        }),
-        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
-            horizontal_alignment,
-            vertical_alignment: 0.5,
-            outside: false,
-        }),
-        transform: Transform {
-            pivot: Vec2 { x: 0.5, y: 0.5 },
-            scale,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
-    let button_props = Props::new(NavItemActive).with(ButtonNotifyProps(id.to_owned().into()));
 
-    widget! {
-        (#{key} button: {button_props} {
-            content = (#{"image"} image_box: {image_props})
-        })
-    }
+    make_widget!(button)
+        .key(key)
+        .with_props(NavItemActive)
+        .with_props(ButtonNotifyProps(id.to_owned().into()))
+        .named_slot(
+            "content",
+            make_widget!(image_box)
+                .key("image")
+                .with_props(ImageBoxProps {
+                    material: ImageBoxMaterial::Image(ImageBoxImage {
+                        id: image,
+                        tint: if trigger {
+                            Color {
+                                r: 0.0,
+                                g: 1.0,
+                                b: 0.0,
+                                a: 1.0,
+                            }
+                        } else if context {
+                            Color {
+                                r: 1.0,
+                                g: 0.0,
+                                b: 0.0,
+                                a: 1.0,
+                            }
+                        } else if selected {
+                            Color {
+                                r: 1.0,
+                                g: 1.0,
+                                b: 1.0,
+                                a: 0.85,
+                            }
+                        } else {
+                            Color::default()
+                        },
+                        ..Default::default()
+                    }),
+                    content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                        horizontal_alignment,
+                        vertical_alignment: 0.5,
+                        outside: false,
+                    }),
+                    transform: Transform {
+                        pivot: Vec2 { x: 0.5, y: 0.5 },
+                        scale,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }),
+        )
+        .into()
 }

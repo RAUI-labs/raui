@@ -13,7 +13,7 @@ fn main() {
     );
     // application.setup(raui_material::setup /* and the raui_material setup if we need it */);
 
-    // Create the renderer. In this case we render the UI to YAML for simplicity, but usually
+    // Create the renderer. In this case we render the UI to JSON for simplicity, but usually
     // you would have a custom renderer for your game engine or renderer.
     let mut renderer = JsonRenderer { pretty: true };
 
@@ -22,13 +22,12 @@ fn main() {
     let mut interactions = DefaultInteractionsEngine::default();
 
     // We create our widget tree
-    let tree = widget! {
-        (#{"app"} nav_content_box [
-            (#{"button"} button: {NavItemActive} {
-                content = (#{"icon"} image_box)
-            })
-        ])
-    };
+    let tree = make_widget!(nav_content_box).key("app").listed_slot(
+        make_widget!(button)
+            .key("button")
+            .with_props(NavItemActive)
+            .named_slot("content", make_widget!(image_box).key("icon")),
+    );
 
     // We apply the tree to the application. This must be done again if we wish to change the
     // tree.

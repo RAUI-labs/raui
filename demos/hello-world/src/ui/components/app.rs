@@ -13,16 +13,15 @@ pub fn app(context: WidgetContext) -> WidgetNode {
             ..Default::default()
         })
     });
-    let props = Props::new(VerticalBoxProps {
-        separation: 16.0,
-        ..Default::default()
-    })
-    .with(NavJumpLooped);
 
-    widget! {
-        (#{key} nav_vertical_box: {props} [
-            {title}
-            {content}
-        ])
-    }
+    make_widget!(nav_vertical_box)
+        .key(key)
+        .with_props(VerticalBoxProps {
+            separation: 16.0,
+            ..Default::default()
+        })
+        .with_props(NavJumpLooped)
+        .listed_slot(title)
+        .listed_slot(content)
+        .into()
 }

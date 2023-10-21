@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 // mark the root widget as navigable container to allow button to subscribe to navigation system.
 #[pre_hooks(use_nav_container_active)]
@@ -78,11 +79,5 @@ fn internal(ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Button - Pass state to its child".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Button - Pass state to its child", make_widget!(app));
 }

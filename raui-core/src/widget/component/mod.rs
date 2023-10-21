@@ -168,10 +168,10 @@ pub struct WidgetComponent {
 }
 
 impl WidgetComponent {
-    pub fn new(processor: FnWidget, type_name: &str) -> Self {
+    pub fn new(processor: FnWidget, type_name: impl ToString) -> Self {
         Self {
             processor,
-            type_name: type_name.to_owned(),
+            type_name: type_name.to_string(),
             key: None,
             idref: None,
             props: Props::default(),
@@ -250,29 +250,29 @@ impl WidgetComponent {
 
     pub fn listed_slots<I, T>(mut self, v: I) -> Self
     where
-        I: Iterator<Item = T>,
+        I: IntoIterator<Item = T>,
         T: Into<WidgetNode>,
     {
-        self.listed_slots.extend(v.map(|v| v.into()));
+        self.listed_slots.extend(v.into_iter().map(|v| v.into()));
         self
     }
 
-    pub fn named_slot<T>(mut self, k: &str, v: T) -> Self
+    pub fn named_slot<T>(mut self, k: impl ToString, v: T) -> Self
     where
         T: Into<WidgetNode>,
     {
-        self.named_slots.insert(k.to_owned(), v.into());
+        self.named_slots.insert(k.to_string(), v.into());
         self
     }
 
     pub fn named_slots<I, K, T>(mut self, v: I) -> Self
     where
-        I: Iterator<Item = (K, T)>,
+        I: IntoIterator<Item = (K, T)>,
         K: ToString,
         T: Into<WidgetNode>,
     {
         self.named_slots
-            .extend(v.map(|(k, v)| (k.to_string(), v.into())));
+            .extend(v.into_iter().map(|(k, v)| (k.to_string(), v.into())));
         self
     }
 

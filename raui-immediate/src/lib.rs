@@ -286,9 +286,11 @@ mod internal {
 
         unpack_named_slots!(ctx.named_slots => content);
 
-        widget! {{{
-            AreaBoxNode { id: ctx.id.to_owned(), slot: Box::new(content) }
-        }}}
+        AreaBoxNode {
+            id: ctx.id.to_owned(),
+            slot: Box::new(content),
+        }
+        .into()
     }
 }
 

@@ -4,6 +4,9 @@
 //! the [`widget!`] macro. Those have more documentation on how to use widgets, components, etc. in
 //! your app.
 
+// TODO: remove once internals will move from `widget` to `make_widget` macro!
+#![allow(deprecated)]
+
 pub mod application;
 #[macro_use]
 pub mod messenger;
@@ -19,31 +22,8 @@ pub mod layout;
 pub mod signals;
 pub mod view_model;
 
-/// A floating point, scalar value define as a type alias to allow switching between 32 and 64 bit
-/// floats
-#[cfg(feature = "scalar64")]
-pub type Scalar = f64;
-/// A floating point, scalar value define as a type alias to allow switching between 32 and 64 bit
-/// floats
-#[cfg(not(feature = "scalar64"))]
 pub type Scalar = f32;
-
-/// An integer, scalar value define as a type alias to allow switching between 32 and 64 bit
-/// integers
-#[cfg(feature = "integer64")]
-pub type Integer = i64;
-/// An unsigned, integer, scalar value define as a type alias to allow switching between 32 and 64
-/// bit integers
-#[cfg(feature = "integer64")]
-pub type UnsignedInteger = u64;
-
-/// An integer, scalar value define as a type alias to allow switching between 32 and 64 bit
-/// integers
-#[cfg(not(feature = "integer64"))]
 pub type Integer = i32;
-/// An unsigned, integer, scalar value define as a type alias to allow switching between 32 and 64
-/// bit integers
-#[cfg(not(feature = "integer64"))]
 pub type UnsignedInteger = u32;
 
 pub use raui_derive::*;

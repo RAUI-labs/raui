@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 #[pre_hooks(use_nav_container_active)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
@@ -90,11 +91,5 @@ fn tab_plate(ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Tabs Box".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Tabs Box", make_widget!(app));
 }

@@ -4,8 +4,9 @@
 // As with retained mode, immediate mode UI can be mixed with
 // declarative mode and retained mode widgets.
 
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 use raui_immediate::{make_widgets, ImmediateContext};
-use raui_quick_start::RauiQuickStartBuilder;
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
@@ -153,33 +154,24 @@ fn main() {
     // some applciation state.
     let mut counter = 0usize;
 
-    RauiQuickStartBuilder::default()
-        .window_title("Immediate mode UI".to_owned())
-        .build()
-        .unwrap()
-        .on_update(move |_, ui| {
-            // resets immediate mode UI builder to ensure we start
-            // building current frame UI from scratch.
-            raui_immediate::reset();
+    let app = DeclarativeApp::default().update(move |app| {
+        // resets immediate mode UI builder to ensure we start
+        // building current frame UI from scratch.
+        raui_immediate::reset();
 
-            // `make_widgets` function is a shorthand for:
-            // - activate immediate context.
-            // - begin widgets group.
-            // - execute closure.
-            // - end widgets group.
-            // - deactivate imemdiate context.
-            let widgets = make_widgets(&context, || gui::app(&mut counter));
+        // `make_widgets` function is a shorthand for:
+        // - activate immediate context.
+        // - begin widgets group.
+        // - execute closure.
+        // - end widgets group.
+        // - deactivate imemdiate context.
+        let widgets = make_widgets(&context, || gui::app(&mut counter));
 
-            // once that's done, we get list of RAUI widgets produced
-            // and we can embed them in some RAUI container, preferably
-            // content box to simulate layers on the screen.
-            ui.application.apply(
-                make_widget!(content_box)
-                    .listed_slots(widgets.into_iter())
-                    .into(),
-            );
-            true
-        })
-        .run()
-        .unwrap();
+        // once that's done, we get list of RAUI widgets produced
+        // and we can embed them in some RAUI container, preferably
+        // content box to simulate layers on the screen.
+        app.apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+    });
+
+    App::new(AppConfig::default().title("Immediate mode UI")).run(app);
 }

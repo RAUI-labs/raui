@@ -5,7 +5,9 @@
 // interleave quite seamingly.
 
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
+#[allow(unused_imports)]
 use raui_retained::*;
 use std::any::Any;
 
@@ -260,17 +262,14 @@ fn main() {
     // this somewhat simulates having UI manager storing views tree.
     let mut screen = View::new(SharedView::<AppView>::default());
 
-    RauiQuickStartBuilder::default()
-        .window_title("Retained mode UI".to_owned())
-        .build()
-        .unwrap()
-        .run_with(|app| {
-            // create app views tree and put it into screen root
-            // to extend its lifetime to application.
-            screen.write().unwrap().replace(create_app(app));
+    let app = DeclarativeApp::default().setup(|app| {
+        // create app views tree and put it into screen root
+        // to extend its lifetime to application.
+        screen.write().unwrap().replace(create_app(app));
 
-            // finally send screen widget component to RAUI app.
-            app.apply(screen.component().key("screen").into());
-        })
-        .unwrap();
+        // finally send screen widget component to RAUI app.
+        app.apply(screen.component().key("screen"));
+    });
+
+    App::new(AppConfig::default().title("Retained mode UI")).run(app);
 }

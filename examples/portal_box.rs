@@ -1,7 +1,8 @@
 // Make sure you have seen `anchor_box` code example first, because this is an evolution of that.
 
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 // we use this hook that receives anchor box state change and store that in this component state.
 #[pre_hooks(use_anchor_box_notified_state)]
@@ -135,11 +136,5 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Portal Box".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Portal Box", make_widget!(app));
 }

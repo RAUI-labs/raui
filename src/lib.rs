@@ -21,9 +21,10 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! # use raui::renderer::html::HtmlRenderer;
-//! # fn app(_: WidgetContext) -> WidgetNode { widget!(()) }
-//! # fn title_bar(_: WidgetContext) -> WidgetNode { widget!(()) }
+//! # use raui::renderer::json::JsonRenderer;
+//! # fn app(_: WidgetContext) -> WidgetNode { Default::default() }
+//! # fn title_bar(_: WidgetContext) -> WidgetNode { Default::default() }
+//! # fn text_button(_: WidgetContext) -> WidgetNode { Default::default() }
 //! // Coords mapping tell RAUI renderers how to convert coordinates
 //! // between virtual-space and ui-space.
 //! let mapping = CoordsMapping::new(Rect {
@@ -40,27 +41,24 @@
 //! // we can also register them at any time one by one.
 //! application.register_component("app", FnWidget::pointer(app));
 //!
-//! // Widget tree is simply a set of nested widget nodes, usually made with special macros.
-//! let tree = widget! {
-//!     (app {
-//!         // <named slot name> = ( <widget to put in a slot> )
-//!         title = (title_bar: {"Hello".to_owned()})
-//!         content = (vertical_box [
-//!             (#{"hi"} button: {"Say hi!".to_owned()})
-//!             (#{"exit"} button: {"Close".to_owned()})
-//!         ])
-//!     })
-//! };
+//! // Widget tree is simply a set of nested widget nodes.
+//! let tree = make_widget!(app)
+//!     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+//!     .named_slot("content", make_widget!(vertical_box)
+//!         .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
+//!         .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
+//!     )
+//! );
 //!
 //! // some dummy widget tree renderer.
 //! // it reads widget unit tree and transforms it into target format.
-//! let mut renderer = HtmlRenderer::default();
+//! let mut renderer = JsonRenderer::default();
 //!
 //! // `apply()` sets new widget tree.
 //! application.apply(tree);
 //!
 //! // `render()` calls renderer to perform transformations on processed application widget tree.
-//! if let Ok(output) = application.render(&mapping, &mut renderer) {
+//! if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
 //!     println!("* OUTPUT:\n{}", output);
 //! }
 //!
@@ -68,7 +66,7 @@
 //! // "change" is either any widget state change, or new message sent to any widget (messages
 //! // can be sent from application host, for example a mouse click, or from another widget).
 //! application.forced_process();
-//! if let Ok(output) = application.render(&mapping, &mut renderer) {
+//! if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
 //!     println!("* OUTPUT:\n{}", output);
 //! }
 //! ```
@@ -83,19 +81,17 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! # fn app(_: WidgetContext) -> WidgetNode { widget!(()) }
-//! # fn title_bar(_: WidgetContext) -> WidgetNode { widget!(()) }
-//!   widget! {
-//!       (app {
-//!           // <named slot name> = ( <widget to put in a slot> )
-//!           title = (title_bar: {"Hello".to_owned()})
-//!           content = (vertical_box [
-//!               (#{"hi"} button: {"Say hi!".to_owned()})
-//!               (#{"exit"} button: {"Close".to_owned()})
-//!           ])
-//!       })
-//!   };
-//!   ```
+//! # fn app(_: WidgetContext) -> WidgetNode { Default::default() }
+//! # fn title_bar(_: WidgetContext) -> WidgetNode { Default::default() }
+//! # fn text_button(_: WidgetContext) -> WidgetNode { Default::default() }
+//! let tree = make_widget!(app)
+//!     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+//!     .named_slot("content", make_widget!(vertical_box)
+//!         .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
+//!         .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
+//!     )
+//! );
+//! ```
 //!
 //! - **[`WidgetComponent`]** - you can think of them as Virtual DOM nodes, they store:
 //!   - pointer to _component function_ (that process their data)
@@ -107,15 +103,13 @@
 //!     to them, so you can access them by name instead of by index)
 //! - **[`WidgetUnit`]** - an atomic element that renderers use to convert into target renderable
 //!   data format for rendering engine of choice.
-//! ```rust
-//! # use raui::prelude::*;
-//!   widget! {{{
-//!     TextBoxNode {
-//!         text: "Hello World".to_owned(),
-//!         ..Default::default()
-//!     }
-//!   }}};
-//!```
+//!   ```rust
+//!   # use raui::prelude::*;
+//!   TextBoxNode {
+//!       text: "Hello World".to_owned(),
+//!       ..Default::default()
+//!   };
+//!   ```
 //!
 //! [`WidgetComponent`]: core::widget::component::WidgetComponent
 //!
@@ -146,16 +140,11 @@
 //!     let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
 //!
 //!     // we always return new widgets tree.
-//!     widget! {
-//!         // `#{key}` - provided value gives a unique name to node. keys allows widgets
-//!         //      to save state between render calls. here we just pass key of this widget.
-//!         // `vertical_box` - name of widget component to use, this one is built into RAUI.
-//!         // `[...]` - listed widget slots. here we just put previously unpacked named slots.
-//!         (#{index} vertical_box [
-//!             {title}
-//!             {content}
-//!         ])
-//!     }
+//!     make_widget!(vertical_box)
+//!         .key(index)
+//!         .listed_slot(title)
+//!         .listed_slot(content)
+//!         .into()
 //! }
 //! ```
 //! ### States
@@ -259,9 +248,7 @@
 //!     let WidgetContext { key, props, .. } = context;
 //!     println!("* PROCESS BUTTON: {}", key);
 //!
-//!     widget! {
-//!         (#{key} text_box: {props.clone()})
-//!     }
+//!     make_widget!(text_box).key(key).merge_props(props.clone()).into()
 //! }
 //! ```
 //!
@@ -284,7 +271,7 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! # let tree = widget!(());
+//! # let tree = WidgetNode::default();
 //! # let mapping = CoordsMapping::new(Rect::default());
 //! let mut application = Application::default();
 //! let mut layout_engine = DefaultLayoutEngine;
@@ -317,8 +304,8 @@
 //! user has to do is to just activate navigation features for them (using [`NavItemActive`] unit
 //! props). RAUI integrations that want to just use use default interactions engine should make use
 //! of this struct composed in them and call its [`interact`] method with information about what
-//! input change was made. There is an example of that feature covered in Tetra integration crate
-//! (`TetraInteractionsEngine` struct).
+//! input change was made. There is an example of that feature covered in RAUI App crate
+//! (`AppInteractionsEngine` struct).
 //!
 //! [`NavSignal`]: core::widget::component::interactive::navigation::NavSignal
 //!
@@ -348,15 +335,13 @@
 //! ));
 //! // navigation/interactions works only if we have navigable items (such as `button`) registered
 //! // in some navigable container (usually containers with `nav_` prefix).
-//! let tree = widget! {
-//!     (#{"app"} nav_content_box [
-//!         // by default navigable items are inactive which means we have to tell RAUI we activate
-//!         // them to interact with them.
-//!         (#{"button"} button: {NavItemActive} {
-//!             content = (#{"icon"} image_box)
-//!         })
-//!     ])
-//! };
+//! let tree = make_widget!(nav_content_box)
+//!     .key("app")
+//!     .listed_slot(make_widget!(button)
+//!         .key("button")
+//!         .with_props(NavItemActive)
+//!         .named_slot("content", make_widget!(image_box).key("icon"))
+//!     );
 //! application.apply(tree);
 //! application.process();
 //! let mapping = CoordsMapping::new(Rect {
@@ -385,21 +370,9 @@ pub use raui_material as material;
 
 /// Renderer implementations
 pub mod renderer {
-    #[cfg(feature = "binary")]
-    pub mod binary {
-        pub use raui_binary_renderer::*;
-    }
-    #[cfg(feature = "html")]
-    pub mod html {
-        pub use raui_html_renderer::*;
-    }
     #[cfg(feature = "json")]
     pub mod json {
         pub use raui_json_renderer::*;
-    }
-    #[cfg(feature = "ron")]
-    pub mod ron {
-        pub use raui_ron_renderer::*;
     }
     #[cfg(feature = "tesselate")]
     pub mod tesselate {
@@ -417,6 +390,12 @@ pub mod prelude {
 
     #[cfg(feature = "immediate")]
     pub use raui_immediate::*;
+
+    #[cfg(feature = "immediate-widgets")]
+    pub use raui_immediate_widgets::*;
+
+    #[cfg(feature = "app")]
+    pub use raui_app::prelude::*;
 
     pub use raui_core::prelude::*;
 }

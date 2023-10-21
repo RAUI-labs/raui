@@ -1,7 +1,8 @@
 // Make sure you have seen `immediate_mode` code example first, because this is a continuation of that.
 
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 use raui_immediate::{make_widgets, ImmediateContext};
-use raui_quick_start::RauiQuickStartBuilder;
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
@@ -106,22 +107,13 @@ fn main() {
 
     let context = ImmediateContext::default();
 
-    RauiQuickStartBuilder::default()
-        .window_title("Immediate mode UI - States and Effects".to_owned())
-        .build()
-        .unwrap()
-        .on_update(move |_, ui| {
-            raui_immediate::reset();
+    let app = DeclarativeApp::default().update(move |app| {
+        raui_immediate::reset();
 
-            let widgets = make_widgets(&context, || gui::app());
+        let widgets = make_widgets(&context, || gui::app());
 
-            ui.application.apply(
-                make_widget!(content_box)
-                    .listed_slots(widgets.into_iter())
-                    .into(),
-            );
-            true
-        })
-        .run()
-        .unwrap();
+        app.apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+    });
+
+    App::new(AppConfig::default().title("Immediate mode UI - States and Effects")).run(app);
 }

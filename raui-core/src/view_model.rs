@@ -185,6 +185,10 @@ impl ViewModel {
         }
     }
 
+    pub fn new_object<T: 'static>(object: T) -> Self {
+        Self::new(object, Default::default())
+    }
+
     pub fn produce<T: 'static>(producer: impl FnOnce(&mut ViewModelProperties) -> T) -> Self {
         let mut properties = Default::default();
         let object = DynamicManaged::new(producer(&mut properties));
@@ -213,6 +217,17 @@ impl ViewModel {
 
     pub fn write<T: 'static>(&mut self) -> Option<ValueWriteAccess<T>> {
         self.object.write::<T>()
+    }
+
+    pub fn write_notified<T: 'static>(&mut self) -> Option<ViewModelObject<T>> {
+        if let Some(access) = self.object.write::<T>() {
+            Some(ViewModelObject {
+                access,
+                notifier: self.properties.notifier(""),
+            })
+        } else {
+            None
+        }
     }
 }
 
@@ -336,6 +351,38 @@ impl<'a> ViewModelCollectionView<'a> {
 
     pub fn unset_default<T: 'static>(&mut self) {
         self.defaults.remove(&TypeHash::of::<T>());
+    }
+}
+
+pub struct ViewModelObject<'a, T> {
+    access: ValueWriteAccess<'a, T>,
+    notifier: ViewModelNotifier,
+}
+
+impl<'a, T> ViewModelObject<'a, T> {
+    pub fn set_unique_notify(&mut self, value: T)
+    where
+        T: PartialEq,
+    {
+        if *self.access != value {
+            *self.access = value;
+            self.notifier.notify();
+        }
+    }
+}
+
+impl<'a, T> Deref for ViewModelObject<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.access
+    }
+}
+
+impl<'a, T> DerefMut for ViewModelObject<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.notifier.notify();
+        &mut self.access
     }
 }
 

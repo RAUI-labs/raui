@@ -194,17 +194,7 @@ impl Default for CoordsMapping {
 
 impl CoordsMapping {
     pub fn new(real_area: Rect) -> Self {
-        Self {
-            scale: 1.0.into(),
-            offset: Vec2::default(),
-            real_area,
-            virtual_area: Rect {
-                left: 0.0,
-                right: real_area.width(),
-                top: 0.0,
-                bottom: real_area.height(),
-            },
-        }
+        Self::new_scaling(real_area, CoordsMappingScaling::None)
     }
 
     pub fn new_scaling(real_area: Rect, scaling: CoordsMappingScaling) -> Self {

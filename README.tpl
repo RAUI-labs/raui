@@ -17,15 +17,15 @@
 [`DefaultInteractionsEngine`]: https://docs.rs/raui/latest/raui/prelude/struct.DefaultInteractionsEngine.html
 
 ## Media
-- [`RAUI + Tetra In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
-  An example of an In-Game integration of RAUI with custom Material theme, using Tetra as a renderer.
+- [`RAUI + Spitfire In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
+  An example of an In-Game integration of RAUI with custom Material theme, using Spitfire as a renderer.
 
-  ![RAUI + Tetra In-Game](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-in-game-material-ui.gif?raw=true)
+  ![RAUI + Spitfire In-Game](https://github.com/RAUI-labs/raui/blob/master/media/raui-in-game-material-ui.gif?raw=true)
 
-- [`RAUI + Tetra todo app`](https://github.com/RAUI-labs/raui/tree/master/demos/todo-app)
-  An example of TODO app with Tetra renderer and dark theme Material component library.
+- [`RAUI Todo App`](https://github.com/RAUI-labs/raui/tree/master/demos/todo-app)
+  An example of TODO app with dark theme Material component library.
 
-  ![RAUI + Tetra todo app](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-todo-app-material-ui.gif?raw=true)
+  ![RAUI Todo App](https://github.com/RAUI-labs/raui/blob/master/media/raui-todo-app-material-ui.gif?raw=true)
 
 ## Contribute
 Any contribution that improves quality of the RAUI toolset is highly appreciated.
@@ -60,7 +60,6 @@ Things that now are done:
 - [x] Add "immediate mode UI" builder to give alternative to macros-based declarative mode UI building (with zero overhead, it is an equivalent to declarative macros used by default, immediate mode and declarative mode widgets can talk to each other without a hassle).
 - [x] Add data binding property type to easily mutate data from outside of the application.
 - [x] Create tesselation renderer that produces Vertex + Index + Batch buffers ready for mesh renderers.
-- [x] Create renderer for Tetra game framework.
 - [x] Move from `widget_component!` and `widget_hook!` macro rules to `pre_hooks` and `post_hooks` function attributes.
 - [x] Add derive `PropsData` and `MessageData` procedural macros to gradually replace the need to call `implement_props_data!` and `implement_message_data!` macros.
 - [x] Add support for portals - an easy way to "teleport" sub-tree into another tree node (useful for modals and drag & drop).

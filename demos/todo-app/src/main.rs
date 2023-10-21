@@ -1,14 +1,20 @@
-mod app;
+mod model;
 mod ui;
 
-use crate::app::TodoState;
-use tetra::ContextBuilder;
+use crate::{model::AppState, ui::components::app::app};
+use raui::prelude::*;
 
-fn main() -> tetra::Result {
-    ContextBuilder::new("TODO App", 800, 600)
-        .resizable(true)
-        .key_repeat(true)
-        .show_mouse(true)
-        .build()?
-        .run(TodoState::new)
+fn main() {
+    let app = DeclarativeApp::default()
+        .tree(make_widget!(app))
+        .view_model(
+            AppState::VIEW_MODEL,
+            ViewModel::produce(|properties| {
+                let mut result = AppState::new(properties);
+                result.load();
+                result
+            }),
+        );
+
+    App::new(AppConfig::default().title("TODO App")).run(app);
 }

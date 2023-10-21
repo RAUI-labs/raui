@@ -1,12 +1,20 @@
 use raui::prelude::*;
-use raui_quick_start::{
-    tetra::{input::Key, Event},
-    RauiQuickStartBuilder,
-};
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 const DATA: &str = "data";
 
-fn app(ctx: WidgetContext) -> WidgetNode {
+fn use_app(ctx: &mut WidgetContext) {
+    ctx.life_cycle.mount(|mut ctx| {
+        ctx.view_models
+            .bindings(DATA, "")
+            .unwrap()
+            .bind(ctx.id.to_owned());
+    });
+}
+
+#[pre_hooks(use_app)]
+fn app(mut ctx: WidgetContext) -> WidgetNode {
     // we read value from view model created with app builder.
     let variant_name = ctx
         .view_models
@@ -25,7 +33,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
             })),
         )
         .named_slot(
-            "B",
+            "S",
             make_widget!(image_box).with_props(ImageBoxProps::colored(Color {
                 r: 0.25,
                 g: 1.0,
@@ -34,7 +42,7 @@ fn app(ctx: WidgetContext) -> WidgetNode {
             })),
         )
         .named_slot(
-            "C",
+            "D",
             make_widget!(image_box).with_props(ImageBoxProps::colored(Color {
                 r: 0.25,
                 g: 0.25,
@@ -46,39 +54,42 @@ fn app(ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Variant Box".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .on_event(|_, host, event| {
-            let mut data = host
-                .application
+    let app = DeclarativeApp::default()
+        .tree(make_widget!(app))
+        .view_model(DATA, ViewModel::new_object("A".to_owned()))
+        .event(move |application, event| {
+            let mut data = application
                 .view_models
                 .get_mut(DATA)
                 .unwrap()
-                .write::<String>()
+                .write_notified::<String>()
                 .unwrap();
 
-            match event {
-                Event::KeyPressed { key: Key::A } => {
-                    // we modify app data with value that represent active variant name.
-                    *data = "A".to_owned();
-                    // we return `true` which marks RAUI app as dirty (needs to process tree).
-                    true
+            if let Event::WindowEvent {
+                event: WindowEvent::KeyboardInput { input, .. },
+                ..
+            } = event
+            {
+                if input.state == ElementState::Pressed {
+                    if let Some(key) = input.virtual_keycode {
+                        match key {
+                            VirtualKeyCode::A => {
+                                // we modify app data with value that represent active variant name.
+                                *data = "A".to_owned();
+                            }
+                            VirtualKeyCode::S => {
+                                *data = "S".to_owned();
+                            }
+                            VirtualKeyCode::D => {
+                                *data = "D".to_owned();
+                            }
+                            _ => {}
+                        }
+                    }
                 }
-                Event::KeyPressed { key: Key::B } => {
-                    *data = "B".to_owned();
-                    true
-                }
-                Event::KeyPressed { key: Key::C } => {
-                    *data = "C".to_owned();
-                    true
-                }
-                _ => false,
             }
-        })
-        .view_model("data", "A".to_owned())
-        .run()
-        .unwrap();
+            true
+        });
+
+    App::new(AppConfig::default().title("Variant Box")).run(app);
 }

@@ -174,4 +174,4 @@ content = """Easily create your own widget components simply by defining functio
 
 [[extra.home.list]]
 title = "Existing Integrations 🏗"
-content = """RAUI has an official integration with the <a target="_blank" href="https://github.com/17cupsofcoffee/tetra">Tetra</a> game engine, and is being used in <a target="_blank" href="https://github.com/PsichiX/Oxygengine"> Oxygengine</a> and <a target="_blank" href="https://github.com/katharostech/bevy_retro">Bevy Retro</a>."""
+content = """RAUI is being used in <a target="_blank" href="https://github.com/PsichiX/Oxygengine"> Oxygengine</a> and <a target="_blank" href="https://github.com/katharostech/bevy_retro">Bevy Retro</a>, but slowly new integrations will be made."""

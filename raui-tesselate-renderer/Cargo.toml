@@ -1,6 +1,6 @@
 [package]
 name = "raui-tesselate-renderer"
-version = "0.43.0"
+version = "0.44.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "RAUI renderer that tesselates layout into vertex and index buffers"
@@ -11,11 +11,13 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [features]
-scalar64 = ["raui-core/scalar64"]
-integer64 = ["raui-core/integer64"]
 index32 = []
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.43" }
+raui-core = { path = "../raui-core", version = "0.44" }
 serde = { version = "1", features = ["derive"] }
-vek = "0.15"
+vek = "0.16"
+spitfire-core = "0.8"
+spitfire-fontdue = "0.8"
+bytemuck = { version = "1", features = ["derive"] }
+fontdue = "0.7"

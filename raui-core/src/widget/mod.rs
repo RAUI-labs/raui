@@ -805,6 +805,10 @@ macro_rules! make_widget {
 /// # }
 /// ```
 #[macro_export]
+#[deprecated(
+    since = "0.43.0",
+    note = "Please use `make_widget!(fn_name)` macro to construct widget component and configure it with builder pattern."
+)]
 macro_rules! widget {
     {()} => ($crate::widget::node::WidgetNode::None);
     {[]} => ($crate::widget::node::WidgetNode::Unit(Default::default()));

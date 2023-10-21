@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(size_box)
@@ -42,11 +43,5 @@ fn main() {
                 ),
         );
 
-    RauiQuickStartBuilder::default()
-        .window_title("Size Box".to_owned())
-        .widget_tree(tree.into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Size Box", tree);
 }

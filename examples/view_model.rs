@@ -1,10 +1,8 @@
 // Make sure you have seen `text_box` code example first, because this is an evolution of that.
 
 use raui::prelude::*;
-use raui_quick_start::{
-    tetra::{input::Key, Event},
-    RauiQuickStartBuilder,
-};
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 // Name of View-Model instance.
 const DATA: &str = "data";
@@ -72,23 +70,25 @@ fn main() {
     // on the host side of application.
     let app_data = view_model.lazy::<AppData>().unwrap();
 
-    RauiQuickStartBuilder::default()
-        .window_title("View-model".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .on_event(move |_, _, event| {
-            match event {
-                Event::KeyPressed { key: Key::Space } => {
-                    // Here we use that shared reference to `AppData`
-                    // to mutate it and notify UI.
-                    *app_data.write().unwrap().counter += 1;
+    let app = DeclarativeApp::default()
+        .tree(make_widget!(app))
+        .view_model(DATA, view_model)
+        .event(move |_, event| {
+            if let Event::WindowEvent {
+                event: WindowEvent::KeyboardInput { input, .. },
+                ..
+            } = event
+            {
+                if let Some(key) = input.virtual_keycode {
+                    if input.state == ElementState::Pressed && key == VirtualKeyCode::Space {
+                        // Here we use that shared reference to `AppData`
+                        // to mutate it and notify UI.
+                        *app_data.write().unwrap().counter += 1;
+                    }
                 }
-                _ => {}
             }
-            false
-        })
-        .view_model_raw(DATA, view_model)
-        .run()
-        .unwrap();
+            true
+        });
+
+    App::new(AppConfig::default().title("View-model")).run(app);
 }

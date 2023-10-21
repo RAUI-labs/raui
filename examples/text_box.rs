@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(text_box).with_props(TextBoxProps {
@@ -14,14 +15,10 @@ fn main() {
             b: 0.5,
             a: 1.0,
         },
+        horizontal_align: TextBoxHorizontalAlign::Center,
+        vertical_align: TextBoxVerticalAlign::Middle,
         ..Default::default()
     });
 
-    RauiQuickStartBuilder::default()
-        .window_title("Text Box".to_owned())
-        .widget_tree(tree.into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Text Box", tree);
 }

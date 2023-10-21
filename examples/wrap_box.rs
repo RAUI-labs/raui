@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(wrap_box)
@@ -20,11 +21,5 @@ fn main() {
             })),
         );
 
-    RauiQuickStartBuilder::default()
-        .window_title("Wrap Box".to_owned())
-        .widget_tree(tree.into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Wrap Box", tree);
 }

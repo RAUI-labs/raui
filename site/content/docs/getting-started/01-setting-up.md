@@ -28,12 +28,12 @@ Then add the following dependencies to the `Cargo.toml`:
 
 ## Initializing The Window
 
-Next we need to setup our UI window. Using the [`raui-quick-start`] crate this is super easy!
+Next we need to setup our UI window. Using the [`raui-app`] crate this is super easy!
 
-In most cases you will probably want to integrate RAUI with a game engine or other renderer, and in that case you would not use [`raui-quick-start`] you would use an integration crate like [`raui-tetra-renderer`]. For now, though, we want to get right into RAUI without having to worry about integrations.
+In most cases you will probably want to integrate RAUI with a game engine or other renderer, and in that case you would not use [`raui-app`], you would use an integration crate like [`raui-tesselation-renderer`]. For now, though, we want to get right into RAUI without having to worry about integrations.
 
-[`raui-quick-start`]: https://docs.rs/raui-quick-start
-[`raui-tetra-renderer`]: https://docs.rs/raui-tetra-renderer
+[`raui-app`]: https://docs.rs/raui-app
+[`raui-tesselation-renderer`]: https://docs.rs/raui-tesselation-renderer
 
 Go ahead and add the following to your `main.rs` file:
 

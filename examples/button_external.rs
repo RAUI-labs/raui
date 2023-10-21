@@ -1,7 +1,8 @@
 // Make sure you have seen `button_internal` code example first, because this is an evolution of that.
 
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 // we create app hook that just receives button state change messages and prints them.
 fn use_app(ctx: &mut WidgetContext) {
@@ -44,11 +45,5 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Button - Sending state to other widget".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Button - Sending state to other widget", make_widget!(app));
 }

@@ -40,27 +40,24 @@ application.setup(setup);
 // we can also register them at any time one by one.
 application.register_component("app", FnWidget::pointer(app));
 
-// Widget tree is simply a set of nested widget nodes, usually made with special macros.
-let tree = widget! {
-    (app {
-        // <named slot name> = ( <widget to put in a slot> )
-        title = (title_bar: {"Hello".to_owned()})
-        content = (vertical_box [
-            (#{"hi"} button: {"Say hi!".to_owned()})
-            (#{"exit"} button: {"Close".to_owned()})
-        ])
-    })
-};
+// Widget tree is simply a set of nested widget nodes.
+let tree = make_widget!(app)
+    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+    .named_slot("content", make_widget!(vertical_box)
+        .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
+        .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
+    )
+);
 
 // some dummy widget tree renderer.
 // it reads widget unit tree and transforms it into target format.
-let mut renderer = HtmlRenderer::default();
+let mut renderer = JsonRenderer::default();
 
 // `apply()` sets new widget tree.
 application.apply(tree);
 
 // `render()` calls renderer to perform transformations on processed application widget tree.
-if let Ok(output) = application.render(&mapping, &mut renderer) {
+if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
     println!("* OUTPUT:\n{}", output);
 }
 
@@ -68,7 +65,7 @@ if let Ok(output) = application.render(&mapping, &mut renderer) {
 // "change" is either any widget state change, or new message sent to any widget (messages
 // can be sent from application host, for example a mouse click, or from another widget).
 application.forced_process();
-if let Ok(output) = application.render(&mapping, &mut renderer) {
+if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
     println!("* OUTPUT:\n{}", output);
 }
 ```
@@ -82,17 +79,14 @@ Widgets are divided into three categories:
 [`WidgetNode`]: core::widget::node::WidgetNode
 
 ```rust
-  widget! {
-      (app {
-          // <named slot name> = ( <widget to put in a slot> )
-          title = (title_bar: {"Hello".to_owned()})
-          content = (vertical_box [
-              (#{"hi"} button: {"Say hi!".to_owned()})
-              (#{"exit"} button: {"Close".to_owned()})
-          ])
-      })
-  };
-  ```
+let tree = make_widget!(app)
+    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+    .named_slot("content", make_widget!(vertical_box)
+        .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
+        .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
+    )
+);
+```
 
 - **[`WidgetComponent`]** - you can think of them as Virtual DOM nodes, they store:
   - pointer to _component function_ (that process their data)
@@ -104,14 +98,13 @@ Widgets are divided into three categories:
     to them, so you can access them by name instead of by index)
 - **[`WidgetUnit`]** - an atomic element that renderers use to convert into target renderable
   data format for rendering engine of choice.
-```rust
-  widget! {{{
-    TextBoxNode {
-        text: "Hello World".to_owned(),
-        ..Default::default()
-    }
-  }}};
-```
+  ```rust
+  # use raui::prelude::*;
+  TextBoxNode {
+      text: "Hello World".to_owned(),
+      ..Default::default()
+  }.into()
+  ```
 
 [`WidgetComponent`]: core::widget::component::WidgetComponent
 
@@ -140,16 +133,11 @@ fn app(context: WidgetContext) -> WidgetNode {
     let index = props.read::<AppProps>().map(|p| p.index).unwrap_or(0);
 
     // we always return new widgets tree.
-    widget! {
-        // `#{key}` - provided value gives a unique name to node. keys allows widgets
-        //      to save state between render calls. here we just pass key of this widget.
-        // `vertical_box` - name of widget component to use, this one is built into RAUI.
-        // `[...]` - listed widget slots. here we just put previously unpacked named slots.
-        (#{index} vertical_box [
-            {title}
-            {content}
-        ])
-    }
+    make_widget!(vertical_box)
+        .key(index)
+        .listed_slot(title)
+        .listed_slot(content)
+        .into()
 }
 ```
 #### States
@@ -245,9 +233,7 @@ fn button(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;
     println!("* PROCESS BUTTON: {}", key);
 
-    widget! {
-        (#{key} text_box: {props.clone()})
-    }
+    make_widget!(text_box).key(key).merge_props(props.clone()).into()
 }
 ```
 
@@ -300,8 +286,8 @@ components that are provided by RAUI handle all [`NavSignal`] actions in their h
 user has to do is to just activate navigation features for them (using [`NavItemActive`] unit
 props). RAUI integrations that want to just use use default interactions engine should make use
 of this struct composed in them and call its [`interact`] method with information about what
-input change was made. There is an example of that feature covered in Tetra integration crate
-(`TetraInteractionsEngine` struct).
+input change was made. There is an example of that feature covered in RAUI App crate
+(`AppInteractionsEngine` struct).
 
 [`NavSignal`]: core::widget::component::interactive::navigation::NavSignal
 
@@ -330,15 +316,13 @@ interactions.interact(Interaction::PointerDown(
 ));
 // navigation/interactions works only if we have navigable items (such as `button`) registered
 // in some navigable container (usually containers with `nav_` prefix).
-let tree = widget! {
-    (#{"app"} nav_content_box [
-        // by default navigable items are inactive which means we have to tell RAUI we activate
-        // them to interact with them.
-        (#{"button"} button: {NavItemActive} {
-            content = (#{"icon"} image_box)
-        })
-    ])
-};
+let tree = make_widget!(nav_content_box)
+    .key("app")
+    .listed_slot(make_widget!(button)
+        .key("button")
+        .with_props(NavItemActive)
+        .named_slot("content", make_widget!(image_box).key("icon"))
+    );
 application.apply(tree);
 application.process();
 let mapping = CoordsMapping::new(Rect {
@@ -368,15 +352,15 @@ application.interact(&mut interactions).unwrap();
 [`DefaultInteractionsEngine`]: https://docs.rs/raui/latest/raui/prelude/struct.DefaultInteractionsEngine.html
 
 ## Media
-- [`RAUI + Tetra In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
-  An example of an In-Game integration of RAUI with custom Material theme, using Tetra as a renderer.
+- [`RAUI + Spitfire In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
+  An example of an In-Game integration of RAUI with custom Material theme, using Spitfire as a renderer.
 
-  ![RAUI + Tetra In-Game](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-in-game-material-ui.gif?raw=true)
+  ![RAUI + Spitfire In-Game](https://github.com/RAUI-labs/raui/blob/master/media/raui-in-game-material-ui.gif?raw=true)
 
-- [`RAUI + Tetra todo app`](https://github.com/RAUI-labs/raui/tree/master/demos/todo-app)
-  An example of TODO app with Tetra renderer and dark theme Material component library.
+- [`RAUI Todo App`](https://github.com/RAUI-labs/raui/tree/master/demos/todo-app)
+  An example of TODO app with dark theme Material component library.
 
-  ![RAUI + Tetra todo app](https://github.com/RAUI-labs/raui/blob/master/media/raui-tetra-todo-app-material-ui.gif?raw=true)
+  ![RAUI Todo App](https://github.com/RAUI-labs/raui/blob/master/media/raui-todo-app-material-ui.gif?raw=true)
 
 ## Contribute
 Any contribution that improves quality of the RAUI toolset is highly appreciated.
@@ -411,7 +395,6 @@ Things that now are done:
 - [x] Add "immediate mode UI" builder to give alternative to macros-based declarative mode UI building (with zero overhead, it is an equivalent to declarative macros used by default, immediate mode and declarative mode widgets can talk to each other without a hassle).
 - [x] Add data binding property type to easily mutate data from outside of the application.
 - [x] Create tesselation renderer that produces Vertex + Index + Batch buffers ready for mesh renderers.
-- [x] Create renderer for Tetra game framework.
 - [x] Move from `widget_component!` and `widget_hook!` macro rules to `pre_hooks` and `post_hooks` function attributes.
 - [x] Add derive `PropsData` and `MessageData` procedural macros to gradually replace the need to call `implement_props_data!` and `implement_message_data!` macros.
 - [x] Add support for portals - an easy way to "teleport" sub-tree into another tree node (useful for modals and drag & drop).

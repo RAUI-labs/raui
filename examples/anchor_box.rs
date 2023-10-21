@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 fn preview(ctx: WidgetContext) -> WidgetNode {
     // we print this widget props to show how AnchorProps values change relative to window resize.
@@ -45,11 +46,5 @@ fn main() {
                 .named_slot("content", make_widget!(preview)),
         );
 
-    RauiQuickStartBuilder::default()
-        .window_title("Anchor Box".to_owned())
-        .widget_tree(tree.into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Anchor Box", tree);
 }

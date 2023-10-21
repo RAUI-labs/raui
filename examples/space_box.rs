@@ -1,5 +1,6 @@
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(horizontal_box)
@@ -27,17 +28,5 @@ fn main() {
             })),
         );
 
-    RauiQuickStartBuilder::default()
-        .window_title("Space Box".to_owned())
-        .widget_tree(tree.into())
-        .clear_color(Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-            a: 1.0,
-        })
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Space Box", tree);
 }

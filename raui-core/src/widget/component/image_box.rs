@@ -5,7 +5,8 @@ use crate::{
         context::WidgetContext,
         node::WidgetNode,
         unit::image::{
-            ImageBoxAspectRatio, ImageBoxColor, ImageBoxMaterial, ImageBoxNode, ImageBoxSizeValue,
+            ImageBoxAspectRatio, ImageBoxColor, ImageBoxImage, ImageBoxMaterial, ImageBoxNode,
+            ImageBoxSizeValue,
         },
         utils::{Color, Transform},
     },
@@ -36,6 +37,31 @@ impl ImageBoxProps {
             material: ImageBoxMaterial::Color(ImageBoxColor {
                 color,
                 ..Default::default()
+            }),
+            ..Default::default()
+        }
+    }
+
+    pub fn image(id: impl ToString) -> Self {
+        Self {
+            material: ImageBoxMaterial::Image(ImageBoxImage {
+                id: id.to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }
+    }
+
+    pub fn image_aspect_ratio(id: impl ToString, outside: bool) -> Self {
+        Self {
+            material: ImageBoxMaterial::Image(ImageBoxImage {
+                id: id.to_string(),
+                ..Default::default()
+            }),
+            content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
+                horizontal_alignment: 0.5,
+                vertical_alignment: 0.5,
+                outside,
             }),
             ..Default::default()
         }

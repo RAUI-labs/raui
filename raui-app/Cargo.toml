@@ -1,9 +1,9 @@
 [package]
-name = "raui-immediate-widgets"
+name = "raui-app"
 version = "0.44.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
-description = "Widgets library for RAUI immediate mode UI layer"
+description = "RAUI application layer to focus only on making UI"
 readme = "../README.md"
 license = "MIT"
 repository = "https://github.com/RAUI-labs/raui"
@@ -14,4 +14,14 @@ categories = ["gui", "rendering::graphics-api"]
 raui-core = { path = "../raui-core", version = "0.44" }
 raui-material = { path = "../raui-material", version = "0.44" }
 raui-immediate = { path = "../raui-immediate", version = "0.44" }
+raui-retained = { path = "../raui-retained", version = "0.44" }
+raui-tesselate-renderer = { path = "../raui-tesselate-renderer", version = "0.44" }
+spitfire-glow = "0.8"
+spitfire-fontdue = "0.8"
+bytemuck = { version = "1", features = ["derive"] }
+glutin = "0.28"
+fontdue = "0.7"
+image = "0.24"
+vek = "0.16"
 serde = { version = "1", features = ["derive"] }
+toml = "0.8"

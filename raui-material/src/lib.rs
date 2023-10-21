@@ -1,5 +1,8 @@
 //! Theme-able RAUI components
 
+// TODO: remove once internals will move from `widget` to `make_widget` macro!
+#![allow(deprecated)]
+
 pub mod component;
 pub mod theme;
 

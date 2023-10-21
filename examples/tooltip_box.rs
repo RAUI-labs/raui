@@ -1,7 +1,8 @@
 // Make sure you have seen `context_box` code example first, because this is an evolution of that.
 
 use raui::prelude::*;
-use raui_quick_start::RauiQuickStartBuilder;
+#[allow(unused_imports)]
+use raui_app::prelude::*;
 
 // we mark app as an active navigable container to let all buttons down the tree register to the
 // navigation system so they can react on mouse hovering for example.
@@ -110,11 +111,5 @@ fn icon(ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    RauiQuickStartBuilder::default()
-        .window_title("Tooltip Box".to_owned())
-        .widget_tree(make_widget!(app).into())
-        .build()
-        .unwrap()
-        .run()
-        .unwrap();
+    DeclarativeApp::simple("Tooltip Box", make_widget!(app));
 }

@@ -1,9 +1,8 @@
 #![cfg(test)]
+// TODO: remove once internals will move from `widget` to `make_widget` macro!
+#![allow(deprecated)]
 
-use crate::{
-    prelude::*,
-    renderer::{html::HtmlRenderer, tesselate::prelude::TesselateRenderer},
-};
+use crate::{prelude::*, renderer::json::JsonRenderer};
 
 use std::str::FromStr;
 
@@ -109,7 +108,6 @@ fn test_macro() {
 
 #[test]
 #[allow(dead_code)]
-#[cfg(feature = "html")]
 fn test_hello_world() {
     use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
@@ -308,13 +306,13 @@ fn test_hello_world() {
 
     // some dummy widget tree renderer.
     // it reads widget unit tree and transforms it into target format.
-    let mut renderer = HtmlRenderer::default();
+    let mut renderer = JsonRenderer::default();
 
     // `apply()` sets new widget tree.
     application.apply(tree);
 
     // `render()` calls renderer to perform transformations on processed application widget tree.
-    if let Ok(output) = application.render(&mapping, &mut renderer) {
+    if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
         println!("* OUTPUT:\n{}", output);
     }
 
@@ -322,7 +320,7 @@ fn test_hello_world() {
     // "change" is either any widget state change, or new message sent to any widget (messages
     // can be sent from application host, for example a mouse click, or from another widget).
     application.forced_process();
-    if let Ok(output) = application.render(&mapping, &mut renderer) {
+    if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
         println!("* OUTPUT:\n{}", output);
     }
     // [md-bakery: end]
@@ -355,7 +353,9 @@ fn test_hello_world() {
     println!("* INPUT:\n{:#?}", tree);
     println!("* PROCESS");
     application.apply(tree);
-    if let Ok(output) = application.render(&mapping, &mut HtmlRenderer::default()) {
+    if let Ok(output) =
+        application.render::<JsonRenderer, String, _>(&mapping, &mut JsonRenderer::default())
+    {
         println!("* OUTPUT:\n{}", output);
     }
 
@@ -914,121 +914,6 @@ fn test_immediate_mode() {
         make_app("app")
             .with_props(NavContainerActive)
             .named_slot("title", make_text_box("text", "Hello, World!"))
-            .named_slot("content", make_button("button", "Click me!"))
-            .into(),
+            .named_slot("content", make_button("button", "Click me!")),
     );
-}
-
-#[test]
-#[cfg(feature = "tesselate")]
-fn test_tesselation() {
-    let mut application = Application::default();
-    let mut layout_engine = DefaultLayoutEngine::default();
-    let atlas_mapping = Default::default();
-    let image_sizes = Default::default();
-    let mut renderer = TesselateRenderer::new(Default::default(), (), &atlas_mapping, &image_sizes);
-    let mapping = CoordsMapping::new(Rect {
-        left: 0.0,
-        right: 100.0,
-        top: 0.0,
-        bottom: 100.0,
-    });
-    application.apply(
-        make_widget!(grid_box)
-            .with_props(GridBoxProps {
-                cols: 2,
-                rows: 2,
-                ..Default::default()
-            })
-            .listed_slot(
-                make_widget!(image_box)
-                    .with_props(ImageBoxProps {
-                        material: ImageBoxMaterial::Color(ImageBoxColor {
-                            color: Color {
-                                r: 0.25,
-                                g: 0.5,
-                                b: 0.75,
-                                a: 1.0,
-                            },
-                            scaling: ImageBoxImageScaling::Frame((10.0, true).into()),
-                        }),
-                        ..Default::default()
-                    })
-                    .with_props(GridBoxItemLayout {
-                        space_occupancy: IntRect {
-                            left: 1,
-                            right: 2,
-                            top: 0,
-                            bottom: 1,
-                        },
-                        ..Default::default()
-                    }),
-            )
-            .listed_slot(
-                make_widget!(image_box)
-                    .with_props(ImageBoxProps {
-                        material: ImageBoxMaterial::Image(ImageBoxImage {
-                            id: "ass".to_owned(),
-                            ..Default::default()
-                        }),
-                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
-                            horizontal_alignment: 0.0,
-                            vertical_alignment: 0.5,
-                            outside: false,
-                        }),
-                        ..Default::default()
-                    })
-                    .with_props(GridBoxItemLayout {
-                        space_occupancy: IntRect {
-                            left: 0,
-                            right: 1,
-                            top: 0,
-                            bottom: 1,
-                        },
-                        ..Default::default()
-                    }),
-            )
-            .listed_slot(
-                make_widget!(image_box)
-                    .with_props(ImageBoxProps {
-                        material: ImageBoxMaterial::Image(ImageBoxImage {
-                            id: "ass".to_owned(),
-                            ..Default::default()
-                        }),
-                        content_keep_aspect_ratio: Some(ImageBoxAspectRatio {
-                            horizontal_alignment: 1.0,
-                            vertical_alignment: 0.5,
-                            outside: false,
-                        }),
-                        ..Default::default()
-                    })
-                    .with_props(GridBoxItemLayout {
-                        space_occupancy: IntRect {
-                            left: 0,
-                            right: 2,
-                            top: 1,
-                            bottom: 2,
-                        },
-                        ..Default::default()
-                    }),
-            )
-            .listed_slot(make_widget!(text_box).with_props(TextBoxProps {
-                text: "hello".to_owned(),
-                font: TextBoxFont {
-                    name: "font".to_owned(),
-                    size: 16.0,
-                },
-                ..Default::default()
-            }))
-            .into(),
-    );
-    application.forced_process();
-    application
-        .layout(&mapping, &mut layout_engine)
-        .expect("Failed layouting");
-    let tesselation = application
-        .render(&mapping, &mut renderer)
-        .expect("Cannot tesselate UI tree!")
-        .optimized_batches();
-    println!("* Tesselation: {:#?}", tesselation);
 }

@@ -4,9 +4,9 @@
 //! interaction, animations, etc.
 //!
 //! In most cases users will not need to manually create and manage an [`Application`]. That will
-//! usually be handled by renderer integration crates like [`raui_tetra_renderer`].
+//! usually be handled by renderer integration crates like [`raui-tesselation-renderer`].
 //!
-//! [`raui_tetra_renderer`]: https://docs.rs/raui-tetra-renderer/latest/raui_tetra_renderer/
+//! [`raui-tesselation-renderer`]: https://docs.rs/raui-tesselation-renderer/
 //!
 //! You _will_ need to interact with [`Application`] if you are building your own RAUI integration
 //! with another renderer or game engine.
@@ -408,9 +408,9 @@ impl Application {
 
     /// Update the application widget tree
     #[inline]
-    pub fn apply(&mut self, tree: WidgetNode) {
+    pub fn apply(&mut self, tree: impl Into<WidgetNode>) {
         self.mark_dirty();
-        self.tree = tree;
+        self.tree = tree.into();
     }
 
     /// Render the application

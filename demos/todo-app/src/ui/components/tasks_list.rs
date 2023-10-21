@@ -1,27 +1,10 @@
-use crate::ui::components::{
-    app::{AppMessage, AppSharedProps},
-    confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage},
+// use crate::ui::components::confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage};
+use crate::{
+    model::{AppState, TaskProps},
+    ui::components::confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage},
 };
-use raui_core::prelude::*;
-use raui_material::prelude::*;
+use raui::prelude::*;
 use serde::{Deserialize, Serialize};
-
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
-pub struct TaskProps {
-    #[serde(default)]
-    pub done: bool,
-    #[serde(default)]
-    pub name: String,
-}
-
-impl TaskProps {
-    pub fn new(name: &str) -> Self {
-        Self {
-            done: false,
-            name: name.to_owned(),
-        }
-    }
-}
 
 #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
 struct TaskState {
@@ -29,28 +12,20 @@ struct TaskState {
     deleting: bool,
 }
 
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
-pub struct TasksProps {
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub tasks: Vec<TaskProps>,
-}
-
 fn use_task(context: &mut WidgetContext) {
-    context.life_cycle.change(|context| {
+    context.life_cycle.change(|mut context| {
+        let mut app_state = context
+            .view_models
+            .view_model_mut::<AppState>(AppState::VIEW_MODEL)
+            .unwrap();
+
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
                 if msg.trigger_start() {
                     match msg.sender.key() {
                         "checkbox" => {
-                            // TODO: figure out better to pass index to the message.
-                            // maybe using props? anything would be better than parsing string.
                             if let Ok(index) = context.id.key().parse::<usize>() {
-                                let id = context
-                                    .shared_props
-                                    .read_cloned_or_default::<AppSharedProps>()
-                                    .id;
-                                context.messenger.write(id, AppMessage::ToggleTask(index));
+                                app_state.toggle_task(index);
                             }
                         }
                         "delete" => {
@@ -62,14 +37,8 @@ fn use_task(context: &mut WidgetContext) {
             } else if let Some(msg) = msg.as_any().downcast_ref::<ConfirmNotifyMessage>() {
                 let _ = context.state.write_with(TaskState { deleting: false });
                 if msg.confirmed {
-                    // TODO: figure out better to pass index to the message.
-                    // maybe using props? anything would be better than parsing string.
                     if let Ok(index) = context.id.key().parse::<usize>() {
-                        let id = context
-                            .shared_props
-                            .read_cloned_or_default::<AppSharedProps>()
-                            .id;
-                        context.messenger.write(id, AppMessage::DeleteTask(index));
+                        app_state.delete_task(index);
                     }
                 }
             }
@@ -86,133 +55,147 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
         state,
         ..
     } = context;
-
     let data = props.read_cloned_or_default::<TaskProps>();
     let TaskState { deleting } = state.read_cloned_or_default();
 
-    let checkbox_props = Props::new(FlexBoxItemLayout {
-        fill: 0.0,
-        grow: 0.0,
-        shrink: 0.0,
-        align: 0.5,
-        ..Default::default()
-    })
-    .with(SwitchPaperProps {
-        on: data.done,
-        variant: "checkbox".to_owned(),
-        size_level: 2,
-    })
-    .with(NavItemActive)
-    .with(ButtonNotifyProps(id.to_owned().into()))
-    .with(ThemedWidgetProps {
-        color: ThemeColor::Primary,
-        variant: ThemeVariant::ContentOnly,
-    });
-
-    let name_props = Props::new(TextPaperProps {
-        text: data.name,
-        height: TextBoxSizeValue::Exact(24.0),
-        variant: "title".to_owned(),
-        ..Default::default()
-    })
-    .with(FlexBoxItemLayout {
-        align: 0.5,
-        ..Default::default()
-    });
-
-    let delete_props = Props::new(FlexBoxItemLayout {
-        fill: 0.0,
-        grow: 0.0,
-        shrink: 0.0,
-        align: 0.5,
-        ..Default::default()
-    })
-    .with(IconPaperProps {
-        image: IconImage {
-            id: "icon-delete".to_owned(),
+    make_widget!(horizontal_paper)
+        .key(key)
+        .with_props(HorizontalBoxProps {
+            separation: 10.0,
             ..Default::default()
-        },
-        size_level: 2,
-        ..Default::default()
-    })
-    .with(NavItemActive)
-    .with(ButtonNotifyProps(id.to_owned().into()))
-    .with(ThemedWidgetProps {
-        color: ThemeColor::Primary,
-        variant: ThemeVariant::ContentOnly,
-    });
-
-    let list_props = Props::new(HorizontalBoxProps {
-        separation: 10.0,
-        ..Default::default()
-    })
-    .with(ContentBoxItemLayout {
-        margin: Rect {
-            left: 10.0,
-            right: 10.0,
-            top: 10.0,
-            bottom: 10.0,
-        },
-        ..Default::default()
-    });
-
-    let confirm_props = ConfirmBoxProps {
-        text: "Do you want to remove task?".to_owned(),
-        notify: id.to_owned().into(),
-    };
-
-    widget! {
-        (#{key} horizontal_paper: {list_props} [
-            (#{"checkbox"} switch_button_paper: {checkbox_props})
-            (#{"name"} text_paper: {name_props})
-            (#{"delete"} icon_button_paper: {delete_props})
-            (hidden_box: {HiddenBoxProps(!deleting)} {
-                content = (#{"confirm"} confirm_box: {confirm_props})
-            })
-        ])
-    }
+        })
+        .with_props(ContentBoxItemLayout {
+            margin: 10.0.into(),
+            ..Default::default()
+        })
+        .listed_slot(
+            make_widget!(switch_button_paper)
+                .key("checkbox")
+                .with_props(FlexBoxItemLayout {
+                    fill: 0.0,
+                    grow: 0.0,
+                    shrink: 0.0,
+                    align: 0.5,
+                    ..Default::default()
+                })
+                .with_props(SwitchPaperProps {
+                    on: data.done,
+                    variant: "checkbox".to_owned(),
+                    size_level: 2,
+                })
+                .with_props(NavItemActive)
+                .with_props(ButtonNotifyProps(id.to_owned().into()))
+                .with_props(ThemedWidgetProps {
+                    color: ThemeColor::Primary,
+                    variant: ThemeVariant::ContentOnly,
+                }),
+        )
+        .listed_slot(
+            make_widget!(text_paper)
+                .key("name")
+                .with_props(TextPaperProps {
+                    text: data.name,
+                    height: TextBoxSizeValue::Exact(24.0),
+                    variant: "title".to_owned(),
+                    ..Default::default()
+                })
+                .with_props(FlexBoxItemLayout {
+                    align: 0.5,
+                    ..Default::default()
+                }),
+        )
+        .listed_slot(
+            make_widget!(icon_button_paper)
+                .key("delete")
+                .with_props(FlexBoxItemLayout {
+                    fill: 0.0,
+                    grow: 0.0,
+                    shrink: 0.0,
+                    align: 0.5,
+                    ..Default::default()
+                })
+                .with_props(IconPaperProps {
+                    image: IconImage {
+                        id: "resources/icons/delete.png".to_owned(),
+                        ..Default::default()
+                    },
+                    size_level: 2,
+                    ..Default::default()
+                })
+                .with_props(NavItemActive)
+                .with_props(ButtonNotifyProps(id.to_owned().into()))
+                .with_props(ThemedWidgetProps {
+                    color: ThemeColor::Primary,
+                    variant: ThemeVariant::ContentOnly,
+                }),
+        )
+        .listed_slot(
+            make_widget!(hidden_box)
+                .with_props(HiddenBoxProps(!deleting))
+                .named_slot(
+                    "content",
+                    make_widget!(confirm_box)
+                        .key("confirm")
+                        .with_props(ConfirmBoxProps {
+                            text: "Do you want to remove task?".to_owned(),
+                            notify: id.to_owned().into(),
+                        }),
+                ),
+        )
+        .into()
 }
 
-pub fn tasks_list(context: WidgetContext) -> WidgetNode {
-    let WidgetContext { key, props, .. } = context;
+fn use_tasks_list(context: &mut WidgetContext) {
+    context.life_cycle.mount(|mut context| {
+        context
+            .view_models
+            .bindings(AppState::VIEW_MODEL, AppState::PROP_TASKS)
+            .unwrap()
+            .bind(context.id.to_owned());
+    });
+}
 
-    let TasksProps { tasks } = props.read_cloned_or_default();
-
-    let tasks = tasks
-        .into_iter()
-        .enumerate()
-        .map(|(i, item)| {
-            let props = Props::new(item).with(FlexBoxItemLayout {
+#[pre_hooks(use_tasks_list)]
+pub fn tasks_list(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        key, view_models, ..
+    } = context;
+    let app_state = view_models
+        .view_model::<AppState>(AppState::VIEW_MODEL)
+        .unwrap();
+    let tasks = app_state.tasks().enumerate().map(|(index, item)| {
+        make_widget!(task)
+            .key(index)
+            .with_props(item.to_owned())
+            .with_props(FlexBoxItemLayout {
                 grow: 0.0,
                 shrink: 0.0,
                 ..Default::default()
-            });
-            widget! { (#{i} task: {props}) }
-        })
-        .collect::<Vec<_>>();
+            })
+    });
 
-    let scroll_props = Props::new(NavContainerActive)
-        .with(NavItemActive)
-        .with(ScrollViewRange::default())
-        .with(PaperContentLayoutProps(ContentBoxItemLayout {
-            margin: Rect {
-                left: 10.0,
-                right: 10.0,
-                top: 10.0,
-                bottom: 10.0,
-            },
+    make_widget!(scroll_paper)
+        .key(key)
+        .with_props(NavContainerActive)
+        .with_props(NavItemActive)
+        .with_props(ScrollViewRange::default())
+        .with_props(PaperContentLayoutProps(ContentBoxItemLayout {
+            margin: 10.0.into(),
             ..Default::default()
-        }));
-
-    let list_props = VerticalBoxProps {
-        separation: 30.0,
-        ..Default::default()
-    };
-
-    widget! {
-        (#{key} scroll_paper: {scroll_props} {
-            content = (#{"list"} vertical_box: {list_props} |[ tasks ]|)
-            scrollbars = (#{"scrollbars"} scroll_paper_side_scrollbars)
-        })
-    }
+        }))
+        .named_slot(
+            "content",
+            make_widget!(vertical_box)
+                .key("list")
+                .with_props(VerticalBoxProps {
+                    separation: 30.0,
+                    ..Default::default()
+                })
+                .listed_slots(tasks),
+        )
+        .named_slot(
+            "scrollbars",
+            make_widget!(scroll_paper_side_scrollbars).key("scrollbars"),
+        )
+        .into()
 }

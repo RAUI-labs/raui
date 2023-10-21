@@ -24,6 +24,9 @@ example NAME:
 demo NAME="todo-app":
     cd ./demos/{{NAME}} && cargo run
 
+guide NAME:
+    cd ./site/rust/guide_{{NAME}} && cargo run
+
 # Mandatory checks to run before pushing changes to repository
 checks:
     just format
@@ -63,18 +66,10 @@ publish:
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-immediate-widgets/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-binary-renderer/Cargo.toml
-    sleep 1
     cargo publish --no-verify --manifest-path ./raui-json-renderer/Cargo.toml
-    sleep 1
-    cargo publish --no-verify --manifest-path ./raui-ron-renderer/Cargo.toml
-    sleep 1
-    cargo publish --no-verify --manifest-path ./raui-html-renderer/Cargo.toml
     sleep 1
     cargo publish --no-verify --manifest-path ./raui-tesselate-renderer/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-tetra-renderer/Cargo.toml
+    cargo publish --no-verify --manifest-path ./raui-app/Cargo.toml
     sleep 1
     cargo publish --no-verify --manifest-path ./Cargo.toml
-    sleep 1
-    cargo publish --no-verify --manifest-path ./raui-quick-start/Cargo.toml
