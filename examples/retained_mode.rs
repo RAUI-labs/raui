@@ -225,13 +225,13 @@ impl<T: ViewState> ViewState for Button<T> {
 }
 
 // here we construct application view tree out of view objects.
-fn create_app(ui: &mut Application) -> View<AppView> {
+fn create_app(notifier: ChangeNotifier) -> View<AppView> {
     // create counter view and get lazy handles to it for buttons to use.
     // nice thing about lazy views is that they can be shared across
     // entire application - think of them just as handles/references to
     // any view you create, that can be accessed from whatever place.
     let counter = View::new(CounterView {
-        counter: ViewValue::new(0).with_notifier(ui.notifier()),
+        counter: ViewValue::new(0).with_notifier(notifier),
     });
     let lazy_counter_increment = counter.lazy();
     let lazy_counter_decrement = counter.lazy();
@@ -257,19 +257,5 @@ fn create_app(ui: &mut Application) -> View<AppView> {
 }
 
 fn main() {
-    // we keep screen shared view in application scope
-    // to keep views tree alive for entire app lifetime.
-    // this somewhat simulates having UI manager storing views tree.
-    let mut screen = View::new(SharedView::<AppView>::default());
-
-    let app = DeclarativeApp::default().setup(|app| {
-        // create app views tree and put it into screen root
-        // to extend its lifetime to application.
-        screen.write().unwrap().replace(create_app(app));
-
-        // finally send screen widget component to RAUI app.
-        app.apply(screen.component().key("screen"));
-    });
-
-    App::new(AppConfig::default().title("Retained mode UI")).run(app);
+    RetainedApp::simple("Retained mode UI", |notifier| create_app(notifier));
 }

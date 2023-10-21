@@ -126,7 +126,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
                     WidgetNode::default()
                 } else {
                     make_widget!(text_tooltip_paper)
-                        .merge_props(make_tooltip_props("Save changes"))
+                        .merge_props(make_tooltip_props("Create task"))
                         .named_slot(
                             "content",
                             make_widget!(icon_button_paper)

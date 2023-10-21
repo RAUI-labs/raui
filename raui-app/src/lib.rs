@@ -17,7 +17,11 @@ use vek::Rect;
 pub use glutin::event;
 
 pub mod prelude {
-    pub use crate::{app::declarative::*, app::*, event::*};
+    pub use crate::{
+        app::*,
+        app::{declarative::*, immediate::*, retained::*},
+        event::*,
+    };
 }
 
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]

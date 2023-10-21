@@ -1,6 +1,6 @@
 use crate::{app::SharedApp, Vertex};
 use glutin::event::Event;
-use raui_core::{application::Application, view_model::ViewModel};
+use raui_core::application::{Application, ChangeNotifier};
 use raui_retained::{View, ViewState};
 use spitfire_glow::{
     app::{App, AppConfig, AppState},
@@ -22,13 +22,16 @@ impl<T: ViewState> Default for RetainedApp<T> {
 }
 
 impl<T: ViewState> RetainedApp<T> {
-    pub fn simple(title: impl ToString, root: impl Into<View<T>>) {
-        App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().tree(root));
+    pub fn simple(title: impl ToString, producer: impl FnMut(ChangeNotifier) -> View<T>) {
+        App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().tree(producer));
     }
 
-    pub fn simple_fullscreen(title: impl ToString, root: impl Into<View<T>>) {
+    pub fn simple_fullscreen(
+        title: impl ToString,
+        producer: impl FnMut(ChangeNotifier) -> View<T>,
+    ) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
-            .run(Self::default().tree(root));
+            .run(Self::default().tree(producer));
     }
 
     pub fn redraw(mut self, f: impl FnMut(f32, &mut Graphics<Vertex>) + 'static) -> Self {
@@ -46,16 +49,8 @@ impl<T: ViewState> RetainedApp<T> {
         self
     }
 
-    pub fn view_model(mut self, name: impl ToString, view_model: ViewModel) -> Self {
-        self.shared
-            .application
-            .view_models
-            .insert(name.to_string(), view_model);
-        self
-    }
-
-    pub fn tree(mut self, root: impl Into<View<T>>) -> Self {
-        let root = root.into();
+    pub fn tree(mut self, mut producer: impl FnMut(ChangeNotifier) -> View<T>) -> Self {
+        let root = producer(self.shared.application.notifier());
         self.shared.application.apply(root.component().key("root"));
         self.root = Some(root);
         self

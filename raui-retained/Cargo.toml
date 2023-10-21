@@ -1,6 +1,6 @@
 [package]
 name = "raui-retained"
-version = "0.44.0"
+version = "0.45.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "RAUI retained mode UI layer"
@@ -11,4 +11,4 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.44" }
+raui-core = { path = "../raui-core", version = "0.45" }

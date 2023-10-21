@@ -103,7 +103,7 @@ let tree = make_widget!(app)
   TextBoxNode {
       text: "Hello World".to_owned(),
       ..Default::default()
-  }.into()
+  };
   ```
 
 [`WidgetComponent`]: core::widget::component::WidgetComponent

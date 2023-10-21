@@ -6,7 +6,6 @@
 
 #[allow(unused_imports)]
 use raui_app::prelude::*;
-use raui_immediate::{make_widgets, ImmediateContext};
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
@@ -145,33 +144,10 @@ mod gui {
 }
 
 fn main() {
-    use raui_core::prelude::*;
-
-    // immediate mode context is backend of `use_state` hook
-    // that tracks persistent state in function calls.
-    let context = ImmediateContext::default();
-
     // some applciation state.
     let mut counter = 0usize;
 
-    let app = DeclarativeApp::default().update(move |app| {
-        // resets immediate mode UI builder to ensure we start
-        // building current frame UI from scratch.
-        raui_immediate::reset();
-
-        // `make_widgets` function is a shorthand for:
-        // - activate immediate context.
-        // - begin widgets group.
-        // - execute closure.
-        // - end widgets group.
-        // - deactivate imemdiate context.
-        let widgets = make_widgets(&context, || gui::app(&mut counter));
-
-        // once that's done, we get list of RAUI widgets produced
-        // and we can embed them in some RAUI container, preferably
-        // content box to simulate layers on the screen.
-        app.apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+    ImmediateApp::simple("Immediate mode UI", move || {
+        gui::app(&mut counter);
     });
-
-    App::new(AppConfig::default().title("Immediate mode UI")).run(app);
 }

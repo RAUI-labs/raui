@@ -2,7 +2,6 @@
 
 #[allow(unused_imports)]
 use raui_app::prelude::*;
-use raui_immediate::{make_widgets, ImmediateContext};
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
@@ -103,17 +102,7 @@ mod gui {
 }
 
 fn main() {
-    use raui_core::prelude::*;
-
-    let context = ImmediateContext::default();
-
-    let app = DeclarativeApp::default().update(move |app| {
-        raui_immediate::reset();
-
-        let widgets = make_widgets(&context, || gui::app());
-
-        app.apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+    ImmediateApp::simple("Immediate mode UI - States and Effects", move || {
+        gui::app();
     });
-
-    App::new(AppConfig::default().title("Immediate mode UI - States and Effects")).run(app);
 }
