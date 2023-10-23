@@ -24,7 +24,11 @@ cargo new --bin my_project
 
 Then add the following dependencies to the `Cargo.toml`:
 
-{{ toml_code_snippet(path="rust/guide_01/Cargo.toml", start=7) }}
+```toml
+[dependencies]
+# The RAUI mother-crate
+raui = { version = "*", features = ["app"] }
+```
 
 ## Initializing The Window
 

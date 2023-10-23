@@ -58,12 +58,7 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
     // influence its layout when it is a child of a `content_box`.
     .with(ContentBoxItemLayout {
         // Specify a margin of 10 on every side
-        margin: Rect {
-            left: 10.,
-            right: 10.,
-            top: 10.,
-            bottom: 10.,
-        },
+        margin: 10.0.into(),
         // Use the default value for the rest of the layout options
         ..Default::default()
     });
@@ -105,12 +100,7 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
 #    })
 #    .with(ContentBoxItemLayout {
 #        // Specify a margin of 10 on every side
-#        margin: Rect {
-#            left: 10.,
-#            right: 10.,
-#            top: 10.,
-#            bottom: 10.,
-#        },
+#        margin: 10.0.into(),
 #        // Use the default value for the rest of the layout options
 #        ..Default::default()
 #    });

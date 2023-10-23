@@ -30,9 +30,9 @@ There's plenty of comments in the above example, but there's a lot going on here
 
 ### Setting the Widget Tree
 
-The first thing we changed was to add our app component to the widget tree in our `RauiQuickStartBuilder`.
+The first thing we changed was to add our app component to the widget tree in our `DeclarativeApp` instance.
 
-{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=9, end=16)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=3, end=5)}}
 
 Every RAUI app has a root widget tree that holds the whole structure of application in it. It is essentially the "main" of the UI. In this case we set our widget to a single `app` component. This is the `app` component that we define in the function below.
 
@@ -42,7 +42,7 @@ Here we use the strategy of keeping our root widget tree very simple and putting
 
 Now we get to the definition of our `app` component:
 
-{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=30, end=30)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=9, end=9)}}
 
 As we mentioned before, components are just normal Rust functions with a specific signature. Components are required to take a [`WidgetContext`] as an argument and they must return a [`WidgetNode`].
 
@@ -55,20 +55,19 @@ The widget context is the way that a widget can access it's own state, propertie
 
 #### [`WidgetNode`]
 
-That brings us to what a **widget _node_** is. As we mentioned above, there are a few different kinds of _widgets_. Widget components are one of them and widget nodes are another. The easiest way to think of a [`WidgetNode`] is that it is a tree of other widgets. [`WidgetNode`]s are most commonly created with the [`make_widget!`] macro and filled
-with builder pattern of [`WidgetComponent`].
+That brings us to what a **widget _node_** is. As we mentioned above, there are a few different kinds of _widgets_. Widget components are one of them and widget nodes are another. The easiest way to think of a [`WidgetNode`] is that it is a tree of other widgets. [`WidgetNode`]s are most commonly created with the [`make_widget!`] macro and filled with builder pattern of [`WidgetComponent`].
 
-> **Note:** There is a third kind of widget is called a [`WidgetUnit`], but you don't usually need to think about those.
+> **Note:** There is a third kind of widget is called a [`WidgetUnit`], but you don't usually need to think about those, since they are the final representation of processed widgets tree.
 
-We can see the [`widget!`] macro in action in our example:
+We can see the [`make_widget!`] macro with builder pattern in action in our example:
 
-{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=56, end=65)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=16, end=33)}}
 
-We use the widget macro to create a simple tree with a single [`text_box`] component in it and we apply our `text_box_props` to it to configure how the text box renders the text inside.
+We use that pattern to create a simple tree with a single [`text_box`] component in it and we apply our `text_box_props` to it to configure how the text box renders the text inside.
 
 [`text_box`]: https://docs.rs/raui/latest/raui/core/widget/component/text_box/fn.text_box.html
 
-[`widget!`]: https://docs.rs/raui/latest/raui/core/macro.widget.html
+[`make_widget!`]: https://docs.rs/raui/latest/raui/core/macro.make_widget.html
 [`WidgetUnit`]: https://docs.rs/raui/latest/raui/core/widget/unit/enum.WidgetUnit.html
 [`WidgetComponent`]: https://docs.rs/raui/latest/raui/core/widget/component/enum.WidgetComponent.html
 
@@ -78,7 +77,7 @@ That brings us to the concept of **_properties_**. Properties are data, made up 
 
 In this case we created [`TextBoxProps`] data that we used to configure the [`text_box`] component.
 
-{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=38, end=52)}}
+{{ rust_code_snippet(path="rust/guide_02/src/main.rs", start=17, end=32)}}
 
 We use the properties to configure the font, content, and color of our text.
 

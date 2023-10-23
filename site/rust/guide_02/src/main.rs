@@ -4,8 +4,6 @@ fn main() {
     DeclarativeApp::simple("RAUI Guide", make_widget!(app));
 }
 
-/// NEW
-///
 /// We create our own widget by making a function that takes a `WidgetContext`
 /// and that returns `WidgetNode`.
 pub fn app(_ctx: WidgetContext) -> WidgetNode {
