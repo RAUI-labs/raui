@@ -1,8 +1,5 @@
 //! Theme-able RAUI components
 
-// TODO: remove once internals will move from `widget` to `make_widget` macro!
-#![allow(deprecated)]
-
 pub mod component;
 pub mod theme;
 
@@ -23,6 +20,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::scroll_paper::SideScrollbarsPaperProps>(
         "SideScrollbarsPaperProps",
     );
+    app.register_props::<component::containers::window_paper::WindowPaperProps>("WindowPaperProps");
     app.register_props::<component::icon_paper::IconPaperProps>("IconPaperProps");
     app.register_props::<component::interactive::button_paper::ButtonPaperOverrideStyle>(
         "ButtonPaperOverrideStyle",
@@ -96,6 +94,14 @@ pub fn setup(app: &mut Application) {
         FnWidget::pointer(component::containers::vertical_paper::vertical_paper),
     );
     app.register_component(
+        "window_paper",
+        FnWidget::pointer(component::containers::window_paper::window_paper),
+    );
+    app.register_component(
+        "window_title_controls_paper",
+        FnWidget::pointer(component::containers::window_paper::window_title_controls_paper),
+    );
+    app.register_component(
         "wrap_paper",
         FnWidget::pointer(component::containers::wrap_paper::wrap_paper),
     );
@@ -139,7 +145,7 @@ pub mod prelude {
             containers::{
                 context_paper::*, flex_paper::*, grid_paper::*, horizontal_paper::*,
                 modal_paper::*, paper::*, scroll_paper::*, scroll_paper::*, text_tooltip_paper::*,
-                tooltip_paper::*, vertical_paper::*, wrap_paper::*,
+                tooltip_paper::*, vertical_paper::*, window_paper::*, wrap_paper::*,
             },
             icon_paper::*,
             interactive::{

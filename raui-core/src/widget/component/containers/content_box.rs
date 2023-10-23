@@ -1,7 +1,7 @@
 //! A generic container for content with optional clipping and transforms
 
 use crate::{
-    pre_hooks, widget,
+    make_widget, pre_hooks,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
@@ -44,9 +44,11 @@ pub fn nav_content_box(mut context: WidgetContext) -> WidgetNode {
         .without::<NavJumpActive>()
         .without::<NavItemActive>();
 
-    widget! {
-        (#{key} content_box: {props} |[listed_slots]|)
-    }
+    make_widget!(content_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }
 
 /// A generic container for other widgets
@@ -89,13 +91,12 @@ pub fn content_box(context: WidgetContext) -> WidgetNode {
         })
         .collect::<Vec<_>>();
 
-    widget! {{{
-        ContentBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            items,
-            clipping,
-            transform,
-        }
-    }}}
+    ContentBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        items,
+        clipping,
+        transform,
+    }
+    .into()
 }

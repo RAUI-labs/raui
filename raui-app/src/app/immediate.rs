@@ -1,9 +1,12 @@
 use crate::{app::SharedApp, Vertex};
 use glutin::event::Event;
 use raui_core::{
-    application::Application, make_widget, widget::component::containers::content_box::content_box,
+    application::Application,
+    make_widget,
+    widget::{component::containers::content_box::content_box, utils::Color},
 };
 use raui_immediate::{make_widgets, ImmediateContext};
+use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
     app::{App, AppConfig, AppState},
     graphics::Graphics,
@@ -37,7 +40,10 @@ impl ImmediateApp {
         self
     }
 
-    pub fn redraw(mut self, f: impl FnMut(f32, &mut Graphics<Vertex>) + 'static) -> Self {
+    pub fn redraw(
+        mut self,
+        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>) + 'static,
+    ) -> Self {
         self.shared.on_redraw = Some(Box::new(f));
         self
     }

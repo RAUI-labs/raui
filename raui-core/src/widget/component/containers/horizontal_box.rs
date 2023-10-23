@@ -1,5 +1,5 @@
 use crate::{
-    pre_hooks, widget,
+    make_widget, pre_hooks,
     widget::{
         component::{
             containers::flex_box::{flex_box, FlexBoxProps},
@@ -48,9 +48,11 @@ pub fn nav_horizontal_box(mut context: WidgetContext) -> WidgetNode {
         .without::<NavJumpActive>()
         .without::<NavItemActive>();
 
-    widget! {
-        (#{key} horizontal_box: {props} |[listed_slots]|)
-    }
+    make_widget!(horizontal_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }
 
 pub fn horizontal_box(context: WidgetContext) -> WidgetNode {
@@ -78,7 +80,9 @@ pub fn horizontal_box(context: WidgetContext) -> WidgetNode {
         transform,
     });
 
-    widget! {
-        (#{key} flex_box: {props} |[ listed_slots ]|)
-    }
+    make_widget!(flex_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }

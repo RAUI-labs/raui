@@ -84,9 +84,10 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
                 ..Default::default()
             })
             .with(image);
-            let background = widget! {
-                (#{"background"} image_box: {props})
-            };
+            let background = make_widget!(image_box)
+                .key("background")
+                .merge_props(props)
+                .into();
             if let Some(frame) = paper_props.frame {
                 let color = match themed_props.color {
                     ThemeColor::Default => background_colors.main.default.dark,
@@ -104,9 +105,10 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
                     }),
                     ..Default::default()
                 });
-                let frame = widget! {
-                    (#{"frame"} image_box: {props})
-                };
+                let frame = make_widget!(image_box)
+                    .key("frame")
+                    .merge_props(props)
+                    .into();
                 std::iter::once(background)
                     .chain(std::iter::once(frame))
                     .chain(listed_slots.into_iter())
@@ -137,9 +139,10 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
                     }),
                     ..Default::default()
                 });
-                let frame = widget! {
-                    (#{"frame"} image_box: {props})
-                };
+                let frame = make_widget!(image_box)
+                    .key("frame")
+                    .merge_props(props)
+                    .into();
                 std::iter::once(frame)
                     .chain(listed_slots.into_iter())
                     .collect::<Vec<_>>()
@@ -149,7 +152,10 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
         }
     };
 
-    widget! {
-        (#{key} | {idref.cloned()} content_box: {props.clone()} |[ items ]|)
-    }
+    make_widget!(content_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slots(items)
+        .into()
 }

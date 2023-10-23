@@ -1,6 +1,6 @@
 use crate::{
     messenger::MessageData,
-    pre_hooks, unpack_named_slots, widget,
+    pre_hooks, unpack_named_slots,
     widget::{
         component::interactive::{
             button::{use_button, ButtonProps},
@@ -281,12 +281,11 @@ pub fn text_input(mut context: WidgetContext) -> WidgetNode {
         p.write(state.read_cloned_or_default::<TextInputProps>());
     }
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 #[pre_hooks(use_nav_item, use_input_field)]
@@ -304,10 +303,9 @@ pub fn input_field(mut context: WidgetContext) -> WidgetNode {
         p.write(state.read_cloned_or_default::<TextInputProps>());
     }
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }

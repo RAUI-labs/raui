@@ -1,5 +1,5 @@
 use crate::{
-    pre_hooks, unpack_named_slots, widget,
+    make_widget, pre_hooks, unpack_named_slots,
     widget::{
         component::containers::{
             anchor_box::{pivot_to_anchor_and_align, use_anchor_box, AnchorProps, PivotBoxProps},
@@ -54,31 +54,32 @@ pub fn context_box(mut context: WidgetContext) -> WidgetNode {
             content_props.with(item_props)
         });
 
-        widget! {
-            (#{"portal"} portal_box {
-                content = (#{"content"} content_box [
-                    {backdrop}
-                    {context}
-                ])
-            })
-        }
+        make_widget!(portal_box)
+            .named_slot(
+                "content",
+                make_widget!(content_box)
+                    .key("content")
+                    .listed_slot(backdrop)
+                    .listed_slot(context),
+            )
+            .into()
     } else {
-        widget! {()}
+        WidgetNode::default()
     };
 
-    let content = widget! {
-        (#{key} | {idref.cloned()} content_box: {props.clone()} [
-            {content}
-            {context}
-        ])
-    };
+    let content = make_widget!(content_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(content)
+        .listed_slot(context)
+        .into();
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 #[pre_hooks(use_portals_container_relative_layout)]

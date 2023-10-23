@@ -1,5 +1,4 @@
 use crate::{
-    widget,
     widget::{
         component::WidgetAlpha,
         context::WidgetContext,
@@ -95,15 +94,14 @@ pub fn image_box(context: WidgetContext) -> WidgetNode {
         _ => {}
     }
 
-    widget! {{{
-        ImageBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            width,
-            height,
-            content_keep_aspect_ratio,
-            material,
-            transform,
-        }
-    }}}
+    ImageBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        width,
+        height,
+        content_keep_aspect_ratio,
+        material,
+        transform,
+    }
+    .into()
 }

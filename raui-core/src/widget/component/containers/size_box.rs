@@ -1,5 +1,5 @@
 use crate::{
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{
         context::WidgetContext,
         node::WidgetNode,
@@ -40,15 +40,14 @@ pub fn size_box(context: WidgetContext) -> WidgetNode {
         transform,
     } = props.read_cloned_or_default();
 
-    widget! {{{
-        SizeBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            slot: Box::new(content),
-            width,
-            height,
-            margin,
-            transform,
-        }
-    }}}
+    SizeBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        slot: Box::new(content),
+        width,
+        height,
+        margin,
+        transform,
+    }
+    .into()
 }

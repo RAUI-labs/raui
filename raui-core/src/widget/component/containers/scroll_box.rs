@@ -1,7 +1,7 @@
 use crate::{
-    pre_hooks,
+    make_widget, pre_hooks,
     props::Props,
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{
         component::{
             containers::{
@@ -100,12 +100,11 @@ pub fn nav_scroll_box_content(mut context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 pub fn use_nav_scroll_box(context: &mut WidgetContext) {
@@ -168,23 +167,32 @@ pub fn nav_scroll_box(mut context: WidgetContext) -> WidgetNode {
         ..Default::default()
     };
 
-    let content = widget! {
-        (#{key} content_box: {props.clone()} [
-            (#{"input-consumer"} button: {NavItemActive} {
-                content = (#{"size"} size_box: {size_props})
-            })
-            (#{"content"} nav_scroll_box_content: {content_props} {
-                content = {content}
-            })
-            {scrollbars}
-        ])
-    };
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    let content = make_widget!(content_box)
+        .key(key)
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(button)
+                .key("input-consumer")
+                .with_props(NavItemActive)
+                .named_slot(
+                    "content",
+                    make_widget!(size_box).key("size").with_props(size_props),
+                ),
+        )
+        .listed_slot(
+            make_widget!(nav_scroll_box_content)
+                .key("content")
+                .merge_props(content_props)
+                .named_slot("content", content),
+        )
+        .listed_slot(scrollbars)
+        .into();
+
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 pub fn use_nav_scroll_box_side_scrollbars(context: &mut WidgetContext) {
@@ -290,21 +298,28 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
                 ..Default::default()
             };
 
-            widget! { (#{"back"} image_box: {props}) }
+            make_widget!(image_box).key("back").with_props(props).into()
         } else {
-            widget! {()}
+            WidgetNode::default()
         };
 
-        widget! {
-            (#{"hbar"} button: {button_props} {
-                content = (#{"container"} content_box [
-                    {back}
-                    (#{"front"} image_box: {front_props})
-                ])
-            })
-        }
+        make_widget!(button)
+            .key("hbar")
+            .merge_props(button_props)
+            .named_slot(
+                "content",
+                make_widget!(content_box)
+                    .key("container")
+                    .listed_slot(back)
+                    .listed_slot(
+                        make_widget!(image_box)
+                            .key("front")
+                            .merge_props(front_props),
+                    ),
+            )
+            .into()
     } else {
-        widget! {()}
+        WidgetNode::default()
     };
 
     let vbar = if view_props.size_factor.y > 1.0 {
@@ -337,9 +352,9 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
                 ..Default::default()
             };
 
-            widget! { (#{"back"} image_box: {props}) }
+            make_widget!(image_box).key("back").with_props(props).into()
         } else {
-            widget! {()}
+            WidgetNode::default()
         };
 
         let front_props = Props::new(ImageBoxProps {
@@ -356,22 +371,28 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
             ..Default::default()
         });
 
-        widget! {
-            (#{"vbar"} button: {button_props} {
-                content = (#{"container"} content_box [
-                    {back}
-                    (#{"front"} image_box: {front_props})
-                ])
-            })
-        }
+        make_widget!(button)
+            .key("vbar")
+            .merge_props(button_props)
+            .named_slot(
+                "content",
+                make_widget!(content_box)
+                    .key("container")
+                    .listed_slot(back)
+                    .listed_slot(
+                        make_widget!(image_box)
+                            .key("front")
+                            .merge_props(front_props),
+                    ),
+            )
+            .into()
     } else {
-        widget! {()}
+        WidgetNode::default()
     };
 
-    widget! {
-        (#{key} content_box [
-            {hbar}
-            {vbar}
-        ])
-    }
+    make_widget!(content_box)
+        .key(key)
+        .listed_slot(hbar)
+        .listed_slot(vbar)
+        .into()
 }

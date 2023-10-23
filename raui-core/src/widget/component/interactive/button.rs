@@ -1,6 +1,6 @@
 use crate::{
     messenger::MessageData,
-    pre_hooks, unpack_named_slots, widget,
+    pre_hooks, unpack_named_slots,
     widget::{
         component::interactive::navigation::{use_nav_button, use_nav_item, NavSignal},
         context::{WidgetContext, WidgetMountOrChangeContext},
@@ -195,10 +195,9 @@ pub fn button(mut context: WidgetContext) -> WidgetNode {
         p.write(state.read_cloned_or_default::<ButtonProps>());
     }
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }

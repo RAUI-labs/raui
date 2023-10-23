@@ -57,7 +57,8 @@ impl AnimationUpdate {
 ///         animator.change("my_animation", None);
 ///     });
 ///
-///     widget! { () }
+///     // some widget stuff...
+///     # Default::default()
 /// }
 /// ```
 ///
@@ -157,7 +158,7 @@ pub struct AnimatedValueProgress {
 ///
 /// ```
 /// # use raui_core::prelude::*;
-/// # fn my_button(_: WidgetContext) -> WidgetNode { widget!(()) }
+/// # fn my_button(_: WidgetContext) -> WidgetNode { Default::default() }
 /// fn my_widget(context: WidgetContext) -> WidgetNode {
 ///     // Get the animator from our context
 ///     let WidgetContext { animator, .. } = context;
@@ -174,9 +175,10 @@ pub struct AnimatedValueProgress {
 ///     });
 ///
 ///     // Wrap our button in our animated size box
-///     widget! { (size_box: {size_box_props} {
-///         content = (my_button)
-///     }) }
+///     make_widget!(size_box)
+///         .merge_props(size_box_props)
+///         .named_slot("content", make_widget!(my_button))
+///         .into()
 /// }
 /// ```
 ///

@@ -1,5 +1,5 @@
 use crate::{
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{context::WidgetContext, node::WidgetNode, unit::area::AreaBoxNode},
     PropsData,
 };
@@ -22,13 +22,12 @@ pub fn hidden_box(context: WidgetContext) -> WidgetNode {
     let HiddenBoxProps(hidden) = props.read_cloned_or_default();
 
     if hidden {
-        widget! {()}
+        Default::default()
     } else {
-        widget! {{{
-            AreaBoxNode {
-                id: id.to_owned(),
-                slot: Box::new(content),
-            }
-        }}}
+        AreaBoxNode {
+            id: id.to_owned(),
+            slot: Box::new(content),
+        }
+        .into()
     }
 }

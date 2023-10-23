@@ -95,7 +95,9 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
         transform,
     };
 
-    widget! {
-        (#{key} | {idref.cloned()} text_box: {props})
-    }
+    make_widget!(text_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .with_props(props)
+        .into()
 }

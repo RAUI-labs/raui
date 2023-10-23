@@ -11,10 +11,16 @@ pub fn text_tooltip_paper(context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    widget! {
-        (#{key} | {idref.cloned()} tooltip_paper: {props.clone()} {
-            content = {content}
-            tooltip = (#{"text"} text_paper: {props.clone()})
-        })
-    }
+    make_widget!(tooltip_paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot("content", content)
+        .named_slot(
+            "tooltip",
+            make_widget!(text_paper)
+                .key("text")
+                .merge_props(props.clone()),
+        )
+        .into()
 }

@@ -1,5 +1,5 @@
 use crate::{
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{
         context::WidgetContext,
         node::WidgetNode,
@@ -36,15 +36,14 @@ pub fn wrap_box(context: WidgetContext) -> WidgetNode {
         (SizeBoxSizeValue::Content, SizeBoxSizeValue::Content)
     };
 
-    widget! {{{
-        SizeBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            slot: Box::new(content),
-            margin,
-            width,
-            height,
-            ..Default::default()
-        }
-    }}}
+    SizeBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        slot: Box::new(content),
+        margin,
+        width,
+        height,
+        ..Default::default()
+    }
+    .into()
 }

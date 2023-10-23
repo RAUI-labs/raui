@@ -59,14 +59,23 @@ pub fn modal_paper(context: WidgetContext) -> WidgetNode {
         ..Default::default()
     };
 
-    widget! {
-        (#{key} portal_box {
-            content = (#{"container"} content_box [
-                (#{"shadow-barrier"} navigation_barrier {
-                    content = (#{"shadow-image"} image_box: {shadow_image_props})
-                })
-                {content}
-            ])
-        })
-    }
+    make_widget!(portal_box)
+        .key(key)
+        .named_slot(
+            "content",
+            make_widget!(content_box)
+                .key("container")
+                .listed_slot(
+                    make_widget!(navigation_barrier)
+                        .key("shadow-barrier")
+                        .named_slot(
+                            "content",
+                            make_widget!(image_box)
+                                .key("shadow-image")
+                                .with_props(shadow_image_props),
+                        ),
+                )
+                .listed_slot(content),
+        )
+        .into()
 }

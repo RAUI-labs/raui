@@ -1,7 +1,6 @@
 use crate::{
-    pre_hooks,
+    make_widget, pre_hooks,
     props::Props,
-    widget,
     widget::{
         component::{
             containers::{
@@ -148,7 +147,7 @@ pub fn nav_tabs_box(mut context: WidgetContext) -> WidgetNode {
         clipping: main_props.contents_clipping,
         ..Default::default()
     };
-    let mut tabs = Vec::with_capacity(listed_slots.len());
+    let mut tabs = Vec::<WidgetNode>::with_capacity(listed_slots.len());
     let mut contents = Vec::with_capacity(listed_slots.len());
 
     for (index, item) in listed_slots.into_iter().enumerate() {
@@ -160,18 +159,30 @@ pub fn nav_tabs_box(mut context: WidgetContext) -> WidgetNode {
             })
         });
         let props = Props::new(NavItemActive).with(ButtonNotifyProps(id.to_owned().into()));
-        tabs.push(widget! {
-            (#{index} button: {props} {
-                content = {tab}
-            })
-        });
+        tabs.push(
+            make_widget!(button)
+                .key(index)
+                .merge_props(props)
+                .named_slot("content", tab)
+                .into(),
+        );
         contents.push(content);
     }
 
-    widget! {
-        (#{key} flex_box: {props} [
-            (#{"tabs"} flex_box: {tabs_props} |[ tabs ]|)
-            (#{"contents"} switch_box: {switch_props} |[ contents ]|)
-        ])
-    }
+    make_widget!(flex_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slot(
+            make_widget!(flex_box)
+                .key("tabs")
+                .merge_props(tabs_props)
+                .listed_slots(tabs),
+        )
+        .listed_slot(
+            make_widget!(switch_box)
+                .key("contents")
+                .with_props(switch_props)
+                .listed_slots(contents),
+        )
+        .into()
 }

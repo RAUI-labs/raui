@@ -87,7 +87,10 @@ pub fn switch_paper(context: WidgetContext) -> WidgetNode {
             ..Default::default()
         },
     };
-    widget! {
-        (#{key} | {idref.cloned()} image_box: {image})
-    }
+
+    make_widget!(image_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .with_props(image)
+        .into()
 }

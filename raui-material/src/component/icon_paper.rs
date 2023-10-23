@@ -75,7 +75,9 @@ pub fn icon_paper(context: WidgetContext) -> WidgetNode {
         transform: icon_props.transform,
     };
 
-    widget! {
-        (#{key} | {idref.cloned()} image_box: {props})
-    }
+    make_widget!(image_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .with_props(props)
+        .into()
 }

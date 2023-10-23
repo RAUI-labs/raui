@@ -3,12 +3,23 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
+const DEFAULT_BACKGROUND_MIXING_FACTOR: Scalar = 0.1;
+const DEFAULT_VARIANT_MIXING_FACTOR: Scalar = 0.2;
+
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeColor {
     #[default]
     Default,
     Primary,
     Secondary,
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ThemeColorVariant {
+    #[default]
+    Main,
+    Light,
+    Dark,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -26,6 +37,8 @@ pub struct ThemedWidgetProps {
     #[serde(default)]
     pub color: ThemeColor,
     #[serde(default)]
+    pub color_variant: ThemeColorVariant,
+    #[serde(default)]
     pub variant: ThemeVariant,
 }
 
@@ -39,6 +52,20 @@ pub struct ThemeColorSet {
     pub dark: Color,
 }
 
+impl ThemeColorSet {
+    pub fn get(&self, variant: ThemeColorVariant) -> Color {
+        match variant {
+            ThemeColorVariant::Main => self.main,
+            ThemeColorVariant::Light => self.light,
+            ThemeColorVariant::Dark => self.dark,
+        }
+    }
+
+    pub fn get_themed(&self, themed: &ThemedWidgetProps) -> Color {
+        self.get(themed.color_variant)
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ThemeColors {
     #[serde(default)]
@@ -49,12 +76,40 @@ pub struct ThemeColors {
     pub secondary: ThemeColorSet,
 }
 
+impl ThemeColors {
+    pub fn get(&self, color: ThemeColor, variant: ThemeColorVariant) -> Color {
+        match color {
+            ThemeColor::Default => self.default.get(variant),
+            ThemeColor::Primary => self.primary.get(variant),
+            ThemeColor::Secondary => self.secondary.get(variant),
+        }
+    }
+
+    pub fn get_themed(&self, themed: &ThemedWidgetProps) -> Color {
+        self.get(themed.color, themed.color_variant)
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ThemeColorsBundle {
     #[serde(default)]
     pub main: ThemeColors,
     #[serde(default)]
     pub contrast: ThemeColors,
+}
+
+impl ThemeColorsBundle {
+    pub fn get(&self, use_main: bool, color: ThemeColor, variant: ThemeColorVariant) -> Color {
+        if use_main {
+            self.main.get(color, variant)
+        } else {
+            self.contrast.get(color, variant)
+        }
+    }
+
+    pub fn get_themed(&self, use_main: bool, themed: &ThemedWidgetProps) -> Color {
+        self.get(use_main, themed.color, themed.color_variant)
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -124,25 +179,49 @@ pub struct ThemeProps {
 }
 
 pub fn new_light_theme() -> ThemeProps {
-    make_default_theme(
+    new_light_theme_parameterized(
+        DEFAULT_BACKGROUND_MIXING_FACTOR,
+        DEFAULT_VARIANT_MIXING_FACTOR,
+    )
+}
+
+pub fn new_light_theme_parameterized(
+    background_mixing_factor: Scalar,
+    variant_mixing_factor: Scalar,
+) -> ThemeProps {
+    new_default_theme_parameterized(
         color_from_rgba(241, 250, 238, 1.0),
         color_from_rgba(29, 53, 87, 1.0),
         color_from_rgba(230, 57, 70, 1.0),
         color_from_rgba(255, 255, 255, 1.0),
+        background_mixing_factor,
+        variant_mixing_factor,
     )
 }
 
 pub fn new_dark_theme() -> ThemeProps {
-    make_default_theme(
+    new_dark_theme_parameterized(
+        DEFAULT_BACKGROUND_MIXING_FACTOR,
+        DEFAULT_VARIANT_MIXING_FACTOR,
+    )
+}
+
+pub fn new_dark_theme_parameterized(
+    background_mixing_factor: Scalar,
+    variant_mixing_factor: Scalar,
+) -> ThemeProps {
+    new_default_theme_parameterized(
         color_from_rgba(64, 64, 64, 1.0),
         color_from_rgba(255, 98, 86, 1.0),
         color_from_rgba(0, 196, 228, 1.0),
         color_from_rgba(32, 32, 32, 1.0),
+        background_mixing_factor,
+        variant_mixing_factor,
     )
 }
 
 pub fn new_all_white_theme() -> ThemeProps {
-    make_default_theme(
+    new_default_theme(
         color_from_rgba(255, 255, 255, 1.0),
         color_from_rgba(255, 255, 255, 1.0),
         color_from_rgba(255, 255, 255, 1.0),
@@ -150,14 +229,32 @@ pub fn new_all_white_theme() -> ThemeProps {
     )
 }
 
-pub fn make_default_theme(
+pub fn new_default_theme(
     default: Color,
     primary: Color,
     secondary: Color,
     background: Color,
 ) -> ThemeProps {
-    let background_primary = color_lerp(background, primary, 0.05);
-    let background_secondary = color_lerp(background, secondary, 0.05);
+    new_default_theme_parameterized(
+        default,
+        primary,
+        secondary,
+        background,
+        DEFAULT_BACKGROUND_MIXING_FACTOR,
+        DEFAULT_VARIANT_MIXING_FACTOR,
+    )
+}
+
+pub fn new_default_theme_parameterized(
+    default: Color,
+    primary: Color,
+    secondary: Color,
+    background: Color,
+    background_mixing_factor: Scalar,
+    variant_mixing_factor: Scalar,
+) -> ThemeProps {
+    let background_primary = color_lerp(background, primary, background_mixing_factor);
+    let background_secondary = color_lerp(background, secondary, background_mixing_factor);
     let mut background_modal = fluid_polarize_color(background);
     background_modal.a = 0.75;
     let mut content_backgrounds = HashMap::with_capacity(1);
@@ -184,14 +281,22 @@ pub fn make_default_theme(
     modal_shadow_variants.insert(String::new(), background_modal);
     ThemeProps {
         active_colors: make_colors_bundle(
-            make_color_set(default, 0.1, 0.2),
-            make_color_set(primary, 0.1, 0.2),
-            make_color_set(secondary, 0.1, 0.2),
+            make_color_set(default, variant_mixing_factor, variant_mixing_factor),
+            make_color_set(primary, variant_mixing_factor, variant_mixing_factor),
+            make_color_set(secondary, variant_mixing_factor, variant_mixing_factor),
         ),
         background_colors: make_colors_bundle(
-            make_color_set(background, 0.1, 0.2),
-            make_color_set(background_primary, 0.1, 0.2),
-            make_color_set(background_secondary, 0.1, 0.2),
+            make_color_set(background, variant_mixing_factor, variant_mixing_factor),
+            make_color_set(
+                background_primary,
+                variant_mixing_factor,
+                variant_mixing_factor,
+            ),
+            make_color_set(
+                background_secondary,
+                variant_mixing_factor,
+                variant_mixing_factor,
+            ),
         ),
         content_backgrounds,
         button_backgrounds,

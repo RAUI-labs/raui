@@ -1,5 +1,5 @@
 use crate::{
-    pre_hooks, widget,
+    make_widget, pre_hooks,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_step_pages_active,
@@ -42,9 +42,11 @@ pub fn nav_switch_box(mut context: WidgetContext) -> WidgetNode {
         .without::<NavJumpActive>()
         .without::<NavItemActive>();
 
-    widget! {
-        (#{key} switch_box: {props} |[listed_slots]|)
-    }
+    make_widget!(switch_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }
 
 pub fn switch_box(context: WidgetContext) -> WidgetNode {
@@ -74,13 +76,12 @@ pub fn switch_box(context: WidgetContext) -> WidgetNode {
         vec![]
     };
 
-    widget! {{{
-        ContentBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            items,
-            clipping,
-            transform,
-        }
-    }}}
+    ContentBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        items,
+        clipping,
+        transform,
+    }
+    .into()
 }

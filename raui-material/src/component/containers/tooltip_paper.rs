@@ -74,14 +74,23 @@ pub fn tooltip_paper(context: WidgetContext) -> WidgetNode {
             ..Default::default()
         });
 
-    widget! {
-        (#{key} | {idref.cloned()} portals_tooltip_box: {props.clone()} {
-            content = {content}
-            tooltip = (#{"size"} size_box: {size_props} {
-                content = (#{"wrap"} wrap_paper: {wrap_props} {
-                    content = {tooltip}
-                })
-            })
-        })
-    }
+    make_widget!(portals_tooltip_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot("content", content)
+        .named_slot(
+            "tooltip",
+            make_widget!(size_box)
+                .key("size")
+                .with_props(size_props)
+                .named_slot(
+                    "content",
+                    make_widget!(wrap_paper)
+                        .key("wrap")
+                        .merge_props(wrap_props)
+                        .named_slot("content", tooltip),
+                ),
+        )
+        .into()
 }

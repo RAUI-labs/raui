@@ -1,7 +1,11 @@
 use crate::{app::SharedApp, Vertex};
 use glutin::event::Event;
-use raui_core::application::{Application, ChangeNotifier};
+use raui_core::{
+    application::{Application, ChangeNotifier},
+    widget::utils::Color,
+};
 use raui_retained::{View, ViewState};
+use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
     app::{App, AppConfig, AppState},
     graphics::Graphics,
@@ -34,7 +38,10 @@ impl<T: ViewState> RetainedApp<T> {
             .run(Self::default().tree(producer));
     }
 
-    pub fn redraw(mut self, f: impl FnMut(f32, &mut Graphics<Vertex>) + 'static) -> Self {
+    pub fn redraw(
+        mut self,
+        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>) + 'static,
+    ) -> Self {
         self.shared.on_redraw = Some(Box::new(f));
         self
     }

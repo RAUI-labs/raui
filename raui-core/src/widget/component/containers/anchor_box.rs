@@ -1,6 +1,6 @@
 use crate::{
     messenger::MessageData,
-    pre_hooks, unpack_named_slots, widget,
+    pre_hooks, unpack_named_slots,
     widget::{
         component::{use_relative_layout_listener, RelativeLayoutListenerSignal},
         context::{WidgetContext, WidgetMountOrChangeContext},
@@ -141,12 +141,11 @@ pub fn anchor_box(mut context: WidgetContext) -> WidgetNode {
 
     content.remap_props(|props| props.with(anchor_props));
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 pub fn pivot_point_to_anchor(pivot: Vec2, anchor: &AnchorProps) -> Vec2 {
@@ -203,10 +202,9 @@ pub fn pivot_box(context: WidgetContext) -> WidgetNode {
         content_props.with(item_props)
     });
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }

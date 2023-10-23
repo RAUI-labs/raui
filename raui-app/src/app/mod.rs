@@ -5,7 +5,7 @@ pub mod retained;
 use crate::{
     asset_manager::AssetsManager, interactions::AppInteractionsEngine, TesselateToGraphics, Vertex,
 };
-use glutin::event::{Event, WindowEvent};
+use glutin::event::{Event, VirtualKeyCode, WindowEvent};
 use raui_core::{
     application::Application,
     layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping},
@@ -36,11 +36,12 @@ pub(crate) struct SharedApp {
     on_update: Option<Box<dyn FnMut(&mut Application)>>,
     /// fn(delta time, graphics interface)
     #[allow(clippy::type_complexity)]
-    on_redraw: Option<Box<dyn FnMut(f32, &mut Graphics<Vertex>)>>,
+    on_redraw: Option<Box<dyn FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>)>>,
     #[allow(clippy::type_complexity)]
     on_event: Option<Box<dyn FnMut(&mut Application, Event<()>) -> bool>>,
     application: Application,
     interactions: AppInteractionsEngine,
+    text_renderer: TextRenderer<Color>,
     timer: Instant,
     assets: AssetsManager,
     coords_mapping: CoordsMapping,
@@ -49,6 +50,10 @@ pub(crate) struct SharedApp {
     colored_shader: Option<Shader>,
     textured_shader: Option<Shader>,
     text_shader: Option<Shader>,
+    #[cfg(debug_assertions)]
+    pub print_raui_tree_key: VirtualKeyCode,
+    #[cfg(debug_assertions)]
+    pub print_raui_layout_key: VirtualKeyCode,
 }
 
 impl Default for SharedApp {
@@ -62,6 +67,7 @@ impl Default for SharedApp {
             on_event: None,
             application,
             interactions: Default::default(),
+            text_renderer: TextRenderer::new(1024, 1024),
             timer: Instant::now(),
             assets: Default::default(),
             coords_mapping: Default::default(),
@@ -70,6 +76,10 @@ impl Default for SharedApp {
             colored_shader: None,
             textured_shader: None,
             text_shader: None,
+            #[cfg(debug_assertions)]
+            print_raui_tree_key: VirtualKeyCode::F10,
+            #[cfg(debug_assertions)]
+            print_raui_layout_key: VirtualKeyCode::F11,
         }
     }
 }
@@ -101,8 +111,9 @@ impl SharedApp {
         if let Some(callback) = self.on_update.as_mut() {
             callback(&mut self.application);
         }
+        self.text_renderer.clear();
         if let Some(callback) = self.on_redraw.as_mut() {
-            callback(elapsed.as_secs_f32(), graphics);
+            callback(elapsed.as_secs_f32(), graphics, &mut self.text_renderer);
         }
         self.assets.maintain();
         self.application.animations_delta_time = elapsed.as_secs_f32();
@@ -137,7 +148,6 @@ impl SharedApp {
             });
             graphics.stream.batch_end();
         }
-        let mut text_renderer = TextRenderer::<Color>::new(1024, 1024);
         let mut converter = TesselateToGraphics {
             colored_shader: self.colored_shader.as_ref().unwrap(),
             textured_shader: self.textured_shader.as_ref().unwrap(),
@@ -152,16 +162,16 @@ impl SharedApp {
             &self.assets,
             &mut converter,
             &mut graphics.stream,
-            &mut text_renderer,
+            &mut self.text_renderer,
         );
         let _ = self.application.render(&self.coords_mapping, &mut renderer);
-        let (image, [w, h, d]) = text_renderer.into_image();
+        let [w, h, d] = self.text_renderer.atlas_size();
         self.glyphs_texture.as_mut().unwrap().upload(
             w as _,
             h as _,
             d as _,
             GlowTextureFormat::Luminance,
-            &image,
+            self.text_renderer.image(),
         );
     }
 
@@ -173,6 +183,20 @@ impl SharedApp {
         } = &event
         {
             self.application.mark_dirty();
+        }
+        #[cfg(debug_assertions)]
+        if let Event::WindowEvent {
+            event: WindowEvent::KeyboardInput { input, .. },
+            ..
+        } = &event
+        {
+            if let Some(key) = input.virtual_keycode {
+                if key == self.print_raui_tree_key {
+                    println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
+                } else if key == self.print_raui_layout_key {
+                    println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());
+                }
+            }
         }
         self.on_event
             .as_mut()

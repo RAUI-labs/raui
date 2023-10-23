@@ -68,15 +68,9 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
         ..Default::default()
     });
 
-    widget! {
-        // Our content box
-        (content_box [ // <---- Note the square bracket here used to specify children of
-                       //       the content box
-
-            // Our text widget is now _inside_ of the content box
-            (text_box: {text_box_props})
-        ])
-    }
+    make_widget!(content_box)
+        .listed_slot(make_widget!(text_box).merge_props(text_box_props))
+        .into()
 }
 ```
 
@@ -135,14 +129,10 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
         ..Default::default()
     });
 
-    widget! {
-        (content_box [
-            // Add our image box above our text box, that will make sure that the
-            // image appears _under_ our text box when the UI is rendered
-            (image_box: {image_box_props})
-            (text_box: {text_box_props})
-        ])
-    }
+    make_widget!(content_box)
+        .listed_slot(make_widget!(image_box).merge_props(image_box_props))
+        .listed_slot(make_widget!(text_box).merge_props(text_box_props))
+        .into()
 }
 ```
 
@@ -212,15 +202,13 @@ pub fn app(_ctx: WidgetContext) -> WidgetNode {
         ..Default::default()
     });
 
-    widget! {
-        // Use a vertical_box instead of a content_box
-        (vertical_box [
-            // Now because the text and image won't overlap, let's put
-            // the text above the image
-            (text_box: {text_box_props})
-            (image_box: {image_box_props})
-        ])
-    }
+    // Use a vertical_box instead of a content_box
+    make_widget!(vertical_box)
+        // Now because the text and image won't overlap, let's put
+        // the text above the image
+        .listed_slot(make_widget!(text_box).merge_props(text_box_props))
+        .listed_slot(make_widget!(image_box).merge_props(image_box_props))
+        .into()
 }
 ```
 

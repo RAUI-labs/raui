@@ -215,6 +215,7 @@ fn make_icon_props(id: &WidgetId, image_id: impl ToString) -> Props {
     .with(ThemedWidgetProps {
         color: ThemeColor::Secondary,
         variant: ThemeVariant::ContentOnly,
+        ..Default::default()
     })
     .with(NavItemActive)
     .with(ButtonNotifyProps(id.to_owned().into()))

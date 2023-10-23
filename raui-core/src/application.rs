@@ -37,13 +37,13 @@
 //! let mut interactions = DefaultInteractionsEngine::default();
 //!
 //! // We create our widget tree
-//! let tree = widget! {
-//!     (#{"app"} nav_content_box [
-//!         (#{"button"} button: {NavItemActive} {
-//!             content = (#{"icon"} image_box)
-//!         })
-//!     ])
-//! };
+//! let tree = make_widget!(nav_content_box)
+//!     .key("app")
+//!     .listed_slot(make_widget!(button)
+//!         .key("button")
+//!         .with_props(NavItemActive)
+//!         .named_slot("content", make_widget!(image_box).key("icon"))
+//!     );
 //!
 //! // We apply the tree to the application. This must be done again if we wish to change the
 //! // tree.
@@ -605,7 +605,7 @@ impl Application {
     ///     *data.counter += 1;
     ///
     ///     // widget stuff...
-    /// #    widget!(())
+    /// #   Default::default()
     /// }
     /// ```
     pub fn process(&mut self) -> bool {

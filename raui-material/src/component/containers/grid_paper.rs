@@ -12,11 +12,17 @@ pub fn nav_grid_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"grid"} nav_grid_box: {inner_props} |[ listed_slots ]|)
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(nav_grid_box)
+                .key("grid")
+                .merge_props(inner_props)
+                .listed_slots(listed_slots),
+        )
+        .into()
 }
 
 pub fn grid_paper(context: WidgetContext) -> WidgetNode {
@@ -30,9 +36,15 @@ pub fn grid_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"grid"} grid_box: {inner_props} |[ listed_slots ]|)
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(grid_box)
+                .key("grid")
+                .merge_props(inner_props)
+                .listed_slots(listed_slots),
+        )
+        .into()
 }

@@ -55,7 +55,8 @@ The widget context is the way that a widget can access it's own state, propertie
 
 #### [`WidgetNode`]
 
-That brings us to what a **widget _node_** is. As we mentioned above, there are a few different kinds of _widgets_. Widget components are one of them and widget nodes are another. The easiest way to think of a [`WidgetNode`] is that it is a tree of other widgets. [`WidgetNode`]s are most commonly created with the [`widget!`] macro.
+That brings us to what a **widget _node_** is. As we mentioned above, there are a few different kinds of _widgets_. Widget components are one of them and widget nodes are another. The easiest way to think of a [`WidgetNode`] is that it is a tree of other widgets. [`WidgetNode`]s are most commonly created with the [`make_widget!`] macro and filled
+with builder pattern of [`WidgetComponent`].
 
 > **Note:** There is a third kind of widget is called a [`WidgetUnit`], but you don't usually need to think about those.
 
@@ -69,6 +70,7 @@ We use the widget macro to create a simple tree with a single [`text_box`] compo
 
 [`widget!`]: https://docs.rs/raui/latest/raui/core/macro.widget.html
 [`WidgetUnit`]: https://docs.rs/raui/latest/raui/core/widget/unit/enum.WidgetUnit.html
+[`WidgetComponent`]: https://docs.rs/raui/latest/raui/core/widget/component/enum.WidgetComponent.html
 
 #### Properties
 

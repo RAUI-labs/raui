@@ -39,14 +39,18 @@ pub fn scroll_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"scroll"} nav_scroll_box: {inner_props} {
-                content = {content}
-                scrollbars = {scrollbars}
-            })
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(nav_scroll_box)
+                .key("scroll")
+                .merge_props(inner_props)
+                .named_slot("content", content)
+                .named_slot("scrollbars", scrollbars),
+        )
+        .into()
 }
 
 pub fn scroll_paper_side_scrollbars(context: WidgetContext) -> WidgetNode {
@@ -123,7 +127,9 @@ pub fn scroll_paper_side_scrollbars(context: WidgetContext) -> WidgetNode {
         front_material,
     });
 
-    widget! {
-        (#{key} | {idref.cloned()} nav_scroll_box_side_scrollbars: {props.clone()})
-    }
+    make_widget!(nav_scroll_box_side_scrollbars)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .into()
 }

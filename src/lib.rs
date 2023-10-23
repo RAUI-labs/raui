@@ -358,9 +358,6 @@
 //! application.interact(&mut interactions).unwrap();
 //! ```
 
-#[cfg(test)]
-mod tests;
-
 #[doc(inline)]
 pub use raui_core as core;
 
@@ -393,6 +390,9 @@ pub mod prelude {
 
     #[cfg(feature = "immediate-widgets")]
     pub use raui_immediate_widgets::*;
+
+    #[cfg(feature = "json")]
+    pub use raui_json_renderer::*;
 
     #[cfg(feature = "app")]
     pub use raui_app::prelude::*;

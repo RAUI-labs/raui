@@ -86,17 +86,35 @@ pub fn context_paper(context: WidgetContext) -> WidgetNode {
         ..Default::default()
     };
 
-    widget! {
-        (#{key} | {idref.cloned()} portals_context_box: {props.clone()} {
-            content = {content}
-            context = (#{"size"} size_box: {context_size_props} {
-                content = (#{"wrap"} wrap_paper: {wrap_props} {
-                    content = {context}
-                })
-            })
-            backdrop = (#{"button"} button: {ButtonNotifyProps(notify_backdrop_accept)} {
-                content = (#{"size"} size_box: {backdrop_size_props})
-            })
-        })
-    }
+    make_widget!(portals_context_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .named_slot("content", content)
+        .named_slot(
+            "context",
+            make_widget!(size_box)
+                .key("size")
+                .with_props(context_size_props)
+                .named_slot(
+                    "content",
+                    make_widget!(wrap_paper)
+                        .key("wrap")
+                        .merge_props(wrap_props)
+                        .named_slot("content", context),
+                ),
+        )
+        .named_slot(
+            "backdrop",
+            make_widget!(button)
+                .key("button")
+                .with_props(ButtonNotifyProps(notify_backdrop_accept))
+                .named_slot(
+                    "content",
+                    make_widget!(size_box)
+                        .key("size")
+                        .with_props(backdrop_size_props),
+                ),
+        )
+        .into()
 }

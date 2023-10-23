@@ -60,24 +60,6 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext { id, key, props, .. } = context;
     let ConfirmBoxProps { text, .. } = props.read_cloned_or_default();
 
-    // widget! {
-    //     (#{key} modal_paper {
-    //         content = (#{"list"} vertical_paper: {list_props} [
-    //             (#{"text-wrap"} wrap_box: {wrap_props.clone()} {
-    //                 content = (#{"text"} text_paper: {text_props})
-    //             })
-    //             (#{"buttons"} horizontal_paper [
-    //                 (#{"yes-wrap"} wrap_box: {wrap_props.clone()} {
-    //                     content = (#{"yes"} text_button_paper: {yes_props})
-    //                 })
-    //                 (#{"no-wrap"} wrap_box: {wrap_props} {
-    //                     content = (#{"no"} text_button_paper: {no_props})
-    //                 })
-    //             ])
-    //         ])
-    //     })
-    // }
-
     make_widget!(modal_paper)
         .key(key)
         .named_slot(

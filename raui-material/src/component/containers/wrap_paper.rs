@@ -13,11 +13,15 @@ pub fn wrap_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"wrap"} wrap_box: {inner_props} {
-                content = {content}
-            })
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(wrap_box)
+                .key("wrap")
+                .merge_props(inner_props)
+                .named_slot("content", content),
+        )
+        .into()
 }

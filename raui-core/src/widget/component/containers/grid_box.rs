@@ -1,5 +1,5 @@
 use crate::{
-    pre_hooks, widget,
+    make_widget, pre_hooks,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
@@ -41,9 +41,11 @@ pub fn nav_grid_box(mut context: WidgetContext) -> WidgetNode {
         .without::<NavJumpActive>()
         .without::<NavItemActive>();
 
-    widget! {
-        (#{key} grid_box: {props} |[listed_slots]|)
-    }
+    make_widget!(grid_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }
 
 pub fn grid_box(context: WidgetContext) -> WidgetNode {
@@ -72,14 +74,13 @@ pub fn grid_box(context: WidgetContext) -> WidgetNode {
         })
         .collect::<Vec<_>>();
 
-    widget! {{{
-        GridBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            items,
-            cols,
-            rows,
-            transform,
-        }
-    }}}
+    GridBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        items,
+        cols,
+        rows,
+        transform,
+    }
+    .into()
 }

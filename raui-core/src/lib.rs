@@ -1,11 +1,7 @@
 //! RAUI core types and components
 //!
-//! The things that most users will be interested in here are the [components][widget::component] and
-//! the [`widget!`] macro. Those have more documentation on how to use widgets, components, etc. in
-//! your app.
-
-// TODO: remove once internals will move from `widget` to `make_widget` macro!
-#![allow(deprecated)]
+//! The things that most users will be interested in here are the [components][widget::component].
+//! Those have more documentation on how to use widgets, components, etc. in your app.
 
 pub mod application;
 #[macro_use]

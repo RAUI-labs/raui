@@ -139,11 +139,16 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         });
     let alpha = if focused { 1.0 } else { inactive_alpha };
 
-    widget! {
-        (#{key} paper: {paper_props} [
-            (#{"text"} text_paper: {text_props} | {WidgetAlpha(alpha)})
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .merge_props(paper_props)
+        .listed_slot(
+            make_widget!(text_paper)
+                .key("text")
+                .merge_props(text_props)
+                .with_shared_props(WidgetAlpha(alpha)),
+        )
+        .into()
 }
 
 pub fn text_field_paper(context: WidgetContext) -> WidgetNode {

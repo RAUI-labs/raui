@@ -1,5 +1,5 @@
 use crate::{
-    post_hooks, pre_hooks, unpack_named_slots, widget,
+    post_hooks, pre_hooks, unpack_named_slots,
     widget::{
         context::WidgetContext, node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2,
         WidgetIdOrRef,
@@ -487,10 +487,9 @@ pub fn navigation_barrier(mut context: WidgetContext) -> WidgetNode {
     } = context;
     unpack_named_slots!(named_slots => content);
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }

@@ -1,5 +1,4 @@
 use crate::{
-    widget,
     widget::{
         component::WidgetAlpha,
         context::WidgetContext,
@@ -61,19 +60,18 @@ pub fn text_box(context: WidgetContext) -> WidgetNode {
     let alpha = shared_props.read_cloned_or_default::<WidgetAlpha>().0;
     color.a *= alpha;
 
-    widget! {{{
-        TextBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            text,
-            width,
-            height,
-            horizontal_align,
-            vertical_align,
-            direction,
-            font,
-            color,
-            transform,
-        }
-    }}}
+    TextBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        text,
+        width,
+        height,
+        horizontal_align,
+        vertical_align,
+        direction,
+        font,
+        color,
+        transform,
+    }
+    .into()
 }

@@ -1,5 +1,5 @@
 use crate::{
-    pre_hooks, widget,
+    make_widget, pre_hooks,
     widget::{
         component::interactive::navigation::{
             use_nav_container_active, use_nav_item, use_nav_jump, NavContainerActive,
@@ -43,9 +43,11 @@ pub fn nav_flex_box(mut context: WidgetContext) -> WidgetNode {
         .without::<NavJumpActive>()
         .without::<NavItemActive>();
 
-    widget! {
-        (#{key} flex_box: {props} |[listed_slots]|)
-    }
+    make_widget!(flex_box)
+        .key(key)
+        .merge_props(props)
+        .listed_slots(listed_slots)
+        .into()
 }
 
 pub fn flex_box(context: WidgetContext) -> WidgetNode {
@@ -75,15 +77,14 @@ pub fn flex_box(context: WidgetContext) -> WidgetNode {
         })
         .collect::<Vec<_>>();
 
-    widget! {{{
-        FlexBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            items,
-            direction,
-            separation,
-            wrap,
-            transform,
-        }
-    }}}
+    FlexBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        items,
+        direction,
+        separation,
+        wrap,
+        transform,
+    }
+    .into()
 }

@@ -12,11 +12,17 @@ pub fn nav_vertical_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"vertical"} nav_vertical_box: {inner_props} |[ listed_slots ]|)
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(nav_vertical_box)
+                .key("vertical")
+                .merge_props(inner_props)
+                .listed_slots(listed_slots),
+        )
+        .into()
 }
 
 pub fn vertical_paper(context: WidgetContext) -> WidgetNode {
@@ -30,9 +36,15 @@ pub fn vertical_paper(context: WidgetContext) -> WidgetNode {
 
     let inner_props = props.clone().without::<ContentBoxItemLayout>();
 
-    widget! {
-        (#{key} | {idref.cloned()} paper: {props.clone()} [
-            (#{"vertical"} vertical_box: {inner_props} |[ listed_slots ]|)
-        ])
-    }
+    make_widget!(paper)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(
+            make_widget!(vertical_box)
+                .key("vertical")
+                .merge_props(inner_props)
+                .listed_slots(listed_slots),
+        )
+        .into()
 }

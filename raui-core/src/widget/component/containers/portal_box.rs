@@ -1,5 +1,5 @@
 use crate::{
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{
         component::RelativeLayoutProps,
         context::WidgetContext,
@@ -53,15 +53,14 @@ pub fn portal_box(context: WidgetContext) -> WidgetNode {
     };
 
     if let Some(owner) = owner.read() {
-        widget! {{{
-            PortalBoxNode {
-                id: id.to_owned(),
-                slot: Box::new(slot),
-                owner,
-            }
-        }}}
+        PortalBoxNode {
+            id: id.to_owned(),
+            slot: Box::new(slot),
+            owner,
+        }
+        .into()
     } else {
-        widget! {()}
+        Default::default()
     }
 }
 

@@ -88,6 +88,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
                 .with_props(ThemedWidgetProps {
                     color: ThemeColor::Primary,
                     variant: ThemeVariant::ContentOnly,
+                    ..Default::default()
                 }),
         )
         .listed_slot(
@@ -127,6 +128,7 @@ pub fn task(mut context: WidgetContext) -> WidgetNode {
                 .with_props(ThemedWidgetProps {
                     color: ThemeColor::Primary,
                     variant: ThemeVariant::ContentOnly,
+                    ..Default::default()
                 }),
         )
         .listed_slot(

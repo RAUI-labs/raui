@@ -1,5 +1,4 @@
 use crate::{
-    widget,
     widget::{
         context::WidgetContext,
         node::WidgetNode,
@@ -41,13 +40,12 @@ pub fn space_box(context: WidgetContext) -> WidgetNode {
 
     let SpaceBoxProps { width, height } = props.read_cloned_or_default();
 
-    widget! {{{
-        SizeBoxNode {
-            id: id.to_owned(),
-            props: props.clone(),
-            width: SizeBoxSizeValue::Exact(width),
-            height: SizeBoxSizeValue::Exact(height),
-            ..Default::default()
-        }
-    }}}
+    SizeBoxNode {
+        id: id.to_owned(),
+        props: props.clone(),
+        width: SizeBoxSizeValue::Exact(width),
+        height: SizeBoxSizeValue::Exact(height),
+        ..Default::default()
+    }
+    .into()
 }

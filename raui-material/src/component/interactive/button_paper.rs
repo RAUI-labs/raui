@@ -95,9 +95,10 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
                 ..Default::default()
             })
             .with(image);
-            let background = widget! {
-                (#{"background"} image_box: {props})
-            };
+            let background = make_widget!(image_box)
+                .key("background")
+                .merge_props(props)
+                .into();
             if let Some(frame) = paper_props.frame {
                 let color = match themed_props.color {
                     ThemeColor::Default => button_colors.main.default.dark,
@@ -115,9 +116,10 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
                     }),
                     ..Default::default()
                 });
-                let frame = widget! {
-                    (#{"frame"} image_box: {props})
-                };
+                let frame = make_widget!(image_box)
+                    .key("frame")
+                    .merge_props(props)
+                    .into();
                 vec![background, frame, content]
             } else {
                 vec![background, content]
@@ -143,9 +145,10 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
                     }),
                     ..Default::default()
                 });
-                let frame = widget! {
-                    (#{"frame"} image_box: {props})
-                };
+                let frame = make_widget!(image_box)
+                    .key("frame")
+                    .merge_props(props)
+                    .into();
                 vec![frame, content]
             } else {
                 vec![content]
@@ -153,9 +156,11 @@ fn button_paper_content(context: WidgetContext) -> WidgetNode {
         }
     };
 
-    widget! {
-        (#{key} content_box: {props.clone()} |[ items ]|)
-    }
+    make_widget!(content_box)
+        .key(key)
+        .merge_props(props.clone())
+        .listed_slots(items)
+        .into()
 }
 
 pub fn button_paper(context: WidgetContext) -> WidgetNode {

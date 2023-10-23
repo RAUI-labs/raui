@@ -1,7 +1,6 @@
+use super::{app_bar::app_bar, tasks_list::tasks_list};
 use crate::model::{AppState, ThemeMode};
 use raui::prelude::*;
-
-use super::{app_bar::app_bar, tasks_list::tasks_list};
 
 fn new_theme(theme: ThemeMode) -> ThemeProps {
     let mut theme = match theme {
@@ -15,6 +14,7 @@ fn new_theme(theme: ThemeMode) -> ThemeProps {
                 name: "resources/fonts/Roboto/Roboto-Black.ttf".to_owned(),
                 size: 24.0,
             },
+            vertical_align: TextBoxVerticalAlign::Middle,
             ..Default::default()
         },
     );

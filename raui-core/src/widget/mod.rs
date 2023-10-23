@@ -759,167 +759,6 @@ macro_rules! make_widget {
     }};
 }
 
-/// Create a [`WidgetNode`] struct from a custom widget tree DSL
-///
-/// The `widget` macro is primarily used to construct widget trees as the return value of
-/// components.
-///
-/// # Example
-///
-/// ```rust
-/// # use raui_core::prelude::*;
-/// # fn my_component(_: WidgetContext) -> WidgetNode { todo!() }
-/// # fn component_1(_: WidgetContext) -> WidgetNode { todo!() }
-/// # fn popup(_: WidgetContext) -> WidgetNode { todo!() }
-/// # fn component_2(_: WidgetContext) -> WidgetNode { todo!() }
-/// # fn component_3(_: WidgetContext) -> WidgetNode { todo!() }
-/// # fn test() -> WidgetNode {
-/// # let my_component_props = Props::new(());
-/// # let my_component_shared_props = Props::new(());
-/// # let component_1_props = Props::new(());
-/// # let popup_props = Props::new(());
-/// # let component_2_props = Props::new(());
-/// # let component_3_props = Props::new(());
-///
-/// // You can create [`WidgetNode`]'s and assign them to variables
-/// let popup_widget = widget! {
-///     (popup: {popup_props})
-/// };
-///
-/// widget! {
-///     // parenthesis are used around components and they each _may_ have a key,
-///     // props, shared props, listed children, and/or named children. Everything is,
-///     // optional.
-///     (#{"widget_key"} my_component: {my_component_props} | {my_component_shared_props} {
-///         // named children
-///         content = (component_1: {component_1_props})
-///     } [
-///         // listed children
-///         (component_2: {component_2_props})
-///         (component_3: {component_3_props})
-///
-///         // You can also use `{variable_name}` syntax to expand variables into a widget
-///         {popup_widget}
-///     ])
-/// }
-/// # }
-/// ```
-#[macro_export]
-#[deprecated(
-    since = "0.43.0",
-    note = "Please use `make_widget!(fn_name)` macro to construct widget component and configure it with builder pattern."
-)]
-macro_rules! widget {
-    {()} => ($crate::widget::node::WidgetNode::None);
-    {[]} => ($crate::widget::node::WidgetNode::Unit(Default::default()));
-    ({{$expr:expr}}) => {
-        $crate::widget::node::WidgetNode::Unit($crate::widget::unit::WidgetUnitNode::from($expr))
-    };
-    ({$expr:expr}) => {
-        $crate::widget::node::WidgetNode::from($expr)
-    };
-    {
-        (
-            $(
-                #{ $key:expr }
-            )?
-            $(
-                | { $idref:expr }
-            )?
-            $type_id:path
-            $(
-                : {$props:expr}
-            )?
-            $(
-                | {$shared_props:expr}
-            )?
-            $(
-                {
-                    $($named_slot_name:ident = $named_slot_widget:tt)*
-                }
-            )?
-            $(
-                |[ $listed_slot_widgets:expr ]|
-            )?
-            $(
-                [
-                    $($listed_slot_widget:tt)*
-                ]
-            )?
-        )
-    } => {
-        {
-            #[allow(unused_assignments)]
-            #[allow(unused_mut)]
-            let mut key = None;
-            $(
-                key = Some($key.to_string());
-            )?
-            #[allow(unused_assignments)]
-            #[allow(unused_mut)]
-            let mut idref = None;
-            $(
-                idref = Option::<$crate::widget::WidgetRef>::from($idref);
-            )?
-            let processor = $type_id;
-            let type_name = stringify!($type_id).to_owned();
-            #[allow(unused_assignments)]
-            #[allow(unused_mut)]
-            let mut props = $crate::props::Props::default();
-            $(
-                props = $crate::props::Props::from($props);
-            )?
-            #[allow(unused_assignments)]
-            #[allow(unused_mut)]
-            let mut shared_props = None;
-            $(
-                shared_props = Some($crate::props::Props::from($shared_props));
-            )?
-            #[allow(unused_mut)]
-            let mut named_slots = std::collections::HashMap::new();
-            $(
-                $(
-                    let widget = $crate::widget!{@wrap $named_slot_widget};
-                    if widget.is_some() {
-                        let name = stringify!($named_slot_name).to_owned();
-                        named_slots.insert(name, widget);
-                    }
-                )*
-            )?
-            #[allow(unused_mut)]
-            let mut listed_slots = vec![];
-            $(
-                listed_slots.extend($listed_slot_widgets);
-            )?
-            $(
-                $(
-                    let widget = $crate::widget!{@wrap $listed_slot_widget};
-                    if widget.is_some() {
-                        listed_slots.push(widget);
-                    }
-                )*
-            )?
-            let component = $crate::widget::component::WidgetComponent {
-                processor: $crate::widget::FnWidget::pointer(processor),
-                type_name,
-                key,
-                idref,
-                props,
-                shared_props,
-                listed_slots,
-                named_slots,
-            };
-            $crate::widget::node::WidgetNode::Component(component)
-        }
-    };
-    (@wrap {$expr:expr}) => {
-        $crate::widget::node::WidgetNode::from($expr)
-    };
-    (@wrap $tree:tt) => {
-        $crate::widget!($tree)
-    };
-}
-
 /// A helper for getting the named children out of a widget context
 ///
 /// # Example
@@ -936,12 +775,7 @@ macro_rules! widget {
 ///     // Unpack our named `body` slot
 ///     unpack_named_slots!(named_slots => body);
 ///
-///     widget! {
-///         (content_box {
-///             // insert our body slot in the content box
-///             content = {body}
-///         })
-///     }
+///     make_widget!(content_box).named_slot("content", body).into()
 /// }
 /// ```
 ///
@@ -954,9 +788,9 @@ macro_rules! widget {
 /// #        named_slots,
 /// #        ..
 /// #    } = context;
-/// // Unpack the `header`, `body`, and `footer` slots
-/// unpack_named_slots!(named_slots => { header, body, footer });
-/// #    widget!(())
+///      // Unpack the `header`, `body`, and `footer` slots
+///      unpack_named_slots!(named_slots => { header, body, footer });
+/// #    Default::default()
 /// # }
 /// ```
 #[macro_export]

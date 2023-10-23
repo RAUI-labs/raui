@@ -1,7 +1,7 @@
 use crate::{
-    pre_hooks,
+    make_widget, pre_hooks,
     props::Props,
-    unpack_named_slots, widget,
+    unpack_named_slots,
     widget::{
         component::{
             containers::{
@@ -65,30 +65,33 @@ pub fn tooltip_box(mut context: WidgetContext) -> WidgetNode {
         Props::new(anchor_state).with(props.read_cloned_or_default::<PivotBoxProps>());
 
     let tooltip = if show {
-        widget! {
-            (#{"pivot"} pivot_box: {pivot_props} {
-                content = (#{"portal"} portal_box {
-                    content = {tooltip}
-                })
-            })
-        }
+        make_widget!(pivot_box)
+            .key("pivot")
+            .merge_props(pivot_props)
+            .named_slot(
+                "content",
+                make_widget!(portal_box)
+                    .key("portal")
+                    .named_slot("content", tooltip),
+            )
+            .into()
     } else {
-        widget! {()}
+        WidgetNode::default()
     };
 
-    let content = widget! {
-        (#{key} | {idref.cloned()} content_box: {props.clone()} [
-            {content}
-            {tooltip}
-        ])
-    };
+    let content = make_widget!(content_box)
+        .key(key)
+        .maybe_idref(idref.cloned())
+        .merge_props(props.clone())
+        .listed_slot(content)
+        .listed_slot(tooltip)
+        .into();
 
-    widget! {{{
-        AreaBoxNode {
-            id: id.to_owned(),
-            slot: Box::new(content),
-        }
-    }}}
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
 }
 
 #[pre_hooks(use_portals_container_relative_layout)]

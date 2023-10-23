@@ -8,4 +8,5 @@ pub mod scroll_paper;
 pub mod text_tooltip_paper;
 pub mod tooltip_paper;
 pub mod vertical_paper;
+pub mod window_paper;
 pub mod wrap_paper;
