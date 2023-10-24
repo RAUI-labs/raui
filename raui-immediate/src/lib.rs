@@ -1,16 +1,18 @@
 use internal::immediate_effects_box;
 use raui_core::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 thread_local! {
     pub(crate) static STACK: RefCell<Vec<Vec<WidgetNode>>> = Default::default();
     pub(crate) static STATES: RefCell<Option<Rc<RefCell<ImmediateStates>>>> = Default::default();
+    pub(crate) static ACCESS_POINTS: RefCell<Option<Rc<RefCell<ImmediateAccessPoints>>>> = Default::default();
 }
 
 #[derive(Default)]
 pub struct ImmediateContext {
     states: Rc<RefCell<ImmediateStates>>,
+    access_points: Rc<RefCell<ImmediateAccessPoints>>,
 }
 
 impl ImmediateContext {
@@ -19,11 +21,20 @@ impl ImmediateContext {
             context.states.borrow_mut().reset();
             *states.borrow_mut() = Some(context.states.clone());
         });
+        ACCESS_POINTS.with(|access_points| {
+            *access_points.borrow_mut() = Some(context.access_points.clone());
+        });
     }
 
     pub fn deactivate() {
         STATES.with(|states| {
             *states.borrow_mut() = None;
+        });
+        ACCESS_POINTS.with(|access_points| {
+            if let Some(access_points) = access_points.borrow_mut().as_mut() {
+                access_points.borrow_mut().reset();
+            }
+            *access_points.borrow_mut() = None;
         });
     }
 }
@@ -54,6 +65,34 @@ impl ImmediateStates {
             .get(index)
             .unwrap()
             .lazy()
+            .into_typed()
+            .ok()
+            .unwrap()
+    }
+}
+
+#[derive(Default)]
+struct ImmediateAccessPoints {
+    data: HashMap<String, DynamicManagedLazy>,
+}
+
+impl ImmediateAccessPoints {
+    fn register<T>(&mut self, id: impl ToString, data: &mut T) -> Lifetime {
+        let result = Lifetime::default();
+        self.data
+            .insert(id.to_string(), DynamicManagedLazy::new(data, result.lazy()));
+        result
+    }
+
+    fn reset(&mut self) {
+        self.data.clear();
+    }
+
+    fn access<T>(&self, id: &str) -> ManagedLazy<T> {
+        self.data
+            .get(id)
+            .unwrap()
+            .clone()
             .into_typed()
             .ok()
             .unwrap()
@@ -122,6 +161,28 @@ pub fn use_state<T>(init: impl FnMut() -> T) -> ManagedLazy<T> {
             .unwrap_or_else(|| panic!("You must activate context first for `use_state` to work!"))
             .borrow_mut();
         states.alloc(init)
+    })
+}
+
+pub fn use_access<T>(id: &str) -> ManagedLazy<T> {
+    ACCESS_POINTS.with(|access_points| {
+        let access_points = access_points.borrow();
+        let access_points = access_points
+            .as_ref()
+            .unwrap_or_else(|| panic!("You must activate context first for `use_access` to work!"))
+            .borrow();
+        access_points.access(id)
+    })
+}
+
+pub fn register_access<T>(id: &str, data: &mut T) -> Lifetime {
+    ACCESS_POINTS.with(|access_points| {
+        let access_points = access_points.borrow();
+        let mut access_points = access_points
+            .as_ref()
+            .unwrap_or_else(|| panic!("You must activate context first for `use_access` to work!"))
+            .borrow_mut();
+        access_points.register(id, data)
     })
 }
 

@@ -16,6 +16,7 @@ pub mod animator;
 pub mod interactive;
 pub mod layout;
 pub mod signals;
+pub mod tester;
 pub mod view_model;
 
 pub type Scalar = f32;

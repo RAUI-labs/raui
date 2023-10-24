@@ -1,11 +1,11 @@
 [package]
 name = "raui-immediate-widgets"
-version = "0.46.0"
+version = "0.46.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Widgets library for RAUI immediate mode UI layer"
 readme = "../README.md"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]

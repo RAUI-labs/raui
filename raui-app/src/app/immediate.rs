@@ -3,6 +3,7 @@ use glutin::event::Event;
 use raui_core::{
     application::Application,
     make_widget,
+    tester::{AppCycleFrameRunner, AppCycleTester},
     widget::{component::containers::content_box::content_box, utils::Color},
 };
 use raui_immediate::{make_widgets, ImmediateContext};
@@ -25,6 +26,10 @@ impl ImmediateApp {
     pub fn simple_fullscreen(title: impl ToString, callback: impl FnMut() + 'static) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
             .run(Self::default().update(callback));
+    }
+
+    pub fn test_frame<F: FnMut()>(f: F) -> ImmediateAppCycleFrameRunner<F> {
+        ImmediateAppCycleFrameRunner(f)
     }
 
     pub fn update(mut self, callback: impl FnMut() + 'static) -> Self {
@@ -70,5 +75,19 @@ impl AppState<Vertex> for ImmediateApp {
 
     fn on_event(&mut self, event: Event<()>) -> bool {
         self.shared.event(event)
+    }
+}
+
+pub struct ImmediateAppCycleFrameRunner<F: FnMut()>(F);
+
+impl<F: FnMut()> AppCycleFrameRunner<ImmediateContext> for ImmediateAppCycleFrameRunner<F> {
+    fn run_frame(mut self, tester: &mut AppCycleTester<ImmediateContext>) {
+        raui_immediate::reset();
+        let widgets = make_widgets(&tester.user_data, || {
+            (self.0)();
+        });
+        tester
+            .application
+            .apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
     }
 }
