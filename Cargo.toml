@@ -12,6 +12,7 @@ categories = ["gui", "rendering::graphics-api"]
 exclude = [".github/**", "demos/**", "media/**", "site/**"]
 
 [features]
+default=["json"]
 material = ["raui-material"]
 retained = ["raui-retained"]
 immediate = ["raui-immediate"]

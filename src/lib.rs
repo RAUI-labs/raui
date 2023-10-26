@@ -22,9 +22,61 @@
 //! ```rust
 //! # use raui::prelude::*;
 //! # use raui::renderer::json::JsonRenderer;
-//! # fn app(_: WidgetContext) -> WidgetNode { Default::default() }
-//! # fn title_bar(_: WidgetContext) -> WidgetNode { Default::default() }
-//! # fn text_button(_: WidgetContext) -> WidgetNode { Default::default() }
+//! #
+//! # fn app(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { named_slots, .. } = context;
+//! #     unpack_named_slots!(named_slots => { title, content });
+//! #     
+//! #     make_widget!(nav_vertical_box)
+//! #         .listed_slot(title)
+//! #         .listed_slot(content)
+//! #         .into()
+//! # }
+//! #
+//! # fn title_bar(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { props, .. } = context;
+//! #     
+//! #     make_widget!(text_box)
+//! #         .with_props(TextBoxProps {
+//! #             text: props.read_cloned_or_default::<String>(),
+//! #             font: TextBoxFont {
+//! #                 name: "verdana.ttf".to_owned(),
+//! #                 size: 64.0,
+//! #             },
+//! #             color: Color {
+//! #                 r: 0.0,
+//! #                 g: 0.0,
+//! #                 b: 0.5,
+//! #                 a: 1.0,
+//! #             },
+//! #             horizontal_align: TextBoxHorizontalAlign::Center,
+//! #             ..Default::default()
+//! #         })
+//! #         .into()
+//! # }
+//! #
+//! # fn text_button(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { props, .. } = context;
+//! #
+//! #     make_widget!(button)
+//! #         .named_slot("content", make_widget!(text_box)
+//! #             .with_props(TextBoxProps {
+//! #                 text: props.read_cloned_or_default::<String>(),
+//! #                 font: TextBoxFont {
+//! #                     name: "verdana.ttf".to_owned(),
+//! #                     size: 32.0,
+//! #                 },
+//! #                 color: Color {
+//! #                     r: 1.0,
+//! #                     g: 0.0,
+//! #                     b: 0.5,
+//! #                     a: 1.0,
+//! #                 },
+//! #                 ..Default::default()
+//! #             }))
+//! #             .into()
+//! # }
+//! #
 //! // Coords mapping tell RAUI renderers how to convert coordinates
 //! // between virtual-space and ui-space.
 //! let mapping = CoordsMapping::new(Rect {
@@ -58,10 +110,6 @@
 //! application.apply(tree);
 //!
 //! // `render()` calls renderer to perform transformations on processed application widget tree.
-//! if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
-//!     println!("* OUTPUT:\n{}", output);
-//! }
-//!
 //! // by default application won't process widget tree if nothing was changed.
 //! // "change" is either any widget state change, or new message sent to any widget (messages
 //! // can be sent from application host, for example a mouse click, or from another widget).
@@ -81,9 +129,61 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! # fn app(_: WidgetContext) -> WidgetNode { Default::default() }
-//! # fn title_bar(_: WidgetContext) -> WidgetNode { Default::default() }
-//! # fn text_button(_: WidgetContext) -> WidgetNode { Default::default() }
+//! #
+//! # fn app(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { named_slots, .. } = context;
+//! #     unpack_named_slots!(named_slots => { title, content });
+//! #     
+//! #     make_widget!(nav_vertical_box)
+//! #         .listed_slot(title)
+//! #         .listed_slot(content)
+//! #         .into()
+//! # }
+//! #
+//! # fn title_bar(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { props, .. } = context;
+//! #     
+//! #     make_widget!(text_box)
+//! #         .with_props(TextBoxProps {
+//! #             text: props.read_cloned_or_default::<String>(),
+//! #             font: TextBoxFont {
+//! #                 name: "verdana.ttf".to_owned(),
+//! #                 size: 64.0,
+//! #             },
+//! #             color: Color {
+//! #                 r: 0.0,
+//! #                 g: 0.0,
+//! #                 b: 0.5,
+//! #                 a: 1.0,
+//! #             },
+//! #             horizontal_align: TextBoxHorizontalAlign::Center,
+//! #             ..Default::default()
+//! #         })
+//! #         .into()
+//! # }
+//! #
+//! # fn text_button(context: WidgetContext) -> WidgetNode {
+//! #     let WidgetContext { props, .. } = context;
+//! #
+//! #     make_widget!(button)
+//! #         .named_slot("content", make_widget!(text_box)
+//! #             .with_props(TextBoxProps {
+//! #                 text: props.read_cloned_or_default::<String>(),
+//! #                 font: TextBoxFont {
+//! #                     name: "verdana.ttf".to_owned(),
+//! #                     size: 32.0,
+//! #                 },
+//! #                 color: Color {
+//! #                     r: 1.0,
+//! #                     g: 0.0,
+//! #                     b: 0.5,
+//! #                     a: 1.0,
+//! #                 },
+//! #                 ..Default::default()
+//! #             }))
+//! #             .into()
+//! # }
+//! #
 //! let tree = make_widget!(app)
 //!     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
 //!     .named_slot("content", make_widget!(vertical_box)

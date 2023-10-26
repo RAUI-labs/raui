@@ -53,6 +53,9 @@ website-doc-tests:
             -L target/doctests/debug/deps; \
     done
 
+website-live-dev:
+    cd site && zola serve
+
 publish:
     cargo publish --no-verify --manifest-path ./raui-derive/Cargo.toml
     sleep 1
