@@ -24,6 +24,13 @@ widgets and receive signals sent from widgets to host application.
 [`Application`]: core::application::Application
 
 ```rust
+#
+#
+#
+#
+#
+#
+#
 // Coords mapping tell RAUI renderers how to convert coordinates
 // between virtual-space and ui-space.
 let mapping = CoordsMapping::new(Rect {
@@ -57,10 +64,6 @@ let mut renderer = JsonRenderer::default();
 application.apply(tree);
 
 // `render()` calls renderer to perform transformations on processed application widget tree.
-if let Ok(output) = application.render::<JsonRenderer, String, _>(&mapping, &mut renderer) {
-    println!("* OUTPUT:\n{}", output);
-}
-
 // by default application won't process widget tree if nothing was changed.
 // "change" is either any widget state change, or new message sent to any widget (messages
 // can be sent from application host, for example a mouse click, or from another widget).
@@ -79,6 +82,13 @@ Widgets are divided into three categories:
 [`WidgetNode`]: core::widget::node::WidgetNode
 
 ```rust
+#
+#
+#
+#
+#
+#
+#
 let tree = make_widget!(app)
     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
     .named_slot("content", make_widget!(vertical_box)
