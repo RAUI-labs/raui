@@ -24,9 +24,6 @@ widgets and receive signals sent from widgets to host application.
 [`Application`]: core::application::Application
 
 ```rust
-#
-#
-#
 // Coords mapping tell RAUI renderers how to convert coordinates
 // between virtual-space and ui-space.
 let mapping = CoordsMapping::new(Rect {
@@ -77,9 +74,6 @@ Widgets are divided into three categories:
 [`WidgetNode`]: core::widget::node::WidgetNode
 
 ```rust
-#
-#
-#
 let tree = make_widget!(app)
     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned()))
     .named_slot("content", make_widget!(vertical_box)
