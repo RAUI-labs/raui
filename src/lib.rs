@@ -25,15 +25,13 @@
 //! # fn app(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { named_slots, .. } = context;
 //! #     unpack_named_slots!(named_slots => { title, content });
-//! #     
 //! #     make_widget!(nav_vertical_box)
 //! #         .listed_slot(title)
 //! #         .listed_slot(content)
 //! #         .into()
 //! # }
 //! # fn title_bar(context: WidgetContext) -> WidgetNode {
-//! #     let WidgetContext { props, .. } = context;
-//! #     
+//! #     let WidgetContext { props, .. } = context;  
 //! #     make_widget!(text_box)
 //! #         .with_props(TextBoxProps {
 //! #             text: props.read_cloned_or_default::<String>(),
@@ -54,7 +52,6 @@
 //! # }
 //! # fn text_button(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
-//! #
 //! #     make_widget!(button)
 //! #         .named_slot("content", make_widget!(text_box)
 //! #             .with_props(TextBoxProps {
@@ -127,7 +124,6 @@
 //! # fn app(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { named_slots, .. } = context;
 //! #     unpack_named_slots!(named_slots => { title, content });
-//! #     
 //! #     make_widget!(nav_vertical_box)
 //! #         .listed_slot(title)
 //! #         .listed_slot(content)
@@ -135,7 +131,6 @@
 //! # }
 //! # fn title_bar(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
-//! #     
 //! #     make_widget!(text_box)
 //! #         .with_props(TextBoxProps {
 //! #             text: props.read_cloned_or_default::<String>(),
@@ -156,7 +151,6 @@
 //! # }
 //! # fn text_button(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
-//! #
 //! #     make_widget!(button)
 //! #         .named_slot("content", make_widget!(text_box)
 //! #             .with_props(TextBoxProps {
