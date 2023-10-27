@@ -49,12 +49,11 @@ application.register_component("app", FnWidget::pointer(app));
 
 // Widget tree is simply a set of nested widget nodes.
 let tree = make_widget!(app)
-    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned()))
     .named_slot("content", make_widget!(vertical_box)
         .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
         .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
-    )
-);
+    );
 
 // some dummy widget tree renderer.
 // it reads widget unit tree and transforms it into target format.
@@ -90,12 +89,11 @@ Widgets are divided into three categories:
 #
 #
 let tree = make_widget!(app)
-    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned())
+    .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned()))
     .named_slot("content", make_widget!(vertical_box)
         .listed_slot(make_widget!(text_button).key("hi").with_props("Say hi!".to_owned()))
         .listed_slot(make_widget!(text_button).key("exit").with_props("Exit!".to_owned()))
-    )
-);
+    );
 ```
 
 - **[`WidgetComponent`]** - you can think of them as Virtual DOM nodes, they store:
