@@ -22,7 +22,6 @@
 //! ```rust
 //! # use raui::prelude::*;
 //! # use raui::renderer::json::JsonRenderer;
-//! #
 //! # fn app(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { named_slots, .. } = context;
 //! #     unpack_named_slots!(named_slots => { title, content });
@@ -32,7 +31,6 @@
 //! #         .listed_slot(content)
 //! #         .into()
 //! # }
-//! #
 //! # fn title_bar(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
 //! #     
@@ -54,7 +52,6 @@
 //! #         })
 //! #         .into()
 //! # }
-//! #
 //! # fn text_button(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
 //! #
@@ -76,7 +73,6 @@
 //! #             }))
 //! #             .into()
 //! # }
-//! #
 //! // Coords mapping tell RAUI renderers how to convert coordinates
 //! // between virtual-space and ui-space.
 //! let mapping = CoordsMapping::new(Rect {
@@ -128,7 +124,6 @@
 //!
 //! ```rust
 //! # use raui::prelude::*;
-//! #
 //! # fn app(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { named_slots, .. } = context;
 //! #     unpack_named_slots!(named_slots => { title, content });
@@ -138,7 +133,6 @@
 //! #         .listed_slot(content)
 //! #         .into()
 //! # }
-//! #
 //! # fn title_bar(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
 //! #     
@@ -160,7 +154,6 @@
 //! #         })
 //! #         .into()
 //! # }
-//! #
 //! # fn text_button(context: WidgetContext) -> WidgetNode {
 //! #     let WidgetContext { props, .. } = context;
 //! #
@@ -182,7 +175,6 @@
 //! #             }))
 //! #             .into()
 //! # }
-//! #
 //! let tree = make_widget!(app)
 //!     .named_slot("title", make_widget!(title_bar).with_props("Hello".to_owned()))
 //!     .named_slot("content", make_widget!(vertical_box)
