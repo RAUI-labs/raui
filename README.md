@@ -27,10 +27,6 @@ widgets and receive signals sent from widgets to host application.
 #
 #
 #
-#
-#
-#
-#
 // Coords mapping tell RAUI renderers how to convert coordinates
 // between virtual-space and ui-space.
 let mapping = CoordsMapping::new(Rect {
@@ -81,10 +77,6 @@ Widgets are divided into three categories:
 [`WidgetNode`]: core::widget::node::WidgetNode
 
 ```rust
-#
-#
-#
-#
 #
 #
 #
