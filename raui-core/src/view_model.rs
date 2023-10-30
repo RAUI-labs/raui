@@ -207,7 +207,7 @@ impl ViewModel {
             .and_then(|object| object.into_typed::<T>().ok())
     }
 
-    pub fn lazy<T: 'static>(&mut self) -> Option<ManagedLazy<T>> {
+    pub fn lazy<T: 'static>(&self) -> Option<ManagedLazy<T>> {
         self.object.lazy().into_typed::<T>().ok()
     }
 
@@ -455,7 +455,7 @@ mod tests {
 
         // create new view-model and add it to collection.
         // `produce` method allows to setup notifiers as we construct view-model.
-        let mut view_model = ViewModel::produce(|properties| Foo {
+        let view_model = ViewModel::produce(|properties| Foo {
             counter: ViewModelValue::new(0, properties.notifier(COUNTER_PROPERTY)),
             flag: false,
             flag_notifier: properties.notifier(FLAG_PROPERTY),

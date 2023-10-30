@@ -62,7 +62,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 
 fn main() {
     // Create View-Model for `AppData`.
-    let mut view_model = ViewModel::produce(|properties| AppData {
+    let view_model = ViewModel::produce(|properties| AppData {
         // We use View-Model properties to create notifiers for properties.
         counter: ViewModelValue::new(0, properties.notifier(COUNTER)),
     });

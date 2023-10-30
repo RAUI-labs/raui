@@ -74,7 +74,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                     "scrollbars",
                     // scrollbars used here are side buttons that you can drag to scroll content on
                     // separate axes, but you could make a custom scrollbars component that for example
-                    // uses single button that allows to scroll inboth axes at once.
+                    // uses single button that allows to scroll in both axes at once with dragging.
                     make_widget!(nav_scroll_box_side_scrollbars).with_props(SideScrollbarsProps {
                         size: 20.0,
                         back_material: Some(ImageBoxMaterial::Color(ImageBoxColor {
