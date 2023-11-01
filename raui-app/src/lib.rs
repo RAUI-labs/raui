@@ -14,7 +14,7 @@ use spitfire_glow::{
 };
 use vek::Rect;
 
-pub use glutin::event;
+pub use glutin::{event, window};
 
 pub mod prelude {
     pub use crate::{
