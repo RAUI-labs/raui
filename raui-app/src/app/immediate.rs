@@ -1,5 +1,5 @@
 use crate::{app::SharedApp, Vertex};
-use glutin::event::Event;
+use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
     make_widget,
@@ -53,7 +53,10 @@ impl ImmediateApp {
         self
     }
 
-    pub fn event(mut self, f: impl FnMut(&mut Application, Event<()>) -> bool + 'static) -> Self {
+    pub fn event(
+        mut self,
+        f: impl FnMut(&mut Application, Event<()>, &mut Window) -> bool + 'static,
+    ) -> Self {
         self.shared.on_event = Some(Box::new(f));
         self
     }
@@ -73,8 +76,8 @@ impl AppState<Vertex> for ImmediateApp {
         self.shared.redraw(graphics);
     }
 
-    fn on_event(&mut self, event: Event<()>) -> bool {
-        self.shared.event(event)
+    fn on_event(&mut self, event: Event<()>, window: &mut Window) -> bool {
+        self.shared.event(event, window)
     }
 }
 

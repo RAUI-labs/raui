@@ -210,7 +210,7 @@ impl DefaultInteractionsEngine {
         }
     }
 
-    fn select_item(&mut self, app: &mut Application, id: Option<WidgetId>) -> bool {
+    pub fn select_item(&mut self, app: &mut Application, id: Option<WidgetId>) -> bool {
         if self.locked_widget.is_some() || self.selected_chain.last() == id.as_ref() {
             return false;
         }
@@ -268,7 +268,7 @@ impl DefaultInteractionsEngine {
         true
     }
 
-    fn focus_text_input(&mut self, app: &mut Application, id: Option<WidgetId>) {
+    pub fn focus_text_input(&mut self, app: &mut Application, id: Option<WidgetId>) {
         if self.focused_text_input == id {
             return;
         }
@@ -284,7 +284,7 @@ impl DefaultInteractionsEngine {
         }
     }
 
-    fn send_to_selected_item<T>(&self, app: &mut Application, data: T) -> bool
+    pub fn send_to_selected_item<T>(&self, app: &mut Application, data: T) -> bool
     where
         T: 'static + MessageData,
     {
@@ -295,7 +295,7 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn send_to_selected_container<T>(&self, app: &mut Application, data: T) -> bool
+    pub fn send_to_selected_container<T>(&self, app: &mut Application, data: T) -> bool
     where
         T: 'static + MessageData,
     {
@@ -306,7 +306,7 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn send_to_selected_button<T>(&self, app: &mut Application, tracked: bool, data: T) -> bool
+    pub fn send_to_selected_button<T>(&self, app: &mut Application, tracked: bool, data: T) -> bool
     where
         T: 'static + MessageData,
     {
@@ -317,7 +317,7 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn send_to_focused_text_input<T>(&self, app: &mut Application, data: T) -> bool
+    pub fn send_to_focused_text_input<T>(&self, app: &mut Application, data: T) -> bool
     where
         T: 'static + MessageData,
     {
@@ -328,7 +328,7 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    fn find_scroll_view_content(&self, id: &&WidgetId) -> Option<WidgetId> {
+    fn find_scroll_view_content(&self, id: &WidgetId) -> Option<WidgetId> {
         if self.scroll_views.contains(id) {
             if let Some(items) = self.containers.get(id) {
                 for item in items {
@@ -618,7 +618,7 @@ impl DefaultInteractionsEngine {
                         v: Vec2,
                         relative: bool,
                     ) {
-                        if let Some(oid) = this.find_scroll_view_content(&id) {
+                        if let Some(oid) = this.find_scroll_view_content(id) {
                             let a = app.layout_data().find_or_ui_space(oid.path());
                             let b = app.layout_data().find_or_ui_space(id.path());
                             let asize = a.local_space.size();
@@ -649,7 +649,7 @@ impl DefaultInteractionsEngine {
                         v: Vec2,
                         relative: bool,
                     ) {
-                        if let Some(oid) = this.find_scroll_view_content(&id) {
+                        if let Some(oid) = this.find_scroll_view_content(id) {
                             let a = app.layout_data().find_or_ui_space(oid.path());
                             let b = app.layout_data().find_or_ui_space(id.path());
                             let asize = a.local_space.size();
@@ -696,7 +696,7 @@ impl DefaultInteractionsEngine {
                         }
                         NavScroll::Widget(idref, anchor) => {
                             if let (Some(wid), Some(oid)) =
-                                (idref.read(), self.find_scroll_view_content(&id))
+                                (idref.read(), self.find_scroll_view_content(id))
                             {
                                 if let Some(rect) = app.layout_data().rect_relative_to(&wid, &oid) {
                                     let aitem = app.layout_data().find_or_ui_space(oid.path());
@@ -737,7 +737,7 @@ impl DefaultInteractionsEngine {
         }
     }
 
-    fn find_button(&self, app: &Application, x: Scalar, y: Scalar) -> Option<(WidgetId, Vec2)> {
+    pub fn find_button(&self, app: &Application, x: Scalar, y: Scalar) -> Option<(WidgetId, Vec2)> {
         self.find_button_inner(app, x, y, app.rendered_tree(), app.layout_data().ui_space)
     }
 
@@ -818,7 +818,7 @@ impl DefaultInteractionsEngine {
         result
     }
 
-    fn does_hover_widget(&self, app: &Application, x: Scalar, y: Scalar) -> bool {
+    pub fn does_hover_widget(&self, app: &Application, x: Scalar, y: Scalar) -> bool {
         Self::does_hover_widget_inner(app, x, y, app.rendered_tree())
     }
 

@@ -5,7 +5,10 @@ pub mod retained;
 use crate::{
     asset_manager::AssetsManager, interactions::AppInteractionsEngine, TesselateToGraphics, Vertex,
 };
-use glutin::event::{Event, VirtualKeyCode, WindowEvent};
+use glutin::{
+    event::{Event, VirtualKeyCode, WindowEvent},
+    window::Window,
+};
 use raui_core::{
     application::Application,
     layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping},
@@ -38,7 +41,7 @@ pub(crate) struct SharedApp {
     #[allow(clippy::type_complexity)]
     on_redraw: Option<Box<dyn FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>)>>,
     #[allow(clippy::type_complexity)]
-    on_event: Option<Box<dyn FnMut(&mut Application, Event<()>) -> bool>>,
+    on_event: Option<Box<dyn FnMut(&mut Application, Event<()>, &mut Window) -> bool>>,
     application: Application,
     interactions: AppInteractionsEngine,
     text_renderer: TextRenderer<Color>,
@@ -175,7 +178,7 @@ impl SharedApp {
         );
     }
 
-    fn event(&mut self, event: Event<()>) -> bool {
+    fn event(&mut self, event: Event<()>, window: &mut Window) -> bool {
         self.interactions.event(&event, &self.coords_mapping);
         if let Event::WindowEvent {
             event: WindowEvent::Resized(_),
@@ -200,7 +203,7 @@ impl SharedApp {
         }
         self.on_event
             .as_mut()
-            .map(|callback| callback(&mut self.application, event))
+            .map(|callback| callback(&mut self.application, event, window))
             .unwrap_or(true)
     }
 }

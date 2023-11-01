@@ -73,7 +73,7 @@ fn main() {
     let app = DeclarativeApp::default()
         .tree(make_widget!(app))
         .view_model(DATA, view_model)
-        .event(move |_, event| {
+        .event(move |_, event, _| {
             if let Event::WindowEvent {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..

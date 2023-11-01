@@ -1,5 +1,5 @@
 use crate::{app::SharedApp, Vertex};
-use glutin::event::Event;
+use glutin::{event::Event, window::Window};
 use raui_core::{
     application::{Application, ChangeNotifier},
     widget::utils::Color,
@@ -46,7 +46,10 @@ impl<T: ViewState> RetainedApp<T> {
         self
     }
 
-    pub fn event(mut self, f: impl FnMut(&mut Application, Event<()>) -> bool + 'static) -> Self {
+    pub fn event(
+        mut self,
+        f: impl FnMut(&mut Application, Event<()>, &mut Window) -> bool + 'static,
+    ) -> Self {
         self.shared.on_event = Some(Box::new(f));
         self
     }
@@ -73,7 +76,7 @@ impl<T: ViewState> AppState<Vertex> for RetainedApp<T> {
         self.shared.redraw(graphics);
     }
 
-    fn on_event(&mut self, event: Event<()>) -> bool {
-        self.shared.event(event)
+    fn on_event(&mut self, event: Event<()>, window: &mut Window) -> bool {
+        self.shared.event(event, window)
     }
 }

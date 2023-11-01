@@ -137,7 +137,7 @@ fn main() {
         .tree(make_widget!(app))
         // we use tuple of 3 bools that will represent state of individual context box.
         .view_model(DATA, ViewModel::new_object((false, true, false)))
-        .event(move |application, event| {
+        .event(move |application, event, _| {
             let mut data = application
                 .view_models
                 .get_mut(DATA)
