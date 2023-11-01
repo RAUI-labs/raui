@@ -295,7 +295,11 @@ impl<'a> ViewModelCollectionView<'a> {
         self.defaults
     }
 
-    pub fn collection(&'a mut self) -> &'a mut ViewModelCollection {
+    pub fn collection(&'a self) -> &'a ViewModelCollection {
+        self.inner
+    }
+
+    pub fn collection_mut(&'a mut self) -> &'a mut ViewModelCollection {
         self.inner
     }
 
@@ -319,6 +323,10 @@ impl<'a> ViewModelCollectionView<'a> {
             .get_mut(view_model.as_ref())?
             .properties
             .bindings(property)
+    }
+
+    pub fn lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
+        self.inner.get(name)?.lazy::<T>()
     }
 
     pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
