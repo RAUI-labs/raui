@@ -11,6 +11,7 @@ use glutin::{
 };
 use raui_core::{
     application::Application,
+    interactive::default_interactions_engine::DefaultInteractionsEngine,
     layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping},
     widget::utils::{Color, Rect},
 };
@@ -41,7 +42,16 @@ pub(crate) struct SharedApp {
     #[allow(clippy::type_complexity)]
     on_redraw: Option<Box<dyn FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>)>>,
     #[allow(clippy::type_complexity)]
-    on_event: Option<Box<dyn FnMut(&mut Application, Event<()>, &mut Window) -> bool>>,
+    on_event: Option<
+        Box<
+            dyn FnMut(
+                &mut Application,
+                Event<()>,
+                &mut Window,
+                &mut DefaultInteractionsEngine,
+            ) -> bool,
+        >,
+    >,
     application: Application,
     interactions: AppInteractionsEngine,
     text_renderer: TextRenderer<Color>,
@@ -203,7 +213,14 @@ impl SharedApp {
         }
         self.on_event
             .as_mut()
-            .map(|callback| callback(&mut self.application, event, window))
+            .map(|callback| {
+                callback(
+                    &mut self.application,
+                    event,
+                    window,
+                    &mut self.interactions.engine,
+                )
+            })
             .unwrap_or(true)
     }
 }

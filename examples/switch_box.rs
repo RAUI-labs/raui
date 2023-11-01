@@ -58,7 +58,7 @@ fn main() {
     let app = DeclarativeApp::default()
         .tree(make_widget!(app))
         .view_model(DATA, ViewModel::new_object(0usize))
-        .event(move |application, event, _| {
+        .event(move |application, event, _, _| {
             let mut data = application
                 .view_models
                 .get_mut(DATA)

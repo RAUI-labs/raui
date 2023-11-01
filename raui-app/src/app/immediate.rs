@@ -2,6 +2,7 @@ use crate::{app::SharedApp, Vertex};
 use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
+    interactive::default_interactions_engine::DefaultInteractionsEngine,
     make_widget,
     tester::{AppCycleFrameRunner, AppCycleTester},
     widget::{component::containers::content_box::content_box, utils::Color},
@@ -55,7 +56,8 @@ impl ImmediateApp {
 
     pub fn event(
         mut self,
-        f: impl FnMut(&mut Application, Event<()>, &mut Window) -> bool + 'static,
+        f: impl FnMut(&mut Application, Event<()>, &mut Window, &mut DefaultInteractionsEngine) -> bool
+            + 'static,
     ) -> Self {
         self.shared.on_event = Some(Box::new(f));
         self
