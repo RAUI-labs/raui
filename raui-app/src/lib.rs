@@ -21,6 +21,7 @@ pub mod prelude {
         app::*,
         app::{declarative::*, immediate::*, retained::*},
         event::*,
+        window::*,
     };
 }
 
