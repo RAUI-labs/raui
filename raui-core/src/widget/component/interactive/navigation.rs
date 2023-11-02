@@ -56,6 +56,11 @@ impl NavTrackingNotifyMessage {
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
+pub struct NavLockingActive;
+
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavContainerActive;
 
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -548,6 +553,31 @@ pub fn use_nav_tracking_notified_state(context: &mut WidgetContext) {
             if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
                 let _ = context.state.write_with(msg.state);
             }
+        }
+    });
+}
+
+pub fn use_nav_locking(context: &mut WidgetContext) {
+    context.life_cycle.mount(|context| {
+        if context.props.has::<NavLockingActive>() {
+            context.signals.write(NavSignal::Lock);
+            let _ = context.state.write_with(NavLockingActive);
+        }
+    });
+
+    context.life_cycle.unmount(|context| {
+        context.signals.write(NavSignal::Unlock);
+    });
+
+    context.life_cycle.change(|context| {
+        if context.props.has::<NavLockingActive>() {
+            if !context.state.has::<NavLockingActive>() {
+                context.signals.write(NavSignal::Lock);
+                let _ = context.state.write_with(NavLockingActive);
+            }
+        } else if context.state.has::<NavLockingActive>() {
+            context.signals.write(NavSignal::Unlock);
+            let _ = context.state.write_without::<NavLockingActive>();
         }
     });
 }

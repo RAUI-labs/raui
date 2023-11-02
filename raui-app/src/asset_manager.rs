@@ -273,7 +273,7 @@ impl AssetsManager {
 
     pub(crate) fn parse_image_id(id: &str) -> (&str, Option<&str>) {
         match id.find('@') {
-            Some(index) => (&id[..index], Some(&id[(index + 1)..])),
+            Some(index) => (&id[..index], Some(&id[(index + b"@".len())..])),
             None => (id, None),
         }
     }

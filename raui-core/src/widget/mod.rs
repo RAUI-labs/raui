@@ -200,6 +200,15 @@ impl WidgetId {
         self.parts.iter().cloned().map(move |range| &self.id[range])
     }
 
+    #[inline]
+    pub fn rparts(&self) -> impl Iterator<Item = &str> + '_ {
+        self.parts
+            .iter()
+            .rev()
+            .cloned()
+            .map(move |range| &self.id[range])
+    }
+
     pub fn hashed_value(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
         self.hash(&mut hasher);
@@ -241,7 +250,7 @@ impl FromStr for WidgetId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some(index) = s.find(':') {
             let type_name = s[..index].to_owned();
-            let rest = &s[(index + 1)..];
+            let rest = &s[(index + b":".len())..];
             let path = rest.split('/').map(Cow::Borrowed).collect::<Vec<_>>();
             Ok(Self::new(&type_name, &path))
         } else {
@@ -622,6 +631,10 @@ pub fn setup(app: &mut Application) {
     app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
     app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
 
+    app.register_component(
+        "area_box",
+        FnWidget::pointer(component::containers::area_box::area_box),
+    );
     app.register_component(
         "anchor_box",
         FnWidget::pointer(component::containers::anchor_box::anchor_box),

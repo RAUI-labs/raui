@@ -1,6 +1,7 @@
 //! Containers for other components
 
 pub mod anchor_box;
+pub mod area_box;
 pub mod content_box;
 pub mod context_box;
 pub mod flex_box;
