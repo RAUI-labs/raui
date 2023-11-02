@@ -41,7 +41,8 @@ impl From<WidgetId> for WidgetIdDef {
 pub struct WidgetId {
     id: String,
     type_name: Range<usize>,
-    parts: Vec<Range<usize>>,
+    /// [(key range, meta range)]
+    parts: Vec<(Range<usize>, Range<usize>)>,
 }
 
 impl WidgetId {
@@ -79,7 +80,15 @@ impl WidgetId {
                 }
                 position = result.as_bytes().len();
                 result.push_str(part);
-                position..result.as_bytes().len()
+                let range = position..result.as_bytes().len();
+                if let Some(index) = part.find('?') {
+                    let key = range.start..(range.start + index);
+                    let meta = (range.start + index + b"?".len())..range.end;
+                    (key, meta)
+                } else {
+                    let meta = range.end..range.end;
+                    (range, meta)
+                }
             })
             .collect::<Vec<_>>();
         Self {
@@ -98,11 +107,20 @@ impl WidgetId {
         }
         let position = result.as_bytes().len();
         result.push_str(part);
+        let range = position..result.as_bytes().len();
+        let (key, meta) = if let Some(index) = part.find('?') {
+            let key = range.start..(range.start + index);
+            let meta = (range.start + index + b"?".len())..range.end;
+            (key, meta)
+        } else {
+            let meta = range.end..range.end;
+            (range, meta)
+        };
         let parts = self
             .parts
             .iter()
             .cloned()
-            .chain(std::iter::once(position..result.as_bytes().len()))
+            .chain(std::iter::once((key, meta)))
             .collect();
         Self {
             id: result,
@@ -114,7 +132,7 @@ impl WidgetId {
     pub fn pop(&self) -> Self {
         let parts = self.parts[0..(self.parts.len().saturating_sub(1))].to_owned();
         let result = if let Some(range) = parts.last() {
-            self.id[0..range.end].to_owned()
+            self.id[0..range.1.end].to_owned()
         } else {
             format!("{}:", self.type_name())
         };
@@ -145,7 +163,7 @@ impl WidgetId {
         if self.parts.is_empty() {
             &self.id.as_str()[0..0]
         } else {
-            &self.id.as_str()[self.parts.first().unwrap().start..self.parts.last().unwrap().end]
+            &self.id.as_str()[self.parts.first().unwrap().0.start..self.parts.last().unwrap().1.end]
         }
     }
 
@@ -154,13 +172,33 @@ impl WidgetId {
         if self.parts.is_empty() {
             &self.id.as_str()[0..0]
         } else {
-            &self.id[self.parts.last().cloned().unwrap()]
+            &self.id[self.parts.last().cloned().unwrap().0]
+        }
+    }
+
+    #[inline]
+    pub fn meta(&self) -> &str {
+        if self.parts.is_empty() {
+            &self.id.as_str()[0..0]
+        } else {
+            &self.id[self.parts.last().cloned().unwrap().1]
         }
     }
 
     #[inline]
     pub fn part(&self, index: usize) -> Option<&str> {
-        self.parts.get(index).cloned().map(|range| &self.id[range])
+        self.parts
+            .get(index)
+            .cloned()
+            .map(|(key, meta)| &self.id[key.start..meta.end])
+    }
+
+    #[inline]
+    pub fn part_key_meta(&self, index: usize) -> Option<(&str, &str)> {
+        self.parts
+            .get(index)
+            .cloned()
+            .map(|(key, meta)| (&self.id[key], &self.id[meta]))
     }
 
     pub fn range(&self, from_inclusive: usize, to_exclusive: usize) -> &str {
@@ -172,8 +210,8 @@ impl WidgetId {
             .saturating_sub(1)
             .max(start)
             .min(self.parts.len().saturating_sub(1));
-        let start = self.parts[start].start;
-        let end = self.parts[end].end;
+        let start = self.parts[start].0.start;
+        let end = self.parts[end].1.end;
         &self.id[start..end]
     }
 
@@ -197,7 +235,18 @@ impl WidgetId {
 
     #[inline]
     pub fn parts(&self) -> impl Iterator<Item = &str> + '_ {
-        self.parts.iter().cloned().map(move |range| &self.id[range])
+        self.parts
+            .iter()
+            .cloned()
+            .map(move |(key, meta)| &self.id[key.start..meta.end])
+    }
+
+    #[inline]
+    pub fn parts_key_meta(&self) -> impl Iterator<Item = (&str, &str)> + '_ {
+        self.parts
+            .iter()
+            .cloned()
+            .map(move |(key, meta)| (&self.id[key], &self.id[meta]))
     }
 
     #[inline]
@@ -206,7 +255,16 @@ impl WidgetId {
             .iter()
             .rev()
             .cloned()
-            .map(move |range| &self.id[range])
+            .map(move |(key, meta)| &self.id[key.start..meta.end])
+    }
+
+    #[inline]
+    pub fn rparts_key_meta(&self) -> impl Iterator<Item = (&str, &str)> + '_ {
+        self.parts
+            .iter()
+            .rev()
+            .cloned()
+            .map(move |(key, meta)| (&self.id[key], &self.id[meta]))
     }
 
     pub fn hashed_value(&self) -> u64 {
@@ -269,7 +327,7 @@ impl std::fmt::Debug for WidgetId {
                 &self
                     .parts
                     .iter()
-                    .map(|part| &self.id[part.clone()])
+                    .map(|(key, meta)| (&self.id[key.to_owned()], &self.id[meta.to_owned()]))
                     .collect::<Vec<_>>(),
             )
             .finish()
@@ -907,5 +965,12 @@ mod tests {
         let id = id.push("me");
         assert_eq!(&*id, "type:parent/me");
         assert_eq!(id.path(), "parent/me");
+        assert_eq!(id.key(), "me");
+        assert_eq!(id.meta(), "");
+        let id = id.push("with?meta");
+        assert_eq!(&*id, "type:parent/me/with?meta");
+        assert_eq!(id.path(), "parent/me/with?meta");
+        assert_eq!(id.key(), "with");
+        assert_eq!(id.meta(), "meta");
     }
 }
