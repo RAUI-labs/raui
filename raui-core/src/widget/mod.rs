@@ -35,6 +35,76 @@ impl From<WidgetId> for WidgetIdDef {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct WidgetIdMetaParam<'a> {
+    pub name: &'a str,
+    pub value: Option<&'a str>,
+}
+
+impl<'a> WidgetIdMetaParam<'a> {
+    pub fn is_flag(&self) -> bool {
+        self.value.is_none()
+    }
+
+    pub fn has_value(&self) -> bool {
+        self.value.is_some()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct WidgetIdMetaParams<'a>(&'a str);
+
+impl<'a> WidgetIdMetaParams<'a> {
+    pub fn new(meta: &'a str) -> Self {
+        Self(meta)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = WidgetIdMetaParam> {
+        self.0.split('&').filter_map(|part| {
+            if let Some(index) = part.find('=') {
+                let name = &part[0..index];
+                let value = &part[(index + b"=".len())..];
+                if name.is_empty() {
+                    None
+                } else {
+                    Some(WidgetIdMetaParam {
+                        name,
+                        value: Some(value),
+                    })
+                }
+            } else {
+                if part.is_empty() {
+                    None
+                } else {
+                    Some(WidgetIdMetaParam {
+                        name: part,
+                        value: None,
+                    })
+                }
+            }
+        })
+    }
+
+    pub fn find(&self, name: &str) -> Option<WidgetIdMetaParam> {
+        self.iter().find(|param| param.name == name)
+    }
+
+    pub fn has_flag(&self, name: &str) -> bool {
+        self.iter()
+            .any(|param| param.name == name && param.is_flag())
+    }
+
+    pub fn find_value(&self, name: &str) -> Option<&str> {
+        self.iter().find_map(|param| {
+            if param.name == name {
+                param.value
+            } else {
+                None
+            }
+        })
+    }
+}
+
 #[derive(PropsData, Default, Clone, Serialize, Deserialize)]
 #[serde(try_from = "WidgetIdDef")]
 #[serde(into = "WidgetIdDef")]
