@@ -6,7 +6,7 @@ use crate::{
     asset_manager::AssetsManager, interactions::AppInteractionsEngine, TesselateToGraphics, Vertex,
 };
 use glutin::{
-    event::{Event, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     window::Window,
 };
 use raui_core::{
@@ -67,6 +67,8 @@ pub(crate) struct SharedApp {
     pub print_raui_tree_key: VirtualKeyCode,
     #[cfg(debug_assertions)]
     pub print_raui_layout_key: VirtualKeyCode,
+    #[cfg(debug_assertions)]
+    pub print_raui_interactions_key: VirtualKeyCode,
 }
 
 impl Default for SharedApp {
@@ -93,6 +95,8 @@ impl Default for SharedApp {
             print_raui_tree_key: VirtualKeyCode::F10,
             #[cfg(debug_assertions)]
             print_raui_layout_key: VirtualKeyCode::F11,
+            #[cfg(debug_assertions)]
+            print_raui_interactions_key: VirtualKeyCode::F12,
         }
     }
 }
@@ -203,11 +207,15 @@ impl SharedApp {
             ..
         } = &event
         {
-            if let Some(key) = input.virtual_keycode {
-                if key == self.print_raui_tree_key {
-                    println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
-                } else if key == self.print_raui_layout_key {
-                    println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());
+            if input.state == ElementState::Pressed {
+                if let Some(key) = input.virtual_keycode {
+                    if key == self.print_raui_tree_key {
+                        println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
+                    } else if key == self.print_raui_layout_key {
+                        println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());
+                    } else if key == self.print_raui_interactions_key {
+                        println!("* RAUI INTERACTIONS: {:#?}", self.interactions);
+                    }
                 }
             }
         }
