@@ -416,13 +416,19 @@ impl WidgetRef {
     }
 }
 
+impl PartialEq for WidgetRef {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
 impl From<WidgetRefDef> for WidgetRef {
     fn from(data: WidgetRefDef) -> Self {
         WidgetRef(Arc::new(RwLock::new(data.0)))
     }
 }
 
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WidgetIdOrRef {
     #[default]
     None,
@@ -595,8 +601,8 @@ pub fn setup(app: &mut Application) {
         "TextInputNotifyProps",
     );
     app.register_props::<component::interactive::navigation::NavItemActive>("NavItemActive");
-    app.register_props::<component::interactive::navigation::NavButtonTrackingActive>(
-        "NavButtonTrackingActive",
+    app.register_props::<component::interactive::navigation::NavTrackingActive>(
+        "NavTrackingActive",
     );
     app.register_props::<component::interactive::navigation::NavContainerActive>(
         "NavContainerActive",
@@ -709,12 +715,16 @@ pub fn setup(app: &mut Application) {
         FnWidget::pointer(component::containers::wrap_box::wrap_box),
     );
     app.register_component(
-        "image_box",
-        FnWidget::pointer(component::image_box::image_box),
-    );
-    app.register_component(
         "button",
         FnWidget::pointer(component::interactive::button::button),
+    );
+    app.register_component(
+        "tracked_button",
+        FnWidget::pointer(component::interactive::button::tracked_button),
+    );
+    app.register_component(
+        "self_tracked_button",
+        FnWidget::pointer(component::interactive::button::self_tracked_button),
     );
     app.register_component(
         "text_input",
@@ -725,8 +735,24 @@ pub fn setup(app: &mut Application) {
         FnWidget::pointer(component::interactive::input_field::input_field),
     );
     app.register_component(
+        "navigation_barrier",
+        FnWidget::pointer(component::interactive::navigation::navigation_barrier),
+    );
+    app.register_component(
+        "tracking",
+        FnWidget::pointer(component::interactive::navigation::tracking),
+    );
+    app.register_component(
+        "self_tracking",
+        FnWidget::pointer(component::interactive::navigation::self_tracking),
+    );
+    app.register_component(
         "space_box",
         FnWidget::pointer(component::space_box::space_box),
+    );
+    app.register_component(
+        "image_box",
+        FnWidget::pointer(component::image_box::image_box),
     );
     app.register_component("text_box", FnWidget::pointer(component::text_box::text_box));
 }

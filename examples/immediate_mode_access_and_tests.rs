@@ -8,11 +8,11 @@ mod gui {
 
     pub fn app() {
         nav_content_box((), || {
-            tracked_button();
+            clickable_button();
         });
     }
 
-    pub fn tracked_button() {
+    pub fn clickable_button() {
         if colored_button().trigger_start() {
             // we use access point to some host data
             let clicked = use_access::<bool>("clicked");

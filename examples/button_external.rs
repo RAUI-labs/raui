@@ -10,6 +10,8 @@ fn use_app(ctx: &mut WidgetContext) {
         for msg in ctx.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
                 println!("Button message: {:#?}", msg);
+            } else if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
+                println!("Tracking message: {:#?}", msg);
             }
         }
     });
@@ -17,13 +19,12 @@ fn use_app(ctx: &mut WidgetContext) {
 
 #[pre_hooks(use_nav_container_active, use_app)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
-    make_widget!(button)
+    make_widget!(self_tracked_button)
         .with_props(NavItemActive)
-        // for this example we enable button tracking to read the pointer (mouse) position relative
-        // to the botton layout area.
-        .with_props(NavButtonTrackingActive)
         // we tell button to notify this component (send messages to it) whenever button state changes.
         .with_props(ButtonNotifyProps(ctx.id.to_owned().into()))
+        // and again but this time with pointer tracking.
+        .with_props(NavTrackingNotifyProps(ctx.id.to_owned().into()))
         .named_slot(
             "content",
             make_widget!(image_box).with_props(ImageBoxProps {

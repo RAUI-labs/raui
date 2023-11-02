@@ -380,7 +380,7 @@ mod tests {
         }
 
         println!(
-            "=== #{} | HOVERED: {} | CLICKED: {}",
+            "* #{} | HOVERED: {} | CLICKED: {}",
             frame, *show_slider, *show_text_field
         );
 
@@ -397,7 +397,7 @@ mod tests {
         let mut state = value.write().unwrap();
 
         *state += 0.1;
-        println!("=== SLIDER VALUE: {}", *state);
+        println!("* SLIDER VALUE: {}", *state);
     }
 
     fn text_field() {
@@ -406,7 +406,7 @@ mod tests {
 
         text.push('z');
 
-        println!("=== TEXT FIELD: {}", text.as_str());
+        println!("* TEXT FIELD: {}", text.as_str());
     }
 
     #[test]

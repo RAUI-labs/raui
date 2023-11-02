@@ -70,10 +70,11 @@ pub struct DefaultInteractionsEngine {
     interactions_queue: VecDeque<Interaction>,
     containers: HashMap<WidgetId, HashSet<WidgetId>>,
     items_owners: HashMap<WidgetId, WidgetId>,
-    buttons: HashMap<WidgetId, bool>,
+    buttons: HashSet<WidgetId>,
     text_inputs: HashSet<WidgetId>,
     scroll_views: HashSet<WidgetId>,
     scroll_view_contents: HashSet<WidgetId>,
+    tracking: HashMap<WidgetId, WidgetId>,
     selected_chain: Vec<WidgetId>,
     locked_widget: Option<WidgetId>,
     focused_text_input: Option<WidgetId>,
@@ -90,6 +91,7 @@ impl DefaultInteractionsEngine {
         buttons: usize,
         text_inputs: usize,
         scroll_views: usize,
+        tracking: usize,
         selected_chain: usize,
     ) -> Self {
         Self {
@@ -99,10 +101,11 @@ impl DefaultInteractionsEngine {
             interactions_queue: VecDeque::with_capacity(interactions_queue),
             containers: HashMap::with_capacity(containers),
             items_owners: Default::default(),
-            buttons: HashMap::with_capacity(buttons),
+            buttons: HashSet::with_capacity(buttons),
             text_inputs: HashSet::with_capacity(text_inputs),
             scroll_views: HashSet::with_capacity(scroll_views),
             scroll_view_contents: HashSet::with_capacity(scroll_views),
+            tracking: HashMap::with_capacity(tracking),
             selected_chain: Vec::with_capacity(selected_chain),
             locked_widget: None,
             focused_text_input: None,
@@ -129,12 +132,11 @@ impl DefaultInteractionsEngine {
             .find(|id| self.containers.contains_key(id))
     }
 
-    pub fn selected_button(&self, tracked: bool) -> Option<&WidgetId> {
+    pub fn selected_button(&self) -> Option<&WidgetId> {
         self.selected_chain
             .iter()
             .rev()
-            .find(|id| self.buttons.contains_key(id))
-            .filter(|&id| !tracked || *self.buttons.get(id).unwrap())
+            .find(|id| self.buttons.contains(id))
     }
 
     pub fn selected_scroll_view(&self) -> Option<&WidgetId> {
@@ -306,11 +308,11 @@ impl DefaultInteractionsEngine {
         false
     }
 
-    pub fn send_to_selected_button<T>(&self, app: &mut Application, tracked: bool, data: T) -> bool
+    pub fn send_to_selected_button<T>(&self, app: &mut Application, data: T) -> bool
     where
         T: 'static + MessageData,
     {
-        if let Some(id) = self.selected_button(tracked) {
+        if let Some(id) = self.selected_button() {
             app.send_message(id, data);
             return true;
         }
@@ -754,7 +756,7 @@ impl DefaultInteractionsEngine {
         }
         let mut result = None;
         if let Some(data) = unit.as_data() {
-            if self.buttons.contains_key(data.id()) {
+            if self.buttons.contains(data.id()) {
                 if let Some(layout) = app.layout_data().items.get(data.id()) {
                     let rect = layout.ui_space;
                     if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
@@ -935,8 +937,8 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                                 self.items_owners.insert(id.to_owned(), key.to_owned());
                             }
                         }
-                        NavType::Button(tracked) => {
-                            self.buttons.insert(id.to_owned(), *tracked);
+                        NavType::Button => {
+                            self.buttons.insert(id.to_owned());
                         }
                         NavType::TextInput => {
                             self.text_inputs.insert(id.to_owned());
@@ -946,6 +948,11 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         }
                         NavType::ScrollViewContent => {
                             self.scroll_view_contents.insert(id.to_owned());
+                        }
+                        NavType::Tracking(who) => {
+                            if let Some(who) = who.read() {
+                                self.tracking.insert(id.to_owned(), who);
+                            }
                         }
                     },
                     NavSignal::Unregister(t) => match t {
@@ -968,7 +975,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                                 }
                             }
                         }
-                        NavType::Button(_) => {
+                        NavType::Button => {
                             self.buttons.remove(id);
                         }
                         NavType::TextInput => {
@@ -984,6 +991,9 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         }
                         NavType::ScrollViewContent => {
                             self.scroll_view_contents.remove(id);
+                        }
+                        NavType::Tracking(_) => {
+                            self.tracking.remove(id);
                         }
                     },
                     NavSignal::Select(idref) => to_select = Some(idref.to_owned()),
@@ -1118,61 +1128,38 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                 },
                 Interaction::PointerMove(Vec2 { x, y }) => {
                     if self.locked_widget.is_some() {
-                        if let Some(id) = self.selected_button(false) {
-                            if let Some(layout) = app.layout_data().items.get(id) {
-                                let rect = layout.ui_space;
-                                let size = rect.size();
-                                let x = if size.x > 0.0 {
-                                    (x - rect.left) / size.x
-                                } else {
-                                    0.0
-                                };
-                                let y = if size.y > 0.0 {
-                                    (y - rect.top) / size.y
-                                } else {
-                                    0.0
-                                };
-                                result.captured_pointer_location = true;
-                                if self.send_to_selected_button(
-                                    app,
-                                    true,
-                                    NavSignal::Axis("pointer-x".to_owned(), x),
-                                ) {
-                                    result.captured_pointer_action = true;
-                                }
-                                if self.send_to_selected_button(
-                                    app,
-                                    true,
-                                    NavSignal::Axis("pointer-y".to_owned(), y),
-                                ) {
-                                    result.captured_pointer_action = true;
-                                }
-                            }
+                        if self.selected_button().is_some() {
+                            result.captured_pointer_location = true;
                         }
-                    } else if let Some((found, pos)) = self.find_button(app, x, y) {
+                    } else if let Some((found, _)) = self.find_button(app, x, y) {
                         result.captured_pointer_location = true;
-                        if !self.select_item(app, Some(found)) {
-                            if self.send_to_selected_button(
-                                app,
-                                true,
-                                NavSignal::Axis("pointer-x".to_owned(), pos.x),
-                            ) {
-                                result.captured_pointer_action = true;
-                            }
-                            if self.send_to_selected_button(
-                                app,
-                                true,
-                                NavSignal::Axis("pointer-y".to_owned(), pos.y),
-                            ) {
-                                result.captured_pointer_action = true;
-                            }
-                        }
+                        self.select_item(app, Some(found));
                     } else {
                         if self.deselect_when_no_button_found {
                             self.select_item(app, None);
                         }
                         if self.does_hover_widget(app, x, y) {
                             result.captured_pointer_location = true;
+                        }
+                    }
+                    for (id, who) in &self.tracking {
+                        if let Some(layout) = app.layout_data().items.get(who) {
+                            let rect = layout.ui_space;
+                            let size = rect.size();
+                            let x = if size.x > 0.0 {
+                                (x - rect.left) / size.x
+                            } else {
+                                0.0
+                            };
+                            let y = if size.y > 0.0 {
+                                (y - rect.top) / size.y
+                            } else {
+                                0.0
+                            };
+                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            result.captured_pointer_location = true;
+                            result.captured_pointer_action = true;
                         }
                     }
                 }
@@ -1184,19 +1171,17 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                             PointerButton::Trigger => NavSignal::Accept(true),
                             PointerButton::Context => NavSignal::Context(true),
                         };
-                        if self.send_to_selected_button(app, false, action) {
+                        if self.send_to_selected_button(app, action) {
                             result.captured_pointer_action = true;
                         }
                         if self.send_to_selected_button(
                             app,
-                            true,
                             NavSignal::Axis("pointer-x".to_owned(), pos.x),
                         ) {
                             result.captured_pointer_action = true;
                         }
                         if self.send_to_selected_button(
                             app,
-                            true,
                             NavSignal::Axis("pointer-y".to_owned(), pos.y),
                         ) {
                             result.captured_pointer_action = true;
@@ -1209,14 +1194,54 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                             result.captured_pointer_location = true;
                         }
                     }
+                    for (id, who) in &self.tracking {
+                        if let Some(layout) = app.layout_data().items.get(who) {
+                            let rect = layout.ui_space;
+                            let size = rect.size();
+                            let x = if size.x > 0.0 {
+                                (x - rect.left) / size.x
+                            } else {
+                                0.0
+                            };
+                            let y = if size.y > 0.0 {
+                                (y - rect.top) / size.y
+                            } else {
+                                0.0
+                            };
+                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            result.captured_pointer_location = true;
+                            result.captured_pointer_action = true;
+                        }
+                    }
                 }
-                Interaction::PointerUp(button, _) => {
+                Interaction::PointerUp(button, Vec2 { x, y }) => {
                     let action = match button {
                         PointerButton::Trigger => NavSignal::Accept(false),
                         PointerButton::Context => NavSignal::Context(false),
                     };
-                    if self.send_to_selected_button(app, false, action) {
+                    if self.send_to_selected_button(app, action) {
                         result.captured_pointer_action = true;
+                    }
+                    for (id, who) in &self.tracking {
+                        if let Some(layout) = app.layout_data().items.get(who) {
+                            let rect = layout.ui_space;
+                            let size = rect.size();
+                            let x = if size.x > 0.0 {
+                                (x - rect.left) / size.x
+                            } else {
+                                0.0
+                            };
+                            let y = if size.y > 0.0 {
+                                (y - rect.top) / size.y
+                            } else {
+                                0.0
+                            };
+                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            result.captured_pointer_location = true;
+                            result.captured_pointer_action = true;
+                        }
                     }
                 }
             }

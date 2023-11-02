@@ -144,9 +144,9 @@ pub mod core {
             button::{ButtonNotifyProps, ButtonProps},
             input_field::{TextInputMode, TextInputNotifyProps, TextInputProps},
             navigation::{
-                NavButtonTrackingActive, NavContainerActive, NavDirection, NavItemActive, NavJump,
-                NavJumpActive, NavJumpLooped, NavJumpMapProps, NavJumpMode, NavScroll,
-                NavTextChange, NavType,
+                NavContainerActive, NavDirection, NavItemActive, NavJump, NavJumpActive,
+                NavJumpLooped, NavJumpMapProps, NavJumpMode, NavScroll, NavTextChange,
+                NavTrackingActive, NavType,
             },
             scroll_view::{ScrollViewNotifyProps, ScrollViewRange, ScrollViewState},
         };

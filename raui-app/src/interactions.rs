@@ -26,7 +26,7 @@ pub struct AppInteractionsEngine {
 
 impl Default for AppInteractionsEngine {
     fn default() -> Self {
-        Self::with_capacity(32, 32, 1024, 32, 32, 32, 32, 32)
+        Self::with_capacity(32, 32, 1024, 32, 32, 32, 32, 32, 32)
     }
 }
 
@@ -44,6 +44,7 @@ impl AppInteractionsEngine {
         buttons: usize,
         text_inputs: usize,
         scroll_views: usize,
+        tracking: usize,
         selected_chain: usize,
     ) -> Self {
         let mut engine = DefaultInteractionsEngine::with_capacity(
@@ -54,6 +55,7 @@ impl AppInteractionsEngine {
             buttons,
             text_inputs,
             scroll_views,
+            tracking,
             selected_chain,
         );
         engine.deselect_when_no_button_found = true;

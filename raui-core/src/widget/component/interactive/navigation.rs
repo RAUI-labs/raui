@@ -1,8 +1,8 @@
 use crate::{
     post_hooks, pre_hooks, unpack_named_slots,
     widget::{
-        context::WidgetContext, node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2,
-        WidgetIdOrRef,
+        component::containers::portal_box::PortalsContainer, context::WidgetContext,
+        node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2, WidgetId, WidgetIdOrRef,
     },
     MessageData, PropsData, Scalar,
 };
@@ -13,10 +13,45 @@ use serde::{Deserialize, Serialize};
 #[prefab(crate::Prefab)]
 pub struct NavItemActive;
 
-#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
-pub struct NavButtonTrackingActive;
+pub struct NavTrackingActive(#[serde(default)] pub WidgetIdOrRef);
+
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct NavTrackingNotifyProps(
+    #[serde(default)]
+    #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
+    pub WidgetIdOrRef,
+);
+
+#[derive(PropsData, Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct NavTrackingProps(#[serde(default)] pub Vec2);
+
+#[derive(MessageData, Debug, Default, Clone)]
+#[message_data(crate::messenger::MessageData)]
+pub struct NavTrackingNotifyMessage {
+    pub sender: WidgetId,
+    pub state: NavTrackingProps,
+    pub prev: NavTrackingProps,
+}
+
+impl NavTrackingNotifyMessage {
+    pub fn pointer_delta(&self) -> Vec2 {
+        Vec2 {
+            x: self.state.0.x - self.prev.0.x,
+            y: self.state.0.y - self.prev.0.y,
+        }
+    }
+
+    pub fn pointer_moved(&self) -> bool {
+        (self.state.0.x - self.prev.0.x) + (self.state.0.y - self.prev.0.y) > 1.0e-6
+    }
+}
 
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
@@ -33,15 +68,16 @@ pub struct NavJumpActive(#[serde(default)] pub NavJumpMode);
 #[prefab(crate::Prefab)]
 pub struct NavJumpLooped;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum NavType {
     Container,
     Item,
-    /// (track pointer)
-    Button(bool),
+    Button,
     TextInput,
     ScrollView,
     ScrollViewContent,
+    /// (tracked widget)
+    Tracking(WidgetIdOrRef),
 }
 
 #[derive(MessageData, Debug, Default, Clone)]
@@ -420,22 +456,100 @@ pub fn use_nav_item_active(context: &mut WidgetContext) {
 
 pub fn use_nav_button(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
-        let tracked = context.props.has::<NavButtonTrackingActive>();
-        context
-            .signals
-            .write(NavSignal::Register(NavType::Button(tracked)));
+        context.signals.write(NavSignal::Register(NavType::Button));
     });
 
     context.life_cycle.unmount(|context| {
         context
             .signals
-            .write(NavSignal::Unregister(NavType::Button(false)));
+            .write(NavSignal::Unregister(NavType::Button));
     });
 }
 
-#[post_hooks(use_nav_button)]
-pub fn use_nav_button_tracking_active(context: &mut WidgetContext) {
-    context.props.write(NavButtonTrackingActive);
+pub fn use_nav_tracking(context: &mut WidgetContext) {
+    context.life_cycle.mount(|context| {
+        if let Ok(tracking) = context.props.read::<NavTrackingActive>() {
+            context
+                .signals
+                .write(NavSignal::Register(NavType::Tracking(tracking.0.clone())));
+            let _ = context.state.write_with(NavTrackingProps::default());
+        }
+    });
+
+    context.life_cycle.unmount(|context| {
+        context
+            .signals
+            .write(NavSignal::Unregister(NavType::Tracking(Default::default())));
+    });
+
+    context.life_cycle.change(|context| {
+        if context.props.has::<NavTrackingActive>() {
+            if !context.state.has::<NavTrackingProps>() {
+                let _ = context.state.write_with(NavTrackingProps::default());
+            }
+            let mut dirty = false;
+            let mut data = context.state.read_cloned_or_default::<NavTrackingProps>();
+            let prev = data;
+            for msg in context.messenger.messages {
+                if let Some(NavSignal::Axis(axis, value)) = msg.as_any().downcast_ref::<NavSignal>()
+                {
+                    if axis == "pointer-x" {
+                        data.0.x = *value;
+                        dirty = true;
+                    } else if axis == "pointer-y" {
+                        data.0.y = *value;
+                        dirty = true;
+                    }
+                }
+            }
+            if dirty {
+                if let Ok(NavTrackingNotifyProps(notify)) = context.props.read() {
+                    if let Some(to) = notify.read() {
+                        context.messenger.write(
+                            to,
+                            NavTrackingNotifyMessage {
+                                sender: context.id.to_owned(),
+                                state: data.to_owned(),
+                                prev,
+                            },
+                        );
+                    }
+                }
+                let _ = context.state.write_with(data);
+            }
+        } else if context.state.has::<NavTrackingProps>() {
+            context
+                .signals
+                .write(NavSignal::Unregister(NavType::Tracking(Default::default())));
+            let _ = context.state.write_without::<NavTrackingProps>();
+        }
+    });
+}
+
+#[pre_hooks(use_nav_tracking)]
+pub fn use_nav_tracking_self(context: &mut WidgetContext) {
+    context
+        .props
+        .write(NavTrackingActive(context.id.to_owned().into()));
+}
+
+#[pre_hooks(use_nav_tracking)]
+pub fn use_nav_tracking_active_portals_container(context: &mut WidgetContext) {
+    if let Ok(data) = context.shared_props.read::<PortalsContainer>() {
+        context
+            .props
+            .write(NavTrackingActive(data.0.to_owned().into()));
+    }
+}
+
+pub fn use_nav_tracking_notified_state(context: &mut WidgetContext) {
+    context.life_cycle.change(|context| {
+        for msg in context.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
+                let _ = context.state.write_with(msg.state);
+            }
+        }
+    });
 }
 
 pub fn use_nav_text_input(context: &mut WidgetContext) {
@@ -492,4 +606,23 @@ pub fn navigation_barrier(mut context: WidgetContext) -> WidgetNode {
         slot: Box::new(content),
     }
     .into()
+}
+
+#[pre_hooks(use_nav_tracking)]
+pub fn tracking(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id, named_slots, ..
+    } = context;
+    unpack_named_slots!(named_slots => content);
+
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
+    }
+    .into()
+}
+
+#[pre_hooks(use_nav_tracking_self)]
+pub fn self_tracking(mut context: WidgetContext) -> WidgetNode {
+    tracking(context)
 }

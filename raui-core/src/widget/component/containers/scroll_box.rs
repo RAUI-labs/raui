@@ -10,11 +10,14 @@ use crate::{
             },
             image_box::{image_box, ImageBoxProps},
             interactive::{
-                button::{button, ButtonNotifyMessage, ButtonNotifyProps},
+                button::{
+                    button, self_tracked_button, ButtonNotifyMessage, ButtonNotifyProps,
+                    ButtonProps,
+                },
                 navigation::{
                     use_nav_container_active, use_nav_item, use_nav_item_active,
-                    use_nav_scroll_view_content, NavButtonTrackingActive, NavItemActive, NavJump,
-                    NavScroll, NavSignal,
+                    use_nav_scroll_view_content, NavItemActive, NavJump, NavScroll, NavSignal,
+                    NavTrackingNotifyMessage, NavTrackingNotifyProps,
                 },
                 scroll_view::{use_scroll_view, ScrollViewState},
             },
@@ -69,8 +72,8 @@ impl Default for SideScrollbarsProps {
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
 pub struct SideScrollbarsState {
-    pub horizontal: Scalar,
-    pub vertical: Scalar,
+    pub horizontal_state: ButtonProps,
+    pub vertical_state: ButtonProps,
 }
 
 pub fn use_nav_scroll_box_content(context: &mut WidgetContext) {
@@ -201,6 +204,12 @@ pub fn use_nav_scroll_box_side_scrollbars(context: &mut WidgetContext) {
     });
 
     context.life_cycle.change(|context| {
+        let mut dirty = false;
+        let mut notify = false;
+        let mut state = context
+            .state
+            .read_cloned_or_default::<SideScrollbarsState>();
+        let mut props = context.props.read_cloned_or_default::<ScrollViewState>();
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
                 if msg.trigger_start() {
@@ -209,31 +218,42 @@ pub fn use_nav_scroll_box_side_scrollbars(context: &mut WidgetContext) {
                 if msg.trigger_stop() {
                     context.signals.write(NavSignal::Unlock);
                 }
-                if msg.state.selected && (msg.state.trigger || msg.state.context) {
-                    let mut dirty = false;
-                    let mut data = context
-                        .state
-                        .read_cloned_or_default::<SideScrollbarsState>();
-                    if msg.sender.key() == "hbar" {
-                        data.horizontal = msg.state.pointer.x;
-                        dirty = true;
-                    } else if msg.sender.key() == "vbar" {
-                        data.vertical = msg.state.pointer.y;
-                        dirty = true;
-                    }
-                    if dirty {
-                        let view = context.props.read_cloned_or_default::<ScrollBoxOwner>().0;
-                        let pos = Vec2 {
-                            x: data.horizontal,
-                            y: data.vertical,
-                        };
-                        context.signals.write(NavSignal::Jump(NavJump::Scroll(
-                            NavScroll::DirectFactor(view.into(), pos, false),
-                        )));
-                        let _ = context.state.write_with(data);
-                    }
+                if msg.sender.key() == "hbar" {
+                    state.horizontal_state = msg.state;
+                    dirty = true;
+                } else if msg.sender.key() == "vbar" {
+                    state.vertical_state = msg.state;
+                    dirty = true;
                 }
             }
+            if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
+                if msg.sender.key() == "hbar"
+                    && state.horizontal_state.selected
+                    && (state.horizontal_state.trigger || state.horizontal_state.context)
+                {
+                    props.value.x = msg.state.0.x;
+                    notify = true;
+                } else if msg.sender.key() == "vbar"
+                    && state.vertical_state.selected
+                    && (state.vertical_state.trigger || state.vertical_state.context)
+                {
+                    props.value.y = msg.state.0.y;
+                    notify = true;
+                }
+            }
+        }
+        if dirty {
+            let _ = context.state.write_with(state);
+        }
+        if notify {
+            let view = context.props.read_cloned_or_default::<ScrollBoxOwner>().0;
+            context
+                .signals
+                .write(NavSignal::Jump(NavJump::Scroll(NavScroll::DirectFactor(
+                    view.into(),
+                    props.value,
+                    false,
+                ))));
         }
     });
 }
@@ -258,9 +278,9 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
         let length = 1.0 / view_props.size_factor.y;
         let rest = 1.0 - length;
 
-        let button_props = Props::new(ButtonNotifyProps(id.to_owned().into()))
-            .with(NavItemActive)
-            .with(NavButtonTrackingActive)
+        let button_props = Props::new(NavItemActive)
+            .with(ButtonNotifyProps(id.to_owned().into()))
+            .with(NavTrackingNotifyProps(id.to_owned().into()))
             .with(ContentBoxItemLayout {
                 anchors: Rect {
                     left: 0.0,
@@ -303,7 +323,7 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
             WidgetNode::default()
         };
 
-        make_widget!(button)
+        make_widget!(self_tracked_button)
             .key("hbar")
             .merge_props(button_props)
             .named_slot(
@@ -326,9 +346,9 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
         let length = 1.0 / view_props.size_factor.y;
         let rest = 1.0 - length;
 
-        let button_props = Props::new(ButtonNotifyProps(id.to_owned().into()))
-            .with(NavItemActive)
-            .with(NavButtonTrackingActive)
+        let button_props = Props::new(NavItemActive)
+            .with(ButtonNotifyProps(id.to_owned().into()))
+            .with(NavTrackingNotifyProps(id.to_owned().into()))
             .with(ContentBoxItemLayout {
                 anchors: Rect {
                     left: 1.0,
@@ -371,7 +391,7 @@ pub fn nav_scroll_box_side_scrollbars(mut context: WidgetContext) -> WidgetNode 
             ..Default::default()
         });
 
-        make_widget!(button)
+        make_widget!(self_tracked_button)
             .key("vbar")
             .merge_props(button_props)
             .named_slot(

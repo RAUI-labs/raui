@@ -97,9 +97,9 @@ pub fn use_scroll_view(context: &mut WidgetContext) {
     });
 
     context.life_cycle.change(|context| {
+        let mut dirty = false;
         let mut data = context.state.read_cloned_or_default::<ScrollViewState>();
         let range = context.props.read::<ScrollViewRange>();
-        let mut dirty = false;
         for msg in context.messenger.messages {
             if let Some(NavSignal::Jump(NavJump::Scroll(NavScroll::Change(
                 value,

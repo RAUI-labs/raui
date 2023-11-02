@@ -2,11 +2,12 @@ use crate::{
     messenger::MessageData,
     pre_hooks, unpack_named_slots,
     widget::{
-        component::interactive::navigation::{use_nav_button, use_nav_item, NavSignal},
+        component::interactive::navigation::{
+            use_nav_button, use_nav_item, use_nav_tracking, use_nav_tracking_self, NavSignal,
+        },
         context::{WidgetContext, WidgetMountOrChangeContext},
         node::WidgetNode,
         unit::area::AreaBoxNode,
-        utils::Vec2,
         WidgetId, WidgetIdOrRef,
     },
     MessageData, PropsData,
@@ -15,10 +16,6 @@ use serde::{Deserialize, Serialize};
 
 fn is_false(v: &bool) -> bool {
     !*v
-}
-
-fn is_zero(v: &Vec2) -> bool {
-    v.x.abs() < 1.0e-6 && v.y.abs() < 1.0e-6
 }
 
 #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
@@ -34,9 +31,6 @@ pub struct ButtonProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub context: bool,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_zero")]
-    pub pointer: Vec2,
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -130,9 +124,9 @@ pub fn use_button(context: &mut WidgetContext) {
     });
 
     context.life_cycle.change(|context| {
+        let mut dirty = false;
         let mut data = context.state.read_cloned_or_default::<ButtonProps>();
         let prev = data;
-        let mut dirty = false;
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
@@ -152,17 +146,6 @@ pub fn use_button(context: &mut WidgetContext) {
                         data.context = *v;
                         dirty = true;
                     }
-                    NavSignal::Axis(n, v) => match n.as_str() {
-                        "pointer-x" => {
-                            data.pointer.x = *v;
-                            dirty = true;
-                        }
-                        "pointer-y" => {
-                            data.pointer.y = *v;
-                            dirty = true;
-                        }
-                        _ => {}
-                    },
                     _ => {}
                 }
             }
@@ -200,4 +183,14 @@ pub fn button(mut context: WidgetContext) -> WidgetNode {
         slot: Box::new(content),
     }
     .into()
+}
+
+#[pre_hooks(use_nav_tracking)]
+pub fn tracked_button(mut context: WidgetContext) -> WidgetNode {
+    button(context)
+}
+
+#[pre_hooks(use_nav_tracking_self)]
+pub fn self_tracked_button(mut context: WidgetContext) -> WidgetNode {
+    button(context)
 }
