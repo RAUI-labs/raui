@@ -488,8 +488,11 @@ pub fn use_nav_tracking(context: &mut WidgetContext) {
     });
 
     context.life_cycle.change(|context| {
-        if context.props.has::<NavTrackingActive>() {
+        if let Ok(tracking) = context.props.read::<NavTrackingActive>() {
             if !context.state.has::<NavTrackingProps>() {
+                context
+                    .signals
+                    .write(NavSignal::Register(NavType::Tracking(tracking.0.clone())));
                 let _ = context.state.write_with(NavTrackingProps::default());
             }
             let mut dirty = false;
@@ -575,7 +578,9 @@ pub fn use_nav_locking(context: &mut WidgetContext) {
                 context.signals.write(NavSignal::Lock);
                 let _ = context.state.write_with(NavLockingActive);
             }
-        } else if context.state.has::<NavLockingActive>() {
+        } else if context.state.has::<NavLockingActive>()
+            && !context.props.has::<NavLockingActive>()
+        {
             context.signals.write(NavSignal::Unlock);
             let _ = context.state.write_without::<NavLockingActive>();
         }
