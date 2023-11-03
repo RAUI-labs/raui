@@ -72,15 +72,13 @@ impl<'a> WidgetIdMetaParams<'a> {
                         value: Some(value),
                     })
                 }
+            } else if part.is_empty() {
+                None
             } else {
-                if part.is_empty() {
-                    None
-                } else {
-                    Some(WidgetIdMetaParam {
-                        name: part,
-                        value: None,
-                    })
-                }
+                Some(WidgetIdMetaParam {
+                    name: part,
+                    value: None,
+                })
             }
         })
     }

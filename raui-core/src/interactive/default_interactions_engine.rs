@@ -1164,7 +1164,7 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                     }
                 }
                 Interaction::PointerDown(button, Vec2 { x, y }) => {
-                    if let Some((found, pos)) = self.find_button(app, x, y) {
+                    if let Some((found, _)) = self.find_button(app, x, y) {
                         self.select_item(app, Some(found));
                         result.captured_pointer_location = true;
                         let action = match button {
@@ -1172,18 +1172,6 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                             PointerButton::Context => NavSignal::Context(true),
                         };
                         if self.send_to_selected_button(app, action) {
-                            result.captured_pointer_action = true;
-                        }
-                        if self.send_to_selected_button(
-                            app,
-                            NavSignal::Axis("pointer-x".to_owned(), pos.x),
-                        ) {
-                            result.captured_pointer_action = true;
-                        }
-                        if self.send_to_selected_button(
-                            app,
-                            NavSignal::Axis("pointer-y".to_owned(), pos.y),
-                        ) {
                             result.captured_pointer_action = true;
                         }
                     } else {
