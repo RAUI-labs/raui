@@ -13,14 +13,10 @@ pub fn title_bar(mut context: WidgetContext) -> WidgetNode {
         focused,
         ..
     } = state.read_cloned_or_default();
-    let text = if text.trim().is_empty() {
+    let text = if text.is_empty() {
         "> Focus here and start typing...".to_owned()
     } else if focused {
-        if cursor_position < text.len() {
-            format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
-        } else {
-            format!("{}|", text)
-        }
+        input_text_with_cursor(&text, cursor_position, '|')
     } else {
         text
     };

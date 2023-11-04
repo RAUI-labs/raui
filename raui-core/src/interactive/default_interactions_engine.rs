@@ -65,6 +65,7 @@ impl DefaultInteractionsEngineResult {
 #[derive(Debug, Default)]
 pub struct DefaultInteractionsEngine {
     pub deselect_when_no_button_found: bool,
+    pub unfocus_when_selection_change: bool,
     resize_listeners: HashMap<WidgetId, Vec2>,
     relative_layout_listeners: HashMap<WidgetId, (WidgetId, Vec2, Rect)>,
     interactions_queue: VecDeque<Interaction>,
@@ -96,6 +97,7 @@ impl DefaultInteractionsEngine {
     ) -> Self {
         Self {
             deselect_when_no_button_found: false,
+            unfocus_when_selection_change: true,
             resize_listeners: HashMap::with_capacity(resize_listeners),
             relative_layout_listeners: HashMap::with_capacity(relative_layout_listeners),
             interactions_queue: VecDeque::with_capacity(interactions_queue),
@@ -223,6 +225,9 @@ impl DefaultInteractionsEngine {
                 }
             }
             (false, Some(mut id)) => {
+                if self.unfocus_when_selection_change {
+                    self.focus_text_input(app, None);
+                }
                 let mut chain = Vec::with_capacity(self.selected_chain.len());
                 while let Some(owner) = self.items_owners.get(&id) {
                     if !chain.contains(&id) {
@@ -250,6 +255,9 @@ impl DefaultInteractionsEngine {
                 self.selected_chain = chain;
             }
             (true, Some(mut id)) => {
+                if self.unfocus_when_selection_change {
+                    self.focus_text_input(app, None);
+                }
                 self.selected_chain.clear();
                 while let Some(owner) = self.items_owners.get(&id) {
                     if !self.selected_chain.contains(&id) {

@@ -10,7 +10,7 @@ use raui_app::prelude::*;
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
 mod gui {
-    use raui_core::Scalar;
+    use raui_core::{widget::component::interactive::input_field::input_text_with_cursor, Scalar};
     use raui_immediate::*;
     use raui_immediate_widgets::prelude::*;
 
@@ -108,18 +108,10 @@ mod gui {
 
         let result = input_field(props, |state, button| {
             text_box(TextBoxProps {
-                text: if state.text.trim().is_empty() {
+                text: if state.text.is_empty() {
                     "...".to_owned()
                 } else if state.focused {
-                    if state.cursor_position < state.text.len() {
-                        format!(
-                            "{}|{}",
-                            &state.text[..state.cursor_position],
-                            &state.text[state.cursor_position..]
-                        )
-                    } else {
-                        format!("{}|", state.text)
-                    }
+                    input_text_with_cursor(&state.text, state.cursor_position, '|')
                 } else {
                     state.text.to_owned()
                 },

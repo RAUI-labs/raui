@@ -38,11 +38,17 @@ pub struct TextFieldPaperProps {
     pub padding: Rect,
     #[serde(default)]
     pub password: Option<char>,
+    #[serde(default = "TextFieldPaperProps::default_cursor")]
+    pub cursor: Option<char>,
 }
 
 impl TextFieldPaperProps {
     fn default_inactive_alpha() -> Scalar {
         0.75
+    }
+
+    fn default_cursor() -> Option<char> {
+        Some('|')
     }
 
     fn default_padding() -> Rect {
@@ -70,6 +76,7 @@ impl Default for TextFieldPaperProps {
             paper_theme: Default::default(),
             padding: Self::default_padding(),
             password: Default::default(),
+            cursor: Self::default_cursor(),
         }
     }
 }
@@ -90,6 +97,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         paper_theme,
         padding,
         password,
+        cursor,
     } = props.read_cloned_or_default();
     let TextInputProps {
         text,
@@ -98,17 +106,17 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         ..
     } = props.read_cloned_or_default();
     let text = if let Some(c) = password {
-        std::iter::repeat(c).take(text.len()).collect()
+        std::iter::repeat(c).take(text.chars().count()).collect()
     } else {
-        text.trim().to_owned()
+        text
     };
     let text = if text.is_empty() {
         hint
     } else if focused {
-        if cursor_position < text.len() {
-            format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
+        if let Some(cursor) = cursor {
+            input_text_with_cursor(&text, cursor_position, cursor)
         } else {
-            format!("{}|", text)
+            text
         }
     } else {
         text

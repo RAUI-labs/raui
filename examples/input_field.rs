@@ -11,6 +11,11 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         .listed_slot(make_widget!(input).with_props(TextInputMode::Number))
         .listed_slot(make_widget!(input).with_props(TextInputMode::Integer))
         .listed_slot(make_widget!(input).with_props(TextInputMode::UnsignedInteger))
+        .listed_slot(
+            make_widget!(input).with_props(TextInputMode::Filter(|_, character| {
+                character.is_uppercase()
+            })),
+        )
         .into()
 }
 
@@ -47,19 +52,16 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
             // that's why we create custom input component to make it work and look exactly as we
             // want - here we just put a text box.
             make_widget!(text_box).with_props(TextBoxProps {
-                text: if text.trim().is_empty() {
+                text: if text.is_empty() {
                     match mode {
                         TextInputMode::Text => "> Type text...".to_owned(),
                         TextInputMode::Number => "> Type number...".to_owned(),
                         TextInputMode::Integer => "> Type integer...".to_owned(),
                         TextInputMode::UnsignedInteger => "> Type unsigned integer...".to_owned(),
+                        TextInputMode::Filter(_) => "> Type uppercase text...".to_owned(),
                     }
                 } else if focused {
-                    if cursor_position < text.len() {
-                        format!("{}|{}", &text[..cursor_position], &text[cursor_position..])
-                    } else {
-                        format!("{}|", text)
-                    }
+                    input_text_with_cursor(&text, cursor_position, '|')
                 } else {
                     text
                 },

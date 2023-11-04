@@ -32,6 +32,8 @@ pub enum TextInputMode {
     Number,
     Integer,
     UnsignedInteger,
+    #[serde(skip)]
+    Filter(fn(usize, char) -> bool),
 }
 
 impl TextInputMode {
@@ -51,12 +53,23 @@ impl TextInputMode {
         matches!(self, Self::UnsignedInteger)
     }
 
+    pub fn is_filter(&self) -> bool {
+        matches!(self, Self::Filter(_))
+    }
+
     pub fn process(&self, text: &str) -> Option<String> {
         match self {
             Self::Text => Some(text.to_owned()),
             Self::Number => text.parse::<Scalar>().ok().map(|v| v.to_string()),
             Self::Integer => text.parse::<Integer>().ok().map(|v| v.to_string()),
             Self::UnsignedInteger => text.parse::<UnsignedInteger>().ok().map(|v| v.to_string()),
+            Self::Filter(f) => {
+                if text.char_indices().any(|(i, c)| !f(i, c)) {
+                    None
+                } else {
+                    Some(text.to_owned())
+                }
+            }
         }
     }
 
@@ -66,6 +79,7 @@ impl TextInputMode {
             Self::Number => text.parse::<Scalar>().is_ok() || text == "-",
             Self::Integer => text.parse::<Integer>().is_ok() || text == "-",
             Self::UnsignedInteger => text.parse::<UnsignedInteger>().is_ok(),
+            Self::Filter(f) => text.char_indices().all(|(i, c)| f(i, c)),
         }
     }
 }
@@ -102,6 +116,7 @@ pub struct TextInputNotifyProps(
 pub struct TextInputNotifyMessage {
     pub sender: WidgetId,
     pub state: TextInputProps,
+    pub submited: bool,
 }
 
 pub fn use_text_input_notified_state(context: &mut WidgetContext) {
@@ -140,6 +155,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
             TextInputNotifyMessage {
                 sender: context.id.to_owned(),
                 state: data.to_owned(),
+                submited: false,
             },
         );
         let _ = context.state.write_with(data);
@@ -148,6 +164,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         let mut data = context.state.read_cloned_or_default::<TextInputProps>();
         let mut dirty = false;
+        let mut submited = false;
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
@@ -161,7 +178,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                 NavTextChange::InsertCharacter(c) => {
                                     if !c.is_control() {
                                         data.cursor_position =
-                                            data.cursor_position.min(data.text.len());
+                                            data.cursor_position.min(data.text.chars().count());
                                         let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, *c);
                                         let mode = context
@@ -181,31 +198,31 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                     }
                                 }
                                 NavTextChange::MoveCursorRight => {
-                                    if data.cursor_position < data.text.len() {
+                                    if data.cursor_position < data.text.chars().count() {
                                         data.cursor_position += 1;
                                     }
                                 }
                                 NavTextChange::MoveCursorStart => data.cursor_position = 0,
                                 NavTextChange::MoveCursorEnd => {
-                                    data.cursor_position = data.text.len();
+                                    data.cursor_position = data.text.chars().count();
                                 }
                                 NavTextChange::DeleteLeft => {
                                     if data.cursor_position > 0
-                                        && data.cursor_position <= data.text.len()
+                                        && data.cursor_position <= data.text.chars().count()
                                     {
                                         data.cursor_position -= 1;
                                         data.text.remove(data.cursor_position);
                                     }
                                 }
                                 NavTextChange::DeleteRight => {
-                                    if data.cursor_position < data.text.len() {
+                                    if data.cursor_position < data.text.chars().count() {
                                         data.text.remove(data.cursor_position);
                                     }
                                 }
                                 NavTextChange::NewLine => {
                                     if data.allow_new_line {
                                         data.cursor_position =
-                                            data.cursor_position.min(data.text.len());
+                                            data.cursor_position.min(data.text.chars().count());
                                         let old = data.text.to_owned();
                                         data.text.insert(data.cursor_position, '\n');
                                         if let Ok(mode) = context.props.read::<TextInputMode>() {
@@ -215,10 +232,13 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                                 data.text = old;
                                             }
                                         }
+                                    } else {
+                                        submited = true;
                                     }
                                 }
                             }
-                            data.cursor_position = data.cursor_position.min(data.text.len());
+                            data.cursor_position =
+                                data.cursor_position.min(data.text.chars().count());
                             dirty = true;
                         }
                     }
@@ -235,9 +255,13 @@ pub fn use_text_input(context: &mut WidgetContext) {
                 TextInputNotifyMessage {
                     sender: context.id.to_owned(),
                     state: data.to_owned(),
+                    submited,
                 },
             );
             let _ = context.state.write_with(data);
+            if submited {
+                context.signals.write(NavSignal::FocusTextInput(().into()));
+            }
         }
     });
 }
@@ -311,4 +335,12 @@ pub fn input_field(mut context: WidgetContext) -> WidgetNode {
         slot: Box::new(content),
     }
     .into()
+}
+
+pub fn input_text_with_cursor(text: &str, position: usize, cursor: char) -> String {
+    text.chars()
+        .take(position)
+        .chain(std::iter::once(cursor))
+        .chain(text.chars().skip(position))
+        .collect()
 }
