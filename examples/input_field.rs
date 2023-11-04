@@ -19,8 +19,22 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         .into()
 }
 
+fn use_input(ctx: &mut WidgetContext) {
+    ctx.life_cycle.change(|ctx| {
+        for msg in ctx.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
+                println!("* Text input: {:#?}", msg);
+            } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputControlNotifyMessage>() {
+                println!("* Text input control: {:#?}", msg);
+            } else if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                println!("* Button: {:#?}", msg);
+            }
+        }
+    });
+}
+
 // this component will receive and store button and input text state changes.
-#[pre_hooks(use_button_notified_state, use_text_input_notified_state)]
+#[pre_hooks(use_button_notified_state, use_text_input_notified_state, use_input)]
 fn input(mut ctx: WidgetContext) -> WidgetNode {
     let ButtonProps {
         selected, trigger, ..
@@ -44,6 +58,9 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
         .with_props(mode)
         // notify this component about input text state change.
         .with_props(TextInputNotifyProps(ctx.id.to_owned().into()))
+        // notify this component about input control characters it receives.
+        // useful for reacting to Tab key for example.
+        .with_props(TextInputControlNotifyProps(ctx.id.to_owned().into()))
         // notify this component about button state change.
         .with_props(ButtonNotifyProps(ctx.id.to_owned().into()))
         .named_slot(

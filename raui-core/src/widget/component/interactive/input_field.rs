@@ -111,12 +111,28 @@ pub struct TextInputNotifyProps(
     pub WidgetIdOrRef,
 );
 
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct TextInputControlNotifyProps(
+    #[serde(default)]
+    #[serde(skip_serializing_if = "WidgetIdOrRef::is_none")]
+    pub WidgetIdOrRef,
+);
+
 #[derive(MessageData, Debug, Clone)]
 #[message_data(crate::messenger::MessageData)]
 pub struct TextInputNotifyMessage {
     pub sender: WidgetId,
     pub state: TextInputProps,
     pub submited: bool,
+}
+
+#[derive(MessageData, Debug, Clone)]
+#[message_data(crate::messenger::MessageData)]
+pub struct TextInputControlNotifyMessage {
+    pub sender: WidgetId,
+    pub character: char,
 }
 
 pub fn use_text_input_notified_state(context: &mut WidgetContext) {
@@ -176,7 +192,21 @@ pub fn use_text_input(context: &mut WidgetContext) {
                         if data.focused {
                             match change {
                                 NavTextChange::InsertCharacter(c) => {
-                                    if !c.is_control() {
+                                    if c.is_control() {
+                                        if let Ok(notify) =
+                                            context.props.read::<TextInputControlNotifyProps>()
+                                        {
+                                            if let Some(to) = notify.0.read() {
+                                                context.messenger.write(
+                                                    to,
+                                                    TextInputControlNotifyMessage {
+                                                        sender: context.id.to_owned(),
+                                                        character: *c,
+                                                    },
+                                                );
+                                            }
+                                        }
+                                    } else {
                                         data.cursor_position =
                                             data.cursor_position.min(data.text.chars().count());
                                         let old = data.text.to_owned();
