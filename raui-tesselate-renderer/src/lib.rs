@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bytemuck::Pod;
 use fontdue::{
     layout::{
@@ -26,7 +28,7 @@ use spitfire_fontdue::{TextRenderer, TextVertex};
 #[derive(Debug, Clone)]
 pub enum Error {
     WidgetHasNoLayout(WidgetId),
-    UnsupportedImageMaterial(ImageBoxMaterial),
+    UnsupportedImageMaterial(Box<ImageBoxMaterial>),
     FontNotFound(String),
     ImageNotFound(String),
 }
@@ -39,9 +41,21 @@ pub trait TesselateVertex: Pod {
 #[derive(Debug, Clone, PartialEq)]
 pub enum TesselateBatch {
     Color,
-    Image { id: String },
+    Image {
+        id: String,
+    },
     Text,
-    ClipPush { x: f32, y: f32, w: f32, h: f32 },
+    Procedural {
+        id: String,
+        images: Vec<String>,
+        parameters: HashMap<String, Scalar>,
+    },
+    ClipPush {
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+    },
     ClipPop,
 }
 
@@ -629,7 +643,45 @@ where
                         Err(Error::WidgetHasNoLayout(unit.id.to_owned()))
                     }
                 }
-                _ => Err(Error::UnsupportedImageMaterial(unit.material.clone())),
+                ImageBoxMaterial::Procedural(procedural) => {
+                    if let Some(item) = layout.items.get(&unit.id) {
+                        let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                        self.push_transform(&unit.transform, local_space);
+                        if let Some(batch) = self.converter.convert(TesselateBatch::Procedural {
+                            id: procedural.id.to_owned(),
+                            images: procedural.images.to_owned(),
+                            parameters: procedural.parameters.to_owned(),
+                        }) {
+                            self.stream.batch_optimized(batch);
+                            self.stream.extend(
+                                procedural.vertices.iter().map(|vertex| {
+                                    Self::make_vertex(
+                                        if procedural.fit_to_rect {
+                                            Vec2 {
+                                                x: vertex.position.x * local_space.width(),
+                                                y: vertex.position.y * local_space.height(),
+                                            }
+                                        } else {
+                                            vertex.position
+                                        },
+                                        vertex.tex_coord,
+                                        vertex.page,
+                                        vertex.color,
+                                    )
+                                }),
+                                procedural.triangles.iter().map(|triangle| Triangle {
+                                    a: triangle[0],
+                                    b: triangle[1],
+                                    c: triangle[2],
+                                }),
+                            );
+                        }
+                        self.pop_transform();
+                        Ok(())
+                    } else {
+                        Err(Error::WidgetHasNoLayout(unit.id.to_owned()))
+                    }
+                }
             },
             WidgetUnit::TextBox(unit) => {
                 let font_index = match self.provider.font_index_by_id(&unit.font.name) {

@@ -224,6 +224,9 @@ pub fn use_text_input(context: &mut WidgetContext) {
                     }
                     _ => {}
                 }
+            } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
+                data = msg.state.to_owned();
+                dirty = true;
             }
         }
         if dirty {

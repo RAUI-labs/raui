@@ -9,6 +9,7 @@ use raui_tesselate_renderer::TesselateResourceProvider;
 use serde::{Deserialize, Serialize};
 use spitfire_glow::{
     graphics::{Graphics, Texture},
+    prelude::Shader,
     renderer::GlowTextureFormat,
 };
 use std::{collections::HashMap, path::PathBuf};
@@ -39,12 +40,18 @@ pub(crate) struct AssetFont {
     frames_left: usize,
 }
 
+pub(crate) struct AssetShader {
+    pub(crate) shader: Shader,
+    frames_left: usize,
+}
+
 pub(crate) struct AssetsManager {
     pub frames_alive: usize,
     pub(crate) root_path: PathBuf,
     pub(crate) textures: HashMap<String, AssetTexture>,
     pub(crate) font_map: HashMap<String, AssetFont>,
     pub(crate) fonts: Vec<Font>,
+    pub(crate) shaders: HashMap<String, AssetShader>,
 }
 
 impl Default for AssetsManager {
@@ -61,6 +68,7 @@ impl AssetsManager {
             textures: Default::default(),
             font_map: Default::default(),
             fonts: Default::default(),
+            shaders: Default::default(),
         }
     }
 
@@ -98,6 +106,22 @@ impl AssetsManager {
             if let Some(index) = self.fonts.iter().position(|font| font.file_hash() == hash) {
                 self.fonts.swap_remove(index);
             }
+        }
+
+        let to_remove = self
+            .shaders
+            .iter_mut()
+            .filter_map(|(id, shader)| {
+                if shader.frames_left > 0 {
+                    shader.frames_left -= 1;
+                    None
+                } else {
+                    Some(id.to_owned())
+                }
+            })
+            .collect::<Vec<_>>();
+        for id in to_remove {
+            self.shaders.remove(&id);
         }
     }
 
@@ -139,109 +163,104 @@ impl AssetsManager {
             WidgetUnit::SizeBox(node) => {
                 self.load(&node.slot, graphics);
             }
-            WidgetUnit::ImageBox(node) => {
-                if let ImageBoxMaterial::Image(image) = &node.material {
+            WidgetUnit::ImageBox(node) => match &node.material {
+                ImageBoxMaterial::Image(image) => {
                     let id = Self::parse_image_id(&image.id).0;
-                    if let Some(texture) = self.textures.get_mut(id) {
-                        texture.frames_left = self.frames_alive;
+                    self.try_load_image(id, graphics);
+                }
+                ImageBoxMaterial::Procedural(procedural) => {
+                    for id in &procedural.images {
+                        self.try_load_image(id, graphics);
+                    }
+                    if procedural.id.is_empty() {
+                    } else if let Some(shader) = self.shaders.get_mut(&procedural.id) {
+                        shader.frames_left = self.frames_alive;
                     } else {
-                        let mut path = self.root_path.join(id);
-                        match path.extension().and_then(|ext| ext.to_str()).unwrap_or("") {
-                            "toml" => {
-                                let content = match std::fs::read_to_string(&path) {
-                                    Ok(content) => content,
+                        let shader = match procedural.id.as_str() {
+                            "@pass" => {
+                                match graphics.shader(Shader::PASS_VERTEX_2D, Shader::PASS_FRAGMENT)
+                                {
+                                    Ok(shader) => shader,
                                     _ => {
-                                        eprintln!("Could not load image atlas file: {:?}", path);
+                                        eprintln!(
+                                            "Could not create shader for: {:?}",
+                                            procedural.id
+                                        );
                                         return;
                                     }
-                                };
-                                let atlas = match toml::from_str::<AssetAtlas>(&content) {
-                                    Ok(atlas) => atlas,
+                                }
+                            }
+                            "@colored" => {
+                                match graphics
+                                    .shader(Shader::COLORED_VERTEX_2D, Shader::PASS_FRAGMENT)
+                                {
+                                    Ok(shader) => shader,
                                     _ => {
-                                        eprintln!("Could not parse image atlas file: {:?}", path);
+                                        eprintln!(
+                                            "Could not create shader for: {:?}",
+                                            procedural.id
+                                        );
                                         return;
                                     }
-                                };
-                                path.pop();
-                                let path = path.join(atlas.image);
-                                let image = match image::open(&path) {
-                                    Ok(image) => image.to_rgba8(),
+                                }
+                            }
+                            "@textured" => {
+                                match graphics
+                                    .shader(Shader::TEXTURED_VERTEX_2D, Shader::TEXTURED_FRAGMENT)
+                                {
+                                    Ok(shader) => shader,
                                     _ => {
-                                        eprintln!("Could not load image file: {:?}", path);
+                                        eprintln!(
+                                            "Could not create shader for: {:?}",
+                                            procedural.id
+                                        );
                                         return;
                                     }
-                                };
-                                let texture = match graphics.texture(
-                                    image.width(),
-                                    image.height(),
-                                    1,
-                                    GlowTextureFormat::Rgba,
-                                    image.as_bytes(),
-                                ) {
-                                    Ok(texture) => texture,
-                                    _ => return,
-                                };
-                                let regions = atlas
-                                    .regions
-                                    .into_iter()
-                                    .map(|(name, region)| {
-                                        let left = region.x as f32 / image.width() as f32;
-                                        let right =
-                                            (region.x + region.width) as f32 / image.width() as f32;
-                                        let top = region.y as f32 / image.height() as f32;
-                                        let bottom = (region.y + region.height) as f32
-                                            / image.height() as f32;
-                                        (
-                                            name,
-                                            Rect {
-                                                left,
-                                                right,
-                                                top,
-                                                bottom,
-                                            },
-                                        )
-                                    })
-                                    .collect();
-                                self.textures.insert(
-                                    id.to_owned(),
-                                    AssetTexture {
-                                        texture,
-                                        regions,
-                                        frames_left: self.frames_alive,
-                                    },
-                                );
+                                }
                             }
                             _ => {
-                                let image = match image::open(&path) {
-                                    Ok(image) => image.to_rgba8(),
+                                let path = self.root_path.join(format!("{}.vs", procedural.id));
+                                let vertex = match std::fs::read_to_string(&path) {
+                                    Ok(content) => content,
                                     _ => {
-                                        eprintln!("Could not load image file: {:?}", path);
+                                        eprintln!("Could not load vertex shader file: {:?}", path);
                                         return;
                                     }
                                 };
-                                let texture = match graphics.texture(
-                                    image.width(),
-                                    image.height(),
-                                    1,
-                                    GlowTextureFormat::Rgba,
-                                    image.as_bytes(),
-                                ) {
-                                    Ok(texture) => texture,
-                                    _ => return,
+                                let path = self.root_path.join(format!("{}.fs", procedural.id));
+                                let fragment = match std::fs::read_to_string(&path) {
+                                    Ok(content) => content,
+                                    _ => {
+                                        eprintln!(
+                                            "Could not load fragment shader file: {:?}",
+                                            path
+                                        );
+                                        return;
+                                    }
                                 };
-                                self.textures.insert(
-                                    id.to_owned(),
-                                    AssetTexture {
-                                        texture,
-                                        regions: Default::default(),
-                                        frames_left: self.frames_alive,
-                                    },
-                                );
+                                match graphics.shader(&vertex, &fragment) {
+                                    Ok(shader) => shader,
+                                    _ => {
+                                        eprintln!(
+                                            "Could not create shader for: {:?}",
+                                            procedural.id
+                                        );
+                                        return;
+                                    }
+                                }
                             }
-                        }
+                        };
+                        self.shaders.insert(
+                            procedural.id.to_owned(),
+                            AssetShader {
+                                shader,
+                                frames_left: self.frames_alive,
+                            },
+                        );
                     }
                 }
-            }
+                _ => {}
+            },
             WidgetUnit::TextBox(node) => {
                 if let Some(font) = self.font_map.get_mut(&node.font.name) {
                     font.frames_left = self.frames_alive;
@@ -275,6 +294,111 @@ impl AssetsManager {
         match id.find('@') {
             Some(index) => (&id[..index], Some(&id[(index + b"@".len())..])),
             None => (id, None),
+        }
+    }
+
+    fn try_load_image(&mut self, id: &str, graphics: &Graphics<Vertex>) {
+        if let Some(texture) = self.textures.get_mut(id) {
+            texture.frames_left = self.frames_alive;
+        } else {
+            let mut path = self.root_path.join(id);
+            match path.extension().and_then(|ext| ext.to_str()).unwrap_or("") {
+                "toml" => {
+                    let content = match std::fs::read_to_string(&path) {
+                        Ok(content) => content,
+                        _ => {
+                            eprintln!("Could not load image atlas file: {:?}", path);
+                            return;
+                        }
+                    };
+                    let atlas = match toml::from_str::<AssetAtlas>(&content) {
+                        Ok(atlas) => atlas,
+                        _ => {
+                            eprintln!("Could not parse image atlas file: {:?}", path);
+                            return;
+                        }
+                    };
+                    path.pop();
+                    let path = path.join(atlas.image);
+                    let image = match image::open(&path) {
+                        Ok(image) => image.to_rgba8(),
+                        _ => {
+                            eprintln!("Could not load image file: {:?}", path);
+                            return;
+                        }
+                    };
+                    let texture = match graphics.texture(
+                        image.width(),
+                        image.height(),
+                        1,
+                        GlowTextureFormat::Rgba,
+                        image.as_bytes(),
+                    ) {
+                        Ok(texture) => texture,
+                        _ => {
+                            eprintln!("Could not create texture for image file: {:?}", path);
+                            return;
+                        }
+                    };
+                    let regions = atlas
+                        .regions
+                        .into_iter()
+                        .map(|(name, region)| {
+                            let left = region.x as f32 / image.width() as f32;
+                            let right = (region.x + region.width) as f32 / image.width() as f32;
+                            let top = region.y as f32 / image.height() as f32;
+                            let bottom = (region.y + region.height) as f32 / image.height() as f32;
+                            (
+                                name,
+                                Rect {
+                                    left,
+                                    right,
+                                    top,
+                                    bottom,
+                                },
+                            )
+                        })
+                        .collect();
+                    self.textures.insert(
+                        id.to_owned(),
+                        AssetTexture {
+                            texture,
+                            regions,
+                            frames_left: self.frames_alive,
+                        },
+                    );
+                }
+                _ => {
+                    let image = match image::open(&path) {
+                        Ok(image) => image.to_rgba8(),
+                        _ => {
+                            eprintln!("Could not load image file: {:?}", path);
+                            return;
+                        }
+                    };
+                    let texture = match graphics.texture(
+                        image.width(),
+                        image.height(),
+                        1,
+                        GlowTextureFormat::Rgba,
+                        image.as_bytes(),
+                    ) {
+                        Ok(texture) => texture,
+                        _ => {
+                            eprintln!("Could not create texture for image file: {:?}", path);
+                            return;
+                        }
+                    };
+                    self.textures.insert(
+                        id.to_owned(),
+                        AssetTexture {
+                            texture,
+                            regions: Default::default(),
+                            frames_left: self.frames_alive,
+                        },
+                    );
+                }
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     widget::{
         node::WidgetNode,
         unit::WidgetUnitData,
-        utils::{Color, Rect, Transform},
+        utils::{Color, Rect, Transform, Vec2},
         WidgetId,
     },
     PrefabValue, Scalar,
@@ -96,12 +96,78 @@ impl ImageBoxImage {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ImageBoxProceduralVertex {
+    #[serde(default)]
+    pub position: Vec2,
+    #[serde(default)]
+    pub page: Scalar,
+    #[serde(default)]
+    pub tex_coord: Vec2,
+    #[serde(default)]
+    pub color: Color,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxProcedural {
     #[serde(default)]
     pub id: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub parameters: HashMap<String, Scalar>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<String>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub vertices: Vec<ImageBoxProceduralVertex>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub triangles: Vec<[u32; 3]>,
+    #[serde(default)]
+    pub fit_to_rect: bool,
+}
+
+impl ImageBoxProcedural {
+    pub fn new(id: impl ToString) -> Self {
+        Self {
+            id: id.to_string(),
+            parameters: Default::default(),
+            images: Default::default(),
+            vertices: Default::default(),
+            triangles: Default::default(),
+            fit_to_rect: false,
+        }
+    }
+
+    pub fn param(mut self, id: impl ToString, value: Scalar) -> Self {
+        self.parameters.insert(id.to_string(), value);
+        self
+    }
+
+    pub fn image(mut self, id: impl ToString) -> Self {
+        self.images.push(id.to_string());
+        self
+    }
+
+    pub fn triangle(mut self, vertices: [ImageBoxProceduralVertex; 3]) -> Self {
+        let count = self.vertices.len() as u32;
+        self.vertices.extend(vertices);
+        self.triangles.push([count, count + 1, count + 2]);
+        self
+    }
+
+    pub fn quad(mut self, vertices: [ImageBoxProceduralVertex; 4]) -> Self {
+        let count = self.vertices.len() as u32;
+        self.vertices.extend(vertices);
+        self.triangles.push([count, count + 1, count + 2]);
+        self.triangles.push([count + 2, count + 3, count]);
+        self
+    }
+
+    pub fn fit_to_rect(mut self, value: bool) -> Self {
+        self.fit_to_rect = value;
+        self
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

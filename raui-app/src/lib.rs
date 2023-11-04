@@ -10,7 +10,9 @@ use spitfire_fontdue::TextVertex;
 use spitfire_glow::{
     graphics::Texture,
     prelude::{GraphicsBatch, Shader},
-    renderer::{GlowBlending, GlowTextureFiltering, GlowVertexAttrib, GlowVertexAttribs},
+    renderer::{
+        GlowBlending, GlowTextureFiltering, GlowUniformValue, GlowVertexAttrib, GlowVertexAttribs,
+    },
 };
 use vek::Rect;
 
@@ -104,6 +106,7 @@ pub(crate) struct TesselateToGraphics<'a> {
     assets: &'a AssetsManager,
     clip_stack: Vec<Rect<i32, i32>>,
     viewport_height: i32,
+    projection_view_matrix: [f32; 16],
 }
 
 impl<'a> TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'a> {
@@ -136,6 +139,46 @@ impl<'a> TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'a> {
                 shader: Some(self.text_shader.clone()),
                 textures: vec![(self.glyphs_texture.clone(), GlowTextureFiltering::Linear)],
                 blending: GlowBlending::Alpha,
+                scissor: self.clip_stack.last().copied(),
+                ..Default::default()
+            }),
+            TesselateBatch::Procedural {
+                id,
+                images,
+                parameters,
+            } => Some(GraphicsBatch {
+                shader: self
+                    .assets
+                    .shaders
+                    .get(&id)
+                    .map(|shader| shader.shader.clone()),
+                uniforms: parameters
+                    .into_iter()
+                    .map(|(k, v)| (k.into(), GlowUniformValue::F1(v)))
+                    .chain((0..images.len()).map(|index| {
+                        (
+                            if index > 0 {
+                                format!("u_image{}", index).into()
+                            } else {
+                                "u_image".into()
+                            },
+                            GlowUniformValue::I1(index as _),
+                        )
+                    }))
+                    .chain(std::iter::once((
+                        "u_projection_view".into(),
+                        GlowUniformValue::M4(self.projection_view_matrix),
+                    )))
+                    .collect(),
+                textures: images
+                    .into_iter()
+                    .filter_map(|id| {
+                        Some((
+                            self.assets.textures.get(&id)?.texture.to_owned(),
+                            GlowTextureFiltering::Linear,
+                        ))
+                    })
+                    .collect(),
                 scissor: self.clip_stack.last().copied(),
                 ..Default::default()
             }),

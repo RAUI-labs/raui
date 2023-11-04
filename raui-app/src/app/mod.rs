@@ -174,6 +174,7 @@ impl SharedApp {
             assets: &self.assets,
             clip_stack: Vec::with_capacity(64),
             viewport_height: graphics.main_camera.viewport_size.y as _,
+            projection_view_matrix: matrix,
         };
         let mut renderer = TesselateRenderer::new(
             &self.assets,
