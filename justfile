@@ -56,6 +56,18 @@ website-doc-tests:
 website-live-dev:
     cd site && zola serve
 
+update:
+    cargo update --manifest-path ./raui-derive/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-core/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-material/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-retained/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-immediate/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-immediate-widgets/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-json-renderer/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-tesselate-renderer/Cargo.toml --aggressive
+    cargo update --manifest-path ./raui-app/Cargo.toml --aggressive
+    cargo update --manifest-path ./Cargo.toml --aggressive
+
 publish:
     cargo publish --no-verify --manifest-path ./raui-derive/Cargo.toml
     sleep 1

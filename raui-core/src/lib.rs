@@ -29,7 +29,7 @@ use serde::{de::DeserializeOwned, Serialize};
 #[doc(inline)]
 pub use serde_json::{Number as PrefabNumber, Value as PrefabValue};
 
-pub use intuicio_data::{lifetime::*, managed::*};
+pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
 
 #[doc(hidden)]
 pub mod prelude {
