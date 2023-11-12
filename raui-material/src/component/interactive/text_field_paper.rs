@@ -52,12 +52,7 @@ impl TextFieldPaperProps {
     }
 
     fn default_padding() -> Rect {
-        Rect {
-            left: 4.0,
-            right: 4.0,
-            top: 4.0,
-            bottom: 4.0,
-        }
+        4.0.into()
     }
 }
 
@@ -99,25 +94,29 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         password,
         cursor,
     } = props.read_cloned_or_default();
-    let TextInputProps {
-        text,
+    let TextInputState {
         cursor_position,
         focused,
-        ..
     } = props.read_cloned_or_default();
+    let text = props
+        .read::<TextInputProps>()
+        .ok()
+        .and_then(|props| props.text.as_ref())
+        .map(|text| text.get())
+        .unwrap_or_default();
     let text = if let Some(c) = password {
         std::iter::repeat(c).take(text.chars().count()).collect()
     } else {
         text
     };
-    let text = if text.is_empty() {
-        hint
-    } else if focused {
+    let text = if focused {
         if let Some(cursor) = cursor {
             input_text_with_cursor(&text, cursor_position, cursor)
         } else {
             text
         }
+    } else if text.is_empty() {
+        hint
     } else {
         text
     };

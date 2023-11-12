@@ -1,6 +1,6 @@
 use crate::{
-    messenger::MessageData,
     pre_hooks, unpack_named_slots,
+    view_model::ViewModelValue,
     widget::{
         component::interactive::{
             button::{use_button, ButtonProps},
@@ -13,7 +13,9 @@ use crate::{
     },
     Integer, MessageData, PropsData, Scalar, UnsignedInteger,
 };
+use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 fn is_false(v: &bool) -> bool {
     !*v
@@ -21,6 +23,80 @@ fn is_false(v: &bool) -> bool {
 
 fn is_zero(v: &usize) -> bool {
     *v == 0
+}
+
+pub trait TextInputProxy: Send + Sync {
+    fn get(&self) -> String;
+    fn set(&mut self, value: String);
+}
+
+impl<T> TextInputProxy for T
+where
+    T: ToString + FromStr + Send + Sync,
+{
+    fn get(&self) -> String {
+        self.to_string()
+    }
+
+    fn set(&mut self, value: String) {
+        if let Ok(value) = value.parse() {
+            *self = value;
+        }
+    }
+}
+
+impl<T> TextInputProxy for ViewModelValue<T>
+where
+    T: ToString + FromStr + Send + Sync,
+{
+    fn get(&self) -> String {
+        self.to_string()
+    }
+
+    fn set(&mut self, value: String) {
+        if let Ok(value) = value.parse() {
+            **self = value;
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct TextInput(ManagedLazy<dyn TextInputProxy>);
+
+impl TextInput {
+    pub fn new(data: ManagedLazy<impl TextInputProxy + 'static>) -> Self {
+        let (lifetime, data) = data.into_inner();
+        let data = data.as_ptr() as *mut dyn TextInputProxy;
+        unsafe { Self(ManagedLazy::<dyn TextInputProxy>::new_raw(data, lifetime)) }
+    }
+
+    pub fn into_inner(self) -> ManagedLazy<dyn TextInputProxy> {
+        self.0
+    }
+
+    pub fn get(&self) -> String {
+        self.0.read().map(|data| data.get()).unwrap_or_default()
+    }
+
+    pub fn set(&mut self, value: impl ToString) {
+        if let Some(mut data) = self.0.write() {
+            data.set(value.to_string());
+        }
+    }
+}
+
+impl std::fmt::Debug for TextInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("TextInput")
+            .field(&self.0.read().map(|data| data.get()).unwrap_or_default())
+            .finish()
+    }
+}
+
+impl<T: TextInputProxy + 'static> From<ManagedLazy<T>> for TextInput {
+    fn from(value: ManagedLazy<T>) -> Self {
+        Self::new(value)
+    }
 }
 
 #[derive(PropsData, Debug, Default, Clone, Copy, Serialize, Deserialize)]
@@ -84,22 +160,28 @@ impl TextInputMode {
     }
 }
 
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Default, Clone, Copy, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
-pub struct TextInputProps {
+pub struct TextInputState {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub focused: bool,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_zero")]
     pub cursor_position: usize,
+}
+
+#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct TextInputProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub allow_new_line: bool,
     #[serde(default)]
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub text: String,
+    #[serde(skip)]
+    pub text: Option<TextInput>,
 }
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
@@ -124,8 +206,8 @@ pub struct TextInputControlNotifyProps(
 #[message_data(crate::messenger::MessageData)]
 pub struct TextInputNotifyMessage {
     pub sender: WidgetId,
-    pub state: TextInputProps,
-    pub submited: bool,
+    pub state: TextInputState,
+    pub submitted: bool,
 }
 
 #[derive(MessageData, Debug, Clone)]
@@ -147,10 +229,7 @@ pub fn use_text_input_notified_state(context: &mut WidgetContext) {
 
 #[pre_hooks(use_nav_text_input)]
 pub fn use_text_input(context: &mut WidgetContext) {
-    fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
-    where
-        T: 'static + MessageData,
-    {
+    fn notify(context: &WidgetMountOrChangeContext, data: TextInputNotifyMessage) {
         if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
             if let Some(to) = notify.0.read() {
                 context.messenger.write(to, data);
@@ -159,37 +238,38 @@ pub fn use_text_input(context: &mut WidgetContext) {
     }
 
     context.life_cycle.mount(|context| {
-        let mut data = context.props.read_cloned_or_default::<TextInputProps>();
-        let mode = context
-            .props
-            .read::<TextInputMode>()
-            .unwrap_or(&TextInputMode::Text);
-        data.text = mode.process(&data.text).unwrap_or_default();
-        data.focused = false;
         notify(
             &context,
             TextInputNotifyMessage {
                 sender: context.id.to_owned(),
-                state: data.to_owned(),
-                submited: false,
+                state: Default::default(),
+                submitted: false,
             },
         );
-        let _ = context.state.write_with(data);
+        let _ = context.state.write_with(TextInputState::default());
     });
 
     context.life_cycle.change(|context| {
-        let mut data = context.state.read_cloned_or_default::<TextInputProps>();
-        let mut dirty = false;
-        let mut submited = false;
+        let mode = context.props.read_cloned_or_default::<TextInputMode>();
+        let mut props = context.props.read_cloned_or_default::<TextInputProps>();
+        let mut state = context.state.read_cloned_or_default::<TextInputState>();
+        let mut text = props
+            .text
+            .as_ref()
+            .map(|text| text.get())
+            .unwrap_or_default();
+        let mut dirty_text = false;
+        let mut dirty_state = false;
+        let mut submitted = false;
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
                     NavSignal::FocusTextInput(idref) => {
-                        data.focused = idref.is_some();
-                        dirty = true;
+                        state.focused = idref.is_some();
+                        dirty_state = true;
                     }
                     NavSignal::TextChange(change) => {
-                        if data.focused {
+                        if state.focused {
                             match change {
                                 NavTextChange::InsertCharacter(c) => {
                                     if c.is_control() {
@@ -207,91 +287,119 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                             }
                                         }
                                     } else {
-                                        data.cursor_position =
-                                            data.cursor_position.min(data.text.chars().count());
-                                        let old = data.text.to_owned();
-                                        data.text.insert(data.cursor_position, *c);
-                                        let mode = context
-                                            .props
-                                            .read::<TextInputMode>()
-                                            .unwrap_or(&TextInputMode::Text);
-                                        if mode.is_valid(&data.text) {
-                                            data.cursor_position += 1;
-                                        } else {
-                                            data.text = old;
+                                        state.cursor_position =
+                                            state.cursor_position.min(text.chars().count());
+                                        let mut iter = text.chars();
+                                        let mut new_text = iter
+                                            .by_ref()
+                                            .take(state.cursor_position)
+                                            .collect::<String>();
+                                        new_text.push(*c);
+                                        new_text.extend(iter);
+                                        if mode.is_valid(&new_text) {
+                                            state.cursor_position += 1;
+                                            text = new_text;
+                                            dirty_text = true;
+                                            dirty_state = true;
                                         }
                                     }
                                 }
                                 NavTextChange::MoveCursorLeft => {
-                                    if data.cursor_position > 0 {
-                                        data.cursor_position -= 1;
+                                    if state.cursor_position > 0 {
+                                        state.cursor_position -= 1;
+                                        dirty_state = true;
                                     }
                                 }
                                 NavTextChange::MoveCursorRight => {
-                                    if data.cursor_position < data.text.chars().count() {
-                                        data.cursor_position += 1;
+                                    if state.cursor_position < text.chars().count() {
+                                        state.cursor_position += 1;
+                                        dirty_state = true;
                                     }
                                 }
-                                NavTextChange::MoveCursorStart => data.cursor_position = 0,
+                                NavTextChange::MoveCursorStart => {
+                                    state.cursor_position = 0;
+                                    dirty_state = true;
+                                }
                                 NavTextChange::MoveCursorEnd => {
-                                    data.cursor_position = data.text.chars().count();
+                                    state.cursor_position = text.chars().count();
+                                    dirty_state = true;
                                 }
                                 NavTextChange::DeleteLeft => {
-                                    if data.cursor_position > 0
-                                        && data.cursor_position <= data.text.chars().count()
-                                    {
-                                        data.cursor_position -= 1;
-                                        data.text.remove(data.cursor_position);
+                                    if state.cursor_position > 0 {
+                                        let mut iter = text.chars();
+                                        let mut new_text = iter
+                                            .by_ref()
+                                            .take(state.cursor_position - 1)
+                                            .collect::<String>();
+                                        iter.by_ref().next();
+                                        new_text.extend(iter);
+                                        if mode.is_valid(&new_text) {
+                                            state.cursor_position -= 1;
+                                            text = new_text;
+                                            dirty_text = true;
+                                            dirty_state = true;
+                                        }
                                     }
                                 }
                                 NavTextChange::DeleteRight => {
-                                    if data.cursor_position < data.text.chars().count() {
-                                        data.text.remove(data.cursor_position);
+                                    let mut iter = text.chars();
+                                    let mut new_text = iter
+                                        .by_ref()
+                                        .take(state.cursor_position)
+                                        .collect::<String>();
+                                    iter.by_ref().next();
+                                    new_text.extend(iter);
+                                    if mode.is_valid(&new_text) {
+                                        dirty_text = true;
+                                        text = new_text;
                                     }
                                 }
                                 NavTextChange::NewLine => {
-                                    if data.allow_new_line {
-                                        data.cursor_position =
-                                            data.cursor_position.min(data.text.chars().count());
-                                        let old = data.text.to_owned();
-                                        data.text.insert(data.cursor_position, '\n');
-                                        if let Ok(mode) = context.props.read::<TextInputMode>() {
-                                            if mode.is_valid(&data.text) {
-                                                data.cursor_position += 1;
-                                            } else {
-                                                data.text = old;
-                                            }
+                                    if props.allow_new_line {
+                                        let mut iter = text.chars();
+                                        let mut new_text = iter
+                                            .by_ref()
+                                            .take(state.cursor_position)
+                                            .collect::<String>();
+                                        new_text.push('\n');
+                                        new_text.extend(iter);
+                                        if mode.is_valid(&new_text) {
+                                            state.cursor_position += 1;
+                                            text = new_text;
+                                            dirty_text = true;
+                                            dirty_state = true;
                                         }
                                     } else {
-                                        submited = true;
+                                        submitted = true;
                                     }
                                 }
                             }
-                            data.cursor_position =
-                                data.cursor_position.min(data.text.chars().count());
-                            dirty = true;
                         }
                     }
                     _ => {}
                 }
-            } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
-                data = msg.state.to_owned();
-                dirty = true;
             }
         }
-        if dirty {
+        if dirty_state {
+            state.cursor_position = state.cursor_position.min(text.chars().count());
             notify(
                 &context,
                 TextInputNotifyMessage {
                     sender: context.id.to_owned(),
-                    state: data.to_owned(),
-                    submited,
+                    state,
+                    submitted,
                 },
             );
-            let _ = context.state.write_with(data);
-            if submited {
-                context.signals.write(NavSignal::FocusTextInput(().into()));
+            let _ = context.state.write_with(state);
+        }
+        if dirty_text {
+            if let Some(data) = props.text.as_mut() {
+                data.set(text);
+                context.messenger.write(context.id.to_owned(), ());
             }
+        }
+        if submitted {
+            context.signals.write(NavSignal::FocusTextInput(().into()));
         }
     });
 }
@@ -301,7 +409,7 @@ pub fn use_input_field(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         let focused = context
             .state
-            .map_or_default::<TextInputProps, _, _>(|s| s.focused);
+            .map_or_default::<TextInputState, _, _>(|s| s.focused);
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref() {
                 match msg {
@@ -328,6 +436,7 @@ pub fn use_input_field(context: &mut WidgetContext) {
 pub fn text_input(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,
+        props,
         state,
         named_slots,
         ..
@@ -335,7 +444,8 @@ pub fn text_input(mut context: WidgetContext) -> WidgetNode {
     unpack_named_slots!(named_slots => content);
 
     if let Some(p) = content.props_mut() {
-        p.write(state.read_cloned_or_default::<TextInputProps>());
+        p.write(state.read_cloned_or_default::<TextInputState>());
+        p.write(props.read_cloned_or_default::<TextInputProps>());
     }
 
     AreaBoxNode {
@@ -349,6 +459,7 @@ pub fn text_input(mut context: WidgetContext) -> WidgetNode {
 pub fn input_field(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,
+        props,
         state,
         named_slots,
         ..
@@ -357,7 +468,8 @@ pub fn input_field(mut context: WidgetContext) -> WidgetNode {
 
     if let Some(p) = content.props_mut() {
         p.write(state.read_cloned_or_default::<ButtonProps>());
-        p.write(state.read_cloned_or_default::<TextInputProps>());
+        p.write(state.read_cloned_or_default::<TextInputState>());
+        p.write(props.read_cloned_or_default::<TextInputProps>());
     }
 
     AreaBoxNode {

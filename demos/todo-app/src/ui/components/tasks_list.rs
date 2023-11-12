@@ -151,7 +151,7 @@ fn use_tasks_list(context: &mut WidgetContext) {
     context.life_cycle.mount(|mut context| {
         context
             .view_models
-            .bindings(AppState::VIEW_MODEL, AppState::PROP_TASKS)
+            .bindings(AppState::VIEW_MODEL, AppState::TASKS)
             .unwrap()
             .bind(context.id.to_owned());
     });
@@ -165,16 +165,21 @@ pub fn tasks_list(mut context: WidgetContext) -> WidgetNode {
     let app_state = view_models
         .view_model::<AppState>(AppState::VIEW_MODEL)
         .unwrap();
-    let tasks = app_state.tasks().enumerate().map(|(index, item)| {
-        make_widget!(task)
-            .key(index)
-            .with_props(item.to_owned())
-            .with_props(FlexBoxItemLayout {
-                grow: 0.0,
-                shrink: 0.0,
-                ..Default::default()
-            })
-    });
+    let mut tasks = app_state
+        .tasks()
+        .enumerate()
+        .map(|(index, item)| {
+            make_widget!(task)
+                .key(index)
+                .with_props(item.to_owned())
+                .with_props(FlexBoxItemLayout {
+                    grow: 0.0,
+                    shrink: 0.0,
+                    ..Default::default()
+                })
+        })
+        .collect::<Vec<_>>();
+    tasks.reverse();
 
     make_widget!(scroll_paper)
         .key(key)

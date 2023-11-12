@@ -1,5 +1,4 @@
 use crate::{
-    messenger::MessageData,
     pre_hooks, unpack_named_slots,
     widget::{
         component::interactive::navigation::{
@@ -100,10 +99,7 @@ pub fn use_button_notified_state(context: &mut WidgetContext) {
 
 #[pre_hooks(use_nav_item, use_nav_button)]
 pub fn use_button(context: &mut WidgetContext) {
-    fn notify<T>(context: &WidgetMountOrChangeContext, data: T)
-    where
-        T: 'static + MessageData,
-    {
+    fn notify(context: &WidgetMountOrChangeContext, data: ButtonNotifyMessage) {
         if let Ok(ButtonNotifyProps(notify)) = context.props.read() {
             if let Some(to) = notify.read() {
                 context.messenger.write(to, data);

@@ -43,17 +43,26 @@ struct AppStateSave {
 pub struct AppState {
     theme: ViewModelValue<ThemeMode>,
     tasks: ViewModelValue<Vec<TaskProps>>,
+    creating_task: ViewModelValue<bool>,
+    new_task_name: Managed<ViewModelValue<String>>,
 }
 
 impl AppState {
     pub const VIEW_MODEL: &str = "app-state";
-    pub const PROP_THEME: &str = "theme";
-    pub const PROP_TASKS: &str = "tasks";
+    pub const THEME: &str = "theme";
+    pub const TASKS: &str = "tasks";
+    pub const CREATING_TASK: &str = "creating-task";
+    pub const NEW_TASK_NAME: &str = "new-task-name";
 
     pub fn new(properties: &mut ViewModelProperties) -> Self {
         Self {
-            theme: ViewModelValue::new(ThemeMode::Dark, properties.notifier(Self::PROP_THEME)),
-            tasks: ViewModelValue::new(Default::default(), properties.notifier(Self::PROP_TASKS)),
+            theme: ViewModelValue::new(ThemeMode::Dark, properties.notifier(Self::THEME)),
+            tasks: ViewModelValue::new(Default::default(), properties.notifier(Self::TASKS)),
+            creating_task: ViewModelValue::new(false, properties.notifier(Self::CREATING_TASK)),
+            new_task_name: Managed::new(ViewModelValue::new(
+                Default::default(),
+                properties.notifier(Self::NEW_TASK_NAME),
+            )),
         }
     }
 
@@ -69,8 +78,27 @@ impl AppState {
         self.theme.toggle();
     }
 
-    pub fn add_task(&mut self, name: impl ToString) {
-        self.tasks.push(TaskProps::new(name));
+    pub fn creating_task(&self) -> bool {
+        *self.creating_task
+    }
+
+    pub fn new_task_name(&self) -> ManagedLazy<ViewModelValue<String>> {
+        self.new_task_name.lazy()
+    }
+
+    pub fn create_task(&mut self) {
+        *self.creating_task = true;
+        **self.new_task_name.write().unwrap() = Default::default();
+    }
+
+    pub fn add_task(&mut self) {
+        if *self.creating_task {
+            *self.creating_task = false;
+            let name = std::mem::take(&mut **self.new_task_name.write().unwrap());
+            if !name.is_empty() {
+                self.tasks.push(TaskProps::new(name));
+            }
+        }
     }
 
     pub fn delete_task(&mut self, index: usize) {

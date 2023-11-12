@@ -2,19 +2,94 @@ use raui::prelude::*;
 #[allow(unused_imports)]
 use raui_app::prelude::*;
 
+const DATA: &str = "data";
+const TEXT_INPUT: &str = "text-input";
+const NUMBER_INPUT: &str = "number-input";
+const INTEGER_INPUT: &str = "integer-input";
+const UNSIGNED_INTEGER_INPUT: &str = "unsigned-integer-input";
+const FILTER_INPUT: &str = "filter-input";
+
+struct AppData {
+    text_input: Managed<ViewModelValue<String>>,
+    number_input: Managed<ViewModelValue<String>>,
+    integer_input: Managed<ViewModelValue<String>>,
+    unsigned_integer_input: Managed<ViewModelValue<String>>,
+    filter_input: Managed<ViewModelValue<String>>,
+}
+
+fn use_app(ctx: &mut WidgetContext) {
+    ctx.life_cycle.mount(|mut ctx| {
+        ctx.view_models
+            .bindings(DATA, TEXT_INPUT)
+            .unwrap()
+            .bind(ctx.id.to_owned());
+        ctx.view_models
+            .bindings(DATA, NUMBER_INPUT)
+            .unwrap()
+            .bind(ctx.id.to_owned());
+        ctx.view_models
+            .bindings(DATA, INTEGER_INPUT)
+            .unwrap()
+            .bind(ctx.id.to_owned());
+        ctx.view_models
+            .bindings(DATA, UNSIGNED_INTEGER_INPUT)
+            .unwrap()
+            .bind(ctx.id.to_owned());
+        ctx.view_models
+            .bindings(DATA, FILTER_INPUT)
+            .unwrap()
+            .bind(ctx.id.to_owned());
+    });
+}
+
 // we mark root widget as navigable container to let user focus and type in text inputs.
-#[pre_hooks(use_nav_container_active)]
+#[pre_hooks(use_nav_container_active, use_app)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
+    let app_data = ctx.view_models.view_model::<AppData>(DATA).unwrap();
+
+    // put inputs with all different types modes.
     make_widget!(vertical_box)
-        // put inputs with all different types modes.
-        .listed_slot(make_widget!(input).with_props(TextInputMode::Text))
-        .listed_slot(make_widget!(input).with_props(TextInputMode::Number))
-        .listed_slot(make_widget!(input).with_props(TextInputMode::Integer))
-        .listed_slot(make_widget!(input).with_props(TextInputMode::UnsignedInteger))
         .listed_slot(
-            make_widget!(input).with_props(TextInputMode::Filter(|_, character| {
-                character.is_uppercase()
-            })),
+            make_widget!(input)
+                .with_props(TextInputMode::Text)
+                .with_props(TextInputProps {
+                    allow_new_line: false,
+                    text: Some(app_data.text_input.lazy().into()),
+                }),
+        )
+        .listed_slot(
+            make_widget!(input)
+                .with_props(TextInputMode::Number)
+                .with_props(TextInputProps {
+                    allow_new_line: false,
+                    text: Some(app_data.number_input.lazy().into()),
+                }),
+        )
+        .listed_slot(
+            make_widget!(input)
+                .with_props(TextInputMode::Integer)
+                .with_props(TextInputProps {
+                    allow_new_line: false,
+                    text: Some(app_data.integer_input.lazy().into()),
+                }),
+        )
+        .listed_slot(
+            make_widget!(input)
+                .with_props(TextInputMode::UnsignedInteger)
+                .with_props(TextInputProps {
+                    allow_new_line: false,
+                    text: Some(app_data.unsigned_integer_input.lazy().into()),
+                }),
+        )
+        .listed_slot(
+            make_widget!(input)
+                .with_props(TextInputMode::Filter(|_, character| {
+                    character.is_uppercase()
+                }))
+                .with_props(TextInputProps {
+                    allow_new_line: false,
+                    text: Some(app_data.filter_input.lazy().into()),
+                }),
         )
         .into()
 }
@@ -40,14 +115,22 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
         selected, trigger, ..
     } = ctx.state.read_cloned_or_default();
 
-    let TextInputProps {
-        text,
+    let TextInputState {
         cursor_position,
         focused,
-        ..
     } = ctx.state.read_cloned_or_default();
 
+    let TextInputProps {
+        allow_new_line,
+        text,
+    } = ctx.props.read_cloned_or_default();
+
     let mode = ctx.props.read_cloned_or_default::<TextInputMode>();
+
+    let value = text
+        .as_ref()
+        .and_then(|text| mode.process(&text.get()))
+        .unwrap_or_default();
 
     // input field is an evolution of input text, what changes is input field can be focused
     // because it is input text plus button.
@@ -56,6 +139,11 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
         .with_props(NavItemActive)
         // pass text input mode to the input field (by default Text mode is used).
         .with_props(mode)
+        // setup text input.
+        .with_props(TextInputProps {
+            allow_new_line,
+            text,
+        })
         // notify this component about input text state change.
         .with_props(TextInputNotifyProps(ctx.id.to_owned().into()))
         // notify this component about input control characters it receives.
@@ -69,7 +157,9 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
             // that's why we create custom input component to make it work and look exactly as we
             // want - here we just put a text box.
             make_widget!(text_box).with_props(TextBoxProps {
-                text: if text.is_empty() {
+                text: if focused {
+                    input_text_with_cursor(&value, cursor_position, '|')
+                } else if value.is_empty() {
                     match mode {
                         TextInputMode::Text => "> Type text...".to_owned(),
                         TextInputMode::Number => "> Type number...".to_owned(),
@@ -77,10 +167,8 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
                         TextInputMode::UnsignedInteger => "> Type unsigned integer...".to_owned(),
                         TextInputMode::Filter(_) => "> Type uppercase text...".to_owned(),
                     }
-                } else if focused {
-                    input_text_with_cursor(&text, cursor_position, '|')
                 } else {
-                    text
+                    value
                 },
                 width: TextBoxSizeValue::Fill,
                 height: TextBoxSizeValue::Exact(48.0),
@@ -101,5 +189,33 @@ fn input(mut ctx: WidgetContext) -> WidgetNode {
 }
 
 fn main() {
-    DeclarativeApp::simple("Input Field", make_widget!(app));
+    let app = DeclarativeApp::default()
+        .tree(make_widget!(app))
+        .view_model(
+            DATA,
+            ViewModel::produce(|properties| AppData {
+                text_input: Managed::new(ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(TEXT_INPUT),
+                )),
+                number_input: Managed::new(ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(NUMBER_INPUT),
+                )),
+                integer_input: Managed::new(ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(INTEGER_INPUT),
+                )),
+                unsigned_integer_input: Managed::new(ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(UNSIGNED_INTEGER_INPUT),
+                )),
+                filter_input: Managed::new(ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(FILTER_INPUT),
+                )),
+            }),
+        );
+
+    App::new(AppConfig::default().title("Input Field")).run(app);
 }

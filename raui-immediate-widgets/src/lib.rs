@@ -139,10 +139,14 @@ pub mod core {
     pub mod interactive {
         use raui_core::{make_widget, props::Props};
         use raui_immediate::{begin, end, push, use_state};
+        use std::str::FromStr;
 
         pub use raui_core::widget::component::interactive::{
             button::{ButtonNotifyProps, ButtonProps},
-            input_field::{TextInputMode, TextInputNotifyProps, TextInputProps},
+            input_field::{
+                TextInput, TextInputControlNotifyProps, TextInputMode, TextInputNotifyProps,
+                TextInputProps, TextInputState,
+            },
             navigation::{
                 NavContainerActive, NavDirection, NavItemActive, NavJump, NavJumpActive,
                 NavJumpLooped, NavJumpMapProps, NavJumpMode, NavScroll, NavTextChange,
@@ -220,44 +224,62 @@ pub mod core {
             result
         }
 
-        pub fn text_input(
+        pub fn text_input<T: ToString + FromStr + Send + Sync>(
+            value: &T,
             props: impl Into<Props>,
-            mut f: impl FnMut(&TextInputProps),
-        ) -> TextInputProps {
+            mut f: impl FnMut(&str, TextInputState),
+        ) -> (Option<T>, TextInputState) {
             use crate::internal::*;
             use raui_core::prelude::*;
-            let state = use_state(TextInputProps::default);
-            let result = state.read().unwrap().to_owned();
+            let content = use_state(|| value.to_string());
+            let props = props.into();
+            let TextInputProps { allow_new_line, .. } =
+                props.read_cloned_or_default::<TextInputProps>();
+            let text_state = use_state(TextInputState::default);
+            let text_result = text_state.read().unwrap().to_owned();
+            if !text_result.focused {
+                *content.write().unwrap() = value.to_string();
+            }
+            let result = content.read().unwrap().to_string();
             begin();
-            f(&result);
+            f(&result, text_result);
             let node = end().pop().unwrap_or_default();
             push(
                 make_widget!(immediate_text_input)
-                    .with_props(ImmediateTextInputProps { state: Some(state) })
-                    .merge_props(props.into())
+                    .with_props(ImmediateTextInputProps {
+                        state: Some(text_state),
+                    })
+                    .merge_props(props)
+                    .with_props(TextInputProps {
+                        allow_new_line,
+                        text: Some(content.into()),
+                    })
                     .named_slot("content", node),
             );
-            result
+            (result.parse().ok(), text_result)
         }
 
-        pub fn input_field(
+        pub fn input_field<T: ToString + FromStr + Send + Sync>(
+            value: &T,
             props: impl Into<Props>,
-            mut f: impl FnMut(&TextInputProps, ImmediateButton),
-        ) -> (TextInputProps, ImmediateButton) {
+            mut f: impl FnMut(&str, TextInputState, ImmediateButton),
+        ) -> (Option<T>, TextInputState, ImmediateButton) {
             use crate::internal::*;
             use raui_core::prelude::*;
+            let content = use_state(|| value.to_string());
             let props = props.into();
-            let text_state = use_state(TextInputProps::default);
+            let TextInputProps { allow_new_line, .. } =
+                props.read_cloned_or_default::<TextInputProps>();
+            let text_state = use_state(TextInputState::default);
+            let text_result = text_state.read().unwrap().to_owned();
             let button_state = use_state(ImmediateButton::default);
-            let mut text_result = text_state.read().unwrap().to_owned();
             let button_result = button_state.read().unwrap().to_owned();
             if !text_result.focused {
-                if let Ok(text) = props.read_cloned::<String>() {
-                    text_result.text = text;
-                }
+                *content.write().unwrap() = value.to_string();
             }
+            let result = content.read().unwrap().to_string();
             begin();
-            f(&text_result, button_result);
+            f(&result, text_result, button_result);
             let node = end().pop().unwrap_or_default();
             push(
                 make_widget!(immediate_input_field)
@@ -268,9 +290,13 @@ pub mod core {
                         state: Some(button_state),
                     })
                     .merge_props(props)
+                    .with_props(TextInputProps {
+                        allow_new_line,
+                        text: Some(content.into()),
+                    })
                     .named_slot("content", node),
             );
-            (text_result, button_result)
+            (result.parse().ok(), text_result, button_result)
         }
     }
 }
@@ -320,9 +346,10 @@ pub mod material {
     pub mod interactive {
         use crate::core::interactive::ImmediateButton;
         use raui_core::{
-            props::Props, widget::component::interactive::input_field::TextInputProps,
+            props::Props, widget::component::interactive::input_field::TextInputState,
         };
         use raui_immediate::{begin, end, push, use_state};
+        use std::str::FromStr;
 
         pub use raui_material::component::interactive::{
             button_paper::ButtonPaperOverrideStyle, text_field_paper::TextFieldPaperProps,
@@ -387,19 +414,24 @@ pub mod material {
             result
         }
 
-        pub fn text_field_paper(props: impl Into<Props>) -> (TextInputProps, ImmediateButton) {
+        pub fn text_field_paper<T: ToString + FromStr + Send + Sync>(
+            value: &T,
+            props: impl Into<Props>,
+        ) -> (Option<T>, TextInputState, ImmediateButton) {
             use crate::internal::*;
             use raui_core::prelude::*;
+            let content = use_state(|| value.to_string());
             let props = props.into();
-            let text_state = use_state(TextInputProps::default);
+            let TextInputProps { allow_new_line, .. } =
+                props.read_cloned_or_default::<TextInputProps>();
+            let text_state = use_state(TextInputState::default);
+            let text_result = text_state.read().unwrap().to_owned();
             let button_state = use_state(ImmediateButton::default);
-            let mut text_result = text_state.read().unwrap().to_owned();
             let button_result = button_state.read().unwrap().to_owned();
             if !text_result.focused {
-                if let Ok(text) = props.read_cloned::<String>() {
-                    text_result.text = text;
-                }
+                *content.write().unwrap() = value.to_string();
             }
+            let result = content.read().unwrap().to_string();
             push(
                 make_widget!(immediate_text_field_paper)
                     .with_props(ImmediateTextInputProps {
@@ -408,9 +440,13 @@ pub mod material {
                     .with_props(ImmediateButtonProps {
                         state: Some(button_state),
                     })
-                    .merge_props(props),
+                    .merge_props(props)
+                    .with_props(TextInputProps {
+                        allow_new_line,
+                        text: Some(content.into()),
+                    }),
             );
-            (text_result, button_result)
+            (result.parse().ok(), text_result, button_result)
         }
     }
 }
@@ -431,7 +467,15 @@ mod internal {
     impl std::fmt::Debug for ImmediateButtonProps {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("ImmediateButtonProps")
-                .finish_non_exhaustive()
+                .field(
+                    "state",
+                    &self
+                        .state
+                        .as_ref()
+                        .and_then(|state| state.read())
+                        .map(|state| *state),
+                )
+                .finish()
         }
     }
 
@@ -439,7 +483,7 @@ mod internal {
     #[props_data(raui_core::props::PropsData)]
     pub struct ImmediateTextInputProps {
         #[serde(default, skip)]
-        pub state: Option<ManagedLazy<TextInputProps>>,
+        pub state: Option<ManagedLazy<TextInputState>>,
     }
 
     impl std::fmt::Debug for ImmediateTextInputProps {
@@ -474,23 +518,12 @@ mod internal {
     }
 
     fn use_immediate_text_input(ctx: &mut WidgetContext) {
-        ctx.props
-            .write(TextInputNotifyProps(ctx.id.to_owned().into()));
-
-        if let Ok(data) = ctx.state.read_cloned::<TextInputProps>() {
+        if let Ok(data) = ctx.state.read_cloned::<TextInputState>() {
             if let Ok(props) = ctx.props.read::<ImmediateTextInputProps>() {
                 let state = props.state.as_ref().unwrap();
                 let mut state = state.write().unwrap();
                 *state = data;
             }
-        }
-
-        if let Ok(text) = ctx.props.read::<String>() {
-            let _ = ctx.state.mutate_cloned::<TextInputProps, _>(|state| {
-                if !state.focused {
-                    state.text = text.to_owned();
-                }
-            });
         }
     }
 

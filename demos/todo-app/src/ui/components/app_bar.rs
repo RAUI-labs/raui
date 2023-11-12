@@ -1,18 +1,7 @@
 use crate::model::{AppState, ThemeMode};
 use raui::prelude::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
-pub struct AppBarState {
-    pub creating_task: bool,
-    pub new_task_name: String,
-}
 
 fn use_app_bar(context: &mut WidgetContext) {
-    context.life_cycle.mount(|context| {
-        let _ = context.state.write(AppBarState::default());
-    });
-
     context.life_cycle.change(|mut context| {
         let mut app_state = context
             .view_models
@@ -30,27 +19,14 @@ fn use_app_bar(context: &mut WidgetContext) {
                             app_state.save();
                         }
                         "create" => {
-                            let _ = context.state.write(AppBarState {
-                                creating_task: true,
-                                ..Default::default()
-                            });
+                            app_state.create_task();
                         }
                         "add" => {
-                            if let Ok(data) = context.state.read::<AppBarState>() {
-                                if !data.new_task_name.is_empty() {
-                                    app_state.add_task(data.new_task_name.to_owned());
-                                }
-                            }
-                            let _ = context.state.write(AppBarState::default());
+                            app_state.add_task();
                         }
                         _ => {}
                     }
                 }
-            } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
-                let _ = context.state.write(AppBarState {
-                    creating_task: true,
-                    new_task_name: msg.state.text.to_owned(),
-                });
             }
         }
     });
@@ -61,17 +37,12 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         key,
         id,
-        state,
         view_models,
         ..
     } = context;
     let app_state = view_models
         .view_model::<AppState>(AppState::VIEW_MODEL)
         .unwrap();
-    let creating_task = state
-        .read::<AppBarState>()
-        .map(|state| state.creating_task)
-        .unwrap_or_default();
 
     make_widget!(vertical_box)
         .key(key)
@@ -122,7 +93,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
                                 .merge_props(make_icon_props(id, "resources/icons/save.png")),
                         ),
                 )
-                .listed_slot(if creating_task {
+                .listed_slot(if app_state.creating_task() {
                     WidgetNode::default()
                 } else {
                     make_widget!(text_tooltip_paper)
@@ -136,7 +107,7 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
                         .into()
                 }),
         )
-        .listed_slot(if creating_task {
+        .listed_slot(if app_state.creating_task() {
             make_widget!(horizontal_box)
                 .key("task-bar")
                 .with_props(HorizontalBoxProps {
@@ -163,7 +134,10 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
                         })
                         .with_props(NavItemActive)
                         .with_props(ButtonNotifyProps(id.to_owned().into()))
-                        .with_props(TextInputNotifyProps(id.to_owned().into())),
+                        .with_props(TextInputProps {
+                            text: Some(app_state.new_task_name().into()),
+                            ..Default::default()
+                        }),
                 )
                 .listed_slot(
                     make_widget!(text_tooltip_paper)

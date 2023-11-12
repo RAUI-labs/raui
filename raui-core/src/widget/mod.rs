@@ -732,8 +732,12 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::interactive::button::ButtonNotifyProps>("ButtonNotifyProps");
     app.register_props::<component::interactive::input_field::TextInputMode>("TextInputMode");
     app.register_props::<component::interactive::input_field::TextInputProps>("TextInputProps");
+    app.register_props::<component::interactive::input_field::TextInputState>("TextInputState");
     app.register_props::<component::interactive::input_field::TextInputNotifyProps>(
         "TextInputNotifyProps",
+    );
+    app.register_props::<component::interactive::input_field::TextInputControlNotifyProps>(
+        "TextInputControlNotifyProps",
     );
     app.register_props::<component::interactive::navigation::NavItemActive>("NavItemActive");
     app.register_props::<component::interactive::navigation::NavTrackingActive>(

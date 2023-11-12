@@ -404,6 +404,10 @@ impl<T> ViewModelValue<T> {
         Self { value, notifier }
     }
 
+    pub fn consume(self) -> T {
+        self.value
+    }
+
     pub fn set_unique_notify(&mut self, value: T)
     where
         T: PartialEq,

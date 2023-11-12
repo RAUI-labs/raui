@@ -47,7 +47,7 @@ mod gui {
                         // we can react to button-like behavior by reading what
                         // button-like widgets return of their tracked state.
                         if text_button("Increment").trigger_start() {
-                            *value += 1;
+                            *value = value.saturating_add(1);
                         }
 
                         if text_button("Decrement").trigger_start() {
@@ -98,22 +98,16 @@ mod gui {
         // it works like combination of button (can be focused by
         // selection/navigation) and text field (collects keyboard
         // text characters when focused).
-        let props = (
-            NavItemActive,
-            TextInputMode::UnsignedInteger,
-            // if we want to override `input_field` text value,
-            // do it with String props.
-            value.to_string(),
-        );
+        let props = (NavItemActive, TextInputMode::UnsignedInteger);
 
-        let result = input_field(props, |state, button| {
+        let (result, ..) = input_field(value, props, |text, state, button| {
             text_box(TextBoxProps {
-                text: if state.text.is_empty() {
+                text: if state.focused {
+                    input_text_with_cursor(text, state.cursor_position, '|')
+                } else if text.is_empty() {
                     "...".to_owned()
-                } else if state.focused {
-                    input_text_with_cursor(&state.text, state.cursor_position, '|')
                 } else {
-                    state.text.to_owned()
+                    text.to_owned()
                 },
                 font: TextBoxFont {
                     name: crate::FONT.to_owned(),
@@ -129,7 +123,7 @@ mod gui {
             });
         });
 
-        if let Ok(result) = result.0.text.parse() {
+        if let Some(result) = result {
             *value = result;
         }
     }

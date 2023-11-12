@@ -70,7 +70,7 @@ fn use_app(context: &mut WidgetContext) {
     context.life_cycle.mount(|mut context| {
         context
             .view_models
-            .bindings(AppState::VIEW_MODEL, AppState::PROP_THEME)
+            .bindings(AppState::VIEW_MODEL, AppState::THEME)
             .unwrap()
             .bind(context.id.to_owned());
     });
