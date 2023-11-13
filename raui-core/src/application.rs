@@ -128,7 +128,6 @@ use crate::{
     },
     Prefab, PrefabError, PrefabValue, Scalar,
 };
-use intuicio_data::type_hash::TypeHash;
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
@@ -658,11 +657,10 @@ impl Application {
             None,
             &message_sender,
             &signal_sender,
-            &Default::default(),
         );
         self.states = states
             .into_iter()
-            .chain(new_states.into_iter())
+            .chain(new_states)
             .filter(|(id, state)| {
                 if used_ids.contains(id) {
                     true
@@ -671,10 +669,8 @@ impl Application {
                         for mut closure in closures {
                             let messenger = &message_sender;
                             let signals = SignalSender::new(id.clone(), signal_sender.clone());
-                            let view_models = ViewModelCollectionView::new(
-                                &mut self.view_models,
-                                Default::default(),
-                            );
+                            let view_models =
+                                ViewModelCollectionView::new(id, &mut self.view_models);
                             let context = WidgetUnmountContext {
                                 id,
                                 state,
@@ -687,6 +683,7 @@ impl Application {
                     }
                     self.animators.remove(id);
                     self.view_models.unbind_all(id);
+                    self.view_models.remove_widget_view_models(id);
                     false
                 }
             })
@@ -728,7 +725,6 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
-        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         match node {
             WidgetNode::None | WidgetNode::Tuple(_) => node,
@@ -743,7 +739,6 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
-                master_view_model_defaults,
             ),
             WidgetNode::Unit(unit) => self.process_node_unit(
                 unit,
@@ -755,7 +750,6 @@ impl Application {
                 master_shared_props,
                 message_sender,
                 signal_sender,
-                master_view_model_defaults,
             ),
         }
     }
@@ -773,7 +767,6 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
-        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         let WidgetComponent {
             processor,
@@ -815,10 +808,7 @@ impl Application {
             Some(state) => {
                 let state = State::new(state, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
-                let view_models = ViewModelCollectionView::new(
-                    &mut self.view_models,
-                    master_view_model_defaults.to_owned(),
-                );
+                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
                 let context = WidgetContext {
                     id: &id,
                     idref: idref.as_ref(),
@@ -838,10 +828,7 @@ impl Application {
                 let state_data = Props::default();
                 let state = State::new(&state_data, StateUpdate::new(state_sender.clone()));
                 let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
-                let view_models = ViewModelCollectionView::new(
-                    &mut self.view_models,
-                    master_view_model_defaults.to_owned(),
-                );
+                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
                 let context = WidgetContext {
                     id: &id,
                     idref: idref.as_ref(),
@@ -872,10 +859,7 @@ impl Application {
                             self.animators.get(&id).unwrap_or(&default_animator_state),
                             AnimationUpdate::new(animation_sender.clone()),
                         );
-                        let view_models = ViewModelCollectionView::new(
-                            &mut self.view_models,
-                            master_view_model_defaults.to_owned(),
-                        );
+                        let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
                         let context = WidgetMountOrChangeContext {
                             id: &id,
                             props: &props,
@@ -900,10 +884,7 @@ impl Application {
                         self.animators.get(&id).unwrap_or(&default_animator_state),
                         AnimationUpdate::new(animation_sender.clone()),
                     );
-                    let view_models = ViewModelCollectionView::new(
-                        &mut self.view_models,
-                        master_view_model_defaults.to_owned(),
-                    );
+                    let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
                     let context = WidgetMountOrChangeContext {
                         id: &id,
                         props: &props,
@@ -940,7 +921,6 @@ impl Application {
             Some(shared_props),
             message_sender,
             signal_sender,
-            master_view_model_defaults,
         );
         while let Ok(data) = state_receiver.try_recv() {
             self.state_changes.insert(id.to_owned(), data);
@@ -960,7 +940,6 @@ impl Application {
         master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
-        master_view_model_defaults: &HashMap<TypeHash, Cow<'static, str>>,
     ) -> WidgetNode {
         match &mut unit {
             WidgetUnitNode::None | WidgetUnitNode::ImageBox(_) | WidgetUnitNode::TextBox(_) => {}
@@ -977,7 +956,6 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
-                    master_view_model_defaults,
                 ));
             }
             WidgetUnitNode::PortalBox(unit) => match &mut *unit.slot {
@@ -994,7 +972,6 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
-                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::ContentItem(item) => {
@@ -1010,7 +987,6 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
-                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::FlexItem(item) => {
@@ -1026,7 +1002,6 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
-                        master_view_model_defaults,
                     )
                 }
                 PortalBoxSlotNode::GridItem(item) => {
@@ -1042,7 +1017,6 @@ impl Application {
                         master_shared_props,
                         message_sender,
                         signal_sender,
-                        master_view_model_defaults,
                     )
                 }
             },
@@ -1064,7 +1038,6 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
-                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1088,7 +1061,6 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
-                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1112,7 +1084,6 @@ impl Application {
                             master_shared_props.clone(),
                             message_sender,
                             signal_sender,
-                            master_view_model_defaults,
                         );
                         node
                     })
@@ -1131,7 +1102,6 @@ impl Application {
                     master_shared_props,
                     message_sender,
                     signal_sender,
-                    master_view_model_defaults,
                 ));
             }
         }

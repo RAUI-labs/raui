@@ -351,7 +351,7 @@ impl DefaultLayoutEngine {
         let mut new_cross: Scalar = 0.0;
         let children = items
             .into_iter()
-            .zip(axis_sizes.into_iter())
+            .zip(axis_sizes)
             .filter_map(|(item, axis_size)| {
                 let child_main = if main < main_available {
                     axis_size.0

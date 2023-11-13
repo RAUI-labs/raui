@@ -264,7 +264,7 @@ pub fn list_component<R>(
         widget
             .into()
             .merge_props(props.into())
-            .listed_slots(widgets.into_iter()),
+            .listed_slots(widgets),
     );
     result
 }

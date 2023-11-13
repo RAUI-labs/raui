@@ -7,7 +7,6 @@ use crate::{
     Prefab,
 };
 use serde::{Deserialize, Serialize};
-use std::mem::MaybeUninit;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Default, Clone)]
@@ -119,20 +118,12 @@ impl WidgetNode {
     }
 
     pub fn unpack_tuple<const N: usize>(self) -> [WidgetNode; N] {
-        let mut data: [MaybeUninit<WidgetNode>; N] = unsafe { MaybeUninit::uninit().assume_init() };
-        for item in data.iter_mut().take(N) {
-            *item = MaybeUninit::new(WidgetNode::None);
+        if let WidgetNode::Tuple(mut data) = self {
+            let mut iter = data.drain(..);
+            std::array::from_fn(|_| iter.next().unwrap_or_default())
+        } else {
+            std::array::from_fn(|_| WidgetNode::None)
         }
-        if let WidgetNode::Tuple(mut v) = self {
-            for i in (0..(v.len().min(N))).rev() {
-                data[i] = MaybeUninit::new(v.swap_remove(i));
-            }
-        }
-        // TODO: workaround for MaybeUninit to array transmute not working with generics.
-        let ptr = &data as *const _ as *const [WidgetNode; N];
-        let res = unsafe { ptr.read() };
-        std::mem::forget(data);
-        res
     }
 }
 

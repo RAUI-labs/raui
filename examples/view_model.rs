@@ -28,6 +28,7 @@ fn use_app(ctx: &mut WidgetContext) {
             .unwrap()
             .bind(ctx.id.to_owned());
     });
+
     ctx.life_cycle.unmount(|mut ctx| {
         ctx.view_models
             .bindings(DATA, COUNTER)
@@ -90,5 +91,5 @@ fn main() {
             true
         });
 
-    App::new(AppConfig::default().title("View-model")).run(app);
+    App::new(AppConfig::default().title("View-Model")).run(app);
 }

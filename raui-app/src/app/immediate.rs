@@ -41,7 +41,7 @@ impl ImmediateApp {
             let widgets = make_widgets(&context, || {
                 callback();
             });
-            application.apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+            application.apply(make_widget!(content_box).listed_slots(widgets));
         }));
         self
     }
@@ -93,6 +93,6 @@ impl<F: FnMut()> AppCycleFrameRunner<ImmediateContext> for ImmediateAppCycleFram
         });
         tester
             .application
-            .apply(make_widget!(content_box).listed_slots(widgets.into_iter()));
+            .apply(make_widget!(content_box).listed_slots(widgets));
     }
 }

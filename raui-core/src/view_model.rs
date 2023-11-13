@@ -3,10 +3,8 @@ use intuicio_data::{
     lifetime::{ValueReadAccess, ValueWriteAccess},
     managed::DynamicManaged,
     managed::{Managed, ManagedLazy, ManagedRef, ManagedRefMut},
-    type_hash::TypeHash,
 };
 use std::{
-    borrow::Cow,
     collections::{HashMap, HashSet},
     ops::{Deref, DerefMut},
 };
@@ -233,34 +231,61 @@ impl ViewModel {
 
 #[derive(Default)]
 pub struct ViewModelCollection {
-    inner: HashMap<String, ViewModel>,
+    named: HashMap<String, ViewModel>,
+    widgets: HashMap<WidgetId, HashMap<String, ViewModel>>,
 }
 
 impl ViewModelCollection {
     pub fn unbind_all(&mut self, id: &WidgetId) {
-        for view_model in self.inner.values_mut() {
+        for view_model in self.named.values_mut() {
             view_model.properties.unbind_all(id);
+        }
+        for view_model in self.widgets.values_mut() {
+            for view_model in view_model.values_mut() {
+                view_model.properties.unbind_all(id);
+            }
         }
     }
 
     pub fn remove_empty_bindings(&mut self) {
-        for view_model in self.inner.values_mut() {
+        for view_model in self.named.values_mut() {
             view_model.properties.remove_empty_bindings();
+        }
+        for view_model in self.widgets.values_mut() {
+            for view_model in view_model.values_mut() {
+                view_model.properties.remove_empty_bindings();
+            }
         }
     }
 
     pub fn consume_notification(&mut self) -> bool {
-        self.inner
-            .values_mut()
-            .any(|view_model| view_model.properties.consume_notification())
+        let mut result = false;
+        for view_model in self.named.values_mut() {
+            result = result || view_model.properties.consume_notification();
+        }
+        for view_model in self.widgets.values_mut() {
+            for view_model in view_model.values_mut() {
+                result = result || view_model.properties.consume_notification();
+            }
+        }
+        result
     }
 
     pub fn consume_notified_common_root(&mut self) -> WidgetIdCommon {
         let mut result = WidgetIdCommon::default();
-        for view_model in self.inner.values_mut() {
+        for view_model in self.named.values_mut() {
             result.include_other(&view_model.properties.consume_notified_common_root());
         }
+        for view_model in self.widgets.values_mut() {
+            for view_model in view_model.values_mut() {
+                result.include_other(&view_model.properties.consume_notified_common_root());
+            }
+        }
         result
+    }
+
+    pub fn remove_widget_view_models(&mut self, id: &WidgetId) {
+        self.widgets.remove(id);
     }
 }
 
@@ -268,39 +293,32 @@ impl Deref for ViewModelCollection {
     type Target = HashMap<String, ViewModel>;
 
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        &self.named
     }
 }
 
 impl DerefMut for ViewModelCollection {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
+        &mut self.named
     }
 }
 
 pub struct ViewModelCollectionView<'a> {
-    inner: &'a mut ViewModelCollection,
-    defaults: HashMap<TypeHash, Cow<'static, str>>,
+    id: &'a WidgetId,
+    collection: &'a mut ViewModelCollection,
 }
 
 impl<'a> ViewModelCollectionView<'a> {
-    pub fn new(
-        inner: &'a mut ViewModelCollection,
-        defaults: HashMap<TypeHash, Cow<'static, str>>,
-    ) -> Self {
-        Self { inner, defaults }
-    }
-
-    pub fn into_defaults(self) -> HashMap<TypeHash, Cow<'static, str>> {
-        self.defaults
+    pub fn new(id: &'a WidgetId, collection: &'a mut ViewModelCollection) -> Self {
+        Self { id, collection }
     }
 
     pub fn collection(&'a self) -> &'a ViewModelCollection {
-        self.inner
+        self.collection
     }
 
     pub fn collection_mut(&'a mut self) -> &'a mut ViewModelCollection {
-        self.inner
+        self.collection
     }
 
     pub fn bindings(
@@ -308,57 +326,68 @@ impl<'a> ViewModelCollectionView<'a> {
         view_model: &str,
         property: impl ToString,
     ) -> Option<ValueWriteAccess<ViewModelBindings>> {
-        self.inner
+        self.collection
             .get_mut(view_model)?
             .properties
             .bindings(property)
     }
 
-    pub fn default_bindings<T: 'static>(
+    pub fn lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
+        self.collection.get(name)?.lazy::<T>()
+    }
+
+    pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
+        self.collection.get(name)?.read::<T>()
+    }
+
+    pub fn view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
+        self.collection.get_mut(name)?.write::<T>()
+    }
+
+    pub fn widget_bindings(
         &mut self,
+        view_model: &str,
         property: impl ToString,
     ) -> Option<ValueWriteAccess<ViewModelBindings>> {
-        let view_model = self.defaults.get(&TypeHash::of::<T>())?;
-        self.inner
-            .get_mut(view_model.as_ref())?
+        self.collection
+            .widgets
+            .get_mut(self.id)?
+            .get_mut(view_model)?
             .properties
             .bindings(property)
     }
 
-    pub fn lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
-        self.inner.get(name)?.lazy::<T>()
+    pub fn widget_lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
+        self.collection.widgets.get(self.id)?.get(name)?.lazy::<T>()
     }
 
-    pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
-        self.inner.get(name)?.read::<T>()
+    pub fn widget_view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
+        self.collection.widgets.get(self.id)?.get(name)?.read::<T>()
     }
 
-    pub fn default_view_model<T: 'static>(&self) -> Option<ValueReadAccess<T>> {
-        let name = self.defaults.get(&TypeHash::of::<T>())?;
-        self.inner.get(name.as_ref())?.read::<T>()
+    pub fn widget_view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
+        self.collection
+            .widgets
+            .get_mut(self.id)?
+            .get_mut(name)?
+            .write::<T>()
     }
 
-    pub fn view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
-        self.inner.get_mut(name)?.write::<T>()
+    pub fn widget_register(&mut self, name: impl ToString, view_model: ViewModel) {
+        self.collection
+            .widgets
+            .entry(self.id.to_owned())
+            .or_default()
+            .insert(name.to_string(), view_model);
     }
 
-    pub fn default_view_model_mut<T: 'static>(&mut self) -> Option<ValueWriteAccess<T>> {
-        let name = self.defaults.get(&TypeHash::of::<T>())?;
-        self.inner.get_mut(name.as_ref())?.write::<T>()
-    }
-
-    pub fn set_default<T: 'static>(&mut self, name: impl Into<Cow<'static, str>>) {
-        let name = name.into();
-        if let Some(view_model) = self.inner.get(name.as_ref()) {
-            let type_hash = TypeHash::of::<T>();
-            if view_model.object.type_hash() == &type_hash {
-                self.defaults.insert(type_hash, name);
-            }
+    pub fn widget_unregister(&mut self, name: &str) -> Option<ViewModel> {
+        let view_models = self.collection.widgets.get_mut(self.id)?;
+        let result = view_models.remove(name)?;
+        if view_models.is_empty() {
+            self.collection.widgets.remove(self.id);
         }
-    }
-
-    pub fn unset_default<T: 'static>(&mut self) {
-        self.defaults.remove(&TypeHash::of::<T>());
+        Some(result)
     }
 }
 

@@ -111,11 +111,11 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
                     .into();
                 std::iter::once(background)
                     .chain(std::iter::once(frame))
-                    .chain(listed_slots.into_iter())
+                    .chain(listed_slots)
                     .collect::<Vec<_>>()
             } else {
                 std::iter::once(background)
-                    .chain(listed_slots.into_iter())
+                    .chain(listed_slots)
                     .collect::<Vec<_>>()
             }
         }
@@ -144,7 +144,7 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
                     .merge_props(props)
                     .into();
                 std::iter::once(frame)
-                    .chain(listed_slots.into_iter())
+                    .chain(listed_slots)
                     .collect::<Vec<_>>()
             } else {
                 listed_slots
