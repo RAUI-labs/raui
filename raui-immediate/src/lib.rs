@@ -7,12 +7,14 @@ thread_local! {
     pub(crate) static STACK: RefCell<Vec<Vec<WidgetNode>>> = Default::default();
     pub(crate) static STATES: RefCell<Option<Rc<RefCell<ImmediateStates>>>> = Default::default();
     pub(crate) static ACCESS_POINTS: RefCell<Option<Rc<RefCell<ImmediateAccessPoints>>>> = Default::default();
+    pub(crate) static PROPS_STACK: RefCell<Option<Rc<RefCell<Vec<Props>>>>> = Default::default();
 }
 
 #[derive(Default)]
 pub struct ImmediateContext {
     states: Rc<RefCell<ImmediateStates>>,
     access_points: Rc<RefCell<ImmediateAccessPoints>>,
+    props_stack: Rc<RefCell<Vec<Props>>>,
 }
 
 impl ImmediateContext {
@@ -23,6 +25,9 @@ impl ImmediateContext {
         });
         ACCESS_POINTS.with(|access_points| {
             *access_points.borrow_mut() = Some(context.access_points.clone());
+        });
+        PROPS_STACK.with(|props_stack| {
+            *props_stack.borrow_mut() = Some(context.props_stack.clone());
         });
     }
 
@@ -35,6 +40,12 @@ impl ImmediateContext {
                 access_points.borrow_mut().reset();
             }
             *access_points.borrow_mut() = None;
+        });
+        PROPS_STACK.with(|props_stack| {
+            if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+                props_stack.borrow_mut().clear();
+            }
+            *props_stack.borrow_mut() = None;
         });
     }
 }
@@ -175,6 +186,31 @@ pub fn use_access<T>(id: &str) -> ManagedLazy<T> {
     })
 }
 
+pub fn use_stack_props<T: PropsData + Clone + 'static>() -> Option<T> {
+    PROPS_STACK.with(|props_stack| {
+        if let Some(props_stack) = props_stack.borrow().as_ref() {
+            for props in props_stack.borrow().iter().rev() {
+                if let Ok(props) = props.read_cloned::<T>() {
+                    return Some(props);
+                }
+            }
+        }
+        None
+    })
+}
+
+pub fn use_effects<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
+    begin();
+    let result = f();
+    let node = end().pop().unwrap_or_default();
+    push(
+        make_widget!(immediate_effects_box)
+            .merge_props(props.into())
+            .named_slot("content", node),
+    );
+    result
+}
+
 pub fn register_access<T>(id: &str, data: &mut T) -> Lifetime {
     ACCESS_POINTS.with(|access_points| {
         let access_points = access_points.borrow();
@@ -224,6 +260,11 @@ pub fn reset() {
     STACK.with(|stack| {
         stack.borrow_mut().clear();
     });
+    PROPS_STACK.with(|props_stack| {
+        if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+            props_stack.borrow_mut().clear();
+        }
+    });
 }
 
 pub fn apply_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
@@ -240,15 +281,34 @@ pub fn apply_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
     result
 }
 
-pub fn use_effects<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
+pub fn apply_shared_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
+    let props = props.into();
     begin();
     let result = f();
-    let node = end().pop().unwrap_or_default();
-    push(
-        make_widget!(immediate_effects_box)
-            .merge_props(props.into())
-            .named_slot("content", node),
-    );
+    let mut widgets = end();
+    for widget in &mut widgets {
+        if let Some(widget) = widget.shared_props_mut() {
+            widget.merge_from(props.clone());
+        }
+    }
+    extend(widgets);
+    result
+}
+
+pub fn stack_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
+    PROPS_STACK.with(|props_stack| {
+        if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+            props_stack.borrow_mut().push(props.into());
+        }
+    });
+    begin();
+    let result = f();
+    extend(end());
+    PROPS_STACK.with(|props_stack| {
+        if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+            props_stack.borrow_mut().pop();
+        }
+    });
     result
 }
 

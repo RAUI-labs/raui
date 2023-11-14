@@ -382,7 +382,7 @@ implement_props_data!(usize);
 implement_props_data!(bool);
 implement_props_data!(String);
 
-macro_rules! impl_tuple_into_props {
+macro_rules! impl_tuple_props_conversion {
     ($($id:ident),+) => {
         #[allow(non_snake_case)]
         impl<$($id: $crate::props::PropsData),+> From<($($id,)+)> for $crate::props::Props {
@@ -397,30 +397,42 @@ macro_rules! impl_tuple_into_props {
                 Self(result)
             }
         }
+
+        #[allow(non_snake_case)]
+        impl<$($id: $crate::props::PropsData + Clone + Default),+> From<&$crate::props::Props> for ($($id,)+) {
+            fn from(props: &$crate::props::Props) -> ($($id,)+) {
+                ( $( props.read_cloned_or_default::<$id>(), )+ )
+            }
+        }
     };
 }
 
-impl_tuple_into_props!(A);
-impl_tuple_into_props!(A, B);
-impl_tuple_into_props!(A, B, C);
-impl_tuple_into_props!(A, B, C, D);
-impl_tuple_into_props!(A, B, C, D, E);
-impl_tuple_into_props!(A, B, C, D, E, F);
-impl_tuple_into_props!(A, B, C, D, E, F, G);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y);
-impl_tuple_into_props!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y, Z);
+impl_tuple_props_conversion!(A);
+impl_tuple_props_conversion!(A, B);
+impl_tuple_props_conversion!(A, B, C);
+impl_tuple_props_conversion!(A, B, C, D);
+impl_tuple_props_conversion!(A, B, C, D, E);
+impl_tuple_props_conversion!(A, B, C, D, E, F);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V);
+impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X);
+impl_tuple_props_conversion!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y
+);
+impl_tuple_props_conversion!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y, Z
+);
