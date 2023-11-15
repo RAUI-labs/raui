@@ -155,6 +155,7 @@ impl ViewModelProperties {
     }
 }
 
+#[derive(Clone)]
 pub struct ViewModelNotifier {
     inner: ManagedLazy<ViewModelBindings>,
 }
