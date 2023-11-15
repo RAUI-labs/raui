@@ -18,7 +18,9 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
     // we read value from view model created with app builder.
     let variant_name = ctx
         .view_models
-        .view_model::<String>(DATA)
+        .view_model(DATA)
+        .unwrap()
+        .read::<String>()
         .map(|value| value.to_owned());
 
     make_widget!(variant_box)

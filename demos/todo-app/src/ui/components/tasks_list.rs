@@ -16,7 +16,9 @@ fn use_task(context: &mut WidgetContext) {
     context.life_cycle.change(|mut context| {
         let mut app_state = context
             .view_models
-            .view_model_mut::<AppState>(AppState::VIEW_MODEL)
+            .view_model_mut(AppState::VIEW_MODEL)
+            .unwrap()
+            .write::<AppState>()
             .unwrap();
 
         for msg in context.messenger.messages {
@@ -163,7 +165,9 @@ pub fn tasks_list(mut context: WidgetContext) -> WidgetNode {
         key, view_models, ..
     } = context;
     let app_state = view_models
-        .view_model::<AppState>(AppState::VIEW_MODEL)
+        .view_model(AppState::VIEW_MODEL)
+        .unwrap()
+        .read::<AppState>()
         .unwrap();
     let mut tasks = app_state
         .tasks()

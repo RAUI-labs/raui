@@ -313,6 +313,10 @@ impl<'a> ViewModelCollectionView<'a> {
         Self { id, collection }
     }
 
+    pub fn id(&self) -> &WidgetId {
+        self.id
+    }
+
     pub fn collection(&'a self) -> &'a ViewModelCollection {
         self.collection
     }
@@ -332,45 +336,12 @@ impl<'a> ViewModelCollectionView<'a> {
             .bindings(property)
     }
 
-    pub fn lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
-        self.collection.get(name)?.lazy::<T>()
+    pub fn view_model(&self, name: &str) -> Option<&ViewModel> {
+        self.collection.get(name)
     }
 
-    pub fn view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
-        self.collection.get(name)?.read::<T>()
-    }
-
-    pub fn view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
-        self.collection.get_mut(name)?.write::<T>()
-    }
-
-    pub fn widget_bindings(
-        &mut self,
-        view_model: &str,
-        property: impl ToString,
-    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
-        self.collection
-            .widgets
-            .get_mut(self.id)?
-            .get_mut(view_model)?
-            .properties
-            .bindings(property)
-    }
-
-    pub fn widget_lazy_view_model<T: 'static>(&self, name: &str) -> Option<ManagedLazy<T>> {
-        self.collection.widgets.get(self.id)?.get(name)?.lazy::<T>()
-    }
-
-    pub fn widget_view_model<T: 'static>(&self, name: &str) -> Option<ValueReadAccess<T>> {
-        self.collection.widgets.get(self.id)?.get(name)?.read::<T>()
-    }
-
-    pub fn widget_view_model_mut<T: 'static>(&mut self, name: &str) -> Option<ValueWriteAccess<T>> {
-        self.collection
-            .widgets
-            .get_mut(self.id)?
-            .get_mut(name)?
-            .write::<T>()
+    pub fn view_model_mut(&mut self, name: &str) -> Option<&mut ViewModel> {
+        self.collection.get_mut(name)
     }
 
     pub fn widget_register(&mut self, name: impl ToString, view_model: ViewModel) {
@@ -388,6 +359,61 @@ impl<'a> ViewModelCollectionView<'a> {
             self.collection.widgets.remove(self.id);
         }
         Some(result)
+    }
+
+    pub fn widget_bindings(
+        &mut self,
+        view_model: &str,
+        property: impl ToString,
+    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
+        self.collection
+            .widgets
+            .get_mut(self.id)?
+            .get_mut(view_model)?
+            .properties
+            .bindings(property)
+    }
+
+    pub fn widget_view_model(&self, name: &str) -> Option<&ViewModel> {
+        self.collection.widgets.get(self.id)?.get(name)
+    }
+
+    pub fn widget_view_model_mut(&mut self, name: &str) -> Option<&mut ViewModel> {
+        self.collection.widgets.get_mut(self.id)?.get_mut(name)
+    }
+
+    pub fn hierarchy_view_model(&self, name: &str) -> Option<&ViewModel> {
+        self.collection
+            .widgets
+            .iter()
+            .filter_map(|(id, view_models)| {
+                id.distance_to(self.id).ok().and_then(|distance| {
+                    if distance <= 0 {
+                        Some((distance, view_models.get(name)?))
+                    } else {
+                        None
+                    }
+                })
+            })
+            .min_by(|(a, _), (b, _)| a.cmp(b))
+            .map(|(_, view_model)| view_model)
+    }
+
+    pub fn hierarchy_view_model_mut(&mut self, name: &str) -> Option<&mut ViewModel> {
+        self.collection
+            .widgets
+            .iter_mut()
+            .filter_map(|(id, view_models)| {
+                id.distance_to(self.id).ok().and_then(|distance| {
+                    if distance <= 0 {
+                        Some((distance, view_models.get_mut(name)?))
+                    } else {
+                        None
+                    }
+                })
+            })
+            .min_by(|(a, _), (b, _)| a.cmp(b))
+            .map(|(_, view_model)| view_model)
     }
 }
 

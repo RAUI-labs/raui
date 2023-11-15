@@ -82,7 +82,9 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
         key, view_models, ..
     } = context;
     let app_state = view_models
-        .view_model::<AppState>(AppState::VIEW_MODEL)
+        .view_model(AppState::VIEW_MODEL)
+        .unwrap()
+        .read::<AppState>()
         .unwrap();
     let idref = WidgetRef::default();
 

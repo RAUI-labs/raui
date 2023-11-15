@@ -40,7 +40,12 @@ fn use_app(ctx: &mut WidgetContext) {
 #[pre_hooks(use_app)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
     // We read app data from view model created with app builder.
-    let app_data = ctx.view_models.view_model::<AppData>(DATA).unwrap();
+    let app_data = ctx
+        .view_models
+        .view_model(DATA)
+        .unwrap()
+        .read::<AppData>()
+        .unwrap();
 
     make_widget!(text_box)
         .with_props(TextBoxProps {

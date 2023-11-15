@@ -47,7 +47,9 @@ fn use_app(ctx: &mut WidgetContext) {
         // We get View-Model of this widget.
         let mut app_data = ctx
             .view_models
-            .widget_view_model_mut::<AppData>(DATA)
+            .widget_view_model_mut(DATA)
+            .unwrap()
+            .write::<AppData>()
             .unwrap();
 
         // And then we react for tick messages from animation.
@@ -68,8 +70,8 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
     // is not yet available.
     let counter = ctx
         .view_models
-        .widget_view_model::<AppData>(DATA)
-        .map(|data| *data.counter)
+        .widget_view_model(DATA)
+        .and_then(|view_model| view_model.read::<AppData>().map(|data| *data.counter))
         .unwrap_or_default();
 
     make_widget!(text_box)

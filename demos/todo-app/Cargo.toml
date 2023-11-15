@@ -8,4 +8,4 @@ publish = false
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-raui = { version = "0.54", path = "../../", features = ["app", "material"] }
+raui = { version = "0.55", path = "../../", features = ["app", "material"] }

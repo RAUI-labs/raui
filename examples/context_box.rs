@@ -21,7 +21,9 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
     // we read value from view model created with app builder.
     let data = ctx
         .view_models
-        .view_model::<(bool, bool, bool)>(DATA)
+        .view_model(DATA)
+        .unwrap()
+        .read::<(bool, bool, bool)>()
         .unwrap();
 
     make_widget!(content_box)

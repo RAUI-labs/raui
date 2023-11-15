@@ -284,21 +284,34 @@ impl WidgetId {
     }
 
     pub fn is_subset_of(&self, other: &Self) -> bool {
-        for index in 0..self.depth() {
-            let a = self.part(index).unwrap();
-            let b = match other.part(index) {
-                Some(b) => b,
-                None => return false,
-            };
-            if a != b {
-                return false;
-            }
+        match self.distance_to(other) {
+            Ok(v) => v < 0,
+            _ => false,
         }
-        true
     }
 
     pub fn is_superset_of(&self, other: &Self) -> bool {
-        other.is_subset_of(self)
+        match self.distance_to(other) {
+            Ok(v) => v > 0,
+            _ => false,
+        }
+    }
+
+    pub fn distance_to(&self, other: &Self) -> Result<isize, isize> {
+        for index in 0..self.depth().max(other.depth()) {
+            match (self.part(index), other.part(index)) {
+                (None, None) => return Ok(0),
+                (None, Some(_)) | (Some(_), None) => {
+                    return Ok(self.depth() as isize - other.depth() as isize);
+                }
+                (Some(a), Some(b)) => {
+                    if a != b {
+                        return Err(index as isize - other.depth() as isize);
+                    }
+                }
+            }
+        }
+        Ok(0)
     }
 
     #[inline]
@@ -1044,5 +1057,56 @@ mod tests {
         assert_eq!(id.path(), "parent/me/with?meta");
         assert_eq!(id.key(), "with");
         assert_eq!(id.meta(), "meta");
+
+        let a = WidgetId::from_str("a:root/a/b/c").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(0));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root/a/b").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(-1));
+        assert_eq!(a.is_subset_of(&b), true);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root/a").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(-2));
+        assert_eq!(a.is_subset_of(&b), true);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(-3));
+        assert_eq!(a.is_subset_of(&b), true);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root/a/b/c").unwrap();
+        let b = WidgetId::from_str("b:root/a/b").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(1));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), true);
+        let a = WidgetId::from_str("a:root/a/b/c").unwrap();
+        let b = WidgetId::from_str("b:root/a").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(2));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), true);
+        let a = WidgetId::from_str("a:root/a/b/c").unwrap();
+        let b = WidgetId::from_str("b:root").unwrap();
+        assert_eq!(a.distance_to(&b), Ok(3));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), true);
+        let a = WidgetId::from_str("a:root/a/b/x").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Err(-1));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root/a/x/y").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Err(-2));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), false);
+        let a = WidgetId::from_str("a:root/x/y/z").unwrap();
+        let b = WidgetId::from_str("b:root/a/b/c").unwrap();
+        assert_eq!(a.distance_to(&b), Err(-3));
+        assert_eq!(a.is_subset_of(&b), false);
+        assert_eq!(a.is_superset_of(&b), false);
     }
 }

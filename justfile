@@ -18,7 +18,7 @@ clippy:
 test:
     cargo test --all --features all
 
-example NAME:
+example NAME="setup":
     cargo run --example {{NAME}}
 
 demo NAME="todo-app":

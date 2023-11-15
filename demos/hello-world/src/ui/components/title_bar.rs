@@ -29,7 +29,9 @@ pub fn title_bar(mut context: WidgetContext) -> WidgetNode {
     } = state.read_cloned_or_default();
     let content = context
         .view_models
-        .view_model::<AppData>(AppData::VIEW_MODEL)
+        .view_model(AppData::VIEW_MODEL)
+        .unwrap()
+        .read::<AppData>()
         .unwrap()
         .input
         .lazy();

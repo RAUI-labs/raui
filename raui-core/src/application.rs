@@ -599,7 +599,9 @@ impl Application {
     /// fn my_component(mut ctx: WidgetContext) -> WidgetNode {
     ///     let mut data = ctx
     ///         .view_models
-    ///         .view_model_mut::<AppData>(APP_DATA)
+    ///         .view_model_mut(APP_DATA)
+    ///         .unwrap()
+    ///         .write::<AppData>()
     ///         .unwrap();
     ///     *data.counter += 1;
     ///
