@@ -350,8 +350,9 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                     iter.by_ref().next();
                                     new_text.extend(iter);
                                     if mode.is_valid(&new_text) {
-                                        dirty_text = true;
                                         text = new_text;
+                                        dirty_text = true;
+                                        dirty_state = true;
                                     }
                                 }
                                 NavTextChange::NewLine => {
@@ -371,6 +372,7 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                         }
                                     } else {
                                         submitted = true;
+                                        dirty_state = true;
                                     }
                                 }
                             }

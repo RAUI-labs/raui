@@ -38,6 +38,16 @@ checks:
 doc-coverage crate="raui-core":
     cargo +nightly rustdoc -p {{crate}} -- -Z unstable-options --show-coverage
 
+clean:
+  find . -name target -type d -exec rm -r {} +
+  just remove-lockfiles
+
+remove-lockfiles:
+  find . -name Cargo.lock -type f -exec rm {} +
+
+list-outdated:
+  cargo outdated -R -w
+
 # Run the Rust doctests in the website docs
 website-doc-tests:
     cargo build --features all -p raui --target-dir target/doctests
