@@ -699,7 +699,7 @@ where
                             |stream| {
                                 let text = TextStyle::with_user_data(
                                     &unit.text,
-                                    unit.font.size,
+                                    unit.font.size * mapping.scalar_scale(false),
                                     font_index,
                                     unit.color,
                                 );

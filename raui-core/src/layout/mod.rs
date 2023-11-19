@@ -326,6 +326,15 @@ impl CoordsMapping {
     }
 
     #[inline]
+    pub fn scalar_scale(&self, max: bool) -> Scalar {
+        if max {
+            self.scale.x.max(self.scale.y)
+        } else {
+            self.scale.x.min(self.scale.y)
+        }
+    }
+
+    #[inline]
     pub fn offset(&self) -> Vec2 {
         self.offset
     }
