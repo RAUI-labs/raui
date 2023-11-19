@@ -1,6 +1,6 @@
 [package]
 name = "raui-app"
-version = "0.55.3"
+version = "0.55.4"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "RAUI application layer to focus only on making UI"

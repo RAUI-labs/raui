@@ -145,7 +145,7 @@ impl SharedApp {
                 .application
                 .layout(&self.coords_mapping, &mut DefaultLayoutEngine);
         }
-        self.application.interact(&mut self.interactions).unwrap();
+        let _ = self.application.interact(&mut self.interactions);
         self.application.consume_signals();
         self.assets.load(self.application.rendered_tree(), graphics);
         let matrix = graphics.main_camera.projection_matrix().into_col_array();

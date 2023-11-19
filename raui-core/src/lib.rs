@@ -70,7 +70,7 @@ pub mod prelude {
             context::*,
             node::*,
             unit::*,
-            unit::{area::*, content::*, flex::*, grid::*, image::*, size::*, text::*},
+            unit::{area::*, content::*, flex::*, grid::*, image::*, portal::*, size::*, text::*},
             utils::*,
         },
         Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
