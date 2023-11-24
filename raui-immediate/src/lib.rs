@@ -267,6 +267,32 @@ pub fn reset() {
     });
 }
 
+pub fn apply_key<R>(key: impl ToString, mut f: impl FnMut() -> R) -> R {
+    let key = key.to_string();
+    begin();
+    let result = f();
+    let mut widgets = end();
+    match widgets.len() {
+        0 => {}
+        1 => {
+            let mut widget = widgets.pop().unwrap();
+            if let WidgetNode::Component(widget) = &mut widget {
+                widget.key = Some(key);
+            }
+            push(widget);
+        }
+        _ => {
+            for (index, widget) in widgets.iter_mut().enumerate() {
+                if let WidgetNode::Component(widget) = widget {
+                    widget.key = Some(format!("{}-{}", key, index));
+                }
+            }
+            extend(widgets);
+        }
+    }
+    result
+}
+
 pub fn apply_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
     let props = props.into();
     begin();
