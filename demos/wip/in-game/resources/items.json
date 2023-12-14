@@ -1,0 +1,20 @@
+{
+    "potion": {
+        "name": "Potion",
+        "icon": "resources/icons/potion.png",
+        "buy": 3,
+        "sell": 1
+    },
+    "sword": {
+        "name": "Sword",
+        "icon": "resources/icons/sword.png",
+        "buy": 10,
+        "sell": 4
+    },
+    "shield": {
+        "name": "Shield",
+        "icon": "resources/icons/shield.png",
+        "buy": 7,
+        "sell": 3
+    }
+}

@@ -48,11 +48,11 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub const VIEW_MODEL: &str = "app-state";
-    pub const THEME: &str = "theme";
-    pub const TASKS: &str = "tasks";
-    pub const CREATING_TASK: &str = "creating-task";
-    pub const NEW_TASK_NAME: &str = "new-task-name";
+    pub const VIEW_MODEL: &'static str = "app-state";
+    pub const THEME: &'static str = "theme";
+    pub const TASKS: &'static str = "tasks";
+    pub const CREATING_TASK: &'static str = "creating-task";
+    pub const NEW_TASK_NAME: &'static str = "new-task-name";
 
     pub fn new(properties: &mut ViewModelProperties) -> Self {
         Self {

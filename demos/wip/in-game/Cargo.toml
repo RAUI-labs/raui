@@ -1,5 +1,5 @@
 [package]
-name = "hello-world"
+name = "in-game"
 version = "0.1.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
@@ -7,4 +7,5 @@ publish = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-raui = { version = "0.56", path = "../../", features = ["app"] }
+serde_json = "1"
+raui = { version = "0.56", path = "../../../", features = ["app", "material"] }

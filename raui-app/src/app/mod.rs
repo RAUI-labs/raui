@@ -136,9 +136,9 @@ impl SharedApp {
         self.application.animations_delta_time = elapsed.as_secs_f32();
         self.coords_mapping = CoordsMapping::new(Rect {
             left: 0.0,
-            right: graphics.main_camera.viewport_size.x,
+            right: graphics.main_camera.screen_size.x,
             top: 0.0,
-            bottom: graphics.main_camera.viewport_size.y,
+            bottom: graphics.main_camera.screen_size.y,
         });
         if self.application.process() {
             let _ = self
@@ -148,7 +148,10 @@ impl SharedApp {
         let _ = self.application.interact(&mut self.interactions);
         self.application.consume_signals();
         self.assets.load(self.application.rendered_tree(), graphics);
-        let matrix = graphics.main_camera.projection_matrix().into_col_array();
+        let matrix = graphics
+            .main_camera
+            .world_projection_matrix()
+            .into_col_array();
         graphics.stream.batch_end();
         for shader in [
             self.colored_shader.clone(),
@@ -173,7 +176,7 @@ impl SharedApp {
             missing_texture: self.missing_texutre.as_ref().unwrap(),
             assets: &self.assets,
             clip_stack: Vec::with_capacity(64),
-            viewport_height: graphics.main_camera.viewport_size.y as _,
+            viewport_height: graphics.main_camera.screen_size.y as _,
             projection_view_matrix: matrix,
         };
         let mut renderer = TesselateRenderer::new(

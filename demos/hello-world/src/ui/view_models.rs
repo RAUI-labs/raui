@@ -5,8 +5,8 @@ pub struct AppData {
 }
 
 impl AppData {
-    pub const VIEW_MODEL: &str = "app-data";
-    pub const INPUT: &str = "input";
+    pub const VIEW_MODEL: &'static str = "app-data";
+    pub const INPUT: &'static str = "input";
 
     pub fn new(properties: &mut ViewModelProperties) -> Self {
         Self {

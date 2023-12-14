@@ -56,7 +56,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 
 fn use_trigger(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|mut ctx| {
-        // We write to View-Model in hierarchy of `app` widget branchm
+        // We write to View-Model in hierarchy of `app` widget branch,
         // that happen to be parent of this `trigger` widget.
         // Useful for data storages cascading down the hierarchy tree.
         // Each level of the hierarchy can also "override" View-Models.

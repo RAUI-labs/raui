@@ -1,0 +1,11 @@
+{
+    "kill-5-monsters": {
+        "name": "Kill 5 monsters"
+    },
+    "collect-3-potions": {
+        "name": "Collect 3 potions"
+    },
+    "save-the-world": {
+        "name": "Save the world"
+    }
+}

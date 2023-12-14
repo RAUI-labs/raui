@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.55.6"
+version = "0.56.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Renderer Agnostic User Interface"
@@ -31,41 +31,41 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.55" }
+raui-core = { path = "./raui-core", version = "0.56" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-retained]
 path = "./raui-retained"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-immediate]
 path = "./raui-immediate"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-immediate-widgets]
 path = "./raui-immediate-widgets"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-tesselate-renderer]
 path = "./raui-tesselate-renderer"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dependencies.raui-app]
 path = "./raui-app"
-version = "0.55"
+version = "0.56"
 optional = true
 
 [dev-dependencies]
@@ -89,7 +89,7 @@ members = [
   "raui-tesselate-renderer",
   "demos/hello-world",
   "demos/todo-app",
-  # "demos/in-game",
+  # "demos/wip/in-game",
   "site/rust/guide_01",
   "site/rust/guide_02",
   "site/rust/guide_03",
