@@ -144,8 +144,8 @@ pub mod prelude {
         component::{
             containers::{
                 context_paper::*, flex_paper::*, grid_paper::*, horizontal_paper::*,
-                modal_paper::*, paper::*, scroll_paper::*, scroll_paper::*, text_tooltip_paper::*,
-                tooltip_paper::*, vertical_paper::*, window_paper::*, wrap_paper::*,
+                modal_paper::*, paper::*, scroll_paper::*, text_tooltip_paper::*, tooltip_paper::*,
+                vertical_paper::*, window_paper::*, wrap_paper::*,
             },
             icon_paper::*,
             interactive::{
