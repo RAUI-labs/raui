@@ -97,7 +97,7 @@ use crate::{
     props::{Props, PropsData, PropsRegistry},
     renderer::Renderer,
     signals::{Signal, SignalSender},
-    state::{State, StateUpdate},
+    state::{State, StateChange, StateUpdate},
     view_model::ViewModelCollection,
     widget::{
         component::{WidgetComponent, WidgetComponentPrefab},
@@ -186,7 +186,7 @@ pub struct Application {
     rendered_tree: WidgetUnit,
     layout: Layout,
     states: HashMap<WidgetId, Props>,
-    state_changes: HashMap<WidgetId, Props>,
+    state_changes: HashMap<WidgetId, Vec<StateChange>>,
     animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
     signals: Vec<Signal>,
@@ -509,43 +509,6 @@ impl Application {
         std::mem::take(&mut self.signals)
     }
 
-    /// Read the [`Props`] of a given widget
-    #[inline]
-    pub fn state_read(&self, id: &WidgetId) -> Option<&Props> {
-        self.states.get(id)
-    }
-
-    /// Set the props of a given widget
-    #[inline]
-    pub fn state_write(&mut self, id: &WidgetId, data: Props) {
-        if self.states.contains_key(id) {
-            self.state_changes.insert(id.to_owned(), data);
-        }
-    }
-
-    /// Get read access to the given widget's [`Props`] in a closure and update the widget's props
-    /// to the props that were returned by the closure
-    pub fn state_mutate<F>(&mut self, id: &WidgetId, mut f: F)
-    where
-        F: FnMut(&Props) -> Props,
-    {
-        if let Some(state) = self.states.get(id) {
-            self.state_changes.insert(id.to_owned(), f(state));
-        }
-    }
-
-    /// Get mutable access to the cloned [`Props`] of a widget in a closure and update the widget's
-    /// props to the value of the clone props after the closure modifies them
-    pub fn state_mutate_cloned<F>(&mut self, id: &WidgetId, mut f: F)
-    where
-        F: FnMut(&mut Props),
-    {
-        if let Some(mut state) = self.states.get(id).cloned() {
-            f(&mut state);
-            self.state_changes.insert(id.to_owned(), state);
-        }
-    }
-
     /// [`process()`][Self::process] application, even if no changes have been detected
     #[inline]
     pub fn forced_process(&mut self) -> bool {
@@ -643,7 +606,22 @@ impl Application {
             a.process(self.animations_delta_time, k, &message_sender);
         }
         let mut states = std::mem::take(&mut self.states);
-        states.extend(changed_states);
+        for (id, changes) in changed_states {
+            let state = states.entry(id).or_default();
+            for change in changes {
+                match change {
+                    StateChange::Set(props) => {
+                        *state = props;
+                    }
+                    StateChange::Include(props) => {
+                        state.merge_from(props);
+                    }
+                    StateChange::Exclude(type_id) => unsafe {
+                        state.remove_by_type(type_id);
+                    },
+                }
+            }
+        }
         let (signal_sender, signal_receiver) = channel();
         let tree = self.tree.clone();
         let mut used_ids = HashSet::new();
@@ -925,7 +903,10 @@ impl Application {
             signal_sender,
         );
         while let Ok(data) = state_receiver.try_recv() {
-            self.state_changes.insert(id.to_owned(), data);
+            self.state_changes
+                .entry(id.to_owned())
+                .or_default()
+                .push(data);
         }
         new_node
     }

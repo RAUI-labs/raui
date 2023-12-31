@@ -148,12 +148,27 @@ impl Props {
         Self(result)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     pub fn has<T>(&self) -> bool
     where
         T: 'static + PropsData,
     {
         let e = TypeId::of::<T>();
         self.0.iter().any(|(t, _)| *t == e)
+    }
+
+    pub fn remove<T>(&mut self)
+    where
+        T: 'static + PropsData,
+    {
+        self.0.remove(&TypeId::of::<T>());
+    }
+
+    pub(crate) unsafe fn remove_by_type(&mut self, id: TypeId) {
+        self.0.remove(&id);
     }
 
     pub fn consume<T>(&mut self) -> Result<Box<dyn PropsData>, PropsError>

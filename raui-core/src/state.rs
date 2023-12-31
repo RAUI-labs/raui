@@ -1,28 +1,62 @@
 //! Widget state types
 
 use crate::props::{Props, PropsData, PropsError};
-use std::sync::mpsc::Sender;
+use std::{any::TypeId, sync::mpsc::Sender};
 
 #[derive(Debug, Clone)]
 pub enum StateError {
     Props(PropsError),
-    CouldNotWriteData,
+    CouldNotWriteChange,
+}
+
+#[derive(Debug, Clone)]
+pub enum StateChange {
+    Set(Props),
+    Include(Props),
+    Exclude(TypeId),
 }
 
 #[derive(Clone)]
-pub struct StateUpdate(Sender<Props>);
+pub struct StateUpdate(Sender<StateChange>);
 
 impl StateUpdate {
-    pub fn new(sender: Sender<Props>) -> Self {
+    pub fn new(sender: Sender<StateChange>) -> Self {
         Self(sender)
     }
 
-    pub fn write<T>(&self, data: T) -> Result<(), StateError>
+    pub fn set<T>(&self, data: T) -> Result<(), StateError>
     where
         T: Into<Props>,
     {
-        if self.0.send(data.into()).is_err() {
-            Err(StateError::CouldNotWriteData)
+        if self.0.send(StateChange::Set(data.into())).is_err() {
+            Err(StateError::CouldNotWriteChange)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn include<T>(&self, data: T) -> Result<(), StateError>
+    where
+        T: Into<Props>,
+    {
+        let data = data.into();
+        if self.0.send(StateChange::Include(data)).is_err() {
+            Err(StateError::CouldNotWriteChange)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn exclude<T>(&self) -> Result<(), StateError>
+    where
+        T: 'static + PropsData,
+    {
+        if self
+            .0
+            .send(StateChange::Exclude(TypeId::of::<T>()))
+            .is_err()
+        {
+            Err(StateError::CouldNotWriteChange)
         } else {
             Ok(())
         }
@@ -108,21 +142,21 @@ impl<'a> State<'a> {
     where
         T: 'static + PropsData + Send + Sync,
     {
-        self.update.write(data)
+        self.update.set(data)
     }
 
     pub fn write_with<T>(&self, data: T) -> Result<(), StateError>
     where
         T: 'static + PropsData + Send + Sync,
     {
-        self.update.write(self.data.to_owned().with(data))
+        self.update.include(data)
     }
 
     pub fn write_without<T>(&self) -> Result<(), StateError>
     where
         T: 'static + PropsData + Send + Sync,
     {
-        self.update.write(self.data.to_owned().without::<T>())
+        self.update.exclude::<T>()
     }
 
     pub fn mutate<T, F>(&self, mut f: F) -> Result<(), StateError>
