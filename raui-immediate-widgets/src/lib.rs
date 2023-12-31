@@ -6,6 +6,7 @@ pub mod prelude {
         core::*,
         core::{containers::*, interactive::*},
         material::*,
+        material::{containers::*, interactive::*},
     };
 }
 
@@ -137,7 +138,9 @@ pub mod core {
     }
 
     pub mod interactive {
-        use raui_core::{make_widget, props::Props};
+        use raui_core::{
+            make_widget, props::Props, widget::component::interactive::slider_view::SliderViewProxy,
+        };
         use raui_immediate::{begin, end, push, use_state};
         use std::str::FromStr;
 
@@ -233,8 +236,7 @@ pub mod core {
             use raui_core::prelude::*;
             let content = use_state(|| value.to_string());
             let props = props.into();
-            let TextInputProps { allow_new_line, .. } =
-                props.read_cloned_or_default::<TextInputProps>();
+            let TextInputProps { allow_new_line, .. } = props.read_cloned_or_default();
             let text_state = use_state(TextInputState::default);
             let text_result = text_state.read().unwrap().to_owned();
             if !text_result.focused {
@@ -268,8 +270,7 @@ pub mod core {
             use raui_core::prelude::*;
             let content = use_state(|| value.to_string());
             let props = props.into();
-            let TextInputProps { allow_new_line, .. } =
-                props.read_cloned_or_default::<TextInputProps>();
+            let TextInputProps { allow_new_line, .. } = props.read_cloned_or_default();
             let text_state = use_state(TextInputState::default);
             let text_result = text_state.read().unwrap().to_owned();
             let button_state = use_state(ImmediateButton::default);
@@ -297,6 +298,38 @@ pub mod core {
                     .named_slot("content", node),
             );
             (result.parse().ok(), text_result, button_result)
+        }
+
+        pub fn slider_view<T: SliderViewProxy + Clone + 'static>(
+            value: T,
+            props: impl Into<Props>,
+            mut f: impl FnMut(&T, ImmediateButton),
+        ) -> (T, ImmediateButton) {
+            use crate::internal::*;
+            use raui_core::prelude::*;
+            let content = use_state(|| value.to_owned());
+            let props = props.into();
+            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let button_state = use_state(ImmediateButton::default);
+            let button_result = button_state.read().unwrap().to_owned();
+            let result = content.read().unwrap().to_owned();
+            begin();
+            f(&result, button_result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_slider_view)
+                    .with_props(ImmediateButtonProps {
+                        state: Some(button_state),
+                    })
+                    .merge_props(props)
+                    .with_props(SliderViewProps {
+                        input: Some(content.into()),
+                        from,
+                        to,
+                    })
+                    .named_slot("content", node),
+            );
+            (result, button_result)
         }
     }
 }
@@ -540,6 +573,11 @@ mod internal {
     #[pre_hooks(use_immediate_text_input, use_immediate_button)]
     pub(crate) fn immediate_input_field(mut ctx: WidgetContext) -> WidgetNode {
         input_field(ctx)
+    }
+
+    #[pre_hooks(use_immediate_button)]
+    pub(crate) fn immediate_slider_view(mut ctx: WidgetContext) -> WidgetNode {
+        slider_view(ctx)
     }
 
     pub(crate) fn immediate_button_paper(ctx: WidgetContext) -> WidgetNode {
