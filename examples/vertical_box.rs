@@ -4,6 +4,10 @@ use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(vertical_box)
+        .with_props(VerticalBoxProps {
+            separation: 50.0,
+            ..Default::default()
+        })
         .listed_slot(
             make_widget!(image_box)
                 .with_props(ImageBoxProps::colored(Color {
