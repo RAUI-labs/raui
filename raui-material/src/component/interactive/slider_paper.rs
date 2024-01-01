@@ -102,13 +102,13 @@ pub fn slider_paper_impl(component: WidgetComponent, context: WidgetContext) -> 
                 let filling = match filling {
                     ThemedImageMaterial::Color => ImageBoxProps {
                         material: ImageBoxMaterial::Color(ImageBoxColor {
-                            color: background_color,
+                            color: filling_color,
                             ..Default::default()
                         }),
                         ..Default::default()
                     },
                     ThemedImageMaterial::Image(mut data) => {
-                        data.tint = background_color;
+                        data.tint = filling_color;
                         ImageBoxProps {
                             material: ImageBoxMaterial::Image(data),
                             ..Default::default()
