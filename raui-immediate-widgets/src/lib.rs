@@ -309,7 +309,12 @@ pub mod core {
             use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
-            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let SliderViewProps {
+                from,
+                to,
+                direction,
+                ..
+            } = props.read_cloned_or_default();
             let button_state = use_state(ImmediateButton::default);
             let button_result = button_state.read().unwrap().to_owned();
             let result = content.read().unwrap().to_owned();
@@ -326,6 +331,7 @@ pub mod core {
                         input: Some(content.into()),
                         from,
                         to,
+                        direction,
                     })
                     .named_slot("content", node),
             );
@@ -494,7 +500,12 @@ pub mod material {
             use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
-            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let SliderViewProps {
+                from,
+                to,
+                direction,
+                ..
+            } = props.read_cloned_or_default();
             let button_state = use_state(ImmediateButton::default);
             let button_result = button_state.read().unwrap().to_owned();
             let result = content.read().unwrap().to_owned();
@@ -511,6 +522,7 @@ pub mod material {
                         input: Some(content.into()),
                         from,
                         to,
+                        direction,
                     })
                     .named_slot("content", node),
             );
@@ -525,7 +537,12 @@ pub mod material {
             use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
-            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let SliderViewProps {
+                from,
+                to,
+                direction,
+                ..
+            } = props.read_cloned_or_default();
             let button_state = use_state(ImmediateButton::default);
             let button_result = button_state.read().unwrap().to_owned();
             let result = content.read().unwrap().to_owned();
@@ -539,6 +556,7 @@ pub mod material {
                         input: Some(content.into()),
                         from,
                         to,
+                        direction,
                     }),
             );
             (result, button_result)

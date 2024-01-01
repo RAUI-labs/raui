@@ -3,9 +3,9 @@ use crate::{
     view_model::ViewModelValue,
     widget::{
         component::interactive::{
-            button::{use_button, ButtonProps},
+            button::{use_button, ButtonNotifyProps, ButtonProps},
             navigation::{
-                use_nav_item, use_nav_tracking_self, NavTrackingNotifyMessage,
+                use_nav_item, use_nav_tracking_self, NavSignal, NavTrackingNotifyMessage,
                 NavTrackingNotifyProps,
             },
         },
@@ -18,6 +18,8 @@ use crate::{
 use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
+
+use super::button::ButtonNotifyMessage;
 
 fn is_zero(value: &Scalar) -> bool {
     value.abs() < 1.0e-6
@@ -126,6 +128,15 @@ impl<T: SliderViewProxy + 'static> From<ManagedLazy<T>> for SliderInput {
     }
 }
 
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SliderViewDirection {
+    #[default]
+    LeftToRight,
+    RightToLeft,
+    TopToBottom,
+    BottomToTop,
+}
+
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
@@ -139,6 +150,8 @@ pub struct SliderViewProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_zero")]
     pub to: Scalar,
+    #[serde(default)]
+    pub direction: SliderViewDirection,
 }
 
 impl SliderViewProps {
@@ -168,15 +181,32 @@ impl SliderViewProps {
 pub fn use_slider_view(context: &mut WidgetContext) {
     context
         .props
+        .write(ButtonNotifyProps(context.id.to_owned().into()));
+    context
+        .props
         .write(NavTrackingNotifyProps(context.id.to_owned().into()));
 
     context.life_cycle.change(|context| {
-        let button = context.state.read_cloned_or_default::<ButtonProps>();
-        if button.selected && button.trigger {
-            let mut props = context.props.read_cloned_or_default::<SliderViewProps>();
-            for msg in context.messenger.messages {
-                if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
-                    let value = msg.state.0.x * (props.to - props.from) + props.from;
+        for msg in context.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                if msg.trigger_start() {
+                    context.signals.write(NavSignal::Lock);
+                }
+                if msg.trigger_stop() {
+                    context.signals.write(NavSignal::Unlock);
+                }
+            } else if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
+                let button = context.state.read_cloned_or_default::<ButtonProps>();
+                if button.selected && button.trigger {
+                    let mut props = context.props.read_cloned_or_default::<SliderViewProps>();
+                    let value = match props.direction {
+                        SliderViewDirection::LeftToRight => msg.state.0.x,
+                        SliderViewDirection::RightToLeft => 1.0 - msg.state.0.x,
+                        SliderViewDirection::TopToBottom => msg.state.0.y,
+                        SliderViewDirection::BottomToTop => 1.0 - msg.state.0.y,
+                    }
+                    .clamp(0.0, 1.0);
+                    let value = value * (props.to - props.from) + props.from;
                     if let Some(input) = props.input.as_mut() {
                         input.set(value);
                     }

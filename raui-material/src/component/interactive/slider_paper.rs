@@ -57,10 +57,38 @@ pub fn slider_paper_impl(component: WidgetComponent, context: WidgetContext) -> 
         background_color,
         filling_color,
     } = props.read_cloned_or_default();
-    let percentage = props
+    let anchors = props
         .read::<SliderViewProps>()
         .ok()
-        .map(|props| props.get_percentage())
+        .map(|props| {
+            let percentage = props.get_percentage();
+            match props.direction {
+                SliderViewDirection::LeftToRight => Rect {
+                    left: 0.0,
+                    right: percentage,
+                    top: 0.0,
+                    bottom: 1.0,
+                },
+                SliderViewDirection::RightToLeft => Rect {
+                    left: 1.0 - percentage,
+                    right: 1.0,
+                    top: 0.0,
+                    bottom: 1.0,
+                },
+                SliderViewDirection::TopToBottom => Rect {
+                    left: 0.0,
+                    right: 1.0,
+                    top: 0.0,
+                    bottom: percentage,
+                },
+                SliderViewDirection::BottomToTop => Rect {
+                    left: 0.0,
+                    right: 1.0,
+                    top: 1.0 - percentage,
+                    bottom: 1.0,
+                },
+            }
+        })
         .unwrap_or_default();
     let (background, filling) = match shared_props.read::<ThemeProps>() {
         Ok(props) => {
@@ -145,12 +173,7 @@ pub fn slider_paper_impl(component: WidgetComponent, context: WidgetContext) -> 
                     make_widget!(image_box)
                         .key("filling")
                         .with_props(ContentBoxItemLayout {
-                            anchors: Rect {
-                                left: 0.0,
-                                right: percentage,
-                                top: 0.0,
-                                bottom: 1.0,
-                            },
+                            anchors,
                             ..Default::default()
                         })
                         .with_props(filling),

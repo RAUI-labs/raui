@@ -39,7 +39,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         .read::<AppData>()
         .unwrap();
 
-    make_widget!(vertical_box)
+    make_widget!(horizontal_box)
         .listed_slot(
             make_widget!(input)
                 .with_props(FlexBoxItemLayout {
@@ -50,31 +50,37 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                     input: Some(app_data.float_input.lazy().into()),
                     from: -10.0,
                     to: 10.0,
+                    direction: SliderViewDirection::BottomToTop,
                 }),
         )
         .listed_slot(
-            make_widget!(input)
-                .with_props(FlexBoxItemLayout {
-                    margin: 50.0.into(),
-                    ..Default::default()
-                })
-                .with_props(SliderViewProps {
-                    input: Some(app_data.integer_input.lazy().into()),
-                    from: -2.0,
-                    to: 2.0,
-                }),
-        )
-        .listed_slot(
-            make_widget!(input)
-                .with_props(FlexBoxItemLayout {
-                    margin: 50.0.into(),
-                    ..Default::default()
-                })
-                .with_props(SliderViewProps {
-                    input: Some(app_data.unsigned_integer_input.lazy().into()),
-                    from: -3.0,
-                    to: 7.0,
-                }),
+            make_widget!(vertical_box)
+                .listed_slot(
+                    make_widget!(input)
+                        .with_props(FlexBoxItemLayout {
+                            margin: 50.0.into(),
+                            ..Default::default()
+                        })
+                        .with_props(SliderViewProps {
+                            input: Some(app_data.integer_input.lazy().into()),
+                            from: -2.0,
+                            to: 2.0,
+                            ..Default::default()
+                        }),
+                )
+                .listed_slot(
+                    make_widget!(input)
+                        .with_props(FlexBoxItemLayout {
+                            margin: 50.0.into(),
+                            ..Default::default()
+                        })
+                        .with_props(SliderViewProps {
+                            input: Some(app_data.unsigned_integer_input.lazy().into()),
+                            from: -3.0,
+                            to: 7.0,
+                            direction: SliderViewDirection::RightToLeft,
+                        }),
+                ),
         )
         .into()
 }
@@ -83,6 +89,32 @@ fn input(ctx: WidgetContext) -> WidgetNode {
     let props = ctx.props.read_cloned_or_default::<SliderViewProps>();
     let percentage = props.get_percentage();
     let value = props.get_value();
+    let anchors = match props.direction {
+        SliderViewDirection::LeftToRight => Rect {
+            left: 0.0,
+            right: percentage,
+            top: 0.0,
+            bottom: 1.0,
+        },
+        SliderViewDirection::RightToLeft => Rect {
+            left: 1.0 - percentage,
+            right: 1.0,
+            top: 0.0,
+            bottom: 1.0,
+        },
+        SliderViewDirection::TopToBottom => Rect {
+            left: 0.0,
+            right: 1.0,
+            top: 0.0,
+            bottom: percentage,
+        },
+        SliderViewDirection::BottomToTop => Rect {
+            left: 0.0,
+            right: 1.0,
+            top: 1.0 - percentage,
+            bottom: 1.0,
+        },
+    };
 
     make_widget!(slider_view)
         .with_props(NavItemActive)
@@ -91,38 +123,23 @@ fn input(ctx: WidgetContext) -> WidgetNode {
             "content",
             make_widget!(content_box)
                 .listed_slot(
+                    make_widget!(image_box).with_props(ImageBoxProps::colored(Color {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 1.0,
+                        a: 1.0,
+                    })),
+                )
+                .listed_slot(
                     make_widget!(image_box)
                         .with_props(ContentBoxItemLayout {
-                            anchors: Rect {
-                                left: 0.0,
-                                right: percentage,
-                                top: 0.0,
-                                bottom: 1.0,
-                            },
+                            anchors,
                             ..Default::default()
                         })
                         .with_props(ImageBoxProps::colored(Color {
                             r: 1.0,
                             g: 0.0,
                             b: 0.0,
-                            a: 1.0,
-                        })),
-                )
-                .listed_slot(
-                    make_widget!(image_box)
-                        .with_props(ContentBoxItemLayout {
-                            anchors: Rect {
-                                left: percentage,
-                                right: 1.0,
-                                top: 0.0,
-                                bottom: 1.0,
-                            },
-                            ..Default::default()
-                        })
-                        .with_props(ImageBoxProps::colored(Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 1.0,
                             a: 1.0,
                         })),
                 )
