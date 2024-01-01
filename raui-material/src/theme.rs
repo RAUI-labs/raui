@@ -150,6 +150,14 @@ pub struct ThemedSwitchMaterial {
     pub off: ThemedImageMaterial,
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ThemedSliderMaterial {
+    #[serde(default)]
+    pub background: ThemedImageMaterial,
+    #[serde(default)]
+    pub filling: ThemedImageMaterial,
+}
+
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
 #[props_data(raui_core::props::PropsData)]
 #[prefab(raui_core::Prefab)]
@@ -173,6 +181,9 @@ pub struct ThemeProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub switch_variants: HashMap<String, ThemedSwitchMaterial>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    pub slider_variants: HashMap<String, ThemedSliderMaterial>,
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub modal_shadow_variants: HashMap<String, Color>,
@@ -277,7 +288,9 @@ pub fn new_default_theme_parameterized(
     switch_variants.insert("checkbox".to_owned(), ThemedSwitchMaterial::default());
     switch_variants.insert("toggle".to_owned(), ThemedSwitchMaterial::default());
     switch_variants.insert("radio".to_owned(), ThemedSwitchMaterial::default());
+    let mut slider_variants = HashMap::with_capacity(1);
     let mut modal_shadow_variants = HashMap::with_capacity(1);
+    slider_variants.insert(String::default(), ThemedSliderMaterial::default());
     modal_shadow_variants.insert(String::new(), background_modal);
     ThemeProps {
         active_colors: make_colors_bundle(
@@ -303,6 +316,7 @@ pub fn new_default_theme_parameterized(
         icons_level_sizes: vec![18.0, 24.0, 32.0, 48.0, 64.0, 128.0, 256.0, 512.0, 1024.0],
         text_variants,
         switch_variants,
+        slider_variants,
         modal_shadow_variants,
     }
 }

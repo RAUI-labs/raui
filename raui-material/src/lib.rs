@@ -118,6 +118,14 @@ pub fn setup(app: &mut Application) {
         FnWidget::pointer(component::interactive::icon_button_paper::icon_button_paper),
     );
     app.register_component(
+        "slider_paper",
+        FnWidget::pointer(component::interactive::slider_paper::slider_paper),
+    );
+    app.register_component(
+        "numeric_slider_paper",
+        FnWidget::pointer(component::interactive::slider_paper::numeric_slider_paper),
+    );
+    app.register_component(
         "switch_button_paper",
         FnWidget::pointer(component::interactive::switch_button_paper::switch_button_paper),
     );
@@ -149,7 +157,7 @@ pub mod prelude {
             },
             icon_paper::*,
             interactive::{
-                button_paper::*, icon_button_paper::*, switch_button_paper::*,
+                button_paper::*, icon_button_paper::*, slider_paper::*, switch_button_paper::*,
                 text_button_paper::*, text_field_paper::*,
             },
             switch_paper::*,

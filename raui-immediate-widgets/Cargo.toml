@@ -1,6 +1,6 @@
 [package]
 name = "raui-immediate-widgets"
-version = "0.57.0"
+version = "0.58.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Widgets library for RAUI immediate mode UI layer"
@@ -11,7 +11,7 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.57" }
-raui-material = { path = "../raui-material", version = "0.57" }
-raui-immediate = { path = "../raui-immediate", version = "0.57" }
+raui-core = { path = "../raui-core", version = "0.58" }
+raui-material = { path = "../raui-material", version = "0.58" }
+raui-immediate = { path = "../raui-immediate", version = "0.58" }
 serde = { version = "1", features = ["derive"] }
