@@ -161,6 +161,10 @@ pub fn slider_paper_impl(component: WidgetComponent, context: WidgetContext) -> 
 }
 
 pub fn numeric_slider_paper(context: WidgetContext) -> WidgetNode {
+    numeric_slider_paper_impl(make_widget!(slider_paper), context)
+}
+
+pub fn numeric_slider_paper_impl(component: WidgetComponent, context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref, key, props, ..
     } = context;
@@ -175,7 +179,7 @@ pub fn numeric_slider_paper(context: WidgetContext) -> WidgetNode {
         .unwrap_or_default()
         .to_string();
 
-    make_widget!(slider_paper)
+    component
         .key(key)
         .maybe_idref(idref.cloned())
         .merge_props(props.clone())

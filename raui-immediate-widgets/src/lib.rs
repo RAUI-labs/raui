@@ -379,7 +379,10 @@ pub mod material {
     pub mod interactive {
         use crate::core::interactive::ImmediateButton;
         use raui_core::{
-            props::Props, widget::component::interactive::input_field::TextInputState,
+            props::Props,
+            widget::component::interactive::{
+                input_field::TextInputState, slider_view::SliderViewProxy,
+            },
         };
         use raui_immediate::{begin, end, push, use_state};
         use std::str::FromStr;
@@ -480,6 +483,65 @@ pub mod material {
                     }),
             );
             (result.parse().ok(), text_result, button_result)
+        }
+
+        pub fn slider_paper<T: SliderViewProxy + Clone + 'static>(
+            value: T,
+            props: impl Into<Props>,
+            mut f: impl FnMut(&T, ImmediateButton),
+        ) -> (T, ImmediateButton) {
+            use crate::internal::*;
+            use raui_core::prelude::*;
+            let content = use_state(|| value.to_owned());
+            let props = props.into();
+            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let button_state = use_state(ImmediateButton::default);
+            let button_result = button_state.read().unwrap().to_owned();
+            let result = content.read().unwrap().to_owned();
+            begin();
+            f(&result, button_result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_slider_paper)
+                    .with_props(ImmediateButtonProps {
+                        state: Some(button_state),
+                    })
+                    .merge_props(props)
+                    .with_props(SliderViewProps {
+                        input: Some(content.into()),
+                        from,
+                        to,
+                    })
+                    .named_slot("content", node),
+            );
+            (result, button_result)
+        }
+
+        pub fn numeric_slider_paper<T: SliderViewProxy + Clone + 'static>(
+            value: T,
+            props: impl Into<Props>,
+        ) -> (T, ImmediateButton) {
+            use crate::internal::*;
+            use raui_core::prelude::*;
+            let content = use_state(|| value.to_owned());
+            let props = props.into();
+            let SliderViewProps { from, to, .. } = props.read_cloned_or_default();
+            let button_state = use_state(ImmediateButton::default);
+            let button_result = button_state.read().unwrap().to_owned();
+            let result = content.read().unwrap().to_owned();
+            push(
+                make_widget!(immediate_numeric_slider_paper)
+                    .with_props(ImmediateButtonProps {
+                        state: Some(button_state),
+                    })
+                    .merge_props(props)
+                    .with_props(SliderViewProps {
+                        input: Some(content.into()),
+                        from,
+                        to,
+                    }),
+            );
+            (result, button_result)
         }
     }
 }
@@ -598,5 +660,13 @@ mod internal {
 
     pub(crate) fn immediate_text_field_paper(ctx: WidgetContext) -> WidgetNode {
         text_field_paper_impl(make_widget!(immediate_input_field), ctx)
+    }
+
+    pub(crate) fn immediate_slider_paper(ctx: WidgetContext) -> WidgetNode {
+        slider_paper_impl(make_widget!(immediate_slider_view), ctx)
+    }
+
+    pub(crate) fn immediate_numeric_slider_paper(ctx: WidgetContext) -> WidgetNode {
+        numeric_slider_paper_impl(make_widget!(immediate_slider_paper), ctx)
     }
 }
