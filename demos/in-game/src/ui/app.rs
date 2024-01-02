@@ -152,6 +152,18 @@ fn make_theme() -> ThemeProps {
                 ..Default::default()
             },
         )
+        .text_variant(
+            "inventory-item-count",
+            ThemedTextMaterial {
+                font: TextBoxFont {
+                    name: "resources/fonts/MiKrollFantasy.ttf".to_owned(),
+                    size: 28.0,
+                },
+                horizontal_align: TextBoxHorizontalAlign::Right,
+                vertical_align: TextBoxVerticalAlign::Bottom,
+                ..Default::default()
+            },
+        )
         .switch_variant(
             "checkbox",
             ThemedSwitchMaterial {

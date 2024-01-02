@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use raui::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs::File, path::Path};
@@ -39,7 +37,7 @@ impl ItemsDatabase {
 }
 
 pub struct Inventory {
-    owned: ViewModelValue<Vec<String>>,
+    owned: ViewModelValue<HashMap<String, usize>>,
 }
 
 impl Inventory {
@@ -47,14 +45,38 @@ impl Inventory {
     const OWNED: &'static str = "owned";
 
     pub fn view_model() -> ViewModel {
-        ViewModel::produce(|properties| Self {
-            owned: ViewModelValue::new(Default::default(), properties.notifier(Self::OWNED)),
+        ViewModel::produce(|properties| {
+            let mut result = Self {
+                owned: ViewModelValue::new(Default::default(), properties.notifier(Self::OWNED)),
+            };
+            result.add("potion", 5);
+            result.add("shield", 1);
+            result.add("sword", 2);
+            result
         })
     }
 
-    pub fn owned<'a>(&'a self, database: &'a ItemsDatabase) -> impl Iterator<Item = (&str, &Item)> {
+    pub fn add(&mut self, id: impl ToString, count: usize) {
+        let value = self.owned.entry(id.to_string()).or_default();
+        *value = value.saturating_add(count);
+    }
+
+    #[allow(dead_code)]
+    pub fn remove(&mut self, id: &str, count: usize) {
+        if let Some(value) = self.owned.get_mut(id) {
+            *value = value.saturating_sub(count);
+            if *value == 0 {
+                self.owned.remove(id);
+            }
+        }
+    }
+
+    pub fn owned<'a>(
+        &'a self,
+        database: &'a ItemsDatabase,
+    ) -> impl Iterator<Item = (&str, usize, &Item)> {
         self.owned
             .iter()
-            .filter_map(|id| Some((id.as_str(), database.items.get(id)?)))
+            .filter_map(|(id, count)| Some((id.as_str(), *count, database.items.get(id)?)))
     }
 }
