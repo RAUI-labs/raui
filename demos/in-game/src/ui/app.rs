@@ -61,6 +61,41 @@ fn make_theme() -> ThemeProps {
                 a: 0.7,
             }),
         )))
+        .button_background(
+            "",
+            ThemedButtonMaterial {
+                default: ThemedImageMaterial::Image(ImageBoxImage {
+                    id: "resources/images/button-default.png".to_owned(),
+                    scaling: ImageBoxImageScaling::Frame(ImageBoxFrame {
+                        source: 6.0.into(),
+                        destination: 6.0.into(),
+                        frame_only: false,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+                selected: ThemedImageMaterial::Image(ImageBoxImage {
+                    id: "resources/images/button-selected.png".to_owned(),
+                    scaling: ImageBoxImageScaling::Frame(ImageBoxFrame {
+                        source: 6.0.into(),
+                        destination: 6.0.into(),
+                        frame_only: false,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+                trigger: ThemedImageMaterial::Image(ImageBoxImage {
+                    id: "resources/images/button-trigger.png".to_owned(),
+                    scaling: ImageBoxImageScaling::Frame(ImageBoxFrame {
+                        source: 6.0.into(),
+                        destination: 6.0.into(),
+                        frame_only: false,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+            },
+        )
         .text_variant(
             "title",
             ThemedTextMaterial {
@@ -87,6 +122,30 @@ fn make_theme() -> ThemeProps {
                 font: TextBoxFont {
                     name: "resources/fonts/MiKrollFantasy.ttf".to_owned(),
                     size: 32.0,
+                },
+                horizontal_align: TextBoxHorizontalAlign::Center,
+                vertical_align: TextBoxVerticalAlign::Middle,
+                ..Default::default()
+            },
+        )
+        .text_variant(
+            "tab-label",
+            ThemedTextMaterial {
+                font: TextBoxFont {
+                    name: "resources/fonts/MiKrollFantasy.ttf".to_owned(),
+                    size: 48.0,
+                },
+                horizontal_align: TextBoxHorizontalAlign::Center,
+                vertical_align: TextBoxVerticalAlign::Middle,
+                ..Default::default()
+            },
+        )
+        .text_variant(
+            "task-name",
+            ThemedTextMaterial {
+                font: TextBoxFont {
+                    name: "resources/fonts/MiKrollFantasy.ttf".to_owned(),
+                    size: 48.0,
                 },
                 horizontal_align: TextBoxHorizontalAlign::Center,
                 vertical_align: TextBoxVerticalAlign::Middle,

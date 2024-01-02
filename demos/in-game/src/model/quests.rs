@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use raui::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -37,17 +35,21 @@ impl Quests {
             )
         });
 
-        ViewModel::produce(|properties| Self {
-            database,
-            completed: ViewModelValue::new(
-                Default::default(),
-                properties.notifier(Self::COMPLETED),
-            ),
+        ViewModel::produce(|properties| {
+            let mut result = Self {
+                database,
+                completed: ViewModelValue::new(
+                    Default::default(),
+                    properties.notifier(Self::COMPLETED),
+                ),
+            };
+            result.complete("collect-3-potions");
+            result
         })
     }
 
-    pub fn complete(&mut self, id: String) {
-        self.completed.insert(id);
+    pub fn complete(&mut self, id: impl ToString) {
+        self.completed.insert(id.to_string());
     }
 
     pub fn completed(&self) -> impl Iterator<Item = (&str, &Quest)> {

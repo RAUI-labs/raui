@@ -32,7 +32,7 @@ pub fn settings(mut context: WidgetContext) -> WidgetNode {
         .named_slot(
             "content",
             make_widget!(nav_vertical_box)
-                .key("settings")
+                .key("options")
                 .with_props(VerticalBoxProps {
                     override_slots_layout: Some(FlexBoxItemLayout {
                         grow: 0.0,
