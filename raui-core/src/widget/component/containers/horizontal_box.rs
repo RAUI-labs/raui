@@ -10,7 +10,7 @@ use crate::{
         },
         context::WidgetContext,
         node::WidgetNode,
-        unit::flex::FlexBoxDirection,
+        unit::flex::{FlexBoxDirection, FlexBoxItemLayout},
         utils::Transform,
     },
     PropsData, Scalar,
@@ -25,6 +25,8 @@ pub struct HorizontalBoxProps {
     pub separation: Scalar,
     #[serde(default)]
     pub reversed: bool,
+    #[serde(default)]
+    pub override_slots_layout: Option<FlexBoxItemLayout>,
     #[serde(default)]
     pub transform: Transform,
 }
@@ -59,15 +61,24 @@ pub fn horizontal_box(context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         key,
         props,
-        listed_slots,
+        mut listed_slots,
         ..
     } = context;
 
     let HorizontalBoxProps {
         separation,
         reversed,
+        override_slots_layout,
         transform,
     } = props.read_cloned_or_default();
+
+    if let Some(layout) = override_slots_layout {
+        for slot in &mut listed_slots {
+            if let Some(props) = slot.props_mut() {
+                props.write(layout.to_owned());
+            }
+        }
+    }
 
     let props = props.clone().with(FlexBoxProps {
         direction: if reversed {

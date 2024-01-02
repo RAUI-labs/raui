@@ -32,25 +32,18 @@ impl ViewState for AppView {
         context.use_hook(use_nav_container_active);
 
         make_widget!(vertical_box)
-            .listed_slot(
-                self.counter
-                    .component()
-                    .key("counter")
-                    .with_props(FlexBoxItemLayout {
-                        basis: Some(48.0),
-                        grow: 0.0,
-                        shrink: 0.0,
-                        ..Default::default()
-                    }),
-            )
+            .with_props(VerticalBoxProps {
+                override_slots_layout: Some(FlexBoxItemLayout {
+                    basis: Some(48.0),
+                    grow: 0.0,
+                    shrink: 0.0,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            })
+            .listed_slot(self.counter.component().key("counter"))
             .listed_slot(
                 make_widget!(horizontal_box)
-                    .with_props(FlexBoxItemLayout {
-                        basis: Some(48.0),
-                        grow: 0.0,
-                        shrink: 0.0,
-                        ..Default::default()
-                    })
                     .with_props(HorizontalBoxProps {
                         separation: 50.0,
                         ..Default::default()

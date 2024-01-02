@@ -53,6 +53,14 @@ pub struct ThemeColorSet {
 }
 
 impl ThemeColorSet {
+    pub fn uniform(color: Color) -> Self {
+        Self {
+            main: color,
+            light: color,
+            dark: color,
+        }
+    }
+
     pub fn get(&self, variant: ThemeColorVariant) -> Color {
         match variant {
             ThemeColorVariant::Main => self.main,
@@ -77,6 +85,14 @@ pub struct ThemeColors {
 }
 
 impl ThemeColors {
+    pub fn uniform(set: ThemeColorSet) -> Self {
+        Self {
+            default: set.to_owned(),
+            primary: set.to_owned(),
+            secondary: set,
+        }
+    }
+
     pub fn get(&self, color: ThemeColor, variant: ThemeColorVariant) -> Color {
         match color {
             ThemeColor::Default => self.default.get(variant),
@@ -99,6 +115,13 @@ pub struct ThemeColorsBundle {
 }
 
 impl ThemeColorsBundle {
+    pub fn uniform(colors: ThemeColors) -> Self {
+        Self {
+            main: colors.to_owned(),
+            contrast: colors,
+        }
+    }
+
     pub fn get(&self, use_main: bool, color: ThemeColor, variant: ThemeColorVariant) -> Color {
         if use_main {
             self.main.get(color, variant)
@@ -187,6 +210,53 @@ pub struct ThemeProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub modal_shadow_variants: HashMap<String, Color>,
+}
+
+impl ThemeProps {
+    pub fn active_colors(mut self, bundle: ThemeColorsBundle) -> Self {
+        self.active_colors = bundle;
+        self
+    }
+
+    pub fn background_colors(mut self, bundle: ThemeColorsBundle) -> Self {
+        self.background_colors = bundle;
+        self
+    }
+
+    pub fn content_background(mut self, id: impl ToString, material: ThemedImageMaterial) -> Self {
+        self.content_backgrounds.insert(id.to_string(), material);
+        self
+    }
+
+    pub fn button_background(mut self, id: impl ToString, material: ThemedButtonMaterial) -> Self {
+        self.button_backgrounds.insert(id.to_string(), material);
+        self
+    }
+
+    pub fn icons_level_size(mut self, level: usize, size: Scalar) -> Self {
+        self.icons_level_sizes.insert(level, size);
+        self
+    }
+
+    pub fn text_variant(mut self, id: impl ToString, material: ThemedTextMaterial) -> Self {
+        self.text_variants.insert(id.to_string(), material);
+        self
+    }
+
+    pub fn switch_variant(mut self, id: impl ToString, material: ThemedSwitchMaterial) -> Self {
+        self.switch_variants.insert(id.to_string(), material);
+        self
+    }
+
+    pub fn slider_variant(mut self, id: impl ToString, material: ThemedSliderMaterial) -> Self {
+        self.slider_variants.insert(id.to_string(), material);
+        self
+    }
+
+    pub fn modal_shadow_variant(mut self, id: impl ToString, color: Color) -> Self {
+        self.modal_shadow_variants.insert(id.to_string(), color);
+        self
+    }
 }
 
 pub fn new_light_theme() -> ThemeProps {

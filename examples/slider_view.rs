@@ -55,32 +55,25 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         )
         .listed_slot(
             make_widget!(vertical_box)
-                .listed_slot(
-                    make_widget!(input)
-                        .with_props(FlexBoxItemLayout {
-                            margin: 50.0.into(),
-                            ..Default::default()
-                        })
-                        .with_props(SliderViewProps {
-                            input: Some(app_data.integer_input.lazy().into()),
-                            from: -2.0,
-                            to: 2.0,
-                            ..Default::default()
-                        }),
-                )
-                .listed_slot(
-                    make_widget!(input)
-                        .with_props(FlexBoxItemLayout {
-                            margin: 50.0.into(),
-                            ..Default::default()
-                        })
-                        .with_props(SliderViewProps {
-                            input: Some(app_data.unsigned_integer_input.lazy().into()),
-                            from: -3.0,
-                            to: 7.0,
-                            direction: SliderViewDirection::RightToLeft,
-                        }),
-                ),
+                .with_props(VerticalBoxProps {
+                    override_slots_layout: Some(FlexBoxItemLayout {
+                        margin: 50.0.into(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                })
+                .listed_slot(make_widget!(input).with_props(SliderViewProps {
+                    input: Some(app_data.integer_input.lazy().into()),
+                    from: -2.0,
+                    to: 2.0,
+                    ..Default::default()
+                }))
+                .listed_slot(make_widget!(input).with_props(SliderViewProps {
+                    input: Some(app_data.unsigned_integer_input.lazy().into()),
+                    from: -3.0,
+                    to: 7.0,
+                    direction: SliderViewDirection::RightToLeft,
+                })),
         )
         .into()
 }

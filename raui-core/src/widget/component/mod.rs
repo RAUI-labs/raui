@@ -248,6 +248,16 @@ impl WidgetComponent {
         self
     }
 
+    pub fn maybe_listed_slot<T>(mut self, v: Option<T>) -> Self
+    where
+        T: Into<WidgetNode>,
+    {
+        if let Some(v) = v {
+            self.listed_slots.push(v.into());
+        }
+        self
+    }
+
     pub fn listed_slots<I, T>(mut self, v: I) -> Self
     where
         I: IntoIterator<Item = T>,
@@ -262,6 +272,16 @@ impl WidgetComponent {
         T: Into<WidgetNode>,
     {
         self.named_slots.insert(k.to_string(), v.into());
+        self
+    }
+
+    pub fn maybe_named_slot<T>(mut self, k: impl ToString, v: Option<T>) -> Self
+    where
+        T: Into<WidgetNode>,
+    {
+        if let Some(v) = v {
+            self.named_slots.insert(k.to_string(), v.into());
+        }
         self
     }
 

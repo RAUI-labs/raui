@@ -267,12 +267,8 @@ where
                             Self::make_tiled_triangle_second(10),
                         ]
                         .into_iter()
-                        .chain(frame.frame_only.then(|| Self::make_tiled_triangle_first(5)))
-                        .chain(
-                            frame
-                                .frame_only
-                                .then(|| Self::make_tiled_triangle_second(5)),
-                        ),
+                        .chain((!frame.frame_only).then(|| Self::make_tiled_triangle_first(5)))
+                        .chain((!frame.frame_only).then(|| Self::make_tiled_triangle_second(5))),
                     );
                 }
             }
@@ -467,12 +463,8 @@ where
                             Self::make_tiled_triangle_second(10),
                         ]
                         .into_iter()
-                        .chain(frame.frame_only.then(|| Self::make_tiled_triangle_first(5)))
-                        .chain(
-                            frame
-                                .frame_only
-                                .then(|| Self::make_tiled_triangle_second(5)),
-                        ),
+                        .chain((!frame.frame_only).then(|| Self::make_tiled_triangle_first(5)))
+                        .chain((!frame.frame_only).then(|| Self::make_tiled_triangle_second(5))),
                     );
                 }
             }

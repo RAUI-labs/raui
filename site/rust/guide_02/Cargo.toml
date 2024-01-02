@@ -8,4 +8,4 @@ publish = false
 
 [dependencies]
 # The main RAUI crate
-raui = { version = "0.59", path = "../../../", features = ["app"] }
+raui = { version = "0.60", path = "../../../", features = ["app"] }

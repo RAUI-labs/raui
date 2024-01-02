@@ -37,7 +37,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 })
                 .listed_slot(
                     make_widget!(icon)
-                        // clear this flex box item layout (no frowing, shrinking or filling).
+                        // clear this flex box item layout (no growing, shrinking or filling).
                         .with_props(FlexBoxItemLayout::cleared())
                         // pass context box state read from app data.
                         .with_props(data.0)

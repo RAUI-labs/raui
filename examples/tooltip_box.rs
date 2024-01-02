@@ -17,21 +17,17 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
             make_widget!(horizontal_box)
                 .with_props(HorizontalBoxProps {
                     separation: 25.0,
+                    override_slots_layout: Some(FlexBoxItemLayout::cleared()),
                     ..Default::default()
                 })
+                .listed_slot(make_widget!(icon).with_props(Color {
+                    r: 1.0,
+                    g: 0.25,
+                    b: 0.25,
+                    a: 1.0,
+                }))
                 .listed_slot(
                     make_widget!(icon)
-                        .with_props(FlexBoxItemLayout::cleared())
-                        .with_props(Color {
-                            r: 1.0,
-                            g: 0.25,
-                            b: 0.25,
-                            a: 1.0,
-                        }),
-                )
-                .listed_slot(
-                    make_widget!(icon)
-                        .with_props(FlexBoxItemLayout::cleared())
                         .with_props(Color {
                             r: 0.25,
                             g: 1.0,
@@ -45,7 +41,6 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 )
                 .listed_slot(
                     make_widget!(icon)
-                        .with_props(FlexBoxItemLayout::cleared())
                         .with_props(Color {
                             r: 0.25,
                             g: 0.25,

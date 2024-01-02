@@ -25,6 +25,12 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::interactive::button_paper::ButtonPaperOverrideStyle>(
         "ButtonPaperOverrideStyle",
     );
+    app.register_props::<component::interactive::slider_paper::SliderPaperProps>(
+        "SliderPaperProps",
+    );
+    app.register_props::<component::interactive::slider_paper::NumericSliderPaperProps>(
+        "NumericSliderPaperProps",
+    );
     app.register_props::<component::interactive::text_field_paper::TextFieldPaperProps>(
         "TextFieldPaperProps",
     );

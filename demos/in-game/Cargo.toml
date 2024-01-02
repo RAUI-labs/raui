@@ -1,5 +1,5 @@
 [package]
-name = "todo-app"
+name = "in-game"
 version = "0.1.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"

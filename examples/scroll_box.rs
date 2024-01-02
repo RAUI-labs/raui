@@ -27,48 +27,20 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                     // typical use of scroll box is to wrap around some kind of list but we can actually
                     // put there anything and scroll box will scroll that content.
                     make_widget!(vertical_box)
-                        .listed_slot(make_widget!(item).with_props(true).with_props(
-                            FlexBoxItemLayout {
+                        .with_props(VerticalBoxProps {
+                            override_slots_layout: Some(FlexBoxItemLayout {
                                 grow: 0.0,
                                 shrink: 0.0,
                                 ..Default::default()
-                            },
-                        ))
-                        .listed_slot(make_widget!(item).with_props(false).with_props(
-                            FlexBoxItemLayout {
-                                grow: 0.0,
-                                shrink: 0.0,
-                                ..Default::default()
-                            },
-                        ))
-                        .listed_slot(make_widget!(item).with_props(true).with_props(
-                            FlexBoxItemLayout {
-                                grow: 0.0,
-                                shrink: 0.0,
-                                ..Default::default()
-                            },
-                        ))
-                        .listed_slot(make_widget!(item).with_props(false).with_props(
-                            FlexBoxItemLayout {
-                                grow: 0.0,
-                                shrink: 0.0,
-                                ..Default::default()
-                            },
-                        ))
-                        .listed_slot(make_widget!(item).with_props(true).with_props(
-                            FlexBoxItemLayout {
-                                grow: 0.0,
-                                shrink: 0.0,
-                                ..Default::default()
-                            },
-                        ))
-                        .listed_slot(make_widget!(item).with_props(false).with_props(
-                            FlexBoxItemLayout {
-                                grow: 0.0,
-                                shrink: 0.0,
-                                ..Default::default()
-                            },
-                        )),
+                            }),
+                            ..Default::default()
+                        })
+                        .listed_slot(make_widget!(item).with_props(true))
+                        .listed_slot(make_widget!(item).with_props(false))
+                        .listed_slot(make_widget!(item).with_props(true))
+                        .listed_slot(make_widget!(item).with_props(false))
+                        .listed_slot(make_widget!(item).with_props(true))
+                        .listed_slot(make_widget!(item).with_props(false)),
                 )
                 .named_slot(
                     "scrollbars",

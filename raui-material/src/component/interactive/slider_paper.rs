@@ -37,6 +37,14 @@ impl SliderPaperProps {
     }
 }
 
+#[derive(PropsData, Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[props_data(raui_core::props::PropsData)]
+#[prefab(raui_core::Prefab)]
+pub struct NumericSliderPaperProps {
+    #[serde(default)]
+    pub fractional_digits_count: Option<usize>,
+}
+
 pub fn slider_paper(context: WidgetContext) -> WidgetNode {
     slider_paper_impl(make_widget!(slider_view), context)
 }
@@ -195,12 +203,19 @@ pub fn numeric_slider_paper_impl(component: WidgetComponent, context: WidgetCont
     let mut text = props.read_cloned_or_default::<TextPaperProps>();
     text.width = TextBoxSizeValue::Fill;
     text.height = TextBoxSizeValue::Fill;
-    text.text = props
+    let value = props
         .read::<SliderViewProps>()
         .ok()
         .map(|props| props.get_value())
-        .unwrap_or_default()
-        .to_string();
+        .unwrap_or_default();
+    text.text = if let Some(count) = props
+        .read_cloned_or_default::<NumericSliderPaperProps>()
+        .fractional_digits_count
+    {
+        format!("{:.1$}", value, count)
+    } else {
+        value.to_string()
+    };
 
     component
         .key(key)
