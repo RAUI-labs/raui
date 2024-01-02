@@ -10,14 +10,29 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(PropsData, Debug, Clone, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
 pub struct WrapBoxProps {
     #[serde(default)]
     pub margin: Rect,
-    #[serde(default)]
+    #[serde(default = "WrapBoxProps::default_fill")]
     pub fill: bool,
+}
+
+impl Default for WrapBoxProps {
+    fn default() -> Self {
+        Self {
+            margin: Default::default(),
+            fill: Self::default_fill(),
+        }
+    }
+}
+
+impl WrapBoxProps {
+    fn default_fill() -> bool {
+        true
+    }
 }
 
 pub fn wrap_box(context: WidgetContext) -> WidgetNode {

@@ -1,7 +1,8 @@
 use crate::model::inventory::{Inventory, ItemsDatabase};
 use raui::prelude::*;
 
-pub fn inventory(context: WidgetContext) -> WidgetNode {
+#[pre_hooks(use_inventory)]
+pub fn inventory(mut context: WidgetContext) -> WidgetNode {
     let inventory = context
         .view_models
         .view_model(Inventory::VIEW_MODEL)
@@ -17,10 +18,12 @@ pub fn inventory(context: WidgetContext) -> WidgetNode {
     let items = inventory
         .owned(&database)
         .enumerate()
-        .map(|(index, (_, count, item))| {
+        .map(|(index, (id, count, item))| {
             let col = index as i32 % 5;
             let row = index as i32 / 5;
             make_widget!(inventory_item)
+                .key(format!("{}?item={}", index, id))
+                .with_props(ButtonNotifyProps(context.id.to_owned().into()))
                 .with_props(GridBoxItemLayout {
                     space_occupancy: IntRect {
                         left: col,
@@ -75,17 +78,7 @@ pub fn inventory(context: WidgetContext) -> WidgetNode {
                     })
                     .named_slot(
                         "content",
-                        make_widget!(grid_paper)
-                            .with_props(ContentBoxItemLayout {
-                                anchors: Rect {
-                                    left: 0.5,
-                                    right: 0.5,
-                                    top: 0.0,
-                                    bottom: 1.0,
-                                },
-                                align: Vec2 { x: 0.5, y: 0.0 },
-                                ..Default::default()
-                            })
+                        make_widget!(nav_grid_paper)
                             .with_props(GridBoxProps {
                                 cols: 5,
                                 rows: 5,
@@ -100,25 +93,81 @@ pub fn inventory(context: WidgetContext) -> WidgetNode {
 
 fn inventory_item(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;
+
+    let notify = props.read_cloned::<ButtonNotifyProps>().ok();
     let icon = props.read_cloned_or_default::<String>();
     let count = props.read_cloned_or_default::<usize>();
 
-    make_widget!(paper)
+    make_widget!(button_paper)
         .key(key)
-        .listed_slot(
-            make_widget!(image_box)
-                .key("icon")
-                .with_props(ContentBoxItemLayout {
-                    margin: 10.0.into(),
-                    ..Default::default()
-                })
-                .with_props(ImageBoxProps::image(icon)),
+        .with_props(NavItemActive)
+        .maybe_with_props(notify)
+        .named_slot(
+            "content",
+            make_widget!(content_box)
+                .key(key)
+                .listed_slot(
+                    make_widget!(image_box)
+                        .key("icon")
+                        .with_props(ContentBoxItemLayout {
+                            margin: 16.0.into(),
+                            ..Default::default()
+                        })
+                        .with_props(ImageBoxProps {
+                            material: ImageBoxMaterial::Image(ImageBoxImage {
+                                id: icon,
+                                tint: Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                },
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        }),
+                )
+                .listed_slot(
+                    make_widget!(text_paper)
+                        .with_props(ContentBoxItemLayout {
+                            margin: 2.0.into(),
+                            ..Default::default()
+                        })
+                        .with_props(TextPaperProps {
+                            text: count.to_string(),
+                            variant: "inventory-item-count".to_owned(),
+                            ..Default::default()
+                        }),
+                ),
         )
-        .listed_slot(make_widget!(text_paper).with_props(TextPaperProps {
-            text: count.to_string(),
-            variant: "inventory-item-count".to_owned(),
-            use_main_color: true,
-            ..Default::default()
-        }))
         .into()
+}
+
+fn use_inventory(context: &mut WidgetContext) {
+    context.life_cycle.mount(|mut context| {
+        context
+            .view_models
+            .bindings(Inventory::VIEW_MODEL, Inventory::OWNED)
+            .unwrap()
+            .bind(context.id.to_owned());
+    });
+
+    context.life_cycle.change(|mut context| {
+        let mut inventory = context
+            .view_models
+            .view_model_mut(Inventory::VIEW_MODEL)
+            .unwrap()
+            .write::<Inventory>()
+            .unwrap();
+
+        for msg in context.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                if let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("item") {
+                    if msg.trigger_start() {
+                        inventory.remove(id, 1);
+                    }
+                }
+            }
+        }
+    });
 }

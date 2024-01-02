@@ -213,6 +213,17 @@ impl WidgetComponent {
         self
     }
 
+    pub fn maybe_with_props<T>(self, v: Option<T>) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        if let Some(v) = v {
+            self.with_props(v)
+        } else {
+            self
+        }
+    }
+
     pub fn merge_props(mut self, v: Props) -> Self {
         let props = std::mem::take(&mut self.props);
         self.props = props.merge(v);
@@ -229,6 +240,17 @@ impl WidgetComponent {
             self.shared_props = Some(Props::new(v));
         }
         self
+    }
+
+    pub fn maybe_with_shared_props<T>(self, v: Option<T>) -> Self
+    where
+        T: 'static + PropsData,
+    {
+        if let Some(v) = v {
+            self.with_shared_props(v)
+        } else {
+            self
+        }
     }
 
     pub fn merge_shared_props(mut self, v: Props) -> Self {

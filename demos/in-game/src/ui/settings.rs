@@ -122,6 +122,7 @@ fn option(context: WidgetContext) -> WidgetNode {
         named_slots,
         ..
     } = context;
+
     unpack_named_slots!(named_slots => { content });
     let label = props.read_cloned_or_default::<String>();
 

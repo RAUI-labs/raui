@@ -71,7 +71,7 @@ pub fn tooltip_paper(context: WidgetContext) -> WidgetNode {
         .with(paper_props)
         .with(WrapBoxProps {
             margin,
-            ..Default::default()
+            fill: false,
         });
 
     make_widget!(portals_tooltip_box)

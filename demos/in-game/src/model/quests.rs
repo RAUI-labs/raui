@@ -18,7 +18,7 @@ pub struct Quests {
 
 impl Quests {
     pub const VIEW_MODEL: &'static str = "quests";
-    const COMPLETED: &'static str = "completed";
+    pub const COMPLETED: &'static str = "completed";
 
     pub fn view_model(database_path: impl AsRef<Path>) -> ViewModel {
         let database_path = database_path.as_ref();
@@ -43,13 +43,18 @@ impl Quests {
                     properties.notifier(Self::COMPLETED),
                 ),
             };
-            result.complete("collect-3-potions");
+            result.toggle("collect-3-potions");
             result
         })
     }
 
-    pub fn complete(&mut self, id: impl ToString) {
-        self.completed.insert(id.to_string());
+    pub fn toggle(&mut self, id: impl ToString) {
+        let id = id.to_string();
+        if self.completed.contains(&id) {
+            self.completed.remove(&id);
+        } else {
+            self.completed.insert(id);
+        }
     }
 
     pub fn completed(&self) -> impl Iterator<Item = (&str, &Quest)> {

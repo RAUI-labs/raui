@@ -78,7 +78,7 @@ pub fn context_paper(context: WidgetContext) -> WidgetNode {
         .with(paper_props)
         .with(WrapBoxProps {
             margin,
-            ..Default::default()
+            fill: false,
         });
     let backdrop_size_props = SizeBoxProps {
         width: SizeBoxSizeValue::Fill,

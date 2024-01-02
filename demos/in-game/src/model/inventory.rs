@@ -42,7 +42,7 @@ pub struct Inventory {
 
 impl Inventory {
     pub const VIEW_MODEL: &'static str = "items";
-    const OWNED: &'static str = "owned";
+    pub const OWNED: &'static str = "owned";
 
     pub fn view_model() -> ViewModel {
         ViewModel::produce(|properties| {
