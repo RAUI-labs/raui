@@ -30,6 +30,8 @@ pub struct TextFieldPaperProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vertical_align_override: Option<TextBoxVerticalAlign>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color_override: Option<Color>,
     #[serde(default)]
     pub transform: Transform,
     #[serde(default)]
@@ -67,6 +69,7 @@ impl Default for TextFieldPaperProps {
             inactive_alpha: Self::default_inactive_alpha(),
             horizontal_align_override: Default::default(),
             vertical_align_override: Default::default(),
+            color_override: Default::default(),
             transform: Default::default(),
             paper_theme: Default::default(),
             padding: Self::default_padding(),
@@ -88,6 +91,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         inactive_alpha,
         horizontal_align_override,
         vertical_align_override,
+        color_override,
         transform,
         paper_theme,
         padding,
@@ -138,6 +142,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
             use_main_color,
             horizontal_align_override,
             vertical_align_override,
+            color_override,
             transform,
         })
         .with(ContentBoxItemLayout {

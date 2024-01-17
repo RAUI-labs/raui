@@ -22,6 +22,8 @@ pub struct TextPaperProps {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vertical_align_override: Option<TextBoxVerticalAlign>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color_override: Option<Color>,
     #[serde(default)]
     pub transform: Transform,
 }
@@ -43,6 +45,7 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
         use_main_color,
         horizontal_align_override,
         vertical_align_override,
+        color_override,
         transform,
     } = props.read_cloned_or_default();
     let themed_props = props.read_cloned_or_default::<ThemedWidgetProps>();
@@ -65,23 +68,27 @@ pub fn text_paper(context: WidgetContext) -> WidgetNode {
     if let Some(alignment_override) = vertical_align_override {
         vertical_align = alignment_override;
     }
-    let color = match shared_props.read::<ThemeProps>() {
-        Ok(props) => {
-            if use_main_color {
-                match themed_props.color {
-                    ThemeColor::Default => props.active_colors.main.default.main,
-                    ThemeColor::Primary => props.active_colors.main.primary.main,
-                    ThemeColor::Secondary => props.active_colors.main.secondary.main,
-                }
-            } else {
-                match themed_props.color {
-                    ThemeColor::Default => props.active_colors.contrast.default.main,
-                    ThemeColor::Primary => props.active_colors.contrast.primary.main,
-                    ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
+    let color = if let Some(color_override) = color_override {
+        color_override
+    } else {
+        match shared_props.read::<ThemeProps>() {
+            Ok(props) => {
+                if use_main_color {
+                    match themed_props.color {
+                        ThemeColor::Default => props.active_colors.main.default.main,
+                        ThemeColor::Primary => props.active_colors.main.primary.main,
+                        ThemeColor::Secondary => props.active_colors.main.secondary.main,
+                    }
+                } else {
+                    match themed_props.color {
+                        ThemeColor::Default => props.active_colors.contrast.default.main,
+                        ThemeColor::Primary => props.active_colors.contrast.primary.main,
+                        ThemeColor::Secondary => props.active_colors.contrast.secondary.main,
+                    }
                 }
             }
+            Err(_) => Default::default(),
         }
-        Err(_) => Default::default(),
     };
     let props = TextBoxProps {
         text,
