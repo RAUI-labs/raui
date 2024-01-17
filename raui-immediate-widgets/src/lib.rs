@@ -341,6 +341,8 @@ pub mod core {
 }
 
 pub mod material {
+    pub use raui_material::theme;
+
     pub use raui_material::component::{
         icon_paper::{IconImage, IconPaperProps},
         switch_paper::SwitchPaperProps,
