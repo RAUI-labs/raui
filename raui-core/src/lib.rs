@@ -64,7 +64,8 @@ pub mod prelude {
                 image_box::*,
                 interactive::*,
                 interactive::{
-                    button::*, input_field::*, navigation::*, scroll_view::*, slider_view::*,
+                    button::*, input_field::*, navigation::*, options_view::*, scroll_view::*,
+                    slider_view::*,
                 },
                 space_box::*,
                 text_box::*,

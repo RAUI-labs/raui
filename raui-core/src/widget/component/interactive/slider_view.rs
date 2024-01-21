@@ -3,7 +3,7 @@ use crate::{
     view_model::ViewModelValue,
     widget::{
         component::interactive::{
-            button::{use_button, ButtonNotifyProps, ButtonProps},
+            button::{use_button, ButtonNotifyMessage, ButtonNotifyProps, ButtonProps},
             navigation::{
                 use_nav_item, use_nav_tracking_self, NavSignal, NavTrackingNotifyMessage,
                 NavTrackingNotifyProps,
@@ -18,8 +18,6 @@ use crate::{
 use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
-
-use super::button::ButtonNotifyMessage;
 
 fn is_zero(value: &Scalar) -> bool {
     value.abs() < 1.0e-6

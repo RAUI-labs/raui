@@ -139,9 +139,13 @@ pub mod core {
 
     pub mod interactive {
         use raui_core::{
-            make_widget, props::Props, widget::component::interactive::slider_view::SliderViewProxy,
+            make_widget,
+            props::Props,
+            widget::component::interactive::{
+                options_view::OptionsViewProxy, slider_view::SliderViewProxy,
+            },
         };
-        use raui_immediate::{begin, end, push, use_state};
+        use raui_immediate::{begin, end, pop, push, use_state};
         use std::str::FromStr;
 
         pub use raui_core::widget::component::interactive::{
@@ -336,6 +340,34 @@ pub mod core {
                     .named_slot("content", node),
             );
             (result, button_result)
+        }
+
+        pub fn options_view<T: OptionsViewProxy + Clone + 'static>(
+            value: T,
+            props: impl Into<Props>,
+            mut f_items: impl FnMut(&T),
+            mut f_content: impl FnMut(),
+        ) -> T {
+            use raui_core::prelude::*;
+            let content = use_state(|| value.to_owned());
+            let props = props.into();
+            let result = content.read().unwrap().to_owned();
+            begin();
+            f_items(&result);
+            let nodes = end();
+            begin();
+            f_content();
+            let node = pop();
+            push(
+                make_widget!(raui_core::widget::component::interactive::options_view::options_view)
+                    .merge_props(props)
+                    .with_props(OptionsViewProps {
+                        input: Some(content.into()),
+                    })
+                    .named_slot("content", node)
+                    .listed_slots(nodes),
+            );
+            result
         }
     }
 }

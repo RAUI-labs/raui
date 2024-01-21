@@ -752,6 +752,11 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::interactive::input_field::TextInputControlNotifyProps>(
         "TextInputControlNotifyProps",
     );
+    app.register_props::<component::interactive::options_view::OptionsViewMode>("OptionsViewMode");
+    app.register_props::<component::interactive::options_view::OptionsViewProps>(
+        "OptionsViewProps",
+    );
+    app.register_props::<component::interactive::slider_view::SliderViewProps>("SliderViewProps");
     app.register_props::<component::interactive::navigation::NavItemActive>("NavItemActive");
     app.register_props::<component::interactive::navigation::NavTrackingActive>(
         "NavTrackingActive",
@@ -889,6 +894,14 @@ pub fn setup(app: &mut Application) {
     app.register_component(
         "input_field",
         FnWidget::pointer(component::interactive::input_field::input_field),
+    );
+    app.register_component(
+        "options_view",
+        FnWidget::pointer(component::interactive::options_view::options_view),
+    );
+    app.register_component(
+        "slider_view",
+        FnWidget::pointer(component::interactive::slider_view::slider_view),
     );
     app.register_component(
         "navigation_barrier",
