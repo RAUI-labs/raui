@@ -222,6 +222,7 @@ pub fn options_view(mut context: WidgetContext) -> WidgetNode {
         Some(
             make_widget!(size_box)
                 .key("context")
+                .merge_props(content.props().cloned().unwrap_or_default())
                 .with_props(props.read_cloned_or_default::<SizeBoxProps>())
                 .named_slot("content", content),
         )

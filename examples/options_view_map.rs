@@ -55,10 +55,15 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 })
                 .named_slot(
                     "content",
-                    make_widget!(content_box).listed_slot(
-                        make_widget!(image_box)
-                            .with_props(ImageBoxProps::image("./examples/resources/map.png")),
-                    ),
+                    make_widget!(content_box)
+                        .with_props(ContentBoxItemLayout {
+                            keep_in_bounds: true.into(),
+                            ..Default::default()
+                        })
+                        .listed_slot(
+                            make_widget!(image_box)
+                                .with_props(ImageBoxProps::image("./examples/resources/map.png")),
+                        ),
                 )
                 .listed_slot(
                     make_widget!(option)

@@ -5,12 +5,23 @@ use raui_app::prelude::*;
 fn main() {
     let tree = make_widget!(content_box)
         .listed_slot(
-            make_widget!(image_box).with_props(ImageBoxProps::colored(Color {
-                r: 1.0,
-                g: 0.25,
-                b: 0.25,
-                a: 1.0,
-            })),
+            make_widget!(image_box)
+                .with_props(ImageBoxProps::colored(Color {
+                    r: 1.0,
+                    g: 0.25,
+                    b: 0.25,
+                    a: 1.0,
+                }))
+                .with_props(ContentBoxItemLayout {
+                    anchors: Rect {
+                        left: -1.0,
+                        right: 2.0,
+                        top: -1.0,
+                        bottom: 2.0,
+                    },
+                    keep_in_bounds: true.into(),
+                    ..Default::default()
+                }),
         )
         .listed_slot(
             make_widget!(image_box)

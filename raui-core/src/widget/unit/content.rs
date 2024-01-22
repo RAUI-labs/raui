@@ -11,6 +11,63 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ContentBoxItemPreserveInBounds {
+    #[serde(default)]
+    pub width: bool,
+    #[serde(default)]
+    pub height: bool,
+}
+
+impl From<bool> for ContentBoxItemPreserveInBounds {
+    fn from(value: bool) -> Self {
+        Self {
+            width: value,
+            height: value,
+        }
+    }
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ContentBoxItemCutInBounds {
+    #[serde(default)]
+    pub left: bool,
+    #[serde(default)]
+    pub right: bool,
+    #[serde(default)]
+    pub top: bool,
+    #[serde(default)]
+    pub bottom: bool,
+}
+
+impl From<bool> for ContentBoxItemCutInBounds {
+    fn from(value: bool) -> Self {
+        Self {
+            left: value,
+            right: value,
+            top: value,
+            bottom: value,
+        }
+    }
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ContentBoxItemKeepInBounds {
+    #[serde(default)]
+    pub preserve: ContentBoxItemPreserveInBounds,
+    #[serde(default)]
+    pub cut: ContentBoxItemCutInBounds,
+}
+
+impl From<bool> for ContentBoxItemKeepInBounds {
+    fn from(value: bool) -> Self {
+        Self {
+            preserve: value.into(),
+            cut: value.into(),
+        }
+    }
+}
+
 /// Allows customizing how an item in a [`content_box`] is laid out
 ///
 /// [`content_box`]: crate::widget::component::containers::content_box::content_box
@@ -23,6 +80,7 @@ pub struct ContentBoxItemLayout {
     /// The margins to put on each side of the item
     #[serde(default)]
     pub margin: Rect,
+    /// Tells in percentage, where is the center of mass of the widget, relative to it's box size
     #[serde(default)]
     pub align: Vec2,
     /// The amount to offset the item from where it would otherwise be laid out
@@ -31,6 +89,9 @@ pub struct ContentBoxItemLayout {
     /// The "Z" depth of the item
     #[serde(default)]
     pub depth: Scalar,
+    /// Set of constraints that tell if and how to keep item in container bounds
+    #[serde(default)]
+    pub keep_in_bounds: ContentBoxItemKeepInBounds,
 }
 
 impl ContentBoxItemLayout {
@@ -52,6 +113,7 @@ impl Default for ContentBoxItemLayout {
             align: Default::default(),
             offset: Default::default(),
             depth: 0.0,
+            keep_in_bounds: Default::default(),
         }
     }
 }

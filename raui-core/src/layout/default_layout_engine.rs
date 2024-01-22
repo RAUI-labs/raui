@@ -90,6 +90,32 @@ impl DefaultLayoutEngine {
                     let oy = lerp(0.0, diff, item.layout.align.y);
                     child.local_space.top += top - oy;
                     child.local_space.bottom += top - oy;
+                    let w = child.local_space.width().min(size_available.x);
+                    let h = child.local_space.height().min(size_available.y);
+                    if item.layout.keep_in_bounds.cut.left {
+                        child.local_space.left = child.local_space.left.max(0.0);
+                        if item.layout.keep_in_bounds.preserve.width {
+                            child.local_space.right = child.local_space.left + w;
+                        }
+                    }
+                    if item.layout.keep_in_bounds.cut.right {
+                        child.local_space.right = child.local_space.right.min(size_available.x);
+                        if item.layout.keep_in_bounds.preserve.width {
+                            child.local_space.left = child.local_space.right - w;
+                        }
+                    }
+                    if item.layout.keep_in_bounds.cut.top {
+                        child.local_space.top = child.local_space.top.max(0.0);
+                        if item.layout.keep_in_bounds.preserve.height {
+                            child.local_space.bottom = child.local_space.top + h;
+                        }
+                    }
+                    if item.layout.keep_in_bounds.cut.bottom {
+                        child.local_space.bottom = child.local_space.bottom.min(size_available.y);
+                        if item.layout.keep_in_bounds.preserve.height {
+                            child.local_space.top = child.local_space.bottom - h;
+                        }
+                    }
                     Some(child)
                 } else {
                     None

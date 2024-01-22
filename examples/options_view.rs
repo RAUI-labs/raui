@@ -71,7 +71,15 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 // Lists are obvious choice but you could also put slots into a grid,
                 // or even freeform content box to for example make a map with city
                 // icons to select!
-                .named_slot("content", make_widget!(vertical_box))
+                .named_slot(
+                    "content",
+                    // Since this list will be injected into portal container, which is
+                    // content box, we can make that list kept in bounds of the container.
+                    make_widget!(vertical_box).with_props(ContentBoxItemLayout {
+                        keep_in_bounds: true.into(),
+                        ..Default::default()
+                    }),
+                )
                 // And last but not least, we provide items as listed slots.
                 // Each provided widget will be wrapped in button that will notify
                 // options view about selected option.
