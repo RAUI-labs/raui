@@ -273,7 +273,7 @@ impl DefaultInteractionsEngine {
                     app.send_message(id, NavSignal::Select(().into()));
                 }
             }
-            _ => {}
+            (true, None) => {}
         }
         true
     }
@@ -459,7 +459,7 @@ impl DefaultInteractionsEngine {
             .cloned()
     }
 
-    // TODO: refactor this shit!
+    // TODO: refactor this shit! my eyes are bleeding, like really dude ffs..
     fn jump(&mut self, app: &mut Application, id: &WidgetId, data: NavJump) {
         if let Some(items) = self.containers.get(id) {
             match data {
@@ -1063,11 +1063,11 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                 }
             }
         }
-        if let Some(idref) = to_select {
-            self.select_item(app, idref.read());
-        }
         if !to_jump.is_empty() {
             self.cache_sorted_items_ids(app);
+        }
+        if let Some(idref) = to_select {
+            self.select_item(app, idref.read());
         }
         for (id, data) in to_jump {
             self.jump(app, &id, data);

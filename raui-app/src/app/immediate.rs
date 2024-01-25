@@ -1,4 +1,4 @@
-use crate::{app::SharedApp, Vertex};
+use crate::{app::SharedApp, interactions::AppInteractionsEngine, Vertex};
 use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
@@ -65,6 +65,11 @@ impl ImmediateApp {
 
     pub fn setup(mut self, mut f: impl FnMut(&mut Application)) -> Self {
         f(&mut self.shared.application);
+        self
+    }
+
+    pub fn setup_interactions(mut self, mut f: impl FnMut(&mut AppInteractionsEngine)) -> Self {
+        f(&mut self.shared.interactions);
         self
     }
 }
