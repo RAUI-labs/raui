@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>RAUI</title>
+    <subtitle>Renderer Agnostic User Interface written in Rust</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://RAUI-labs.github.io/raui/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://RAUI-labs.github.io/raui"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2021-05-11T15:07:00+00:00</updated>
+    <id>https://RAUI-labs.github.io/raui/atom.xml</id>
+    <entry xml:lang="en">
+        <title>New RAUI Documentation Site! 🎉</title>
+        <published>2021-05-11T15:07:00+00:00</published>
+        <updated>2021-05-11T15:07:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://RAUI-labs.github.io/raui/blog/new-documentation-site/"/>
+        <id>https://RAUI-labs.github.io/raui/blog/new-documentation-site/</id>
+        
+        <content type="html" xml:base="https://RAUI-labs.github.io/raui/blog/new-documentation-site/">&lt;p&gt;With this new blog section we will also be able to make development announcements to help keep the community in the loop about what&#x27;s going on with the project.&lt;&#x2F;p&gt;
+&lt;p&gt;We&#x27;ve made a lot of progress but there&#x27;s still tons of work to do. If you find bugs, or have feature requests, don&#x27;t hesitate to open a &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;RAUI-labs&#x2F;raui&#x2F;issues&quot;&gt;GitHub issue&lt;&#x2F;a&gt;! And if you have questions or comments feel free to open a &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;RAUI-labs&#x2F;raui&#x2F;discussions&quot;&gt;discussion&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>PsichiX</title>
+        <published>2021-04-01T08:50:45+00:00</published>
+        <updated>2021-04-01T08:50:45+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://RAUI-labs.github.io/raui/authors/psichix/"/>
+        <id>https://RAUI-labs.github.io/raui/authors/psichix/</id>
+        
+        <content type="html" xml:base="https://RAUI-labs.github.io/raui/authors/psichix/">&lt;p&gt;The creator of RAUI.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;PsichiX&quot;&gt;@PsichiX&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="en">
+        <title>Zicklag</title>
+        <published>2021-04-01T08:50:45+00:00</published>
+        <updated>2021-04-01T08:50:45+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://RAUI-labs.github.io/raui/authors/zicklag/"/>
+        <id>https://RAUI-labs.github.io/raui/authors/zicklag/</id>
+        
+        <content type="html" xml:base="https://RAUI-labs.github.io/raui/authors/zicklag/">&lt;p&gt;A contributor to RAUI that works on making games &lt;a href=&quot;https:&#x2F;&#x2F;katharostech.com&quot;&gt;@katharostech&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;zicklag&quot;&gt;@zicklag&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
