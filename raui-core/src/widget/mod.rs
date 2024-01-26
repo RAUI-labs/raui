@@ -576,6 +576,20 @@ impl From<WidgetRefDef> for WidgetRef {
     }
 }
 
+impl std::fmt::Display for WidgetRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Ok(id) = self.0.read() {
+            if let Some(id) = id.as_ref() {
+                write!(f, "{}", id)
+            } else {
+                Ok(())
+            }
+        } else {
+            Ok(())
+        }
+    }
+}
+
 #[derive(PropsData, Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WidgetIdOrRef {
     #[default]
@@ -624,6 +638,16 @@ impl From<WidgetId> for WidgetIdOrRef {
 impl From<WidgetRef> for WidgetIdOrRef {
     fn from(v: WidgetRef) -> Self {
         Self::Ref(v)
+    }
+}
+
+impl std::fmt::Display for WidgetIdOrRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => Ok(()),
+            Self::Id(id) => write!(f, "{}", id),
+            Self::Ref(id) => write!(f, "{}", id),
+        }
     }
 }
 

@@ -218,6 +218,11 @@ impl DefaultInteractionsEngine {
         if self.locked_widget.is_some() || self.selected_chain.last() == id.as_ref() {
             return false;
         }
+        if let Some(id) = &id {
+            if self.containers.contains_key(id) {
+                app.send_message(id, NavSignal::Select(id.to_owned().into()));
+            }
+        }
         match (self.selected_chain.is_empty(), id) {
             (false, None) => {
                 for id in std::mem::take(&mut self.selected_chain).iter().rev() {
@@ -361,6 +366,20 @@ impl DefaultInteractionsEngine {
         }
     }
 
+    fn get_selected_item_point(&self, app: &Application) -> Option<Vec2> {
+        Self::get_item_point(app, self.selected_item()?)
+    }
+
+    fn get_closest_item_point(app: &Application, id: &WidgetId, mut point: Vec2) -> Option<Vec2> {
+        if let Some(layout) = app.layout_data().items.get(id) {
+            point.x = point.x.max(layout.ui_space.left).min(layout.ui_space.right);
+            point.y = point.y.max(layout.ui_space.top).min(layout.ui_space.bottom);
+            Some(point)
+        } else {
+            None
+        }
+    }
+
     fn find_item_closest_to_point(
         app: &Application,
         point: Vec2,
@@ -369,7 +388,7 @@ impl DefaultInteractionsEngine {
         items
             .iter()
             .filter_map(|id| {
-                Self::get_item_point(app, id).map(|p| {
+                Self::get_closest_item_point(app, id, point).map(|p| {
                     let dx = p.x - point.x;
                     let dy = p.y - point.y;
                     (id, dx * dx + dy * dy)
@@ -395,12 +414,12 @@ impl DefaultInteractionsEngine {
         items
             .iter()
             .filter_map(|id| {
-                Self::get_item_point(app, id).map(|p| {
+                Self::get_closest_item_point(app, id, point).map(|p| {
                     let dx = p.x - point.x;
                     let dy = p.y - point.y;
-                    let dot = dx * dir.x + dy * dir.y;
                     let len = (dx * dx + dy * dy).sqrt();
-                    let f = if len > 0.0 { dot / len } else { dot };
+                    let dot = dx / len * dir.x + dy / len * dir.y;
+                    let f = if len > 0.0 { dot / len } else { 0.0 };
                     (id, f)
                 })
             })
@@ -533,7 +552,7 @@ impl DefaultInteractionsEngine {
                     | NavDirection::Down
                     | NavDirection::Left
                     | NavDirection::Right => {
-                        if let Some(point) = Self::get_item_point(app, id) {
+                        if let Some(point) = self.get_selected_item_point(app) {
                             if let Some(id) =
                                 Self::find_item_closest_to_direction(app, point, direction, items)
                             {
@@ -578,7 +597,7 @@ impl DefaultInteractionsEngine {
                     | NavDirection::Down
                     | NavDirection::Left
                     | NavDirection::Right => {
-                        if let Some(point) = Self::get_item_point(app, id) {
+                        if let Some(point) = self.get_selected_item_point(app) {
                             if let Some(id) =
                                 Self::find_item_closest_to_direction(app, point, direction, items)
                             {

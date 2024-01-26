@@ -11,6 +11,11 @@ use serde::{Deserialize, Serialize};
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
+pub struct NavAutoSelect;
+
+#[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
 pub struct NavItemActive;
 
 #[derive(PropsData, Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
@@ -62,6 +67,11 @@ pub struct NavLockingActive;
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
 pub struct NavContainerActive;
+
+#[derive(PropsData, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[props_data(crate::props::PropsData)]
+#[prefab(crate::Prefab)]
+pub struct NavContainerDesiredSelection(#[serde(default)] pub WidgetIdOrRef);
 
 #[derive(PropsData, Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
@@ -206,12 +216,29 @@ pub fn use_nav_container(context: &mut WidgetContext) {
                 .signals
                 .write(NavSignal::Register(NavType::Container));
         }
+        if context.props.has::<NavAutoSelect>() {
+            context
+                .signals
+                .write(NavSignal::Select(context.id.to_owned().into()));
+        }
     });
 
     context.life_cycle.unmount(|context| {
         context
             .signals
             .write(NavSignal::Unregister(NavType::Container));
+    });
+
+    context.life_cycle.change(move |context| {
+        if let Ok(props) = context.props.read::<NavContainerDesiredSelection>() {
+            for msg in context.messenger.messages {
+                if let Some(NavSignal::Select(idref)) = msg.as_any().downcast_ref::<NavSignal>() {
+                    if idref.read().map(|id| &id == context.id).unwrap_or_default() {
+                        context.signals.write(NavSignal::Select(props.0.to_owned()));
+                    }
+                }
+            }
+        }
     });
 }
 
@@ -446,6 +473,11 @@ pub fn use_nav_item(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
         if context.props.has::<NavItemActive>() {
             context.signals.write(NavSignal::Register(NavType::Item));
+        }
+        if context.props.has::<NavAutoSelect>() {
+            context
+                .signals
+                .write(NavSignal::Select(context.id.to_owned().into()));
         }
     });
 

@@ -218,9 +218,29 @@ impl AppInteractionsEngine {
                                             NavSignal::Accept(true),
                                         ));
                                     }
-                                    VirtualKeyCode::Escape => {
+                                    VirtualKeyCode::Escape | VirtualKeyCode::Back => {
                                         self.engine.interact(Interaction::Navigate(
                                             NavSignal::Cancel(true),
+                                        ));
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    } else if input.state == ElementState::Released {
+                        if let Some(key) = input.virtual_keycode {
+                            if self.engine.focused_text_input().is_none() {
+                                match key {
+                                    VirtualKeyCode::Return
+                                    | VirtualKeyCode::NumpadEnter
+                                    | VirtualKeyCode::Space => {
+                                        self.engine.interact(Interaction::Navigate(
+                                            NavSignal::Accept(false),
+                                        ));
+                                    }
+                                    VirtualKeyCode::Escape | VirtualKeyCode::Back => {
+                                        self.engine.interact(Interaction::Navigate(
+                                            NavSignal::Cancel(false),
                                         ));
                                     }
                                     _ => {}

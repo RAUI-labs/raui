@@ -1,6 +1,6 @@
 [package]
 name = "raui-app"
-version = "0.62.1"
+version = "0.63.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "RAUI application layer to focus only on making UI"
@@ -11,11 +11,11 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.62" }
-raui-material = { path = "../raui-material", version = "0.62" }
-raui-immediate = { path = "../raui-immediate", version = "0.62" }
-raui-retained = { path = "../raui-retained", version = "0.62" }
-raui-tesselate-renderer = { path = "../raui-tesselate-renderer", version = "0.62" }
+raui-core = { path = "../raui-core", version = "0.63" }
+raui-material = { path = "../raui-material", version = "0.63" }
+raui-immediate = { path = "../raui-immediate", version = "0.63" }
+raui-retained = { path = "../raui-retained", version = "0.63" }
+raui-tesselate-renderer = { path = "../raui-tesselate-renderer", version = "0.63" }
 spitfire-glow = "0.25"
 spitfire-fontdue = "0.25"
 bytemuck = { version = "1", features = ["derive"] }
