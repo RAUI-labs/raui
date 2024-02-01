@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::mpsc::Sender};
 
 /// An error that may occur when animating a value
+#[derive(Debug, Clone)]
 pub enum AnimationError {
     /// Could not read animation data
     CouldNotReadData,
