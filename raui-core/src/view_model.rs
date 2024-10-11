@@ -179,7 +179,7 @@ pub struct ViewModel {
 impl ViewModel {
     pub fn new<T: 'static>(object: T, properties: ViewModelProperties) -> Self {
         Self {
-            object: DynamicManaged::new(object),
+            object: DynamicManaged::new(object).ok().unwrap(),
             properties,
         }
     }
@@ -190,7 +190,7 @@ impl ViewModel {
 
     pub fn produce<T: 'static>(producer: impl FnOnce(&mut ViewModelProperties) -> T) -> Self {
         let mut properties = Default::default();
-        let object = DynamicManaged::new(producer(&mut properties));
+        let object = DynamicManaged::new(producer(&mut properties)).ok().unwrap();
         Self { object, properties }
     }
 

@@ -33,6 +33,7 @@ checks:
     just build
     just clippy
     just test
+    just readme
 
 # Print the documentation coverage for a crate in the workspace
 doc-coverage crate="raui-core":

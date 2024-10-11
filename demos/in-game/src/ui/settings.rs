@@ -3,11 +3,11 @@ use raui::prelude::*;
 
 #[pre_hooks(use_settings)]
 pub fn settings(mut context: WidgetContext) -> WidgetNode {
-    let settings = context
+    let mut settings = context
         .view_models
-        .view_model(Settings::VIEW_MODEL)
+        .view_model_mut(Settings::VIEW_MODEL)
         .unwrap()
-        .read::<Settings>()
+        .write::<Settings>()
         .unwrap();
 
     make_widget!(window_paper)

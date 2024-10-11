@@ -82,7 +82,7 @@ impl AppState {
         *self.creating_task
     }
 
-    pub fn new_task_name(&self) -> ManagedLazy<ViewModelValue<String>> {
+    pub fn new_task_name(&mut self) -> ManagedLazy<ViewModelValue<String>> {
         self.new_task_name.lazy()
     }
 

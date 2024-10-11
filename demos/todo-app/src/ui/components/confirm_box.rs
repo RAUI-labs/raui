@@ -11,6 +11,7 @@ pub struct ConfirmBoxProps {
 
 #[derive(MessageData, Debug, Clone)]
 pub struct ConfirmNotifyMessage {
+    #[allow(dead_code)]
     pub sender: WidgetId,
     pub confirmed: bool,
 }

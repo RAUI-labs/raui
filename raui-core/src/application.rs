@@ -778,10 +778,7 @@ impl Application {
         }
         let (state_sender, state_receiver) = channel();
         let (animation_sender, animation_receiver) = channel();
-        let messages_list = match messages.remove(&id) {
-            Some(messages) => messages,
-            None => Messages::new(),
-        };
+        let messages_list = messages.remove(&id).unwrap_or_default();
         let mut life_cycle = WidgetLifeCycle::default();
         let default_animator_state = AnimatorStates::default();
         let (new_node, mounted) = match states.get(&id) {

@@ -87,8 +87,8 @@ pub struct SliderInput(ManagedLazy<dyn SliderViewProxy>);
 impl SliderInput {
     pub fn new(data: ManagedLazy<impl SliderViewProxy + 'static>) -> Self {
         let (lifetime, data) = data.into_inner();
-        let data = data.as_ptr() as *mut dyn SliderViewProxy;
-        unsafe { Self(ManagedLazy::<dyn SliderViewProxy>::new_raw(data, lifetime)) }
+        let data = data as *mut dyn SliderViewProxy;
+        unsafe { Self(ManagedLazy::<dyn SliderViewProxy>::new_raw(data, lifetime).unwrap()) }
     }
 
     pub fn into_inner(self) -> ManagedLazy<dyn SliderViewProxy> {

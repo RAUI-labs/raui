@@ -39,13 +39,13 @@ pub fn app_bar(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         key,
         id,
-        view_models,
+        mut view_models,
         ..
     } = context;
-    let app_state = view_models
-        .view_model(AppState::VIEW_MODEL)
+    let mut app_state = view_models
+        .view_model_mut(AppState::VIEW_MODEL)
         .unwrap()
-        .read::<AppState>()
+        .write::<AppState>()
         .unwrap();
 
     make_widget!(vertical_box)

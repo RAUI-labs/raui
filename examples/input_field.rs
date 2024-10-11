@@ -45,11 +45,11 @@ fn use_app(ctx: &mut WidgetContext) {
 // we mark root widget as navigable container to let user focus and type in text inputs.
 #[pre_hooks(use_nav_container_active, use_app)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
-    let app_data = ctx
+    let mut app_data = ctx
         .view_models
-        .view_model(DATA)
+        .view_model_mut(DATA)
         .unwrap()
-        .read::<AppData>()
+        .write::<AppData>()
         .unwrap();
 
     // put inputs with all different types modes.

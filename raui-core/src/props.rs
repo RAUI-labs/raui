@@ -237,7 +237,7 @@ impl Props {
     where
         T: 'static + PropsData + Clone,
     {
-        self.read::<T>().map(|v| v.clone())
+        self.read::<T>().cloned()
     }
 
     pub fn read_cloned_or_default<T>(&self) -> T

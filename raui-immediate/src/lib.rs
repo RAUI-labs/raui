@@ -67,10 +67,10 @@ impl ImmediateStates {
         self.position += 1;
         if let Some(managed) = self.data.get_mut(index) {
             if managed.type_hash() != &TypeHash::of::<T>() {
-                *managed = DynamicManaged::new(init());
+                *managed = DynamicManaged::new(init()).ok().unwrap();
             }
         } else {
-            self.data.push(DynamicManaged::new(init()));
+            self.data.push(DynamicManaged::new(init()).ok().unwrap());
         }
         self.data
             .get(index)

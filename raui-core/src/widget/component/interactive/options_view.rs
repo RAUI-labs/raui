@@ -76,8 +76,8 @@ pub struct OptionsInput(ManagedLazy<dyn OptionsViewProxy>);
 impl OptionsInput {
     pub fn new(data: ManagedLazy<impl OptionsViewProxy + 'static>) -> Self {
         let (lifetime, data) = data.into_inner();
-        let data = data.as_ptr() as *mut dyn OptionsViewProxy;
-        unsafe { Self(ManagedLazy::<dyn OptionsViewProxy>::new_raw(data, lifetime)) }
+        let data = data as *mut dyn OptionsViewProxy;
+        unsafe { Self(ManagedLazy::<dyn OptionsViewProxy>::new_raw(data, lifetime).unwrap()) }
     }
 
     pub fn into_inner(self) -> ManagedLazy<dyn OptionsViewProxy> {

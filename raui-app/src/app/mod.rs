@@ -191,8 +191,8 @@ impl SharedApp {
             w as _,
             h as _,
             d as _,
-            GlowTextureFormat::Luminance,
-            self.text_renderer.image(),
+            GlowTextureFormat::Monochromatic,
+            Some(self.text_renderer.image()),
         );
     }
 

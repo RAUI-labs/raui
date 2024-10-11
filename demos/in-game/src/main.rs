@@ -105,5 +105,10 @@ fn main() {
             true
         });
 
-    App::new(AppConfig::default().title("In-Game").color([0.2, 0.2, 0.2])).run(app);
+    App::new(
+        AppConfig::default()
+            .title("In-Game")
+            .color([0.2, 0.2, 0.2, 1.0]),
+    )
+    .run(app);
 }

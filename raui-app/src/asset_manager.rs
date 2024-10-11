@@ -332,7 +332,7 @@ impl AssetsManager {
                         image.height(),
                         1,
                         GlowTextureFormat::Rgba,
-                        image.as_bytes(),
+                        Some(image.as_bytes()),
                     ) {
                         Ok(texture) => texture,
                         _ => {
@@ -381,7 +381,7 @@ impl AssetsManager {
                         image.height(),
                         1,
                         GlowTextureFormat::Rgba,
-                        image.as_bytes(),
+                        Some(image.as_bytes()),
                     ) {
                         Ok(texture) => texture,
                         _ => {

@@ -294,5 +294,5 @@ pub fn lerp(from: Scalar, to: Scalar, factor: Scalar) -> Scalar {
 
 #[inline]
 pub fn lerp_clamped(from: Scalar, to: Scalar, factor: Scalar) -> Scalar {
-    lerp(from, to, factor.max(0.0).min(1.0))
+    lerp(from, to, factor.clamp(0.0, 1.0))
 }

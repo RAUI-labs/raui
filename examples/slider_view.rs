@@ -32,11 +32,11 @@ fn use_app(ctx: &mut WidgetContext) {
 
 #[pre_hooks(use_nav_container_active, use_app)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {
-    let app_data = ctx
+    let mut app_data = ctx
         .view_models
-        .view_model(DATA)
+        .view_model_mut(DATA)
         .unwrap()
-        .read::<AppData>()
+        .write::<AppData>()
         .unwrap();
 
     make_widget!(horizontal_box)
