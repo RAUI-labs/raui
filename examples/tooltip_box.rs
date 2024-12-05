@@ -12,7 +12,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 
     make_widget!(content_box)
         .idref(idref.clone())
-        .with_shared_props(PortalsContainer(idref.into()))
+        .with_shared_props(PortalsContainer(idref))
         .listed_slot(
             make_widget!(horizontal_box)
                 .with_props(HorizontalBoxProps {

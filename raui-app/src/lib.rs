@@ -109,7 +109,7 @@ pub(crate) struct TesselateToGraphics<'a> {
     projection_view_matrix: [f32; 16],
 }
 
-impl<'a> TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'a> {
+impl TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'_> {
     fn convert(&mut self, batch: TesselateBatch) -> Option<GraphicsBatch> {
         match batch {
             TesselateBatch::Color => Some(GraphicsBatch {

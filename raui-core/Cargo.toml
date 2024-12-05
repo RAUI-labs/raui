@@ -1,6 +1,6 @@
 [package]
 name = "raui-core"
-version = "0.64.0"
+version = "0.64.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "RAUI application layer"
@@ -14,4 +14,4 @@ categories = ["gui", "rendering::graphics-api"]
 raui-derive = { version = "0.64", path = "../raui-derive" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
-intuicio-data = "0.33"
+intuicio-data = "0.39"

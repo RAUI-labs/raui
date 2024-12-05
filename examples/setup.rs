@@ -33,8 +33,8 @@ fn main() {
     // tree.
     application.apply(tree);
 
-    // This and the following function calls would need to be called every frame
-    loop {
+    // This scope content would need to be called every frame
+    {
         // Telling the app to `process` will make it perform any necessary updates.
         application.process();
 
@@ -73,8 +73,5 @@ fn main() {
                 .render::<_, String, _>(&mapping, &mut renderer)
                 .unwrap()
         );
-
-        // Let's not actually loop infinitely for this example
-        break;
     }
 }

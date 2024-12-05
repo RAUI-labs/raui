@@ -23,7 +23,7 @@ pub struct WidgetContext<'a> {
     pub view_models: ViewModelCollectionView<'a>,
 }
 
-impl<'a> WidgetContext<'a> {
+impl WidgetContext<'_> {
     pub fn take_named_slots(&mut self) -> HashMap<String, WidgetNode> {
         std::mem::take(&mut self.named_slots)
     }
@@ -45,7 +45,7 @@ impl<'a> WidgetContext<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for WidgetContext<'a> {
+impl std::fmt::Debug for WidgetContext<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("WidgetContext")
             .field("id", &self.id)

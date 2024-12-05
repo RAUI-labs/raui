@@ -41,7 +41,7 @@ pub struct WidgetIdMetaParam<'a> {
     pub value: Option<&'a str>,
 }
 
-impl<'a> WidgetIdMetaParam<'a> {
+impl WidgetIdMetaParam<'_> {
     pub fn is_flag(&self) -> bool {
         self.value.is_none()
     }
@@ -1098,52 +1098,52 @@ mod tests {
         let a = WidgetId::from_str("a:root/a/b/c").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Ok(0));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(!a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/b").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Ok(-1));
-        assert_eq!(a.is_subset_of(&b), true);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Ok(-2));
-        assert_eq!(a.is_subset_of(&b), true);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Ok(-3));
-        assert_eq!(a.is_subset_of(&b), true);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/b/c").unwrap();
         let b = WidgetId::from_str("b:root/a/b").unwrap();
         assert_eq!(a.distance_to(&b), Ok(1));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), true);
+        assert!(!a.is_subset_of(&b));
+        assert!(a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/b/c").unwrap();
         let b = WidgetId::from_str("b:root/a").unwrap();
         assert_eq!(a.distance_to(&b), Ok(2));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), true);
+        assert!(!a.is_subset_of(&b));
+        assert!(a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/b/c").unwrap();
         let b = WidgetId::from_str("b:root").unwrap();
         assert_eq!(a.distance_to(&b), Ok(3));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), true);
+        assert!(!a.is_subset_of(&b));
+        assert!(a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/b/x").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Err(-1));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(!a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/a/x/y").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Err(-2));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(!a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
         let a = WidgetId::from_str("a:root/x/y/z").unwrap();
         let b = WidgetId::from_str("b:root/a/b/c").unwrap();
         assert_eq!(a.distance_to(&b), Err(-3));
-        assert_eq!(a.is_subset_of(&b), false);
-        assert_eq!(a.is_superset_of(&b), false);
+        assert!(!a.is_subset_of(&b));
+        assert!(!a.is_superset_of(&b));
     }
 }

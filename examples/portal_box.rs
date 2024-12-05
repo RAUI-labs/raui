@@ -13,7 +13,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         .idref(idref.clone())
         // widget rederence marked as portals container and put into root shared props for any
         // portal box down the widget tree. More about how portal box works later.
-        .with_shared_props(PortalsContainer(idref.to_owned().into()))
+        .with_shared_props(PortalsContainer(idref.to_owned()))
         .listed_slot(
             make_widget!(anchor_box)
                 .with_props(RelativeLayoutProps {

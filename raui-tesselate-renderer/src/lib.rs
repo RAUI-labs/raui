@@ -730,7 +730,7 @@ where
     }
 }
 
-impl<'a, V, B, P, C> Renderer<(), Error> for TesselateRenderer<'a, V, B, P, C>
+impl<V, B, P, C> Renderer<(), Error> for TesselateRenderer<'_, V, B, P, C>
 where
     V: TesselateVertex + TextVertex<Color> + Default,
     B: PartialEq,

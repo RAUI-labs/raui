@@ -27,7 +27,7 @@ impl<'a> LayoutSortedItems<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for LayoutSortedItems<'a> {
+impl std::fmt::Debug for LayoutSortedItems<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_map()
             .entries(self.0.iter().map(|&(k, v)| (k, v)))

@@ -250,5 +250,5 @@ fn create_app(notifier: ChangeNotifier) -> View<AppView> {
 }
 
 fn main() {
-    RetainedApp::simple("Retained mode UI", |notifier| create_app(notifier));
+    RetainedApp::simple("Retained mode UI", create_app);
 }

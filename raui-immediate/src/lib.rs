@@ -487,7 +487,7 @@ mod tests {
     }
 
     fn text_field() {
-        let text = use_state(|| String::default());
+        let text = use_state(String::default);
         let mut text = text.write().unwrap();
 
         text.push('z');

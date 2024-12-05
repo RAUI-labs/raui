@@ -32,7 +32,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
     // for option views to anchor thier content into.
     make_widget!(content_box)
         .idref(idref.clone())
-        .with_shared_props(PortalsContainer(idref.into()))
+        .with_shared_props(PortalsContainer(idref))
         .listed_slot(
             // Options view is basically a button that toggles its content anchored
             // to itself. You can think of dropdown/context menus, but actually it

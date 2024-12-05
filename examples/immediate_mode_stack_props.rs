@@ -77,5 +77,5 @@ mod gui {
 }
 
 fn main() {
-    ImmediateApp::simple("Immediate mode UI - Stack props", || gui::app());
+    ImmediateApp::simple("Immediate mode UI - Stack props", gui::app);
 }

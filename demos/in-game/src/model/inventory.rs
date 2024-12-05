@@ -74,7 +74,7 @@ impl Inventory {
     pub fn owned<'a>(
         &'a self,
         database: &'a ItemsDatabase,
-    ) -> impl Iterator<Item = (&str, usize, &Item)> {
+    ) -> impl Iterator<Item = (&'a str, usize, &'a Item)> {
         self.owned
             .iter()
             .filter_map(|(id, count)| Some((id.as_str(), *count, database.items.get(id)?)))

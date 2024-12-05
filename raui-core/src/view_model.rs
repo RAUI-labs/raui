@@ -423,7 +423,7 @@ pub struct ViewModelObject<'a, T> {
     notifier: ViewModelNotifier,
 }
 
-impl<'a, T> ViewModelObject<'a, T> {
+impl<T> ViewModelObject<'_, T> {
     pub fn set_unique_notify(&mut self, value: T)
     where
         T: PartialEq,
@@ -435,7 +435,7 @@ impl<'a, T> ViewModelObject<'a, T> {
     }
 }
 
-impl<'a, T> Deref for ViewModelObject<'a, T> {
+impl<T> Deref for ViewModelObject<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -443,7 +443,7 @@ impl<'a, T> Deref for ViewModelObject<'a, T> {
     }
 }
 
-impl<'a, T> DerefMut for ViewModelObject<'a, T> {
+impl<T> DerefMut for ViewModelObject<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.notifier.notify();
         &mut self.access
@@ -534,9 +534,9 @@ mod tests {
         collection.insert(FOO_VIEW_MODEL.to_owned(), view_model);
 
         // unbound properties won't trigger notification until we bind widgets to them.
-        assert_eq!(collection.consume_notified_common_root().is_valid(), false);
+        assert!(!collection.consume_notified_common_root().is_valid());
         handle.write().unwrap().toggle();
-        assert_eq!(collection.consume_notified_common_root().is_valid(), false);
+        assert!(!collection.consume_notified_common_root().is_valid());
         assert!(collection
             .get_mut(FOO_VIEW_MODEL)
             .unwrap()
