@@ -126,18 +126,18 @@ impl WidgetId {
         if path.is_empty() {
             return Self {
                 id: format!("{}:", type_name),
-                type_name: 0..type_name.as_bytes().len(),
+                type_name: 0..type_name.len(),
                 parts: Default::default(),
             };
         }
-        let count = type_name.as_bytes().len()
+        let count = type_name.len()
             + b":".len()
-            + path.iter().map(|part| part.as_bytes().len()).sum::<usize>()
+            + path.iter().map(|part| part.len()).sum::<usize>()
             + path.len().saturating_sub(1) * b"/".len();
         let mut result = String::with_capacity(count);
-        let mut position = result.as_bytes().len();
+        let mut position = result.len();
         result.push_str(type_name);
-        let type_name = 0..result.as_bytes().len();
+        let type_name = 0..result.len();
         result.push(':');
         let parts = path
             .iter()
@@ -146,9 +146,9 @@ impl WidgetId {
                 if index > 0 {
                     result.push('/');
                 }
-                position = result.as_bytes().len();
+                position = result.len();
                 result.push_str(part);
-                let range = position..result.as_bytes().len();
+                let range = position..result.len();
                 if let Some(index) = part.find('?') {
                     let key = range.start..(range.start + index);
                     let meta = (range.start + index + b"?".len())..range.end;
@@ -167,15 +167,15 @@ impl WidgetId {
     }
 
     pub fn push(&self, part: &str) -> Self {
-        let count = self.id.as_bytes().len() + b"/".len();
+        let count = self.id.len() + b"/".len();
         let mut result = String::with_capacity(count);
         result.push_str(&self.id);
         if self.depth() > 0 {
             result.push('/');
         }
-        let position = result.as_bytes().len();
+        let position = result.len();
         result.push_str(part);
-        let range = position..result.as_bytes().len();
+        let range = position..result.len();
         let (key, meta) = if let Some(index) = part.find('?') {
             let key = range.start..(range.start + index);
             let meta = (range.start + index + b"?".len())..range.end;
