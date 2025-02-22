@@ -7,7 +7,7 @@ use crate::{
             flex::FlexBox,
             grid::GridBox,
             image::{ImageBox, ImageBoxSizeValue},
-            size::{SizeBox, SizeBoxSizeValue},
+            size::{SizeBox, SizeBoxAspectRatio, SizeBoxSizeValue},
             text::{TextBox, TextBoxSizeValue},
             WidgetUnit,
         },
@@ -556,7 +556,7 @@ impl DefaultLayoutEngine {
         if !unit.id.is_valid() {
             return None;
         }
-        let size = Vec2 {
+        let mut size = Vec2 {
             x: match unit.width {
                 SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &unit.slot),
                 SizeBoxSizeValue::Fill => size_available.x - unit.margin.left - unit.margin.right,
@@ -568,6 +568,15 @@ impl DefaultLayoutEngine {
                 SizeBoxSizeValue::Exact(v) => v,
             },
         };
+        match unit.keep_aspect_ratio {
+            SizeBoxAspectRatio::None => {}
+            SizeBoxAspectRatio::WidthOfHeight(factor) => {
+                size.x = (size.y * factor).max(0.0);
+            }
+            SizeBoxAspectRatio::HeightOfWidth(factor) => {
+                size.y = (size.x * factor).max(0.0);
+            }
+        }
         let children = if let Some(mut child) = Self::layout_node(size, &unit.slot) {
             child.local_space.left += unit.margin.left;
             child.local_space.right += unit.margin.left;

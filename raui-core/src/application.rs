@@ -1486,6 +1486,7 @@ impl Application {
             width: data.width,
             height: data.height,
             margin: data.margin,
+            keep_aspect_ratio: data.keep_aspect_ratio,
             transform: data.transform,
         })
     }
@@ -1733,6 +1734,7 @@ impl Application {
             width: data.width,
             height: data.height,
             margin: data.margin,
+            keep_aspect_ratio: data.keep_aspect_ratio,
             transform: data.transform,
         })
     }

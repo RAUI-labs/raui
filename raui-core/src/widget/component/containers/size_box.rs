@@ -3,7 +3,7 @@ use crate::{
     widget::{
         context::WidgetContext,
         node::WidgetNode,
-        unit::size::{SizeBoxNode, SizeBoxSizeValue},
+        unit::size::{SizeBoxAspectRatio, SizeBoxNode, SizeBoxSizeValue},
         utils::{Rect, Transform},
     },
     PropsData,
@@ -21,6 +21,8 @@ pub struct SizeBoxProps {
     #[serde(default)]
     pub margin: Rect,
     #[serde(default)]
+    pub keep_aspect_ratio: SizeBoxAspectRatio,
+    #[serde(default)]
     pub transform: Transform,
 }
 
@@ -37,6 +39,7 @@ pub fn size_box(context: WidgetContext) -> WidgetNode {
         width,
         height,
         margin,
+        keep_aspect_ratio,
         transform,
     } = props.read_cloned_or_default();
 
@@ -47,6 +50,7 @@ pub fn size_box(context: WidgetContext) -> WidgetNode {
         width,
         height,
         margin,
+        keep_aspect_ratio,
         transform,
     }
     .into()

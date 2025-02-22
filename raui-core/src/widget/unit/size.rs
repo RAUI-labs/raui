@@ -19,6 +19,14 @@ pub enum SizeBoxSizeValue {
     Exact(Scalar),
 }
 
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
+pub enum SizeBoxAspectRatio {
+    #[default]
+    None,
+    WidthOfHeight(Scalar),
+    HeightOfWidth(Scalar),
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct SizeBox {
     #[serde(default)]
@@ -31,6 +39,8 @@ pub struct SizeBox {
     pub height: SizeBoxSizeValue,
     #[serde(default)]
     pub margin: Rect,
+    #[serde(default)]
+    pub keep_aspect_ratio: SizeBoxAspectRatio,
     #[serde(default)]
     pub transform: Transform,
 }
@@ -55,6 +65,7 @@ impl TryFrom<SizeBoxNode> for SizeBox {
             width,
             height,
             margin,
+            keep_aspect_ratio,
             transform,
             ..
         } = node;
@@ -64,6 +75,7 @@ impl TryFrom<SizeBoxNode> for SizeBox {
             width,
             height,
             margin,
+            keep_aspect_ratio,
             transform,
         })
     }
@@ -77,6 +89,7 @@ pub struct SizeBoxNode {
     pub width: SizeBoxSizeValue,
     pub height: SizeBoxSizeValue,
     pub margin: Rect,
+    pub keep_aspect_ratio: SizeBoxAspectRatio,
     pub transform: Transform,
 }
 
@@ -108,6 +121,8 @@ pub(crate) struct SizeBoxNodePrefab {
     pub width: SizeBoxSizeValue,
     #[serde(default)]
     pub height: SizeBoxSizeValue,
+    #[serde(default)]
+    pub keep_aspect_ratio: SizeBoxAspectRatio,
     #[serde(default)]
     pub margin: Rect,
     #[serde(default)]
