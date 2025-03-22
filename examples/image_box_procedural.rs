@@ -16,12 +16,16 @@ fn main() {
         // then our id would be: `path/to/shader`.
         material: ImageBoxMaterial::Procedural(
             ImageBoxProcedural::new("@colored")
-                // if we tell material to fit vertices into layout rect,
-                // then we can define vertices in unit space (0-1 coords).
-                .fit_to_rect(true)
-                .triangle([
+                // if we tell material to remap vertices from its local
+                // coordinate space to rendered screen space.
+                // Here we keep mesh inside image box keeping aspect ratio.
+                .vertex_mapping(CoordsMappingScaling::FitToView(
+                    Vec2 { x: 1.0, y: 1.0 },
+                    true,
+                ))
+                .quad([
                     ImageBoxProceduralVertex {
-                        position: Vec2 { x: 0.0, y: 0.0 },
+                        position: Vec2 { x: 0.5, y: 0.0 },
                         color: Color {
                             r: 1.0,
                             g: 0.0,
@@ -31,7 +35,7 @@ fn main() {
                         ..Default::default()
                     },
                     ImageBoxProceduralVertex {
-                        position: Vec2 { x: 1.0, y: 0.0 },
+                        position: Vec2 { x: 1.0, y: 0.5 },
                         color: Color {
                             r: 0.0,
                             g: 1.0,
@@ -42,6 +46,16 @@ fn main() {
                     },
                     ImageBoxProceduralVertex {
                         position: Vec2 { x: 0.5, y: 1.0 },
+                        color: Color {
+                            r: 1.0,
+                            g: 1.0,
+                            b: 0.0,
+                            a: 1.0,
+                        },
+                        ..Default::default()
+                    },
+                    ImageBoxProceduralVertex {
+                        position: Vec2 { x: 0.0, y: 0.5 },
                         color: Color {
                             r: 0.0,
                             g: 0.0,

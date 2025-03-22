@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.64.3"
+version = "0.65.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Renderer Agnostic User Interface"
@@ -31,41 +31,41 @@ all = [
 ]
 
 [dependencies]
-raui-core = { path = "./raui-core", version = "0.64" }
+raui-core = { path = "./raui-core", version = "0.65" }
 
 [dependencies.raui-material]
 path = "./raui-material"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-retained]
 path = "./raui-retained"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-immediate]
 path = "./raui-immediate"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-immediate-widgets]
 path = "./raui-immediate-widgets"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-json-renderer]
 path = "./raui-json-renderer"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-tesselate-renderer]
 path = "./raui-tesselate-renderer"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dependencies.raui-app]
 path = "./raui-app"
-version = "0.64"
+version = "0.65"
 optional = true
 
 [dev-dependencies]

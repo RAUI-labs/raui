@@ -13,7 +13,10 @@ use raui_core::{
     renderer::Renderer,
     widget::{
         unit::{
-            image::{ImageBoxColor, ImageBoxImage, ImageBoxImageScaling, ImageBoxMaterial},
+            image::{
+                ImageBoxColor, ImageBoxImage, ImageBoxImageScaling, ImageBoxMaterial,
+                ImageBoxProceduralMesh,
+            },
             text::{TextBoxHorizontalAlign, TextBoxVerticalAlign},
             WidgetUnit,
         },
@@ -644,34 +647,66 @@ where
                             images: procedural.images.to_owned(),
                             parameters: procedural.parameters.to_owned(),
                         }) {
+                            let image_mapping =
+                                CoordsMapping::new_scaling(local_space, procedural.vertex_mapping);
                             self.stream.batch_optimized(batch);
-                            self.stream.extend(
-                                procedural.mesh.read().vertices.iter().map(|vertex| {
-                                    Self::make_vertex(
-                                        if procedural.fit_to_rect {
-                                            Vec2 {
-                                                x: vertex.position.x * local_space.width(),
-                                                y: vertex.position.y * local_space.height(),
-                                            }
-                                        } else {
-                                            vertex.position
-                                        },
-                                        vertex.tex_coord,
-                                        vertex.page,
-                                        vertex.color,
-                                    )
-                                }),
-                                procedural
-                                    .mesh
-                                    .read()
-                                    .triangles
-                                    .iter()
-                                    .map(|triangle| Triangle {
-                                        a: triangle[0],
-                                        b: triangle[1],
-                                        c: triangle[2],
-                                    }),
-                            );
+                            match &procedural.mesh {
+                                ImageBoxProceduralMesh::Owned(mesh) => {
+                                    self.stream.extend(
+                                        mesh.vertices.iter().map(|vertex| {
+                                            Self::make_vertex(
+                                                image_mapping
+                                                    .virtual_to_real_vec2(vertex.position, false),
+                                                vertex.tex_coord,
+                                                vertex.page,
+                                                vertex.color,
+                                            )
+                                        }),
+                                        mesh.triangles.iter().map(|triangle| Triangle {
+                                            a: triangle[0],
+                                            b: triangle[1],
+                                            c: triangle[2],
+                                        }),
+                                    );
+                                }
+                                ImageBoxProceduralMesh::Shared(mesh) => {
+                                    self.stream.extend(
+                                        mesh.vertices.iter().map(|vertex| {
+                                            Self::make_vertex(
+                                                image_mapping
+                                                    .virtual_to_real_vec2(vertex.position, false),
+                                                vertex.tex_coord,
+                                                vertex.page,
+                                                vertex.color,
+                                            )
+                                        }),
+                                        mesh.triangles.iter().map(|triangle| Triangle {
+                                            a: triangle[0],
+                                            b: triangle[1],
+                                            c: triangle[2],
+                                        }),
+                                    );
+                                }
+                                ImageBoxProceduralMesh::Generator(generator) => {
+                                    let mesh = (generator)(local_space, &procedural.parameters);
+                                    self.stream.extend(
+                                        mesh.vertices.into_iter().map(|vertex| {
+                                            Self::make_vertex(
+                                                image_mapping
+                                                    .virtual_to_real_vec2(vertex.position, false),
+                                                vertex.tex_coord,
+                                                vertex.page,
+                                                vertex.color,
+                                            )
+                                        }),
+                                        mesh.triangles.into_iter().map(|triangle| Triangle {
+                                            a: triangle[0],
+                                            b: triangle[1],
+                                            c: triangle[2],
+                                        }),
+                                    );
+                                }
+                            }
                         }
                         self.pop_transform();
                         Ok(())

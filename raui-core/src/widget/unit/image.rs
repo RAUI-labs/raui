@@ -1,4 +1,5 @@
 use crate::{
+    layout::CoordsMappingScaling,
     props::Props,
     widget::{
         node::WidgetNode,
@@ -117,31 +118,35 @@ pub struct ImageBoxProceduralMeshData {
     pub triangles: Vec<[u32; 3]>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum ImageBoxProceduralMesh {
     Owned(ImageBoxProceduralMeshData),
     Shared(Arc<ImageBoxProceduralMeshData>),
+    /// fn(widget local space rect, procedural image parameters map) -> mesh data
+    #[serde(skip)]
+    Generator(
+        Arc<
+            dyn Fn(Rect, &HashMap<String, Scalar>) -> ImageBoxProceduralMeshData
+                + 'static
+                + Send
+                + Sync,
+        >,
+    ),
+}
+
+impl std::fmt::Debug for ImageBoxProceduralMesh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Owned(data) => write!(f, "Owned({:?})", data),
+            Self::Shared(data) => write!(f, "Shared({:?})", data),
+            Self::Generator(_) => write!(f, "Generator(...)"),
+        }
+    }
 }
 
 impl Default for ImageBoxProceduralMesh {
     fn default() -> Self {
         Self::Owned(Default::default())
-    }
-}
-
-impl ImageBoxProceduralMesh {
-    pub fn read(&self) -> &ImageBoxProceduralMeshData {
-        match self {
-            Self::Owned(data) => data,
-            Self::Shared(data) => data,
-        }
-    }
-
-    pub fn write(&mut self) -> Option<&mut ImageBoxProceduralMeshData> {
-        match self {
-            Self::Owned(data) => Some(data),
-            Self::Shared(_) => None,
-        }
     }
 }
 
@@ -158,7 +163,7 @@ pub struct ImageBoxProcedural {
     #[serde(default)]
     pub mesh: ImageBoxProceduralMesh,
     #[serde(default)]
-    pub fit_to_rect: bool,
+    pub vertex_mapping: CoordsMappingScaling,
 }
 
 impl ImageBoxProcedural {
@@ -168,7 +173,7 @@ impl ImageBoxProcedural {
             parameters: Default::default(),
             images: Default::default(),
             mesh: Default::default(),
-            fit_to_rect: false,
+            vertex_mapping: Default::default(),
         }
     }
 
@@ -188,7 +193,7 @@ impl ImageBoxProcedural {
     }
 
     pub fn triangle(mut self, vertices: [ImageBoxProceduralVertex; 3]) -> Self {
-        if let Some(mesh) = self.mesh.write() {
+        if let ImageBoxProceduralMesh::Owned(mesh) = &mut self.mesh {
             let count = mesh.vertices.len() as u32;
             mesh.vertices.extend(vertices);
             mesh.triangles.push([count, count + 1, count + 2]);
@@ -197,7 +202,7 @@ impl ImageBoxProcedural {
     }
 
     pub fn quad(mut self, vertices: [ImageBoxProceduralVertex; 4]) -> Self {
-        if let Some(mesh) = self.mesh.write() {
+        if let ImageBoxProceduralMesh::Owned(mesh) = &mut self.mesh {
             let count = mesh.vertices.len() as u32;
             mesh.vertices.extend(vertices);
             mesh.triangles.push([count, count + 1, count + 2]);
@@ -211,7 +216,7 @@ impl ImageBoxProcedural {
         vertices: impl IntoIterator<Item = ImageBoxProceduralVertex>,
         triangles: impl IntoIterator<Item = [u32; 3]>,
     ) -> Self {
-        if let Some(mesh) = self.mesh.write() {
+        if let ImageBoxProceduralMesh::Owned(mesh) = &mut self.mesh {
             let count = mesh.vertices.len() as u32;
             mesh.vertices.extend(vertices);
             mesh.triangles.extend(
@@ -223,8 +228,8 @@ impl ImageBoxProcedural {
         self
     }
 
-    pub fn fit_to_rect(mut self, value: bool) -> Self {
-        self.fit_to_rect = value;
+    pub fn vertex_mapping(mut self, value: CoordsMappingScaling) -> Self {
+        self.vertex_mapping = value;
         self
     }
 }
