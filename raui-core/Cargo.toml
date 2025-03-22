@@ -12,6 +12,6 @@ categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
 raui-derive = { version = "0.64", path = "../raui-derive" }
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1.0"
 intuicio-data = "0.44"

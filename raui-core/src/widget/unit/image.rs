@@ -9,7 +9,7 @@ use crate::{
     PrefabValue, Scalar,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom};
+use std::{collections::HashMap, convert::TryFrom, sync::Arc};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxFrame {
@@ -108,6 +108,44 @@ pub struct ImageBoxProceduralVertex {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ImageBoxProceduralMeshData {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub vertices: Vec<ImageBoxProceduralVertex>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub triangles: Vec<[u32; 3]>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ImageBoxProceduralMesh {
+    Owned(ImageBoxProceduralMeshData),
+    Shared(Arc<ImageBoxProceduralMeshData>),
+}
+
+impl Default for ImageBoxProceduralMesh {
+    fn default() -> Self {
+        Self::Owned(Default::default())
+    }
+}
+
+impl ImageBoxProceduralMesh {
+    pub fn read(&self) -> &ImageBoxProceduralMeshData {
+        match self {
+            Self::Owned(data) => data,
+            Self::Shared(data) => data,
+        }
+    }
+
+    pub fn write(&mut self) -> Option<&mut ImageBoxProceduralMeshData> {
+        match self {
+            Self::Owned(data) => Some(data),
+            Self::Shared(_) => None,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ImageBoxProcedural {
     #[serde(default)]
     pub id: String,
@@ -118,11 +156,7 @@ pub struct ImageBoxProcedural {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub images: Vec<String>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub vertices: Vec<ImageBoxProceduralVertex>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub triangles: Vec<[u32; 3]>,
+    pub mesh: ImageBoxProceduralMesh,
     #[serde(default)]
     pub fit_to_rect: bool,
 }
@@ -133,8 +167,7 @@ impl ImageBoxProcedural {
             id: id.to_string(),
             parameters: Default::default(),
             images: Default::default(),
-            vertices: Default::default(),
-            triangles: Default::default(),
+            mesh: Default::default(),
             fit_to_rect: false,
         }
     }
@@ -149,18 +182,44 @@ impl ImageBoxProcedural {
         self
     }
 
+    pub fn mesh(mut self, mesh: ImageBoxProceduralMesh) -> Self {
+        self.mesh = mesh;
+        self
+    }
+
     pub fn triangle(mut self, vertices: [ImageBoxProceduralVertex; 3]) -> Self {
-        let count = self.vertices.len() as u32;
-        self.vertices.extend(vertices);
-        self.triangles.push([count, count + 1, count + 2]);
+        if let Some(mesh) = self.mesh.write() {
+            let count = mesh.vertices.len() as u32;
+            mesh.vertices.extend(vertices);
+            mesh.triangles.push([count, count + 1, count + 2]);
+        }
         self
     }
 
     pub fn quad(mut self, vertices: [ImageBoxProceduralVertex; 4]) -> Self {
-        let count = self.vertices.len() as u32;
-        self.vertices.extend(vertices);
-        self.triangles.push([count, count + 1, count + 2]);
-        self.triangles.push([count + 2, count + 3, count]);
+        if let Some(mesh) = self.mesh.write() {
+            let count = mesh.vertices.len() as u32;
+            mesh.vertices.extend(vertices);
+            mesh.triangles.push([count, count + 1, count + 2]);
+            mesh.triangles.push([count + 2, count + 3, count]);
+        }
+        self
+    }
+
+    pub fn extend(
+        mut self,
+        vertices: impl IntoIterator<Item = ImageBoxProceduralVertex>,
+        triangles: impl IntoIterator<Item = [u32; 3]>,
+    ) -> Self {
+        if let Some(mesh) = self.mesh.write() {
+            let count = mesh.vertices.len() as u32;
+            mesh.vertices.extend(vertices);
+            mesh.triangles.extend(
+                triangles
+                    .into_iter()
+                    .map(|[a, b, c]| [a + count, b + count, c + count]),
+            );
+        }
         self
     }
 

@@ -646,7 +646,7 @@ where
                         }) {
                             self.stream.batch_optimized(batch);
                             self.stream.extend(
-                                procedural.vertices.iter().map(|vertex| {
+                                procedural.mesh.read().vertices.iter().map(|vertex| {
                                     Self::make_vertex(
                                         if procedural.fit_to_rect {
                                             Vec2 {
@@ -661,11 +661,16 @@ where
                                         vertex.color,
                                     )
                                 }),
-                                procedural.triangles.iter().map(|triangle| Triangle {
-                                    a: triangle[0],
-                                    b: triangle[1],
-                                    c: triangle[2],
-                                }),
+                                procedural
+                                    .mesh
+                                    .read()
+                                    .triangles
+                                    .iter()
+                                    .map(|triangle| Triangle {
+                                        a: triangle[0],
+                                        b: triangle[1],
+                                        c: triangle[2],
+                                    }),
                             );
                         }
                         self.pop_transform();
