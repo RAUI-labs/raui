@@ -124,6 +124,7 @@ pub enum ImageBoxProceduralMesh {
     Shared(Arc<ImageBoxProceduralMeshData>),
     /// fn(widget local space rect, procedural image parameters map) -> mesh data
     #[serde(skip)]
+    #[allow(clippy::type_complexity)]
     Generator(
         Arc<
             dyn Fn(Rect, &HashMap<String, Scalar>) -> ImageBoxProceduralMeshData
