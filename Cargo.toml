@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.65.1"
+version = "0.65.2"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2021"
 description = "Renderer Agnostic User Interface"
