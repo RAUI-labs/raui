@@ -1,6 +1,6 @@
 [package]
 name = "raui-material"
-version = "0.66.0"
+version = "0.66.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "Material components library for RAUI"
