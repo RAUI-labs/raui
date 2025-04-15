@@ -2,11 +2,11 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    DeriveInput, FnArg, Ident, ItemFn, Pat, PatIdent, Path, Result, Token, Type, TypePath,
+    TypeReference,
     parse::{Parse, ParseStream},
     parse_macro_input, parse_str,
     punctuated::Punctuated,
-    DeriveInput, FnArg, Ident, ItemFn, Pat, PatIdent, Path, Result, Token, Type, TypePath,
-    TypeReference,
 };
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,7 @@ impl Parse for IdentList {
 fn unpack_context(ty: &Type, pat: &Pat) -> Option<Ident> {
     match ty {
         Type::Path(TypePath { path, .. }) => {
-            if let Some(segment) = path.segments.iter().last() {
+            if let Some(segment) = path.segments.iter().next_back() {
                 if segment.ident == "WidgetContext" {
                     if let Pat::Ident(PatIdent { ident, .. }) = pat {
                         return Some(ident.to_owned());

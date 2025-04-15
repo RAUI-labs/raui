@@ -1,6 +1,6 @@
 use crate::{
-    widget::{context::WidgetContext, node::WidgetNode},
     PropsData,
+    widget::{context::WidgetContext, node::WidgetNode},
 };
 use serde::{Deserialize, Serialize};
 

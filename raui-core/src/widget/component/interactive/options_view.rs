@@ -1,23 +1,22 @@
 use crate::{
-    make_widget, pre_hooks, unpack_named_slots,
+    PropsData, make_widget, pre_hooks, unpack_named_slots,
     view_model::ViewModelValue,
     widget::{
+        WidgetIdMetaParams,
         component::{
             containers::{
                 anchor_box::PivotBoxProps,
-                context_box::{portals_context_box, ContextBoxProps},
-                size_box::{size_box, SizeBoxProps},
+                context_box::{ContextBoxProps, portals_context_box},
+                size_box::{SizeBoxProps, size_box},
             },
             interactive::{
-                button::{button, ButtonNotifyMessage, ButtonNotifyProps},
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
                 navigation::NavItemActive,
             },
         },
         context::WidgetContext,
         node::WidgetNode,
-        WidgetIdMetaParams,
     },
-    PropsData,
 };
 use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};

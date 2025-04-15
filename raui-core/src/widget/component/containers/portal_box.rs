@@ -1,6 +1,7 @@
 use crate::{
-    unpack_named_slots,
+    PropsData, unpack_named_slots,
     widget::{
+        WidgetRef,
         component::RelativeLayoutProps,
         context::WidgetContext,
         node::WidgetNode,
@@ -10,9 +11,7 @@ use crate::{
             grid::{GridBoxItemLayout, GridBoxItemNode},
             portal::{PortalBoxNode, PortalBoxSlotNode},
         },
-        WidgetRef,
     },
-    PropsData,
 };
 use serde::{Deserialize, Serialize};
 

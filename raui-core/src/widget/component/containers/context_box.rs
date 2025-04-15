@@ -1,8 +1,8 @@
 use crate::{
-    make_widget, pre_hooks, unpack_named_slots,
+    PropsData, make_widget, pre_hooks, unpack_named_slots,
     widget::{
         component::containers::{
-            anchor_box::{pivot_to_anchor_and_align, use_anchor_box, AnchorProps, PivotBoxProps},
+            anchor_box::{AnchorProps, PivotBoxProps, pivot_to_anchor_and_align, use_anchor_box},
             content_box::content_box,
             portal_box::{portal_box, use_portals_container_relative_layout},
         },
@@ -11,7 +11,6 @@ use crate::{
         unit::{area::AreaBoxNode, content::ContentBoxItemLayout},
         utils::{Rect, Vec2},
     },
-    PropsData,
 };
 use serde::{Deserialize, Serialize};
 

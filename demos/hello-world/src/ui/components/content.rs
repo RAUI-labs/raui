@@ -1,6 +1,6 @@
 use crate::ui::components::{
-    color_rect::{color_rect, ColorRectProps},
-    image_button::{image_button, ImageButtonProps},
+    color_rect::{ColorRectProps, color_rect},
+    image_button::{ImageButtonProps, image_button},
 };
 use raui::prelude::*;
 

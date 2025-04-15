@@ -1,12 +1,12 @@
 use crate::{
+    PrefabValue, PropsData, Scalar,
     props::Props,
     widget::{
+        WidgetId,
         node::{WidgetNode, WidgetNodePrefab},
         unit::{WidgetUnit, WidgetUnitData},
         utils::{IntRect, Rect, Transform},
-        WidgetId,
     },
-    PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;

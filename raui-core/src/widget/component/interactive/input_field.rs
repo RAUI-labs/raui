@@ -1,17 +1,16 @@
 use crate::{
-    pre_hooks, unpack_named_slots,
+    Integer, MessageData, PropsData, Scalar, UnsignedInteger, pre_hooks, unpack_named_slots,
     view_model::ViewModelValue,
     widget::{
+        WidgetId, WidgetIdOrRef,
         component::interactive::{
-            button::{use_button, ButtonProps},
-            navigation::{use_nav_item, use_nav_text_input, NavSignal, NavTextChange},
+            button::{ButtonProps, use_button},
+            navigation::{NavSignal, NavTextChange, use_nav_item, use_nav_text_input},
         },
         context::{WidgetContext, WidgetMountOrChangeContext},
         node::WidgetNode,
         unit::area::AreaBoxNode,
-        WidgetId, WidgetIdOrRef,
     },
-    Integer, MessageData, PropsData, Scalar, UnsignedInteger,
 };
 use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};

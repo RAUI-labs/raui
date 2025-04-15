@@ -1,10 +1,10 @@
 use crate::{
+    Prefab,
     props::Props,
     widget::{
         component::{WidgetComponent, WidgetComponentPrefab},
         unit::{WidgetUnitNode, WidgetUnitNodePrefab},
     },
-    Prefab,
 };
 use serde::{Deserialize, Serialize};
 

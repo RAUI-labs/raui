@@ -1,5 +1,5 @@
 use crate::{
-    component::text_paper::{text_paper, TextPaperProps},
+    component::text_paper::{TextPaperProps, text_paper},
     theme::{ThemeColor, ThemeProps, ThemedImageMaterial, ThemedSliderMaterial},
 };
 use raui_core::prelude::*;

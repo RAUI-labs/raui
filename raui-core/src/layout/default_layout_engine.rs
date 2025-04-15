@@ -1,7 +1,10 @@
 use crate::{
+    Scalar,
     layout::{CoordsMapping, Layout, LayoutEngine, LayoutItem, LayoutNode},
     widget::{
+        WidgetId,
         unit::{
+            WidgetUnit,
             area::AreaBox,
             content::ContentBox,
             flex::FlexBox,
@@ -9,12 +12,9 @@ use crate::{
             image::{ImageBox, ImageBoxSizeValue},
             size::{SizeBox, SizeBoxAspectRatio, SizeBoxSizeValue},
             text::{TextBox, TextBoxSizeValue},
-            WidgetUnit,
         },
-        utils::{lerp, Rect, Vec2},
-        WidgetId,
+        utils::{Rect, Vec2, lerp},
     },
-    Scalar,
 };
 use std::collections::HashMap;
 

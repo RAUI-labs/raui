@@ -1,7 +1,7 @@
 use raui_core::{
-    application::ChangeNotifier,
-    widget::{component::WidgetComponent, context::*, node::WidgetNode, FnWidget, WidgetRef},
     Lifetime, LifetimeLazy, Managed, ValueReadAccess, ValueWriteAccess,
+    application::ChangeNotifier,
+    widget::{FnWidget, WidgetRef, component::WidgetComponent, context::*, node::WidgetNode},
 };
 use std::{
     any::Any,

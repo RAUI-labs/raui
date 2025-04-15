@@ -1,15 +1,14 @@
 use crate::{
-    pre_hooks, unpack_named_slots,
+    MessageData, PropsData, pre_hooks, unpack_named_slots,
     widget::{
+        WidgetId, WidgetIdOrRef,
         component::interactive::navigation::{
-            use_nav_button, use_nav_item, use_nav_tracking, use_nav_tracking_self, NavSignal,
+            NavSignal, use_nav_button, use_nav_item, use_nav_tracking, use_nav_tracking_self,
         },
         context::{WidgetContext, WidgetMountOrChangeContext},
         node::WidgetNode,
         unit::area::AreaBoxNode,
-        WidgetId, WidgetIdOrRef,
     },
-    MessageData, PropsData,
 };
 use serde::{Deserialize, Serialize};
 

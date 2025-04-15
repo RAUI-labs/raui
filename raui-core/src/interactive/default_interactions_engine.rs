@@ -1,17 +1,17 @@
 use crate::{
+    Scalar,
     application::Application,
     interactive::InteractionsEngine,
     messenger::MessageData,
     widget::{
+        WidgetId,
         component::{
-            interactive::navigation::{NavDirection, NavJump, NavScroll, NavSignal, NavType},
             RelativeLayoutListenerSignal, ResizeListenerSignal,
+            interactive::navigation::{NavDirection, NavJump, NavScroll, NavSignal, NavType},
         },
         unit::WidgetUnit,
-        utils::{lerp, Rect, Vec2},
-        WidgetId,
+        utils::{Rect, Vec2, lerp},
     },
-    Scalar,
 };
 use std::collections::{HashMap, HashSet, VecDeque};
 

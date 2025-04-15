@@ -1,7 +1,7 @@
 // use crate::ui::components::confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage};
 use crate::{
     model::{AppState, TaskProps},
-    ui::components::confirm_box::{confirm_box, ConfirmBoxProps, ConfirmNotifyMessage},
+    ui::components::confirm_box::{ConfirmBoxProps, ConfirmNotifyMessage, confirm_box},
 };
 use raui::prelude::*;
 use serde::{Deserialize, Serialize};

@@ -1,21 +1,20 @@
 use crate::{
-    make_widget, pre_hooks,
+    PropsData, make_widget, pre_hooks,
     props::Props,
     unpack_named_slots,
     widget::{
         component::{
             containers::{
-                anchor_box::{pivot_box, use_anchor_box, AnchorProps, PivotBoxProps},
+                anchor_box::{AnchorProps, PivotBoxProps, pivot_box, use_anchor_box},
                 content_box::content_box,
                 portal_box::{portal_box, use_portals_container_relative_layout},
             },
-            interactive::navigation::{use_nav_container_active, use_nav_item_active, NavSignal},
+            interactive::navigation::{NavSignal, use_nav_container_active, use_nav_item_active},
         },
         context::WidgetContext,
         node::WidgetNode,
         unit::area::AreaBoxNode,
     },
-    PropsData,
 };
 use serde::{Deserialize, Serialize};
 

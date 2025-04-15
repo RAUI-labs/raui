@@ -3,7 +3,7 @@
 use crate::{Prefab, PrefabError, PrefabValue};
 use serde::{Deserialize, Serialize};
 use std::{
-    any::{type_name, Any, TypeId},
+    any::{Any, TypeId, type_name},
     collections::HashMap,
 };
 
@@ -442,9 +442,15 @@ impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q);
 impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R);
 impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S);
 impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T);
-impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U);
-impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V);
-impl_tuple_props_conversion!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X);
+impl_tuple_props_conversion!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U
+);
+impl_tuple_props_conversion!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V
+);
+impl_tuple_props_conversion!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X
+);
 impl_tuple_props_conversion!(
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y
 );

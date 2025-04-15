@@ -1,8 +1,8 @@
 [package]
 name = "raui-json-renderer"
-version = "0.65.2"
+version = "0.66.0"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
-edition = "2021"
+edition = "2024"
 description = "RAUI renderer for JSON format"
 readme = "../README.md"
 license = "MIT OR Apache-2.0"
@@ -11,6 +11,6 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.65" }
+raui-core = { path = "../raui-core", version = "0.66" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

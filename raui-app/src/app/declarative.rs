@@ -1,4 +1,4 @@
-use crate::{app::SharedApp, interactions::AppInteractionsEngine, Vertex};
+use crate::{Vertex, app::SharedApp, interactions::AppInteractionsEngine};
 use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
@@ -43,7 +43,7 @@ impl DeclarativeApp {
     pub fn event(
         mut self,
         f: impl FnMut(&mut Application, Event<()>, &mut Window, &mut DefaultInteractionsEngine) -> bool
-            + 'static,
+        + 'static,
     ) -> Self {
         self.shared.on_event = Some(Box::new(f));
         self

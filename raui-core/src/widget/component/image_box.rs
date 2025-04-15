@@ -1,4 +1,5 @@
 use crate::{
+    PropsData,
     widget::{
         component::WidgetAlpha,
         context::WidgetContext,
@@ -9,7 +10,6 @@ use crate::{
         },
         utils::{Color, Transform},
     },
-    PropsData,
 };
 use serde::{Deserialize, Serialize};
 

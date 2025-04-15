@@ -89,6 +89,7 @@
 //! ```
 
 use crate::{
+    Prefab, PrefabError, PrefabValue, Scalar,
     animator::{AnimationUpdate, Animator, AnimatorStates},
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
@@ -100,10 +101,12 @@ use crate::{
     state::{State, StateChange, StateUpdate},
     view_model::ViewModelCollection,
     widget::{
+        FnWidget, WidgetId, WidgetIdCommon, WidgetLifeCycle,
         component::{WidgetComponent, WidgetComponentPrefab},
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
         node::{WidgetNode, WidgetNodePrefab},
         unit::{
+            WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
             area::{AreaBoxNode, AreaBoxNodePrefab},
             content::{
                 ContentBoxItem, ContentBoxItemNode, ContentBoxItemNodePrefab, ContentBoxNode,
@@ -122,19 +125,16 @@ use crate::{
             },
             size::{SizeBoxNode, SizeBoxNodePrefab},
             text::{TextBoxNode, TextBoxNodePrefab},
-            WidgetUnit, WidgetUnitNode, WidgetUnitNodePrefab,
         },
-        FnWidget, WidgetId, WidgetIdCommon, WidgetLifeCycle,
     },
-    Prefab, PrefabError, PrefabValue, Scalar,
 };
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
     convert::TryInto,
     sync::{
-        mpsc::{channel, Sender},
         Arc, RwLock,
+        mpsc::{Sender, channel},
     },
 };
 

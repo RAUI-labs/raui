@@ -1,7 +1,7 @@
 use crate::{
     component::{
-        containers::paper::{paper, PaperProps},
-        text_paper::{text_paper, TextPaperProps},
+        containers::paper::{PaperProps, paper},
+        text_paper::{TextPaperProps, text_paper},
     },
     theme::ThemedWidgetProps,
 };
@@ -109,7 +109,7 @@ fn text_field_paper_content(context: WidgetContext) -> WidgetNode {
         .map(|text| text.get())
         .unwrap_or_default();
     let text = if let Some(c) = password {
-        std::iter::repeat(c).take(text.chars().count()).collect()
+        std::iter::repeat_n(c, text.chars().count()).collect()
     } else {
         text
     };

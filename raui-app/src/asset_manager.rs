@@ -2,7 +2,7 @@ use crate::Vertex;
 use fontdue::Font;
 use image::EncodableLayout;
 use raui_core::widget::{
-    unit::{image::ImageBoxMaterial, portal::PortalBoxSlot, WidgetUnit},
+    unit::{WidgetUnit, image::ImageBoxMaterial, portal::PortalBoxSlot},
     utils::{Rect, Vec2},
 };
 use raui_tesselate_renderer::TesselateResourceProvider;

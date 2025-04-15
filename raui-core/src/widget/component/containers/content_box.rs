@@ -1,18 +1,17 @@
 //! A generic container for content with optional clipping and transforms
 
 use crate::{
-    make_widget, pre_hooks,
+    PropsData, make_widget, pre_hooks,
     widget::{
         component::interactive::navigation::{
-            use_nav_container_active, use_nav_item, use_nav_jump_direction_active,
-            NavContainerActive, NavItemActive, NavJumpActive,
+            NavContainerActive, NavItemActive, NavJumpActive, use_nav_container_active,
+            use_nav_item, use_nav_jump_direction_active,
         },
         context::WidgetContext,
         node::WidgetNode,
         unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
         utils::Transform,
     },
-    PropsData,
 };
 use serde::{Deserialize, Serialize};
 

@@ -1,4 +1,4 @@
-use crate::{app::SharedApp, interactions::AppInteractionsEngine, Vertex};
+use crate::{Vertex, app::SharedApp, interactions::AppInteractionsEngine};
 use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
@@ -7,7 +7,7 @@ use raui_core::{
     tester::{AppCycleFrameRunner, AppCycleTester},
     widget::{component::containers::content_box::content_box, utils::Color},
 };
-use raui_immediate::{make_widgets, ImmediateContext};
+use raui_immediate::{ImmediateContext, make_widgets};
 use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
     app::{App, AppConfig, AppState},
@@ -57,7 +57,7 @@ impl ImmediateApp {
     pub fn event(
         mut self,
         f: impl FnMut(&mut Application, Event<()>, &mut Window, &mut DefaultInteractionsEngine) -> bool
-            + 'static,
+        + 'static,
     ) -> Self {
         self.shared.on_event = Some(Box::new(f));
         self

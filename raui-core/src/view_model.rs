@@ -537,20 +537,24 @@ mod tests {
         assert!(!collection.consume_notified_common_root().is_valid());
         handle.write().unwrap().toggle();
         assert!(!collection.consume_notified_common_root().is_valid());
-        assert!(collection
-            .get_mut(FOO_VIEW_MODEL)
-            .unwrap()
-            .properties
-            .bindings(COUNTER_PROPERTY)
-            .unwrap()
-            .is_notified());
-        assert!(collection
-            .get_mut(FOO_VIEW_MODEL)
-            .unwrap()
-            .properties
-            .bindings(FLAG_PROPERTY)
-            .unwrap()
-            .is_notified());
+        assert!(
+            collection
+                .get_mut(FOO_VIEW_MODEL)
+                .unwrap()
+                .properties
+                .bindings(COUNTER_PROPERTY)
+                .unwrap()
+                .is_notified()
+        );
+        assert!(
+            collection
+                .get_mut(FOO_VIEW_MODEL)
+                .unwrap()
+                .properties
+                .bindings(FLAG_PROPERTY)
+                .unwrap()
+                .is_notified()
+        );
 
         // bind widget to properties.
         // whenever property gets notified, its widgets will rebuild.

@@ -2,10 +2,10 @@
 name = "guide_03"
 version = "0.1.0"
 authors = ["RAUI Contributors"]
-edition = "2021"
+edition = "2024"
 
 publish = false
 
 [dependencies]
 # The main RAUI crate
-raui = { version = "0.65", path = "../../../", features = ["app"] }
+raui = { version = "0.66", path = "../../../", features = ["app"] }

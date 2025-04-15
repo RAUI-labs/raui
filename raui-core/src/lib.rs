@@ -24,7 +24,7 @@ pub type Integer = i32;
 pub type UnsignedInteger = u32;
 
 pub use raui_derive::*;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 #[doc(inline)]
 pub use serde_json::{Number as PrefabNumber, Value as PrefabValue};
@@ -34,6 +34,7 @@ pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
 #[doc(hidden)]
 pub mod prelude {
     pub use crate::{
+        Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
         animator::*,
         application::*,
         implement_message_data, implement_props_data,
@@ -76,7 +77,6 @@ pub mod prelude {
             unit::{area::*, content::*, flex::*, grid::*, image::*, portal::*, size::*, text::*},
             utils::*,
         },
-        Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
     };
     pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
 }

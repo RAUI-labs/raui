@@ -1,15 +1,15 @@
 use crate::{
-    make_widget, pre_hooks,
+    PropsData, Scalar, make_widget, pre_hooks,
     props::Props,
     widget::{
         component::{
             containers::{
-                flex_box::{flex_box, FlexBoxProps},
-                switch_box::{switch_box, SwitchBoxProps},
+                flex_box::{FlexBoxProps, flex_box},
+                switch_box::{SwitchBoxProps, switch_box},
             },
             interactive::{
-                button::{button, ButtonNotifyMessage, ButtonNotifyProps},
-                navigation::{use_nav_container_active, use_nav_item, NavItemActive},
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                navigation::{NavItemActive, use_nav_container_active, use_nav_item},
             },
         },
         context::WidgetContext,
@@ -17,7 +17,6 @@ use crate::{
         unit::flex::{FlexBoxDirection, FlexBoxItemLayout},
         utils::Transform,
     },
-    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 

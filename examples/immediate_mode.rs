@@ -10,7 +10,7 @@ use raui_app::prelude::*;
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 
 mod gui {
-    use raui_core::{widget::component::interactive::input_field::input_text_with_cursor, Scalar};
+    use raui_core::{Scalar, widget::component::interactive::input_field::input_text_with_cursor};
     use raui_immediate::*;
     use raui_immediate_widgets::prelude::*;
 

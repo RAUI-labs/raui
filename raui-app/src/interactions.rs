@@ -4,10 +4,10 @@ use glutin::event::{
 use raui_core::{
     application::Application,
     interactive::{
+        InteractionsEngine,
         default_interactions_engine::{
             DefaultInteractionsEngine, DefaultInteractionsEngineResult, Interaction, PointerButton,
         },
-        InteractionsEngine,
     },
     layout::CoordsMapping,
     widget::{

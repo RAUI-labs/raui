@@ -10,6 +10,7 @@ pub mod text;
 use crate::{
     props::Props,
     widget::{
+        WidgetId,
         node::WidgetNode,
         unit::{
             area::{AreaBox, AreaBoxNode, AreaBoxNodePrefab},
@@ -21,7 +22,6 @@ use crate::{
             size::{SizeBox, SizeBoxNode, SizeBoxNodePrefab},
             text::{TextBox, TextBoxNode, TextBoxNodePrefab},
         },
-        WidgetId,
     },
 };
 use serde::{Deserialize, Serialize};

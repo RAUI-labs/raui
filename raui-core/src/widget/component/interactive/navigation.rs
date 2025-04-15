@@ -1,10 +1,9 @@
 use crate::{
-    post_hooks, pre_hooks, unpack_named_slots,
+    MessageData, PropsData, Scalar, post_hooks, pre_hooks, unpack_named_slots,
     widget::{
-        component::containers::portal_box::PortalsContainer, context::WidgetContext,
-        node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2, WidgetId, WidgetIdOrRef,
+        WidgetId, WidgetIdOrRef, component::containers::portal_box::PortalsContainer,
+        context::WidgetContext, node::WidgetNode, unit::area::AreaBoxNode, utils::Vec2,
     },
-    MessageData, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 

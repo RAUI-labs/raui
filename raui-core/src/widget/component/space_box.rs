@@ -1,10 +1,10 @@
 use crate::{
+    PropsData, Scalar,
     widget::{
         context::WidgetContext,
         node::WidgetNode,
         unit::size::{SizeBoxNode, SizeBoxSizeValue},
     },
-    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 

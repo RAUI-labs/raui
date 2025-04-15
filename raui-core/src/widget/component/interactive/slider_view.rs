@@ -1,19 +1,18 @@
 use crate::{
-    pre_hooks, unpack_named_slots,
+    PropsData, Scalar, pre_hooks, unpack_named_slots,
     view_model::ViewModelValue,
     widget::{
         component::interactive::{
-            button::{use_button, ButtonNotifyMessage, ButtonNotifyProps, ButtonProps},
+            button::{ButtonNotifyMessage, ButtonNotifyProps, ButtonProps, use_button},
             navigation::{
-                use_nav_item, use_nav_tracking_self, NavSignal, NavTrackingNotifyMessage,
-                NavTrackingNotifyProps,
+                NavSignal, NavTrackingNotifyMessage, NavTrackingNotifyProps, use_nav_item,
+                use_nav_tracking_self,
             },
         },
         context::WidgetContext,
         node::WidgetNode,
         unit::area::AreaBoxNode,
     },
-    PropsData, Scalar,
 };
 use intuicio_data::managed::ManagedLazy;
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
 use crate::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
-    layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping},
+    layout::{CoordsMapping, default_layout_engine::DefaultLayoutEngine},
 };
 
 pub trait AppCycleFrameRunner<T> {

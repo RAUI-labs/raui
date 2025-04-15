@@ -1,12 +1,12 @@
 use crate::widget::{
+    WidgetId,
     node::{WidgetNode, WidgetNodePrefab},
     unit::{
+        WidgetUnit, WidgetUnitData,
         content::{ContentBoxItem, ContentBoxItemNode, ContentBoxItemNodePrefab},
         flex::{FlexBoxItem, FlexBoxItemNode, FlexBoxItemNodePrefab},
         grid::{GridBoxItem, GridBoxItemNode, GridBoxItemNodePrefab},
-        WidgetUnit, WidgetUnitData,
     },
-    WidgetId,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;

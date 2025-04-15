@@ -7,7 +7,7 @@
 //! See [`Animator`] and [`AnimatorStates`] for code samples.
 //!
 //! [`WidgetContext`]: crate::widget::context::WidgetContext
-use crate::{messenger::MessageSender, widget::WidgetId, MessageData, Scalar};
+use crate::{MessageData, Scalar, messenger::MessageSender, widget::WidgetId};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::mpsc::Sender};
 

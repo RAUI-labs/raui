@@ -3,7 +3,7 @@ pub mod immediate;
 pub mod retained;
 
 use crate::{
-    asset_manager::AssetsManager, interactions::AppInteractionsEngine, TesselateToGraphics, Vertex,
+    TesselateToGraphics, Vertex, asset_manager::AssetsManager, interactions::AppInteractionsEngine,
 };
 use glutin::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
@@ -12,7 +12,7 @@ use glutin::{
 use raui_core::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
-    layout::{default_layout_engine::DefaultLayoutEngine, CoordsMapping},
+    layout::{CoordsMapping, default_layout_engine::DefaultLayoutEngine},
     widget::utils::{Color, Rect},
 };
 use raui_tesselate_renderer::TesselateRenderer;

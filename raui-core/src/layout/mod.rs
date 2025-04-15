@@ -3,12 +3,12 @@
 pub mod default_layout_engine;
 
 use crate::{
+    Scalar,
     widget::{
+        WidgetId,
         unit::WidgetUnit,
         utils::{Rect, Vec2},
-        WidgetId,
     },
-    Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -53,10 +53,10 @@ impl std::fmt::Debug for Layout {
 impl Layout {
     pub fn find(&self, mut path: &str) -> Option<&LayoutItem> {
         loop {
-            if let Some(item) =
-                self.items
-                    .iter()
-                    .find_map(|(k, v)| if k.path() == path { Some(v) } else { None })
+            if let Some(item) = self
+                .items
+                .iter()
+                .find_map(|(k, v)| if k.path() == path { Some(v) } else { None })
             {
                 return Some(item);
             } else if let Some(index) = path.rfind('/') {

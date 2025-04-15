@@ -5,15 +5,15 @@ pub mod space_box;
 pub mod text_box;
 
 use crate::{
+    MessageData, PrefabValue, PropsData, Scalar,
     messenger::Message,
     props::{Props, PropsData},
     widget::{
+        FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
         context::WidgetContext,
         node::{WidgetNode, WidgetNodePrefab},
         utils::{Rect, Vec2},
-        FnWidget, WidgetId, WidgetIdOrRef, WidgetRef,
     },
-    MessageData, PrefabValue, PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 use std::{any::TypeId, collections::HashMap, convert::TryFrom};

@@ -1,27 +1,29 @@
 use crate::{
-    make_widget, pre_hooks,
+    PropsData, Scalar, make_widget, pre_hooks,
     props::Props,
     unpack_named_slots,
     widget::{
+        WidgetId,
         component::{
+            ResizeListenerSignal,
             containers::{
-                content_box::{content_box, ContentBoxProps},
-                size_box::{size_box, SizeBoxProps},
+                content_box::{ContentBoxProps, content_box},
+                size_box::{SizeBoxProps, size_box},
             },
-            image_box::{image_box, ImageBoxProps},
+            image_box::{ImageBoxProps, image_box},
             interactive::{
                 button::{
-                    button, self_tracked_button, ButtonNotifyMessage, ButtonNotifyProps,
-                    ButtonProps,
+                    ButtonNotifyMessage, ButtonNotifyProps, ButtonProps, button,
+                    self_tracked_button,
                 },
                 navigation::{
-                    use_nav_container_active, use_nav_item, use_nav_item_active,
-                    use_nav_scroll_view_content, NavItemActive, NavJump, NavScroll, NavSignal,
-                    NavTrackingNotifyMessage, NavTrackingNotifyProps,
+                    NavItemActive, NavJump, NavScroll, NavSignal, NavTrackingNotifyMessage,
+                    NavTrackingNotifyProps, use_nav_container_active, use_nav_item,
+                    use_nav_item_active, use_nav_scroll_view_content,
                 },
-                scroll_view::{use_scroll_view, ScrollViewState},
+                scroll_view::{ScrollViewState, use_scroll_view},
             },
-            use_resize_listener, ResizeListenerSignal,
+            use_resize_listener,
         },
         context::WidgetContext,
         node::WidgetNode,
@@ -29,10 +31,8 @@ use crate::{
             area::AreaBoxNode, content::ContentBoxItemLayout, image::ImageBoxMaterial,
             size::SizeBoxSizeValue,
         },
-        utils::{lerp, Rect, Vec2},
-        WidgetId,
+        utils::{Rect, Vec2, lerp},
     },
-    PropsData, Scalar,
 };
 use serde::{Deserialize, Serialize};
 

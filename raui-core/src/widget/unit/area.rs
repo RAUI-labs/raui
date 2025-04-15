@@ -1,7 +1,7 @@
 use crate::widget::{
+    WidgetId,
     node::{WidgetNode, WidgetNodePrefab},
     unit::{WidgetUnit, WidgetUnitData},
-    WidgetId,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;

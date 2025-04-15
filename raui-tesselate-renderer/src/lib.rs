@@ -2,28 +2,28 @@ use std::collections::HashMap;
 
 use bytemuck::Pod;
 use fontdue::{
+    Font,
     layout::{
         CoordinateSystem, HorizontalAlign, Layout as TextLayout, LayoutSettings, TextStyle,
         VerticalAlign,
     },
-    Font,
 };
 use raui_core::{
+    Scalar,
     layout::{CoordsMapping, Layout},
     renderer::Renderer,
     widget::{
+        WidgetId,
         unit::{
+            WidgetUnit,
             image::{
                 ImageBoxColor, ImageBoxImage, ImageBoxImageScaling, ImageBoxMaterial,
                 ImageBoxProceduralMesh,
             },
             text::{TextBoxHorizontalAlign, TextBoxVerticalAlign},
-            WidgetUnit,
         },
-        utils::{lerp, Color, Rect, Transform, Vec2},
-        WidgetId,
+        utils::{Color, Rect, Transform, Vec2, lerp},
     },
-    Scalar,
 };
 use spitfire_core::{Triangle, VertexStream};
 use spitfire_fontdue::{TextRenderer, TextVertex};

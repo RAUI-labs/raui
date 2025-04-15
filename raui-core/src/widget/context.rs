@@ -5,7 +5,7 @@ use crate::{
     signals::SignalSender,
     state::State,
     view_model::ViewModelCollectionView,
-    widget::{node::WidgetNode, WidgetId, WidgetLifeCycle, WidgetRef},
+    widget::{WidgetId, WidgetLifeCycle, WidgetRef, node::WidgetNode},
 };
 use std::collections::HashMap;
 

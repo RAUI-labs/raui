@@ -1,13 +1,13 @@
 use crate::{
+    MessageData, PropsData,
     messenger::MessageData,
     pre_hooks,
     widget::{
-        component::interactive::navigation::{use_nav_scroll_view, NavJump, NavScroll, NavSignal},
+        WidgetId, WidgetIdOrRef,
+        component::interactive::navigation::{NavJump, NavScroll, NavSignal, use_nav_scroll_view},
         context::{WidgetContext, WidgetMountOrChangeContext},
         utils::Vec2,
-        WidgetId, WidgetIdOrRef,
     },
-    MessageData, PropsData,
 };
 use serde::{Deserialize, Serialize};
 
