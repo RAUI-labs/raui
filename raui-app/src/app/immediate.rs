@@ -3,6 +3,7 @@ use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
+    layout::CoordsMappingScaling,
     make_widget,
     tester::{AppCycleFrameRunner, AppCycleTester},
     widget::{component::containers::content_box::content_box, utils::Color},
@@ -24,9 +25,33 @@ impl ImmediateApp {
         App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().update(callback));
     }
 
+    pub fn simple_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        callback: impl FnMut() + 'static,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title)).run(
+            Self::default()
+                .coords_mapping_scaling(scaling)
+                .update(callback),
+        );
+    }
+
     pub fn simple_fullscreen(title: impl ToString, callback: impl FnMut() + 'static) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
             .run(Self::default().update(callback));
+    }
+
+    pub fn simple_fullscreen_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        callback: impl FnMut() + 'static,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true)).run(
+            Self::default()
+                .coords_mapping_scaling(scaling)
+                .update(callback),
+        );
     }
 
     pub fn test_frame<F: FnMut()>(f: F) -> ImmediateAppCycleFrameRunner<F> {
@@ -70,6 +95,11 @@ impl ImmediateApp {
 
     pub fn setup_interactions(mut self, mut f: impl FnMut(&mut AppInteractionsEngine)) -> Self {
         f(&mut self.shared.interactions);
+        self
+    }
+
+    pub fn coords_mapping_scaling(mut self, value: CoordsMappingScaling) -> Self {
+        self.shared.coords_mapping_scaling = value;
         self
     }
 }

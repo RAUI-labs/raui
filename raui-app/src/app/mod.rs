@@ -12,7 +12,7 @@ use glutin::{
 use raui_core::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
-    layout::{CoordsMapping, default_layout_engine::DefaultLayoutEngine},
+    layout::{CoordsMapping, CoordsMappingScaling, default_layout_engine::DefaultLayoutEngine},
     widget::utils::{Color, Rect},
 };
 use raui_tesselate_renderer::TesselateRenderer;
@@ -58,6 +58,7 @@ pub(crate) struct SharedApp {
     timer: Instant,
     assets: AssetsManager,
     coords_mapping: CoordsMapping,
+    pub coords_mapping_scaling: CoordsMappingScaling,
     missing_texutre: Option<Texture>,
     glyphs_texture: Option<Texture>,
     colored_shader: Option<Shader>,
@@ -86,6 +87,7 @@ impl Default for SharedApp {
             timer: Instant::now(),
             assets: Default::default(),
             coords_mapping: Default::default(),
+            coords_mapping_scaling: Default::default(),
             missing_texutre: None,
             glyphs_texture: None,
             colored_shader: None,
@@ -134,12 +136,15 @@ impl SharedApp {
         }
         self.assets.maintain();
         self.application.animations_delta_time = elapsed.as_secs_f32();
-        self.coords_mapping = CoordsMapping::new(Rect {
-            left: 0.0,
-            right: graphics.main_camera.screen_size.x,
-            top: 0.0,
-            bottom: graphics.main_camera.screen_size.y,
-        });
+        self.coords_mapping = CoordsMapping::new_scaling(
+            Rect {
+                left: 0.0,
+                right: graphics.main_camera.screen_size.x,
+                top: 0.0,
+                bottom: graphics.main_camera.screen_size.y,
+            },
+            self.coords_mapping_scaling,
+        );
         if self.application.process() {
             let _ = self
                 .application

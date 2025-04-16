@@ -3,6 +3,7 @@ use glutin::{event::Event, window::Window};
 use raui_core::{
     application::{Application, ChangeNotifier},
     interactive::default_interactions_engine::DefaultInteractionsEngine,
+    layout::CoordsMappingScaling,
     widget::utils::Color,
 };
 use raui_retained::{View, ViewState};
@@ -31,12 +32,36 @@ impl<T: ViewState> RetainedApp<T> {
         App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().tree(producer));
     }
 
+    pub fn simple_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        producer: impl FnMut(ChangeNotifier) -> View<T>,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title)).run(
+            Self::default()
+                .coords_mapping_scaling(scaling)
+                .tree(producer),
+        );
+    }
+
     pub fn simple_fullscreen(
         title: impl ToString,
         producer: impl FnMut(ChangeNotifier) -> View<T>,
     ) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
             .run(Self::default().tree(producer));
+    }
+
+    pub fn simple_fullscreen_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        producer: impl FnMut(ChangeNotifier) -> View<T>,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true)).run(
+            Self::default()
+                .coords_mapping_scaling(scaling)
+                .tree(producer),
+        );
     }
 
     pub fn redraw(
@@ -70,6 +95,11 @@ impl<T: ViewState> RetainedApp<T> {
         let root = producer(self.shared.application.notifier());
         self.shared.application.apply(root.component().key("root"));
         self.root = Some(root);
+        self
+    }
+
+    pub fn coords_mapping_scaling(mut self, value: CoordsMappingScaling) -> Self {
+        self.shared.coords_mapping_scaling = value;
         self
     }
 }

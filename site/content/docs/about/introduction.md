@@ -5,7 +5,7 @@ sort_by = "weight"
 template = "docs/page.html"
 
 [extra]
-lead = "<b>RAUI</b> is a renderer agnostic UI, written in Rust, that is heavely inspired by <b>React</b> declarative UI composition and <b>UE4 Slate</b> widget components system."
+lead = "<b>RAUI</b> is a renderer agnostic UI, written in Rust, that is heavely inspired by <b>React</b> declarative UI composition and <b>Unreal Engine Slate</b> widget components system."
 toc = true
 top = false
 +++

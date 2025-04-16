@@ -3,6 +3,7 @@ use glutin::{event::Event, window::Window};
 use raui_core::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
+    layout::CoordsMappingScaling,
     view_model::ViewModel,
     widget::{node::WidgetNode, utils::Color},
 };
@@ -22,9 +23,27 @@ impl DeclarativeApp {
         App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().tree(root));
     }
 
+    pub fn simple_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        root: impl Into<WidgetNode>,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title))
+            .run(Self::default().coords_mapping_scaling(scaling).tree(root));
+    }
+
     pub fn simple_fullscreen(title: impl ToString, root: impl Into<WidgetNode>) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
             .run(Self::default().tree(root));
+    }
+
+    pub fn simple_fullscreen_scaled(
+        title: impl ToString,
+        scaling: CoordsMappingScaling,
+        root: impl Into<WidgetNode>,
+    ) {
+        App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
+            .run(Self::default().coords_mapping_scaling(scaling).tree(root));
     }
 
     pub fn update(mut self, f: impl FnMut(&mut Application) + 'static) -> Self {
@@ -69,6 +88,11 @@ impl DeclarativeApp {
 
     pub fn tree(mut self, root: impl Into<WidgetNode>) -> Self {
         self.shared.application.apply(root);
+        self
+    }
+
+    pub fn coords_mapping_scaling(mut self, value: CoordsMappingScaling) -> Self {
+        self.shared.coords_mapping_scaling = value;
         self
     }
 }

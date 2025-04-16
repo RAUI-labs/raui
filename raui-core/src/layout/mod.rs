@@ -166,6 +166,7 @@ impl LayoutEngine<()> for () {
 pub enum CoordsMappingScaling {
     #[default]
     None,
+    Constant(Scalar),
     Stretch(Vec2),
     FitHorizontal(Scalar),
     FitVertical(Scalar),
@@ -210,6 +211,20 @@ impl CoordsMapping {
                     bottom: real_area.height(),
                 },
             },
+            CoordsMappingScaling::Constant(value) => {
+                let value = if value > 0.0 { value } else { 1.0 };
+                Self {
+                    scale: value.into(),
+                    offset: Vec2::default(),
+                    real_area,
+                    virtual_area: Rect {
+                        left: 0.0,
+                        right: real_area.width() / value,
+                        top: 0.0,
+                        bottom: real_area.height() / value,
+                    },
+                }
+            }
             CoordsMappingScaling::Stretch(size) => {
                 let vw = size.x;
                 let vh = size.y;

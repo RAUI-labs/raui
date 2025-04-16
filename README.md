@@ -3,7 +3,7 @@
 ## About
 
 RAUI is a renderer agnostic UI system that is heavily inspired by **React**'s declarative UI
-composition and the **UE4 Slate** widget components system.
+composition and the **Unreal Engine Slate** widget components system.
 
 > 🗣 **Pronunciation:** RAUI is pronounced like **"ra"** ( the Egyptian god ) + **"oui"**
 > (french for "yes" ) — [Audio Example][pronounciation].

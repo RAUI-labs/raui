@@ -149,7 +149,7 @@ info = "Powered by <a href=\"https://www.getzola.org/\">Zola</a> and <a href=\"h
 # The homepage contents
 [extra.home]
 title = "RAUI — Renderer Agnostic UI"
-lead = "<b>RAUI</b> is a renderer agnostic UI, written in Rust, that is heavely inspired by <b>React</b> declarative UI composition and <b>UE4 Slate</b> widget components system"
+lead = "<b>RAUI</b> is a renderer agnostic UI, written in Rust, that is heavely inspired by <b>React</b> declarative UI composition and <b>Unreal Engine Slate</b> widget components system"
 url = "/docs/about/introduction/"
 url_button = "Get started"
 repo_version = "Hosted on GitHub."
