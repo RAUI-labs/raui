@@ -2,6 +2,7 @@ pub mod app;
 pub(crate) mod asset_manager;
 pub(crate) mod interactions;
 pub mod render_worker;
+pub(crate) mod text_measurements;
 
 use crate::asset_manager::AssetsManager;
 use bytemuck::{Pod, Zeroable};

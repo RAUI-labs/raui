@@ -56,11 +56,10 @@ fn main() {
             Vec2 { x: 200.0, y: 100.0 },
         ));
 
-        // We apply the application layout
-        application
-            // We use the default layout engine, but you could make your own layout engine
-            .layout(&mapping, &mut DefaultLayoutEngine)
-            .unwrap();
+        // We apply the application layout.
+        // We use the default layout engine, but you could make your own layout engine.
+        let mut layout_engine = DefaultLayoutEngine::<()>::default();
+        application.layout(&mapping, &mut layout_engine).unwrap();
 
         // Since interactions engines require constructed layout to process interactions we
         // have to process interactions after we layout the UI.

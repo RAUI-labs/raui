@@ -250,7 +250,7 @@ what you've expected, feel free to create your custom layout engine!
 
 ```rust
 let mut application = Application::default();
-let mut layout_engine = DefaultLayoutEngine;
+let mut layout_engine = DefaultLayoutEngine::<()>::default();
 application.apply(tree);
 application.forced_process();
 println!(
@@ -325,8 +325,9 @@ let mapping = CoordsMapping::new(Rect {
     top: 0.0,
     bottom: 576.0,
 });
+let mut layout_engine = DefaultLayoutEngine::<()>::default();
 application
-    .layout(&mapping, &mut DefaultLayoutEngine)
+    .layout(&mapping, &mut layout_engine)
     .unwrap();
 // Since interactions engines require constructed layout to process interactions we have to
 // process interactions after we layout the UI.

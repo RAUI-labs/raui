@@ -4,7 +4,7 @@ pub mod retained;
 
 use crate::{
     TesselateToGraphics, Vertex, asset_manager::AssetsManager, interactions::AppInteractionsEngine,
-    render_worker::RenderWorkersViewModel,
+    render_worker::RenderWorkersViewModel, text_measurements::AppTextMeasurementsEngine,
 };
 use glutin::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
@@ -167,13 +167,18 @@ impl SharedApp {
             self.coords_mapping_scaling,
         );
         if self.application.process() {
+            self.assets.load(self.application.rendered_tree(), graphics);
+            let mut layout_engine = DefaultLayoutEngine::new(AppTextMeasurementsEngine {
+                assets: &self.assets,
+            });
             let _ = self
                 .application
-                .layout(&self.coords_mapping, &mut DefaultLayoutEngine);
+                .layout(&self.coords_mapping, &mut layout_engine);
+        } else {
+            self.assets.load(self.application.rendered_tree(), graphics);
         }
         let _ = self.application.interact(&mut self.interactions);
         self.application.consume_signals();
-        self.assets.load(self.application.rendered_tree(), graphics);
         let matrix = graphics
             .main_camera
             .world_projection_matrix()

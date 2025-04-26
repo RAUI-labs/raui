@@ -64,6 +64,7 @@ pub struct TextBoxFont {
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub enum TextBoxSizeValue {
+    Content,
     #[default]
     Fill,
     Exact(Scalar),

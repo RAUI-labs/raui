@@ -18,34 +18,80 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Debug, Default, Copy, Clone)]
-pub struct DefaultLayoutEngine;
+pub trait TextMeasurementEngine {
+    fn measure_text(&self, mapping: &CoordsMapping, widget: &TextBox) -> Option<Rect>;
+}
 
-impl DefaultLayoutEngine {
-    pub fn layout_node(size_available: Vec2, unit: &WidgetUnit) -> Option<LayoutNode> {
-        match unit {
-            WidgetUnit::None | WidgetUnit::PortalBox(_) => None,
-            WidgetUnit::AreaBox(b) => Self::layout_area_box(size_available, b),
-            WidgetUnit::ContentBox(b) => Self::layout_content_box(size_available, b),
-            WidgetUnit::FlexBox(b) => Self::layout_flex_box(size_available, b),
-            WidgetUnit::GridBox(b) => Self::layout_grid_box(size_available, b),
-            WidgetUnit::SizeBox(b) => Self::layout_size_box(size_available, b),
-            WidgetUnit::ImageBox(b) => Self::layout_image_box(size_available, b),
-            WidgetUnit::TextBox(b) => Self::layout_text_box(size_available, b),
+impl TextMeasurementEngine for () {
+    fn measure_text(&self, _: &CoordsMapping, _: &TextBox) -> Option<Rect> {
+        None
+    }
+}
+
+pub struct DefaultLayoutEngine<TME: TextMeasurementEngine = ()> {
+    text_measurement_engine: TME,
+}
+
+impl<TME: TextMeasurementEngine + Default> Default for DefaultLayoutEngine<TME> {
+    fn default() -> Self {
+        Self {
+            text_measurement_engine: TME::default(),
+        }
+    }
+}
+
+impl<TME: TextMeasurementEngine + Clone> Clone for DefaultLayoutEngine<TME> {
+    fn clone(&self) -> Self {
+        Self {
+            text_measurement_engine: self.text_measurement_engine.clone(),
+        }
+    }
+}
+
+impl<TME: TextMeasurementEngine + Copy> Copy for DefaultLayoutEngine<TME> {}
+
+impl<TME: TextMeasurementEngine> DefaultLayoutEngine<TME> {
+    pub fn new(engine: TME) -> Self {
+        Self {
+            text_measurement_engine: engine,
         }
     }
 
-    pub fn layout_area_box(size_available: Vec2, unit: &AreaBox) -> Option<LayoutNode> {
+    pub fn layout_node(
+        size_available: Vec2,
+        unit: &WidgetUnit,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
+        match unit {
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => None,
+            WidgetUnit::AreaBox(b) => Self::layout_area_box(size_available, b, text_measurements),
+            WidgetUnit::ContentBox(b) => {
+                Self::layout_content_box(size_available, b, text_measurements)
+            }
+            WidgetUnit::FlexBox(b) => Self::layout_flex_box(size_available, b, text_measurements),
+            WidgetUnit::GridBox(b) => Self::layout_grid_box(size_available, b, text_measurements),
+            WidgetUnit::SizeBox(b) => Self::layout_size_box(size_available, b, text_measurements),
+            WidgetUnit::ImageBox(b) => Self::layout_image_box(size_available, b),
+            WidgetUnit::TextBox(b) => Self::layout_text_box(size_available, b, text_measurements),
+        }
+    }
+
+    pub fn layout_area_box(
+        size_available: Vec2,
+        unit: &AreaBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
-        let (children, w, h) = if let Some(child) = Self::layout_node(size_available, &unit.slot) {
-            let w = child.local_space.width();
-            let h = child.local_space.height();
-            (vec![child], w, h)
-        } else {
-            (vec![], 0.0, 0.0)
-        };
+        let (children, w, h) =
+            if let Some(child) = Self::layout_node(size_available, &unit.slot, text_measurements) {
+                let w = child.local_space.width();
+                let h = child.local_space.height();
+                (vec![child], w, h)
+            } else {
+                (vec![], 0.0, 0.0)
+            };
         let local_space = Rect {
             left: 0.0,
             right: w,
@@ -59,7 +105,11 @@ impl DefaultLayoutEngine {
         })
     }
 
-    pub fn layout_content_box(size_available: Vec2, unit: &ContentBox) -> Option<LayoutNode> {
+    pub fn layout_content_box(
+        size_available: Vec2,
+        unit: &ContentBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
@@ -81,7 +131,7 @@ impl DefaultLayoutEngine {
                     x: width,
                     y: height,
                 };
-                if let Some(mut child) = Self::layout_node(size, &item.slot) {
+                if let Some(mut child) = Self::layout_node(size, &item.slot, text_measurements) {
                     let diff = child.local_space.width() - width;
                     let ox = lerp(0.0, diff, item.layout.align.x);
                     child.local_space.left += left - ox;
@@ -134,18 +184,34 @@ impl DefaultLayoutEngine {
         })
     }
 
-    pub fn layout_flex_box(size_available: Vec2, unit: &FlexBox) -> Option<LayoutNode> {
+    pub fn layout_flex_box(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
         if unit.wrap {
-            Some(Self::layout_flex_box_wrapping(size_available, unit))
+            Some(Self::layout_flex_box_wrapping(
+                size_available,
+                unit,
+                text_measurements,
+            ))
         } else {
-            Some(Self::layout_flex_box_no_wrap(size_available, unit))
+            Some(Self::layout_flex_box_no_wrap(
+                size_available,
+                unit,
+                text_measurements,
+            ))
         }
     }
 
-    pub fn layout_flex_box_wrapping(size_available: Vec2, unit: &FlexBox) -> LayoutNode {
+    pub fn layout_flex_box_wrapping(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> LayoutNode {
         let main_available = if unit.direction.is_horizontal() {
             size_available.x
         } else {
@@ -166,9 +232,9 @@ impl DefaultLayoutEngine {
             for item in items {
                 let local_main = item.layout.basis.unwrap_or_else(|| {
                     if unit.direction.is_horizontal() {
-                        Self::calc_unit_min_width(size_available, &item.slot)
+                        Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                     } else {
-                        Self::calc_unit_min_height(size_available, &item.slot)
+                        Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                     }
                 });
                 let local_main = local_main
@@ -178,9 +244,9 @@ impl DefaultLayoutEngine {
                         item.layout.margin.top + item.layout.margin.bottom
                     };
                 let local_cross = if unit.direction.is_horizontal() {
-                    Self::calc_unit_min_height(size_available, &item.slot)
+                    Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                 } else {
-                    Self::calc_unit_min_width(size_available, &item.slot)
+                    Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                 };
                 let local_cross = local_cross
                     + if unit.direction.is_horizontal() {
@@ -248,7 +314,7 @@ impl DefaultLayoutEngine {
                         y: child_main,
                     }
                 };
-                if let Some(mut child) = Self::layout_node(rect, &item.slot) {
+                if let Some(mut child) = Self::layout_node(rect, &item.slot, text_measurements) {
                     if unit.direction.is_horizontal() {
                         if unit.direction.is_order_ascending() {
                             child.local_space.left += new_main + item.layout.margin.left;
@@ -323,7 +389,11 @@ impl DefaultLayoutEngine {
         }
     }
 
-    pub fn layout_flex_box_no_wrap(size_available: Vec2, unit: &FlexBox) -> LayoutNode {
+    pub fn layout_flex_box_no_wrap(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> LayoutNode {
         let (main_available, cross_available) = if unit.direction.is_horizontal() {
             (size_available.x, size_available.y)
         } else {
@@ -342,9 +412,9 @@ impl DefaultLayoutEngine {
         for item in &items {
             let local_main = item.layout.basis.unwrap_or_else(|| {
                 if unit.direction.is_horizontal() {
-                    Self::calc_unit_min_width(size_available, &item.slot)
+                    Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                 } else {
-                    Self::calc_unit_min_height(size_available, &item.slot)
+                    Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                 }
             });
             let local_main = local_main
@@ -354,9 +424,9 @@ impl DefaultLayoutEngine {
                     item.layout.margin.top + item.layout.margin.bottom
                 };
             let local_cross = if unit.direction.is_horizontal() {
-                Self::calc_unit_min_height(size_available, &item.slot)
+                Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
             } else {
-                Self::calc_unit_min_width(size_available, &item.slot)
+                Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
             };
             let local_cross = local_cross
                 + if unit.direction.is_horizontal() {
@@ -421,7 +491,7 @@ impl DefaultLayoutEngine {
                         y: child_main,
                     }
                 };
-                if let Some(mut child) = Self::layout_node(rect, &item.slot) {
+                if let Some(mut child) = Self::layout_node(rect, &item.slot, text_measurements) {
                     if unit.direction.is_horizontal() {
                         if unit.direction.is_order_ascending() {
                             child.local_space.left += new_main + item.layout.margin.left;
@@ -495,7 +565,11 @@ impl DefaultLayoutEngine {
         }
     }
 
-    pub fn layout_grid_box(size_available: Vec2, unit: &GridBox) -> Option<LayoutNode> {
+    pub fn layout_grid_box(
+        size_available: Vec2,
+        unit: &GridBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
@@ -525,7 +599,7 @@ impl DefaultLayoutEngine {
                     x: width,
                     y: height,
                 };
-                if let Some(mut child) = Self::layout_node(size, &item.slot) {
+                if let Some(mut child) = Self::layout_node(size, &item.slot, text_measurements) {
                     let diff = size.x - child.local_space.width();
                     let ox = lerp(0.0, diff, item.layout.horizontal_align);
                     let diff = size.y - child.local_space.height();
@@ -552,18 +626,26 @@ impl DefaultLayoutEngine {
         })
     }
 
-    pub fn layout_size_box(size_available: Vec2, unit: &SizeBox) -> Option<LayoutNode> {
+    pub fn layout_size_box(
+        size_available: Vec2,
+        unit: &SizeBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
         let mut size = Vec2 {
             x: match unit.width {
-                SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &unit.slot),
+                SizeBoxSizeValue::Content => {
+                    Self::calc_unit_min_width(size_available, &unit.slot, text_measurements)
+                }
                 SizeBoxSizeValue::Fill => size_available.x - unit.margin.left - unit.margin.right,
                 SizeBoxSizeValue::Exact(v) => v,
             },
             y: match unit.height {
-                SizeBoxSizeValue::Content => Self::calc_unit_min_height(size_available, &unit.slot),
+                SizeBoxSizeValue::Content => {
+                    Self::calc_unit_min_height(size_available, &unit.slot, text_measurements)
+                }
                 SizeBoxSizeValue::Fill => size_available.y - unit.margin.top - unit.margin.bottom,
                 SizeBoxSizeValue::Exact(v) => v,
             },
@@ -577,15 +659,16 @@ impl DefaultLayoutEngine {
                 size.y = (size.x * factor).max(0.0);
             }
         }
-        let children = if let Some(mut child) = Self::layout_node(size, &unit.slot) {
-            child.local_space.left += unit.margin.left;
-            child.local_space.right += unit.margin.left;
-            child.local_space.top += unit.margin.top;
-            child.local_space.bottom += unit.margin.top;
-            vec![child]
-        } else {
-            vec![]
-        };
+        let children =
+            if let Some(mut child) = Self::layout_node(size, &unit.slot, text_measurements) {
+                child.local_space.left += unit.margin.left;
+                child.local_space.right += unit.margin.left;
+                child.local_space.top += unit.margin.top;
+                child.local_space.bottom += unit.margin.top;
+                vec![child]
+            } else {
+                vec![]
+            };
         let local_space = Rect {
             left: 0.0,
             right: size.x,
@@ -622,18 +705,25 @@ impl DefaultLayoutEngine {
         })
     }
 
-    pub fn layout_text_box(size_available: Vec2, unit: &TextBox) -> Option<LayoutNode> {
+    pub fn layout_text_box(
+        size_available: Vec2,
+        unit: &TextBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Option<LayoutNode> {
         if !unit.id.is_valid() {
             return None;
         }
+        let aabb = text_measurements.get(&unit.id).copied().unwrap_or_default();
         let local_space = Rect {
             left: 0.0,
             right: match unit.width {
+                TextBoxSizeValue::Content => aabb.width(),
                 TextBoxSizeValue::Fill => size_available.x,
                 TextBoxSizeValue::Exact(v) => v,
             },
             top: 0.0,
             bottom: match unit.height {
+                TextBoxSizeValue::Content => aabb.height(),
                 TextBoxSizeValue::Fill => size_available.y,
                 TextBoxSizeValue::Exact(v) => v,
             },
@@ -645,16 +735,30 @@ impl DefaultLayoutEngine {
         })
     }
 
-    fn calc_unit_min_width(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
+    fn calc_unit_min_width(
+        size_available: Vec2,
+        unit: &WidgetUnit,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         match unit {
             WidgetUnit::None | WidgetUnit::PortalBox(_) => 0.0,
-            WidgetUnit::AreaBox(b) => Self::calc_unit_min_width(size_available, &b.slot),
-            WidgetUnit::ContentBox(b) => Self::calc_content_box_min_width(size_available, b),
-            WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_width(size_available, b),
-            WidgetUnit::GridBox(b) => Self::calc_grid_box_min_width(size_available, b),
+            WidgetUnit::AreaBox(b) => {
+                Self::calc_unit_min_width(size_available, &b.slot, text_measurements)
+            }
+            WidgetUnit::ContentBox(b) => {
+                Self::calc_content_box_min_width(size_available, b, text_measurements)
+            }
+            WidgetUnit::FlexBox(b) => {
+                Self::calc_flex_box_min_width(size_available, b, text_measurements)
+            }
+            WidgetUnit::GridBox(b) => {
+                Self::calc_grid_box_min_width(size_available, b, text_measurements)
+            }
             WidgetUnit::SizeBox(b) => {
                 (match b.width {
-                    SizeBoxSizeValue::Content => Self::calc_unit_min_width(size_available, &b.slot),
+                    SizeBoxSizeValue::Content => {
+                        Self::calc_unit_min_width(size_available, &b.slot, text_measurements)
+                    }
                     SizeBoxSizeValue::Fill => 0.0,
                     SizeBoxSizeValue::Exact(v) => v,
                 }) + b.margin.left
@@ -665,16 +769,24 @@ impl DefaultLayoutEngine {
                 ImageBoxSizeValue::Exact(v) => v,
             },
             WidgetUnit::TextBox(b) => match b.width {
+                TextBoxSizeValue::Content => text_measurements
+                    .get(&b.id)
+                    .map(|r| r.width())
+                    .unwrap_or_default(),
                 TextBoxSizeValue::Fill => 0.0,
                 TextBoxSizeValue::Exact(v) => v,
             },
         }
     }
 
-    fn calc_content_box_min_width(size_available: Vec2, unit: &ContentBox) -> Scalar {
+    fn calc_content_box_min_width(
+        size_available: Vec2,
+        unit: &ContentBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         let mut result: Scalar = 0.0;
         for item in &unit.items {
-            let size = Self::calc_unit_min_width(size_available, &item.slot)
+            let size = Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                 + item.layout.margin.left
                 + item.layout.margin.right;
             let width = item.layout.anchors.right - item.layout.anchors.left;
@@ -684,21 +796,29 @@ impl DefaultLayoutEngine {
         result
     }
 
-    fn calc_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_flex_box_min_width(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.direction.is_horizontal() {
-            Self::calc_horizontal_flex_box_min_width(size_available, unit)
+            Self::calc_horizontal_flex_box_min_width(size_available, unit, text_measurements)
         } else {
-            Self::calc_vertical_flex_box_min_width(size_available, unit)
+            Self::calc_vertical_flex_box_min_width(size_available, unit, text_measurements)
         }
     }
 
-    fn calc_horizontal_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_horizontal_flex_box_min_width(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.wrap {
             let mut result: Scalar = 0.0;
             let mut line = 0.0;
             let mut first = true;
             for item in &unit.items {
-                let size = Self::calc_unit_min_width(size_available, &item.slot)
+                let size = Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                     + item.layout.margin.left
                     + item.layout.margin.right;
                 if first || line + size <= size_available.x {
@@ -717,7 +837,7 @@ impl DefaultLayoutEngine {
         } else {
             let mut result = 0.0;
             for item in &unit.items {
-                result += Self::calc_unit_min_width(size_available, &item.slot)
+                result += Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                     + item.layout.margin.left
                     + item.layout.margin.right;
             }
@@ -725,7 +845,11 @@ impl DefaultLayoutEngine {
         }
     }
 
-    fn calc_vertical_flex_box_min_width(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_vertical_flex_box_min_width(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.wrap {
             let mut result = 0.0;
             let mut line_length = 0.0;
@@ -733,12 +857,14 @@ impl DefaultLayoutEngine {
             let mut lines: usize = 0;
             let mut first = true;
             for item in &unit.items {
-                let width = Self::calc_unit_min_width(size_available, &item.slot)
-                    + item.layout.margin.left
-                    + item.layout.margin.right;
-                let height = Self::calc_unit_min_height(size_available, &item.slot)
-                    + item.layout.margin.top
-                    + item.layout.margin.bottom;
+                let width =
+                    Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
+                        + item.layout.margin.left
+                        + item.layout.margin.right;
+                let height =
+                    Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
+                        + item.layout.margin.top
+                        + item.layout.margin.bottom;
                 if first || line_length + height <= size_available.y {
                     line_length += height;
                     if !first {
@@ -759,7 +885,7 @@ impl DefaultLayoutEngine {
             result + (lines.saturating_sub(1) as Scalar) * unit.separation
         } else {
             unit.items.iter().fold(0.0, |a, item| {
-                (Self::calc_unit_min_width(size_available, &item.slot)
+                (Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                     + item.layout.margin.left
                     + item.layout.margin.right)
                     .max(a)
@@ -767,10 +893,14 @@ impl DefaultLayoutEngine {
         }
     }
 
-    fn calc_grid_box_min_width(size_available: Vec2, unit: &GridBox) -> Scalar {
+    fn calc_grid_box_min_width(
+        size_available: Vec2,
+        unit: &GridBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         let mut result: Scalar = 0.0;
         for item in &unit.items {
-            let size = Self::calc_unit_min_width(size_available, &item.slot)
+            let size = Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
                 + item.layout.margin.left
                 + item.layout.margin.right;
             let size = if size > 0.0 {
@@ -783,17 +913,29 @@ impl DefaultLayoutEngine {
         result
     }
 
-    fn calc_unit_min_height(size_available: Vec2, unit: &WidgetUnit) -> Scalar {
+    fn calc_unit_min_height(
+        size_available: Vec2,
+        unit: &WidgetUnit,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         match unit {
             WidgetUnit::None | WidgetUnit::PortalBox(_) => 0.0,
-            WidgetUnit::AreaBox(b) => Self::calc_unit_min_height(size_available, &b.slot),
-            WidgetUnit::ContentBox(b) => Self::calc_content_box_min_height(size_available, b),
-            WidgetUnit::FlexBox(b) => Self::calc_flex_box_min_height(size_available, b),
-            WidgetUnit::GridBox(b) => Self::calc_grid_box_min_height(size_available, b),
+            WidgetUnit::AreaBox(b) => {
+                Self::calc_unit_min_height(size_available, &b.slot, text_measurements)
+            }
+            WidgetUnit::ContentBox(b) => {
+                Self::calc_content_box_min_height(size_available, b, text_measurements)
+            }
+            WidgetUnit::FlexBox(b) => {
+                Self::calc_flex_box_min_height(size_available, b, text_measurements)
+            }
+            WidgetUnit::GridBox(b) => {
+                Self::calc_grid_box_min_height(size_available, b, text_measurements)
+            }
             WidgetUnit::SizeBox(b) => {
                 (match b.height {
                     SizeBoxSizeValue::Content => {
-                        Self::calc_unit_min_height(size_available, &b.slot)
+                        Self::calc_unit_min_height(size_available, &b.slot, text_measurements)
                     }
                     SizeBoxSizeValue::Fill => 0.0,
                     SizeBoxSizeValue::Exact(v) => v,
@@ -805,16 +947,24 @@ impl DefaultLayoutEngine {
                 ImageBoxSizeValue::Exact(v) => v,
             },
             WidgetUnit::TextBox(b) => match b.height {
+                TextBoxSizeValue::Content => text_measurements
+                    .get(&b.id)
+                    .map(|r| r.height())
+                    .unwrap_or_default(),
                 TextBoxSizeValue::Fill => 0.0,
                 TextBoxSizeValue::Exact(v) => v,
             },
         }
     }
 
-    fn calc_content_box_min_height(size_available: Vec2, unit: &ContentBox) -> Scalar {
+    fn calc_content_box_min_height(
+        size_available: Vec2,
+        unit: &ContentBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         let mut result: Scalar = 0.0;
         for item in &unit.items {
-            let size = Self::calc_unit_min_height(size_available, &item.slot)
+            let size = Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                 + item.layout.margin.top
                 + item.layout.margin.bottom;
             let height = item.layout.anchors.bottom - item.layout.anchors.top;
@@ -824,15 +974,23 @@ impl DefaultLayoutEngine {
         result
     }
 
-    fn calc_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_flex_box_min_height(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.direction.is_horizontal() {
-            Self::calc_horizontal_flex_box_min_height(size_available, unit)
+            Self::calc_horizontal_flex_box_min_height(size_available, unit, text_measurements)
         } else {
-            Self::calc_vertical_flex_box_min_height(size_available, unit)
+            Self::calc_vertical_flex_box_min_height(size_available, unit, text_measurements)
         }
     }
 
-    fn calc_horizontal_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_horizontal_flex_box_min_height(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.wrap {
             let mut result = 0.0;
             let mut line_length = 0.0;
@@ -840,12 +998,14 @@ impl DefaultLayoutEngine {
             let mut lines: usize = 0;
             let mut first = true;
             for item in &unit.items {
-                let width = Self::calc_unit_min_width(size_available, &item.slot)
-                    + item.layout.margin.left
-                    + item.layout.margin.right;
-                let height = Self::calc_unit_min_height(size_available, &item.slot)
-                    + item.layout.margin.top
-                    + item.layout.margin.bottom;
+                let width =
+                    Self::calc_unit_min_width(size_available, &item.slot, text_measurements)
+                        + item.layout.margin.left
+                        + item.layout.margin.right;
+                let height =
+                    Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
+                        + item.layout.margin.top
+                        + item.layout.margin.bottom;
                 if first || line_length + width <= size_available.x {
                     line_length += width;
                     if !first {
@@ -866,7 +1026,7 @@ impl DefaultLayoutEngine {
             result + (lines.saturating_sub(1) as Scalar) * unit.separation
         } else {
             unit.items.iter().fold(0.0, |a, item| {
-                (Self::calc_unit_min_height(size_available, &item.slot)
+                (Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                     + item.layout.margin.top
                     + item.layout.margin.bottom)
                     .max(a)
@@ -874,15 +1034,20 @@ impl DefaultLayoutEngine {
         }
     }
 
-    fn calc_vertical_flex_box_min_height(size_available: Vec2, unit: &FlexBox) -> Scalar {
+    fn calc_vertical_flex_box_min_height(
+        size_available: Vec2,
+        unit: &FlexBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         if unit.wrap {
             let mut result: Scalar = 0.0;
             let mut line = 0.0;
             let mut first = true;
             for item in &unit.items {
-                let size = Self::calc_unit_min_height(size_available, &item.slot)
-                    + item.layout.margin.top
-                    + item.layout.margin.bottom;
+                let size =
+                    Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
+                        + item.layout.margin.top
+                        + item.layout.margin.bottom;
                 if first || line + size <= size_available.y {
                     line += size;
                     if !first {
@@ -899,7 +1064,7 @@ impl DefaultLayoutEngine {
         } else {
             let mut result = 0.0;
             for item in &unit.items {
-                result += Self::calc_unit_min_height(size_available, &item.slot)
+                result += Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                     + item.layout.margin.top
                     + item.layout.margin.bottom;
             }
@@ -907,10 +1072,14 @@ impl DefaultLayoutEngine {
         }
     }
 
-    fn calc_grid_box_min_height(size_available: Vec2, unit: &GridBox) -> Scalar {
+    fn calc_grid_box_min_height(
+        size_available: Vec2,
+        unit: &GridBox,
+        text_measurements: &HashMap<WidgetId, Rect>,
+    ) -> Scalar {
         let mut result: Scalar = 0.0;
         for item in &unit.items {
-            let size = Self::calc_unit_min_height(size_available, &item.slot)
+            let size = Self::calc_unit_min_height(size_available, &item.slot, text_measurements)
                 + item.layout.margin.top
                 + item.layout.margin.bottom;
             let size = if size > 0.0 {
@@ -952,12 +1121,48 @@ impl DefaultLayoutEngine {
             },
         );
     }
+
+    fn measure_texts(
+        &self,
+        mapping: &CoordsMapping,
+        unit: &WidgetUnit,
+        result: &mut HashMap<WidgetId, Rect>,
+    ) {
+        match unit {
+            WidgetUnit::None | WidgetUnit::PortalBox(_) => {}
+            WidgetUnit::AreaBox(b) => self.measure_texts(mapping, &b.slot, result),
+            WidgetUnit::ContentBox(b) => {
+                for item in &b.items {
+                    self.measure_texts(mapping, &item.slot, result);
+                }
+            }
+            WidgetUnit::FlexBox(b) => {
+                for item in &b.items {
+                    self.measure_texts(mapping, &item.slot, result);
+                }
+            }
+            WidgetUnit::GridBox(b) => {
+                for item in &b.items {
+                    self.measure_texts(mapping, &item.slot, result);
+                }
+            }
+            WidgetUnit::SizeBox(b) => self.measure_texts(mapping, &b.slot, result),
+            WidgetUnit::ImageBox(_) => {}
+            WidgetUnit::TextBox(b) => {
+                if let Some(aabb) = self.text_measurement_engine.measure_text(mapping, b) {
+                    result.insert(b.id.clone(), aabb);
+                }
+            }
+        }
+    }
 }
 
-impl LayoutEngine<()> for DefaultLayoutEngine {
+impl<TME: TextMeasurementEngine> LayoutEngine<()> for DefaultLayoutEngine<TME> {
     fn layout(&mut self, mapping: &CoordsMapping, tree: &WidgetUnit) -> Result<Layout, ()> {
         let ui_space = mapping.virtual_area();
-        if let Some(root) = Self::layout_node(ui_space.size(), tree) {
+        let mut text_measurements = HashMap::new();
+        self.measure_texts(mapping, tree, &mut text_measurements);
+        if let Some(root) = Self::layout_node(ui_space.size(), tree, &text_measurements) {
             let mut items = HashMap::with_capacity(root.count());
             Self::unpack_node(None, ui_space, root, &mut items);
             Ok(Layout { ui_space, items })

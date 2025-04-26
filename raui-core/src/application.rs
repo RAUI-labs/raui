@@ -64,9 +64,10 @@
 //!     });
 //!
 //!     // We apply the application layout
+//!     let mut layout_engine = DefaultLayoutEngine::<()>::default();
 //!     application
 //!         // We use the default layout engine, but you could make your own layout engine
-//!         .layout(&mapping, &mut DefaultLayoutEngine)
+//!         .layout(&mapping, &mut layout_engine)
 //!         .unwrap();
 //!
 //!     // we interact with UI by sending interaction messages to the engine. You would hook this
