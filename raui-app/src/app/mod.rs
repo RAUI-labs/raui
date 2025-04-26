@@ -4,6 +4,7 @@ pub mod retained;
 
 use crate::{
     TesselateToGraphics, Vertex, asset_manager::AssetsManager, interactions::AppInteractionsEngine,
+    render_worker::RenderWorkersViewModel,
 };
 use glutin::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
@@ -13,6 +14,7 @@ use raui_core::{
     application::Application,
     interactive::default_interactions_engine::DefaultInteractionsEngine,
     layout::{CoordsMapping, CoordsMappingScaling, default_layout_engine::DefaultLayoutEngine},
+    view_model::ViewModel,
     widget::utils::{Color, Rect},
 };
 use raui_tesselate_renderer::TesselateRenderer;
@@ -77,6 +79,10 @@ impl Default for SharedApp {
         let mut application = Application::default();
         application.setup(raui_core::widget::setup);
         application.setup(raui_material::setup);
+        application.view_models.insert(
+            RenderWorkersViewModel::VIEW_MODEL.to_owned(),
+            ViewModel::new(RenderWorkersViewModel::default(), Default::default()),
+        );
         Self {
             on_update: None,
             on_redraw: None,
@@ -133,6 +139,21 @@ impl SharedApp {
         self.text_renderer.clear();
         if let Some(callback) = self.on_redraw.as_mut() {
             callback(elapsed.as_secs_f32(), graphics, &mut self.text_renderer);
+        }
+        {
+            self.application
+                .view_models
+                .get_mut(RenderWorkersViewModel::VIEW_MODEL)
+                .unwrap()
+                .write::<RenderWorkersViewModel>()
+                .unwrap()
+                .maintain(
+                    graphics,
+                    &mut self.assets,
+                    self.colored_shader.as_ref().unwrap(),
+                    self.textured_shader.as_ref().unwrap(),
+                    self.text_shader.as_ref().unwrap(),
+                );
         }
         self.assets.maintain();
         self.application.animations_delta_time = elapsed.as_secs_f32();

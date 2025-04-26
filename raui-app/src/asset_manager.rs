@@ -33,16 +33,19 @@ pub(crate) struct AssetTexture {
     /// {name: uvs}
     regions: HashMap<String, Rect>,
     frames_left: usize,
+    forever_alive: bool,
 }
 
 pub(crate) struct AssetFont {
     hash: usize,
     frames_left: usize,
+    forever_alive: bool,
 }
 
 pub(crate) struct AssetShader {
     pub(crate) shader: Shader,
     frames_left: usize,
+    forever_alive: bool,
 }
 
 pub(crate) struct AssetsManager {
@@ -76,6 +79,7 @@ impl AssetsManager {
         let to_remove = self
             .textures
             .iter_mut()
+            .filter(|(_, texture)| !texture.forever_alive)
             .filter_map(|(id, texture)| {
                 if texture.frames_left > 0 {
                     texture.frames_left -= 1;
@@ -92,6 +96,7 @@ impl AssetsManager {
         let to_remove = self
             .font_map
             .iter_mut()
+            .filter(|(_, font)| !font.forever_alive)
             .filter_map(|(id, font)| {
                 if font.frames_left > 0 {
                     font.frames_left -= 1;
@@ -111,6 +116,7 @@ impl AssetsManager {
         let to_remove = self
             .shaders
             .iter_mut()
+            .filter(|(_, shader)| !shader.forever_alive)
             .filter_map(|(id, shader)| {
                 if shader.frames_left > 0 {
                     shader.frames_left -= 1;
@@ -166,126 +172,20 @@ impl AssetsManager {
             WidgetUnit::ImageBox(node) => match &node.material {
                 ImageBoxMaterial::Image(image) => {
                     let id = Self::parse_image_id(&image.id).0;
-                    self.try_load_image(id, graphics);
+                    self.try_load_image(id, graphics, false);
                 }
                 ImageBoxMaterial::Procedural(procedural) => {
                     for id in &procedural.images {
-                        self.try_load_image(id, graphics);
+                        self.try_load_image(id, graphics, false);
                     }
-                    if procedural.id.is_empty() {
-                    } else if let Some(shader) = self.shaders.get_mut(&procedural.id) {
-                        shader.frames_left = self.frames_alive;
-                    } else {
-                        let shader = match procedural.id.as_str() {
-                            "@pass" => {
-                                match graphics.shader(Shader::PASS_VERTEX_2D, Shader::PASS_FRAGMENT)
-                                {
-                                    Ok(shader) => shader,
-                                    _ => {
-                                        eprintln!(
-                                            "Could not create shader for: {:?}",
-                                            procedural.id
-                                        );
-                                        return;
-                                    }
-                                }
-                            }
-                            "@colored" => {
-                                match graphics
-                                    .shader(Shader::COLORED_VERTEX_2D, Shader::PASS_FRAGMENT)
-                                {
-                                    Ok(shader) => shader,
-                                    _ => {
-                                        eprintln!(
-                                            "Could not create shader for: {:?}",
-                                            procedural.id
-                                        );
-                                        return;
-                                    }
-                                }
-                            }
-                            "@textured" => {
-                                match graphics
-                                    .shader(Shader::TEXTURED_VERTEX_2D, Shader::TEXTURED_FRAGMENT)
-                                {
-                                    Ok(shader) => shader,
-                                    _ => {
-                                        eprintln!(
-                                            "Could not create shader for: {:?}",
-                                            procedural.id
-                                        );
-                                        return;
-                                    }
-                                }
-                            }
-                            _ => {
-                                let path = self.root_path.join(format!("{}.vs", procedural.id));
-                                let vertex = match std::fs::read_to_string(&path) {
-                                    Ok(content) => content,
-                                    _ => {
-                                        eprintln!("Could not load vertex shader file: {:?}", path);
-                                        return;
-                                    }
-                                };
-                                let path = self.root_path.join(format!("{}.fs", procedural.id));
-                                let fragment = match std::fs::read_to_string(&path) {
-                                    Ok(content) => content,
-                                    _ => {
-                                        eprintln!(
-                                            "Could not load fragment shader file: {:?}",
-                                            path
-                                        );
-                                        return;
-                                    }
-                                };
-                                match graphics.shader(&vertex, &fragment) {
-                                    Ok(shader) => shader,
-                                    _ => {
-                                        eprintln!(
-                                            "Could not create shader for: {:?}",
-                                            procedural.id
-                                        );
-                                        return;
-                                    }
-                                }
-                            }
-                        };
-                        self.shaders.insert(
-                            procedural.id.to_owned(),
-                            AssetShader {
-                                shader,
-                                frames_left: self.frames_alive,
-                            },
-                        );
+                    if !procedural.id.is_empty() {
+                        self.try_load_shader(&procedural.id, graphics, false);
                     }
                 }
                 _ => {}
             },
             WidgetUnit::TextBox(node) => {
-                if let Some(font) = self.font_map.get_mut(&node.font.name) {
-                    font.frames_left = self.frames_alive;
-                } else {
-                    let path = self.root_path.join(&node.font.name);
-                    let content = match std::fs::read(&path) {
-                        Ok(content) => content,
-                        _ => {
-                            eprintln!("Could not load font file: {:?}", path);
-                            return;
-                        }
-                    };
-                    let font = match Font::from_bytes(content, Default::default()) {
-                        Ok(font) => font,
-                        _ => return,
-                    };
-                    self.font_map.insert(
-                        node.font.name.to_owned(),
-                        AssetFont {
-                            hash: font.file_hash(),
-                            frames_left: self.frames_alive,
-                        },
-                    );
-                    self.fonts.push(font);
-                }
+                self.try_load_font(&node.font.name, false);
             }
         }
     }
@@ -297,7 +197,58 @@ impl AssetsManager {
         }
     }
 
-    fn try_load_image(&mut self, id: &str, graphics: &Graphics<Vertex>) {
+    pub(crate) fn add_texture(&mut self, id: impl ToString, texture: Texture) {
+        self.textures.insert(
+            id.to_string(),
+            AssetTexture {
+                texture,
+                regions: Default::default(),
+                frames_left: self.frames_alive,
+                forever_alive: true,
+            },
+        );
+    }
+
+    pub(crate) fn remove_texture(&mut self, id: impl ToString) {
+        self.textures.remove(&id.to_string());
+    }
+
+    // pub(crate) fn add_shader(&mut self, id: impl ToString, shader: Shader) {
+    //     self.shaders.insert(
+    //         id.to_string(),
+    //         AssetShader {
+    //             shader,
+    //             frames_left: self.frames_alive,
+    //             forever_alive: true,
+    //         },
+    //     );
+    // }
+
+    // pub(crate) fn remove_shader(&mut self, id: impl ToString) {
+    //     self.shaders.remove(&id.to_string());
+    // }
+
+    // pub(crate) fn add_font(&mut self, id: impl ToString, font: Font) {
+    //     self.font_map.insert(
+    //         id.to_string(),
+    //         AssetFont {
+    //             hash: font.file_hash(),
+    //             frames_left: self.frames_alive,
+    //             forever_alive: true,
+    //         },
+    //     );
+    //     self.fonts.push(font);
+    // }
+
+    // pub(crate) fn remove_font(&mut self, id: impl ToString) {
+    //     if let Some(font) = self.font_map.remove(&id.to_string()) {
+    //         if let Some(index) = self.fonts.iter().position(|f| f.file_hash() == font.hash) {
+    //             self.fonts.swap_remove(index);
+    //         }
+    //     }
+    // }
+
+    fn try_load_image(&mut self, id: &str, graphics: &Graphics<Vertex>, forever_alive: bool) {
         if let Some(texture) = self.textures.get_mut(id) {
             texture.frames_left = self.frames_alive;
         } else {
@@ -365,6 +316,7 @@ impl AssetsManager {
                             texture,
                             regions,
                             frames_left: self.frames_alive,
+                            forever_alive,
                         },
                     );
                 }
@@ -395,10 +347,106 @@ impl AssetsManager {
                             texture,
                             regions: Default::default(),
                             frames_left: self.frames_alive,
+                            forever_alive,
                         },
                     );
                 }
             }
+        }
+    }
+
+    fn try_load_font(&mut self, id: &str, forever_alive: bool) {
+        if let Some(font) = self.font_map.get_mut(id) {
+            font.frames_left = self.frames_alive;
+        } else {
+            let path = self.root_path.join(id);
+            let content = match std::fs::read(&path) {
+                Ok(content) => content,
+                _ => {
+                    eprintln!("Could not load font file: {:?}", path);
+                    return;
+                }
+            };
+            let font = match Font::from_bytes(content, Default::default()) {
+                Ok(font) => font,
+                _ => return,
+            };
+            self.font_map.insert(
+                id.to_owned(),
+                AssetFont {
+                    hash: font.file_hash(),
+                    frames_left: self.frames_alive,
+                    forever_alive,
+                },
+            );
+            self.fonts.push(font);
+        }
+    }
+
+    fn try_load_shader(&mut self, id: &str, graphics: &Graphics<Vertex>, forever_alive: bool) {
+        if let Some(shader) = self.shaders.get_mut(id) {
+            shader.frames_left = self.frames_alive;
+        } else {
+            let shader = match id {
+                "@pass" => match graphics.shader(Shader::PASS_VERTEX_2D, Shader::PASS_FRAGMENT) {
+                    Ok(shader) => shader,
+                    _ => {
+                        eprintln!("Could not create shader for: {:?}", id);
+                        return;
+                    }
+                },
+                "@colored" => {
+                    match graphics.shader(Shader::COLORED_VERTEX_2D, Shader::PASS_FRAGMENT) {
+                        Ok(shader) => shader,
+                        _ => {
+                            eprintln!("Could not create shader for: {:?}", id);
+                            return;
+                        }
+                    }
+                }
+                "@textured" => {
+                    match graphics.shader(Shader::TEXTURED_VERTEX_2D, Shader::TEXTURED_FRAGMENT) {
+                        Ok(shader) => shader,
+                        _ => {
+                            eprintln!("Could not create shader for: {:?}", id);
+                            return;
+                        }
+                    }
+                }
+                _ => {
+                    let path = self.root_path.join(format!("{}.vs", id));
+                    let vertex = match std::fs::read_to_string(&path) {
+                        Ok(content) => content,
+                        _ => {
+                            eprintln!("Could not load vertex shader file: {:?}", path);
+                            return;
+                        }
+                    };
+                    let path = self.root_path.join(format!("{}.fs", id));
+                    let fragment = match std::fs::read_to_string(&path) {
+                        Ok(content) => content,
+                        _ => {
+                            eprintln!("Could not load fragment shader file: {:?}", path);
+                            return;
+                        }
+                    };
+                    match graphics.shader(&vertex, &fragment) {
+                        Ok(shader) => shader,
+                        _ => {
+                            eprintln!("Could not create shader for: {:?}", id);
+                            return;
+                        }
+                    }
+                }
+            };
+            self.shaders.insert(
+                id.to_owned(),
+                AssetShader {
+                    shader,
+                    frames_left: self.frames_alive,
+                    forever_alive,
+                },
+            );
         }
     }
 }

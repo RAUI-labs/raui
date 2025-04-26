@@ -1,6 +1,7 @@
 pub mod app;
 pub(crate) mod asset_manager;
 pub(crate) mod interactions;
+pub mod render_worker;
 
 use crate::asset_manager::AssetsManager;
 use bytemuck::{Pod, Zeroable};
@@ -23,8 +24,13 @@ pub mod prelude {
         app::*,
         app::{declarative::*, immediate::*, retained::*},
         event::*,
+        render_worker::*,
         window::*,
     };
+}
+pub mod third_party {
+    pub use spitfire_fontdue;
+    pub use spitfire_glow;
 }
 
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
