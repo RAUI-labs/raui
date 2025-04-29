@@ -17,7 +17,7 @@ index32 = []
 raui-core = { path = "../raui-core", version = "0.67" }
 serde = { version = "1", features = ["derive"] }
 vek = "0.17"
-spitfire-core = "0.31"
-spitfire-fontdue = "0.31"
+spitfire-core = "0.32"
+spitfire-fontdue = "0.32"
 bytemuck = { version = "1", features = ["derive"] }
 fontdue = "0.9"

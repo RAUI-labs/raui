@@ -16,8 +16,8 @@ raui-material = { path = "../raui-material", version = "0.67" }
 raui-immediate = { path = "../raui-immediate", version = "0.67" }
 raui-retained = { path = "../raui-retained", version = "0.67" }
 raui-tesselate-renderer = { path = "../raui-tesselate-renderer", version = "0.67" }
-spitfire-glow = "0.31"
-spitfire-fontdue = "0.31"
+spitfire-glow = "0.32"
+spitfire-fontdue = "0.32"
 bytemuck = { version = "1", features = ["derive"] }
 glutin = "0.28"
 fontdue = "0.9"

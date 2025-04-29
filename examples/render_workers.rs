@@ -79,6 +79,7 @@ fn render_task(ctx: RenderWorkerTaskContext) {
         textures: Default::default(),
         blending: GlowBlending::Alpha,
         scissor: None,
+        wireframe: false,
     });
     ctx.graphics.stream.quad([
         Vertex {

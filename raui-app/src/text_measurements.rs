@@ -11,7 +11,12 @@ pub struct AppTextMeasurementsEngine<'a> {
 }
 
 impl TextMeasurementEngine for AppTextMeasurementsEngine<'_> {
-    fn measure_text(&self, mapping: &CoordsMapping, unit: &TextBox) -> Option<Rect> {
+    fn measure_text(
+        &self,
+        size_available: Vec2,
+        mapping: &CoordsMapping,
+        unit: &TextBox,
+    ) -> Option<Rect> {
         let font_index = self.assets.font_index_by_id(&unit.font.name)?;
         let text = TextStyle::with_user_data(
             &unit.text,
@@ -19,8 +24,20 @@ impl TextMeasurementEngine for AppTextMeasurementsEngine<'_> {
             font_index,
             unit.color,
         );
+        let max_width = match unit.width {
+            TextBoxSizeValue::Content => None,
+            TextBoxSizeValue::Fill => Some(size_available.x),
+            TextBoxSizeValue::Exact(v) => Some(v),
+        };
+        let max_height = match unit.height {
+            TextBoxSizeValue::Content => None,
+            TextBoxSizeValue::Fill => Some(size_available.y),
+            TextBoxSizeValue::Exact(v) => Some(v),
+        };
         let mut layout = Layout::new(CoordinateSystem::PositiveYDown);
         layout.reset(&LayoutSettings {
+            max_width,
+            max_height,
             horizontal_align: match unit.horizontal_align {
                 TextBoxHorizontalAlign::Left => HorizontalAlign::Left,
                 TextBoxHorizontalAlign::Center => HorizontalAlign::Center,
@@ -34,7 +51,7 @@ impl TextMeasurementEngine for AppTextMeasurementsEngine<'_> {
             ..Default::default()
         });
         layout.append(self.assets.fonts(), &text);
-        let aabb = TextRenderer::measure(self.assets.fonts(), &layout);
+        let aabb = TextRenderer::measure(&layout, self.assets.fonts(), false);
         if aabb.iter().all(|v| v.is_finite()) {
             Some(Rect {
                 left: aabb[0].min(0.0),
