@@ -22,7 +22,7 @@ pub trait ViewState: Any + Send + Sync {
 
 pub struct View<T: ViewState> {
     inner: Box<dyn ViewState>,
-    lifetime: Lifetime,
+    lifetime: Box<Lifetime>,
     _phantom: PhantomData<fn() -> T>,
 }
 
