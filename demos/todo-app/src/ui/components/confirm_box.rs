@@ -86,7 +86,7 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
                         .key("text-wrap")
                         .with_props(WrapBoxProps {
                             margin: 16.0.into(),
-                            fill: true,
+                            ..Default::default()
                         })
                         .named_slot(
                             "content",
@@ -108,7 +108,7 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
                                 .key("yes-wrap")
                                 .with_props(WrapBoxProps {
                                     margin: 16.0.into(),
-                                    fill: true,
+                                    ..Default::default()
                                 })
                                 .named_slot(
                                     "content",
@@ -122,7 +122,7 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
                                         })
                                         .with_props(WrapBoxProps {
                                             margin: 16.0.into(),
-                                            fill: true,
+                                            ..Default::default()
                                         })
                                         .with_props(NavItemActive)
                                         .with_props(ButtonNotifyProps(id.to_owned().into())),
@@ -133,7 +133,7 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
                                 .key("no-wrap")
                                 .with_props(WrapBoxProps {
                                     margin: 16.0.into(),
-                                    fill: true,
+                                    ..Default::default()
                                 })
                                 .named_slot(
                                     "content",
@@ -147,7 +147,7 @@ pub fn confirm_box(mut context: WidgetContext) -> WidgetNode {
                                         })
                                         .with_props(WrapBoxProps {
                                             margin: 16.0.into(),
-                                            fill: true,
+                                            ..Default::default()
                                         })
                                         .with_props(NavItemActive)
                                         .with_props(ButtonNotifyProps(id.to_owned().into())),

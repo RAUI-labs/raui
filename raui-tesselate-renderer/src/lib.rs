@@ -60,6 +60,7 @@ pub enum TesselateBatch {
         h: f32,
     },
     ClipPop,
+    Debug,
 }
 
 pub trait TesselateResourceProvider {
@@ -78,6 +79,11 @@ impl TesselateBatchConverter<TesselateBatch> for () {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy)]
+pub struct TessselateRendererDebug {
+    pub render_non_visual_nodes: bool,
+}
+
 pub struct TesselateRenderer<'a, V, B, P, C>
 where
     V: TesselateVertex + TextVertex<Color> + Default,
@@ -90,6 +96,7 @@ where
     stream: &'a mut VertexStream<V, B>,
     text_renderer: &'a mut TextRenderer<Color>,
     transform_stack: Vec<vek::Mat4<Scalar>>,
+    debug: Option<TessselateRendererDebug>,
 }
 
 impl<'a, V, B, P, C> TesselateRenderer<'a, V, B, P, C>
@@ -104,6 +111,7 @@ where
         converter: &'a mut C,
         stream: &'a mut VertexStream<V, B>,
         text_renderer: &'a mut TextRenderer<Color>,
+        debug: Option<TessselateRendererDebug>,
     ) -> Self {
         Self {
             provider,
@@ -111,6 +119,7 @@ where
             stream,
             text_renderer,
             transform_stack: Default::default(),
+            debug,
         }
     }
 
@@ -474,6 +483,29 @@ where
         }
     }
 
+    fn produce_debug_wireframe(&mut self, size: Vec2) {
+        if let Some(batch) = self.converter.convert(TesselateBatch::Debug) {
+            let rect = Rect {
+                left: 0.0,
+                right: size.x,
+                top: 0.0,
+                bottom: size.y,
+            };
+            let matrix = self.top_transform();
+            let tl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left, rect.top)));
+            let tr = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right, rect.top)));
+            let br = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.right, rect.bottom)));
+            let bl = vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left, rect.bottom)));
+            self.stream.batch_optimized(batch);
+            self.stream.quad([
+                Self::make_vertex(tl, Default::default(), 0.0, Default::default()),
+                Self::make_vertex(tr, Default::default(), 0.0, Default::default()),
+                Self::make_vertex(br, Default::default(), 0.0, Default::default()),
+                Self::make_vertex(bl, Default::default(), 0.0, Default::default()),
+            ]);
+        }
+    }
+
     fn render_node(
         &mut self,
         unit: &WidgetUnit,
@@ -768,6 +800,102 @@ where
             }
         }
     }
+
+    fn debug_render_node(
+        &mut self,
+        unit: &WidgetUnit,
+        mapping: &CoordsMapping,
+        layout: &Layout,
+        local: bool,
+        debug: TessselateRendererDebug,
+    ) {
+        match unit {
+            WidgetUnit::AreaBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform_simple(local_space);
+                    self.debug_render_node(&unit.slot, mapping, layout, true, debug);
+                    if debug.render_non_visual_nodes {
+                        self.produce_debug_wireframe(local_space.size());
+                    }
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::ContentBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let mut items = unit
+                        .items
+                        .iter()
+                        .map(|item| (item.layout.depth, item))
+                        .collect::<Vec<_>>();
+                    items.sort_unstable_by(|(a, _), (b, _)| a.partial_cmp(b).unwrap());
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    for (_, item) in items {
+                        self.debug_render_node(&item.slot, mapping, layout, true, debug);
+                    }
+                    if debug.render_non_visual_nodes {
+                        self.produce_debug_wireframe(local_space.size());
+                    }
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::FlexBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    for item in &unit.items {
+                        self.debug_render_node(&item.slot, mapping, layout, true, debug);
+                    }
+                    if debug.render_non_visual_nodes {
+                        self.produce_debug_wireframe(local_space.size());
+                    }
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::GridBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    for item in &unit.items {
+                        self.debug_render_node(&item.slot, mapping, layout, true, debug);
+                    }
+                    if debug.render_non_visual_nodes {
+                        self.produce_debug_wireframe(local_space.size());
+                    }
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::SizeBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    self.debug_render_node(&unit.slot, mapping, layout, true, debug);
+                    if debug.render_non_visual_nodes {
+                        self.produce_debug_wireframe(local_space.size());
+                    }
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::ImageBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    self.produce_debug_wireframe(local_space.size());
+                    self.pop_transform();
+                }
+            }
+            WidgetUnit::TextBox(unit) => {
+                if let Some(item) = layout.items.get(&unit.id) {
+                    let local_space = mapping.virtual_to_real_rect(item.local_space, local);
+                    self.push_transform(&unit.transform, local_space);
+                    self.produce_debug_wireframe(local_space.size());
+                    self.pop_transform();
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 impl<V, B, P, C> Renderer<(), Error> for TesselateRenderer<'_, V, B, P, C>
@@ -786,6 +914,11 @@ where
         self.transform_stack.clear();
         self.render_node(tree, mapping, layout, false)?;
         self.stream.batch_end();
+        if let Some(debug) = self.debug {
+            self.transform_stack.clear();
+            self.debug_render_node(tree, mapping, layout, false, debug);
+            self.stream.batch_end();
+        }
         Ok(())
     }
 }

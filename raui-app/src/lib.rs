@@ -108,6 +108,8 @@ pub(crate) struct TesselateToGraphics<'a> {
     colored_shader: &'a Shader,
     textured_shader: &'a Shader,
     text_shader: &'a Shader,
+    #[cfg(debug_assertions)]
+    debug_shader: Option<&'a Shader>,
     glyphs_texture: &'a Texture,
     missing_texture: &'a Texture,
     assets: &'a AssetsManager,
@@ -202,6 +204,11 @@ impl TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'_> {
                 self.clip_stack.pop();
                 None
             }
+            TesselateBatch::Debug => Some(GraphicsBatch {
+                shader: self.debug_shader.cloned(),
+                wireframe: true,
+                ..Default::default()
+            }),
         }
     }
 }

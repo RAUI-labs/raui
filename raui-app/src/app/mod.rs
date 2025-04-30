@@ -17,7 +17,7 @@ use raui_core::{
     view_model::ViewModel,
     widget::utils::{Color, Rect},
 };
-use raui_tesselate_renderer::TesselateRenderer;
+use raui_tesselate_renderer::{TesselateRenderer, TessselateRendererDebug};
 use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
     graphics::{Graphics, GraphicsBatch, Shader, Texture},
@@ -26,6 +26,37 @@ use spitfire_glow::{
 use std::{collections::HashMap, time::Instant};
 
 pub use spitfire_glow::app::{App, AppConfig};
+
+#[cfg(debug_assertions)]
+const DEBUG_VERTEX: &str = r#"#version 300 es
+    layout(location = 0) in vec2 a_position;
+    out vec4 v_color;
+    uniform mat4 u_projection_view;
+
+    void main() {
+        gl_Position = u_projection_view * vec4(a_position, 0.0, 1.0);
+    }
+    "#;
+
+#[cfg(debug_assertions)]
+const DEBUG_FRAGMENT: &str = r#"#version 300 es
+    precision highp float;
+    precision highp int;
+    out vec4 o_color;
+    uniform float u_time;
+
+    vec3 hsv2rgb(vec3 c) {
+        vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
+        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+    void main() {
+        vec2 pixel = floor(gl_FragCoord.xy);
+        float hue = fract((floor(pixel.x) + floor(pixel.y)) * 0.01 + u_time);
+        o_color = vec4(hsv2rgb(vec3(hue, 1.0, 1.0)), 1.0);
+    }
+    "#;
 
 macro_rules! hash_map {
     ($($key:ident => $value:expr),* $(,)?) => {{
@@ -58,6 +89,7 @@ pub(crate) struct SharedApp {
     interactions: AppInteractionsEngine,
     text_renderer: TextRenderer<Color>,
     timer: Instant,
+    time: f32,
     assets: AssetsManager,
     coords_mapping: CoordsMapping,
     pub coords_mapping_scaling: CoordsMappingScaling,
@@ -66,6 +98,12 @@ pub(crate) struct SharedApp {
     colored_shader: Option<Shader>,
     textured_shader: Option<Shader>,
     text_shader: Option<Shader>,
+    #[cfg(debug_assertions)]
+    debug_shader: Option<Shader>,
+    #[cfg(debug_assertions)]
+    pub show_raui_aabb_mode: u8,
+    #[cfg(debug_assertions)]
+    pub show_raui_aabb_key: VirtualKeyCode,
     #[cfg(debug_assertions)]
     pub print_raui_tree_key: VirtualKeyCode,
     #[cfg(debug_assertions)]
@@ -91,6 +129,7 @@ impl Default for SharedApp {
             interactions: Default::default(),
             text_renderer: TextRenderer::new(1024, 1024),
             timer: Instant::now(),
+            time: 0.0,
             assets: Default::default(),
             coords_mapping: Default::default(),
             coords_mapping_scaling: Default::default(),
@@ -99,6 +138,12 @@ impl Default for SharedApp {
             colored_shader: None,
             textured_shader: None,
             text_shader: None,
+            #[cfg(debug_assertions)]
+            debug_shader: None,
+            #[cfg(debug_assertions)]
+            show_raui_aabb_mode: 0,
+            #[cfg(debug_assertions)]
+            show_raui_aabb_key: VirtualKeyCode::F9,
             #[cfg(debug_assertions)]
             print_raui_tree_key: VirtualKeyCode::F10,
             #[cfg(debug_assertions)]
@@ -128,11 +173,16 @@ impl SharedApp {
                 .shader(Shader::TEXT_VERTEX, Shader::TEXT_FRAGMENT)
                 .unwrap(),
         );
+        #[cfg(debug_assertions)]
+        {
+            self.debug_shader = Some(graphics.shader(DEBUG_VERTEX, DEBUG_FRAGMENT).unwrap());
+        }
     }
 
     fn redraw(&mut self, graphics: &mut Graphics<Vertex>) {
         let elapsed = self.timer.elapsed();
         self.timer = Instant::now();
+        self.time += elapsed.as_secs_f32();
         if let Some(callback) = self.on_update.as_mut() {
             callback(&mut self.application);
         }
@@ -188,12 +238,15 @@ impl SharedApp {
             self.colored_shader.clone(),
             self.textured_shader.clone(),
             self.text_shader.clone(),
+            #[cfg(debug_assertions)]
+            self.debug_shader.clone(),
         ] {
             graphics.stream.batch(GraphicsBatch {
                 shader,
                 uniforms: hash_map! {
                     u_image => GlowUniformValue::I1(0),
                     u_projection_view => GlowUniformValue::M4(matrix),
+                    u_time => GlowUniformValue::F1(self.time),
                 },
                 ..Default::default()
             });
@@ -203,6 +256,8 @@ impl SharedApp {
             colored_shader: self.colored_shader.as_ref().unwrap(),
             textured_shader: self.textured_shader.as_ref().unwrap(),
             text_shader: self.text_shader.as_ref().unwrap(),
+            #[cfg(debug_assertions)]
+            debug_shader: self.debug_shader.as_ref(),
             glyphs_texture: self.glyphs_texture.as_ref().unwrap(),
             missing_texture: self.missing_texutre.as_ref().unwrap(),
             assets: &self.assets,
@@ -215,6 +270,20 @@ impl SharedApp {
             &mut converter,
             &mut graphics.stream,
             &mut self.text_renderer,
+            if cfg!(debug_assertions) {
+                match self.show_raui_aabb_mode {
+                    0 => None,
+                    1 => Some(TessselateRendererDebug {
+                        render_non_visual_nodes: false,
+                    }),
+                    2 => Some(TessselateRendererDebug {
+                        render_non_visual_nodes: true,
+                    }),
+                    _ => unreachable!(),
+                }
+            } else {
+                None
+            },
         );
         let _ = self.application.render(&self.coords_mapping, &mut renderer);
         let [w, h, d] = self.text_renderer.atlas_size();
@@ -244,7 +313,13 @@ impl SharedApp {
         {
             if input.state == ElementState::Pressed {
                 if let Some(key) = input.virtual_keycode {
-                    if key == self.print_raui_tree_key {
+                    if key == self.show_raui_aabb_key {
+                        self.show_raui_aabb_mode = (self.show_raui_aabb_mode + 1) % 3;
+                        println!(
+                            "* SHOW RAUI LAYOUT AABB MODE: {:#?}",
+                            self.show_raui_aabb_mode
+                        );
+                    } else if key == self.print_raui_tree_key {
                         println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
                     } else if key == self.print_raui_layout_key {
                         println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());

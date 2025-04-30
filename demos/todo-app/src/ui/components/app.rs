@@ -98,7 +98,7 @@ pub fn app(mut context: WidgetContext) -> WidgetNode {
                 .key("wrap")
                 .with_props(WrapBoxProps {
                     margin: 32.0.into(),
-                    fill: true,
+                    ..Default::default()
                 })
                 .named_slot(
                     "content",

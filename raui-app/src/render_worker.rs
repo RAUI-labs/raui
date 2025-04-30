@@ -30,6 +30,13 @@ impl RenderWorkersViewModel {
         self.commands.push(Command::Create { worker });
     }
 
+    pub fn add_worker_surface(&mut self, id: impl ToString, surface: Surface) {
+        self.commands.push(Command::Add {
+            id: id.to_string(),
+            surface,
+        });
+    }
+
     pub fn remove_worker(&mut self, worker: &str) {
         self.commands.push(Command::Remove {
             worker: worker.to_owned(),
@@ -71,6 +78,9 @@ impl RenderWorkersViewModel {
                     surface.set_color(worker.color);
                     self.surfaces.insert(worker.id.clone(), surface);
                     assets.add_texture(worker.id, texture);
+                }
+                Command::Add { id, surface } => {
+                    self.surfaces.insert(id, surface);
                 }
                 Command::Remove { worker } => {
                     self.surfaces.remove(&worker);
@@ -117,6 +127,10 @@ pub struct RenderWorkerTaskContext<'a> {
 enum Command {
     Create {
         worker: RenderWorkerDescriptor,
+    },
+    Add {
+        id: String,
+        surface: Surface,
     },
     Remove {
         worker: String,

@@ -12,7 +12,7 @@ mod gui {
     pub fn app() {
         let props = WrapBoxProps {
             margin: 20.0.into(),
-            fill: true,
+            ..Default::default()
         };
 
         wrap_box(props, || {

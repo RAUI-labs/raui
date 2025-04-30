@@ -13,7 +13,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                 top: 75.0,
                 bottom: 25.0,
             },
-            fill: true,
+            ..Default::default()
         })
         .named_slot(
             "content",

@@ -18,7 +18,7 @@ mod gui {
     pub fn app(value: &mut usize) {
         let props = WrapBoxProps {
             margin: 20.0.into(),
-            fill: true,
+            ..Default::default()
         };
 
         wrap_box(props, || {

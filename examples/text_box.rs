@@ -4,7 +4,7 @@ use raui_app::prelude::*;
 
 fn main() {
     let tree = make_widget!(text_box).with_props(TextBoxProps {
-        text: "RAUI text box example".to_owned(),
+        text: "RAUI\nText Box".to_owned(),
         font: TextBoxFont {
             name: "./demos/hello-world/resources/verdana.ttf".to_owned(),
             size: 64.0,

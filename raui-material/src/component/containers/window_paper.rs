@@ -74,7 +74,7 @@ pub fn window_paper(context: WidgetContext) -> WidgetNode {
                 })
                 .with_props(WrapBoxProps {
                     margin: window_props.bar_margin,
-                    fill: true,
+                    ..Default::default()
                 })
                 .with_props(FlexBoxItemLayout {
                     basis: window_props.bar_height,
@@ -89,7 +89,7 @@ pub fn window_paper(context: WidgetContext) -> WidgetNode {
                 .key("content")
                 .with_props(WrapBoxProps {
                     margin: window_props.content_margin,
-                    fill: true,
+                    ..Default::default()
                 })
                 .named_slot("content", content),
         )

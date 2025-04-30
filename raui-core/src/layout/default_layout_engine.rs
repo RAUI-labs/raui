@@ -722,9 +722,17 @@ impl<TME: TextMeasurementEngine> DefaultLayoutEngine<TME> {
             .unwrap_or_default();
         let local_space = Rect {
             left: 0.0,
-            right: aabb.width(),
+            right: match unit.width {
+                TextBoxSizeValue::Content => aabb.width(),
+                TextBoxSizeValue::Fill => size_available.x,
+                TextBoxSizeValue::Exact(v) => v,
+            },
             top: 0.0,
-            bottom: aabb.height(),
+            bottom: match unit.height {
+                TextBoxSizeValue::Content => aabb.height(),
+                TextBoxSizeValue::Fill => size_available.y,
+                TextBoxSizeValue::Exact(v) => v,
+            },
         };
         Some(LayoutNode {
             id: unit.id.to_owned(),

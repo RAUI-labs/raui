@@ -54,8 +54,8 @@ impl TextMeasurementEngine for AppTextMeasurementsEngine<'_> {
         let aabb = TextRenderer::measure(&layout, self.assets.fonts(), false);
         if aabb.iter().all(|v| v.is_finite()) {
             Some(Rect {
-                left: aabb[0].min(0.0),
-                top: aabb[1].min(0.0),
+                left: aabb[0],
+                top: aabb[1],
                 right: aabb[2],
                 bottom: aabb[3],
             })

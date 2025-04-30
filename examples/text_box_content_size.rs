@@ -11,10 +11,11 @@ fn main() {
                     // take the size of its content in the list.
                     grow: 0.0,
                     shrink: 0.0,
+                    margin: 20.0.into(),
                     ..Default::default()
                 })
                 .with_props(TextBoxProps {
-                    text: "RAUI".to_owned(),
+                    text: "RAUI\nContent Size".to_owned(),
                     font: TextBoxFont {
                         name: "./demos/hello-world/resources/verdana.ttf".to_owned(),
                         size: 64.0,
@@ -25,11 +26,11 @@ fn main() {
                         b: 0.5,
                         a: 1.0,
                     },
-                    horizontal_align: TextBoxHorizontalAlign::Center,
-                    vertical_align: TextBoxVerticalAlign::Middle,
+                    horizontal_align: TextBoxHorizontalAlign::Right,
                     // Setting text size to its content allows for fitting other
                     // widgets nicely around that text box.
                     width: TextBoxSizeValue::Content,
+                    height: TextBoxSizeValue::Content,
                     ..Default::default()
                 }),
         )
