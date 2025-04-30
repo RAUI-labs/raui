@@ -9,6 +9,7 @@ pub mod grid_box;
 pub mod hidden_box;
 pub mod horizontal_box;
 pub mod portal_box;
+pub mod responsive_box;
 pub mod scroll_box;
 pub mod size_box;
 pub mod switch_box;

@@ -58,9 +58,9 @@ pub mod prelude {
             component::{
                 containers::{
                     anchor_box::*, area_box::*, content_box::*, context_box::*, flex_box::*,
-                    grid_box::*, hidden_box::*, horizontal_box::*, portal_box::*, scroll_box::*,
-                    size_box::*, switch_box::*, tabs_box::*, tooltip_box::*, variant_box::*,
-                    vertical_box::*, wrap_box::*,
+                    grid_box::*, hidden_box::*, horizontal_box::*, portal_box::*,
+                    responsive_box::*, scroll_box::*, size_box::*, switch_box::*, tabs_box::*,
+                    tooltip_box::*, variant_box::*, vertical_box::*, wrap_box::*,
                 },
                 image_box::*,
                 interactive::*,

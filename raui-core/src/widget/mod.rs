@@ -756,6 +756,12 @@ pub fn setup(app: &mut Application) {
         "SideScrollbarsState",
     );
     app.register_props::<component::containers::portal_box::PortalsContainer>("PortalsContainer");
+    app.register_props::<component::containers::responsive_box::MediaQueryExpression>(
+        "MediaQueryExpression",
+    );
+    app.register_props::<component::containers::responsive_box::ResponsiveBoxState>(
+        "ResponsiveBoxState",
+    );
     app.register_props::<component::containers::size_box::SizeBoxProps>("SizeBoxProps");
     app.register_props::<component::containers::switch_box::SwitchBoxProps>("SwitchBoxProps");
     app.register_props::<component::containers::tabs_box::TabsBoxProps>("TabsBoxProps");
@@ -858,6 +864,10 @@ pub fn setup(app: &mut Application) {
     app.register_component(
         "portal_box",
         FnWidget::pointer(component::containers::portal_box::portal_box),
+    );
+    app.register_component(
+        "responsive_box",
+        FnWidget::pointer(component::containers::responsive_box::responsive_box),
     );
     app.register_component(
         "size_box",
