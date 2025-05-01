@@ -1,5 +1,6 @@
 use crate::{
     PropsData, Scalar, pre_hooks,
+    view_model::{ViewModelProperties, ViewModelValue},
     widget::{
         component::{ResizeListenerSignal, use_resize_listener},
         context::WidgetContext,
@@ -9,10 +10,12 @@ use crate::{
     },
 };
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
-pub struct MediaQueryContext {
+pub struct MediaQueryContext<'a> {
     pub widget_width: Scalar,
     pub widget_height: Scalar,
+    pub view_model: Option<&'a MediaQueryViewModel>,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -60,6 +63,13 @@ pub enum MediaQueryExpression {
     WidgetAspectRatio(MediaQueryNumber),
     WidgetWidth(MediaQueryNumber),
     WidgetHeight(MediaQueryNumber),
+    ScreenOrientation(MediaQueryOrientation),
+    ScreenAspectRatio(MediaQueryNumber),
+    ScreenWidth(MediaQueryNumber),
+    ScreenHeight(MediaQueryNumber),
+    HasFlag(String),
+    HasNumber(String),
+    Number(String, MediaQueryNumber),
 }
 
 impl MediaQueryExpression {
@@ -86,6 +96,49 @@ impl MediaQueryExpression {
             }
             Self::WidgetWidth(width) => width.is_valid(context.widget_width),
             Self::WidgetHeight(height) => height.is_valid(context.widget_height),
+            Self::ScreenOrientation(orientation) => context
+                .view_model
+                .map(|view_model| {
+                    let is_portrait = view_model.screen_size.y > view_model.screen_size.x;
+                    match orientation {
+                        MediaQueryOrientation::Portrait => is_portrait,
+                        MediaQueryOrientation::Landscape => !is_portrait,
+                    }
+                })
+                .unwrap_or_default(),
+            Self::ScreenAspectRatio(aspect_ratio) => context
+                .view_model
+                .map(|view_model| {
+                    let ratio = view_model.screen_size.x / view_model.screen_size.y;
+                    aspect_ratio.is_valid(ratio)
+                })
+                .unwrap_or_default(),
+            Self::ScreenWidth(width) => context
+                .view_model
+                .map(|view_model| width.is_valid(view_model.screen_size.x))
+                .unwrap_or_default(),
+            Self::ScreenHeight(height) => context
+                .view_model
+                .map(|view_model| height.is_valid(view_model.screen_size.y))
+                .unwrap_or_default(),
+            Self::HasFlag(flag) => context
+                .view_model
+                .map(|view_model| view_model.flags.contains(flag))
+                .unwrap_or_default(),
+            Self::HasNumber(name) => context
+                .view_model
+                .map(|view_model| view_model.numbers.contains_key(name))
+                .unwrap_or_default(),
+            Self::Number(name, number) => context
+                .view_model
+                .map(|view_model| {
+                    view_model
+                        .numbers
+                        .get(name)
+                        .map(|value| number.is_valid(*value))
+                        .unwrap_or_default()
+                })
+                .unwrap_or_default(),
         }
     }
 }
@@ -98,6 +151,24 @@ pub struct ResponsiveBoxState {
 }
 
 pub fn use_responsive_box(context: &mut WidgetContext) {
+    context.life_cycle.mount(|mut context| {
+        if let Some(mut bindings) = context.view_models.bindings(
+            MediaQueryViewModel::VIEW_MODEL,
+            MediaQueryViewModel::NOTIFIER,
+        ) {
+            bindings.bind(context.id.to_owned());
+        }
+    });
+
+    context.life_cycle.unmount(|mut context| {
+        if let Some(mut bindings) = context.view_models.bindings(
+            MediaQueryViewModel::VIEW_MODEL,
+            MediaQueryViewModel::NOTIFIER,
+        ) {
+            bindings.unbind(context.id);
+        }
+    });
+
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
             if let Some(ResizeListenerSignal::Change(size)) = msg.as_any().downcast_ref() {
@@ -113,13 +184,18 @@ pub fn responsive_box(mut context: WidgetContext) -> WidgetNode {
         id,
         state,
         mut listed_slots,
+        view_models,
         ..
     } = context;
 
     let state = state.read_cloned_or_default::<ResponsiveBoxState>();
+    let view_model = view_models
+        .view_model(MediaQueryViewModel::VIEW_MODEL)
+        .and_then(|vm| vm.read::<MediaQueryViewModel>());
     let ctx = MediaQueryContext {
         widget_width: state.size.x,
         widget_height: state.size.y,
+        view_model: view_model.as_deref(),
     };
     let item = if let Some(index) = listed_slots.iter().position(|slot| {
         slot.props()
@@ -142,4 +218,25 @@ pub fn responsive_box(mut context: WidgetContext) -> WidgetNode {
         slot: Box::new(item),
     }
     .into()
+}
+
+#[derive(Debug)]
+pub struct MediaQueryViewModel {
+    pub screen_size: ViewModelValue<Vec2>,
+    pub flags: ViewModelValue<HashSet<String>>,
+    pub numbers: ViewModelValue<HashMap<String, Scalar>>,
+}
+
+impl MediaQueryViewModel {
+    pub const VIEW_MODEL: &str = "MediaQueryViewModel";
+    pub const NOTIFIER: &str = "";
+
+    pub fn new(properties: &mut ViewModelProperties) -> Self {
+        let notifier = properties.notifier(Self::NOTIFIER);
+        Self {
+            screen_size: ViewModelValue::new(Default::default(), notifier.clone()),
+            flags: ViewModelValue::new(Default::default(), notifier.clone()),
+            numbers: ViewModelValue::new(Default::default(), notifier.clone()),
+        }
+    }
 }

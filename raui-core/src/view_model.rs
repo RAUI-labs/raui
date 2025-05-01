@@ -490,6 +490,26 @@ impl<T> DerefMut for ViewModelValue<T> {
     }
 }
 
+impl<T> std::fmt::Display for ViewModelValue<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl<T> std::fmt::Debug for ViewModelValue<T>
+where
+    T: std::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ViewModelValue")
+            .field("value", &self.value)
+            .finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

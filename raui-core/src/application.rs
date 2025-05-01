@@ -95,15 +95,16 @@ use crate::{
     interactive::InteractionsEngine,
     layout::{CoordsMapping, Layout, LayoutEngine},
     messenger::{Message, MessageData, MessageSender, Messages, Messenger},
-    prelude::ViewModelCollectionView,
     props::{Props, PropsData, PropsRegistry},
     renderer::Renderer,
     signals::{Signal, SignalSender},
     state::{State, StateChange, StateUpdate},
-    view_model::ViewModelCollection,
+    view_model::{ViewModel, ViewModelCollection, ViewModelCollectionView},
     widget::{
         FnWidget, WidgetId, WidgetIdCommon, WidgetLifeCycle,
-        component::{WidgetComponent, WidgetComponentPrefab},
+        component::{
+            WidgetComponent, WidgetComponentPrefab, containers::responsive_box::MediaQueryViewModel,
+        },
         context::{WidgetContext, WidgetMountOrChangeContext, WidgetUnmountContext},
         node::{WidgetNode, WidgetNodePrefab},
         unit::{
@@ -204,6 +205,11 @@ pub struct Application {
 
 impl Default for Application {
     fn default() -> Self {
+        let mut view_models = ViewModelCollection::default();
+        view_models.insert(
+            MediaQueryViewModel::VIEW_MODEL.to_string(),
+            ViewModel::produce(MediaQueryViewModel::new),
+        );
         Self {
             component_mappings: Default::default(),
             props_registry: Default::default(),
@@ -215,7 +221,7 @@ impl Default for Application {
             animators: Default::default(),
             messages: Default::default(),
             signals: Default::default(),
-            view_models: Default::default(),
+            view_models,
             changes: ChangeNotifier(Default::default()),
             unmount_closures: Default::default(),
             dirty: Default::default(),
@@ -447,6 +453,13 @@ impl Application {
         L: LayoutEngine<E>,
     {
         self.layout = layout_engine.layout(mapping, &self.rendered_tree)?;
+        if let Some(view_model) = self.view_models.get_mut(MediaQueryViewModel::VIEW_MODEL) {
+            if let Some(mut view_model) = view_model.write::<MediaQueryViewModel>() {
+                view_model
+                    .screen_size
+                    .set_unique_notify(self.layout.ui_space.size());
+            }
+        }
         Ok(())
     }
 
