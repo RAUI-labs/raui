@@ -1,5 +1,5 @@
 use crate::{
-    PropsData, Scalar, pre_hooks,
+    PropsData, Scalar, pre_hooks, unpack_named_slots,
     view_model::{ViewModelProperties, ViewModelValue},
     widget::{
         component::{ResizeListenerSignal, use_resize_listener},
@@ -216,6 +216,53 @@ pub fn responsive_box(mut context: WidgetContext) -> WidgetNode {
     AreaBoxNode {
         id: id.to_owned(),
         slot: Box::new(item),
+    }
+    .into()
+}
+
+#[pre_hooks(use_responsive_box, use_resize_listener)]
+pub fn responsive_props_box(mut context: WidgetContext) -> WidgetNode {
+    let WidgetContext {
+        id,
+        state,
+        listed_slots,
+        named_slots,
+        view_models,
+        ..
+    } = context;
+    unpack_named_slots!(named_slots => content);
+
+    let state = state.read_cloned_or_default::<ResponsiveBoxState>();
+    let view_model = view_models
+        .view_model(MediaQueryViewModel::VIEW_MODEL)
+        .and_then(|vm| vm.read::<MediaQueryViewModel>());
+    let ctx = MediaQueryContext {
+        widget_width: state.size.x,
+        widget_height: state.size.y,
+        view_model: view_model.as_deref(),
+    };
+
+    let props = listed_slots
+        .iter()
+        .find_map(|slot| {
+            slot.props().and_then(|props| {
+                props
+                    .read::<MediaQueryExpression>()
+                    .ok()
+                    .map(|query| query.is_valid(&ctx))
+                    .unwrap_or(true)
+                    .then_some(props.clone())
+            })
+        })
+        .unwrap_or_default();
+
+    if let Some(p) = content.props_mut() {
+        p.merge_from(props.without::<MediaQueryExpression>());
+    }
+
+    AreaBoxNode {
+        id: id.to_owned(),
+        slot: Box::new(content),
     }
     .into()
 }

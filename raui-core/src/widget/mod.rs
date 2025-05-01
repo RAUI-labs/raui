@@ -723,6 +723,10 @@ impl WidgetLifeCycle {
     }
 }
 
+pub fn none_widget(_: WidgetContext) -> WidgetNode {
+    Default::default()
+}
+
 pub fn setup(app: &mut Application) {
     app.register_props::<()>("()");
     app.register_props::<i8>("i8");
@@ -809,6 +813,7 @@ pub fn setup(app: &mut Application) {
     app.register_props::<unit::flex::FlexBoxItemLayout>("FlexBoxItemLayout");
     app.register_props::<unit::grid::GridBoxItemLayout>("GridBoxItemLayout");
 
+    app.register_component("none_widget", FnWidget::pointer(none_widget));
     app.register_component(
         "area_box",
         FnWidget::pointer(component::containers::area_box::area_box),
@@ -868,6 +873,10 @@ pub fn setup(app: &mut Application) {
     app.register_component(
         "responsive_box",
         FnWidget::pointer(component::containers::responsive_box::responsive_box),
+    );
+    app.register_component(
+        "responsive_props_box",
+        FnWidget::pointer(component::containers::responsive_box::responsive_props_box),
     );
     app.register_component(
         "size_box",

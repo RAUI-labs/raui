@@ -78,6 +78,7 @@ pub mod core {
     };
 
     impl_components! {
+        none_widget,
         image_box,
         text_box,
         space_box,
@@ -113,6 +114,7 @@ pub mod core {
             hidden_box,
             portal_box,
             responsive_box,
+            responsive_props_box,
             size_box,
             tooltip_box,
             portals_tooltip_box,
