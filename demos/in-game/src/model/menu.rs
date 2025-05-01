@@ -14,8 +14,8 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub const VIEW_MODEL: &'static str = "menu";
-    pub const SCREEN: &'static str = "screen";
+    pub const VIEW_MODEL: &str = "menu";
+    pub const SCREEN: &str = "screen";
 
     pub fn view_model() -> ViewModel {
         ViewModel::produce(|properties| Self {

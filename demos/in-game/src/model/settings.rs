@@ -12,9 +12,9 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub const VIEW_MODEL: &'static str = "settings";
-    const FULLSCREEN: &'static str = "fullscreen";
-    const VOLUME: &'static str = "volume";
+    pub const VIEW_MODEL: &str = "settings";
+    const FULLSCREEN: &str = "fullscreen";
+    const VOLUME: &str = "volume";
 
     pub fn view_model() -> ViewModel {
         ViewModel::produce(|properties| Self {

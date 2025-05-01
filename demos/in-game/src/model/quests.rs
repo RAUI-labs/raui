@@ -17,8 +17,8 @@ pub struct Quests {
 }
 
 impl Quests {
-    pub const VIEW_MODEL: &'static str = "quests";
-    pub const COMPLETED: &'static str = "completed";
+    pub const VIEW_MODEL: &str = "quests";
+    pub const COMPLETED: &str = "completed";
 
     pub fn view_model(database_path: impl AsRef<Path>) -> ViewModel {
         let database_path = database_path.as_ref();

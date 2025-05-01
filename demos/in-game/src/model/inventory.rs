@@ -15,7 +15,7 @@ pub struct ItemsDatabase {
 }
 
 impl ItemsDatabase {
-    pub const VIEW_MODEL: &'static str = "items-database";
+    pub const VIEW_MODEL: &str = "items-database";
 
     pub fn view_model(database_path: impl AsRef<Path>) -> ViewModel {
         let database_path = database_path.as_ref();
@@ -41,8 +41,8 @@ pub struct Inventory {
 }
 
 impl Inventory {
-    pub const VIEW_MODEL: &'static str = "items";
-    pub const OWNED: &'static str = "owned";
+    pub const VIEW_MODEL: &str = "items";
+    pub const OWNED: &str = "owned";
 
     pub fn view_model() -> ViewModel {
         ViewModel::produce(|properties| {
