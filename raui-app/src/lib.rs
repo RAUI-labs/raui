@@ -1,12 +1,19 @@
 pub mod app;
 pub(crate) mod asset_manager;
+pub mod components;
 pub(crate) mod interactions;
 pub mod render_worker;
 pub(crate) mod text_measurements;
 
-use crate::asset_manager::AssetsManager;
+use crate::{
+    asset_manager::AssetsManager,
+    components::canvas::{CanvasProps, canvas},
+};
 use bytemuck::{Pod, Zeroable};
-use raui_core::widget::utils::Color;
+use raui_core::{
+    application::Application,
+    widget::{FnWidget, utils::Color},
+};
 use raui_tesselate_renderer::{TesselateBatch, TesselateBatchConverter, TesselateVertex};
 use spitfire_fontdue::TextVertex;
 use spitfire_glow::{
@@ -24,6 +31,7 @@ pub mod prelude {
     pub use crate::{
         app::*,
         app::{declarative::*, immediate::*, retained::*},
+        components::{canvas::*, *},
         event::*,
         render_worker::*,
         window::*,
@@ -211,4 +219,10 @@ impl TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'_> {
             }),
         }
     }
+}
+
+pub fn setup(app: &mut Application) {
+    app.register_props::<CanvasProps>("CanvasProps");
+
+    app.register_component("canvas", FnWidget::pointer(canvas));
 }

@@ -178,7 +178,7 @@ pub fn use_responsive_box(context: &mut WidgetContext) {
     });
 }
 
-#[pre_hooks(use_responsive_box, use_resize_listener)]
+#[pre_hooks(use_resize_listener, use_responsive_box)]
 pub fn responsive_box(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,
@@ -220,7 +220,7 @@ pub fn responsive_box(mut context: WidgetContext) -> WidgetNode {
     .into()
 }
 
-#[pre_hooks(use_responsive_box, use_resize_listener)]
+#[pre_hooks(use_resize_listener, use_responsive_box)]
 pub fn responsive_props_box(mut context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         id,
