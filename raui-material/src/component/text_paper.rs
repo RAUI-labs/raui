@@ -1,5 +1,14 @@
 use crate::theme::{ThemeColor, ThemeProps, ThemedTextMaterial, ThemedWidgetProps};
-use raui_core::prelude::*;
+use raui_core::{
+    PropsData, make_widget,
+    widget::{
+        component::text_box::{TextBoxProps, text_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::text::{TextBoxHorizontalAlign, TextBoxSizeValue, TextBoxVerticalAlign},
+        utils::{Color, Transform},
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]

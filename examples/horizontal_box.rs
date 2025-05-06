@@ -1,6 +1,15 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::{
+            containers::horizontal_box::{HorizontalBoxProps, horizontal_box},
+            image_box::{ImageBoxProps, image_box},
+        },
+        unit::flex::FlexBoxItemLayout,
+        utils::Color,
+    },
+};
 
 fn main() {
     let tree = make_widget!(horizontal_box)

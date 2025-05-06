@@ -1,6 +1,24 @@
-use raui::prelude::*;
-
 use crate::ui::view_models::AppData;
+use raui::core::{
+    make_widget, pre_hooks,
+    widget::{
+        component::{
+            interactive::{
+                button::{ButtonNotifyProps, ButtonProps, use_button_notified_state},
+                input_field::{
+                    TextInputNotifyProps, TextInputProps, TextInputState, input_field,
+                    input_text_with_cursor, use_text_input_notified_state,
+                },
+                navigation::NavItemActive,
+            },
+            text_box::{TextBoxProps, text_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::text::{TextBoxFont, TextBoxSizeValue},
+        utils::Color,
+    },
+};
 
 fn use_title_bar(context: &mut WidgetContext) {
     context.life_cycle.mount(|mut context| {

@@ -1,5 +1,15 @@
 use crate::component::{interactive::button_paper::button_paper, text_paper::text_paper};
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::{
+            WidgetComponent,
+            containers::wrap_box::{WrapBoxProps, wrap_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+    },
+};
 
 pub fn text_button_paper(context: WidgetContext) -> WidgetNode {
     text_button_paper_impl(make_widget!(button_paper), context)

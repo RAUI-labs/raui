@@ -4,7 +4,10 @@ use crate::ui::{
     components::{app::app, content::content, title_bar::title_bar},
     view_models::AppData,
 };
-use raui::prelude::*;
+use raui::{
+    app::app::{App, AppConfig, declarative::DeclarativeApp},
+    core::{make_widget, view_model::ViewModel},
+};
 
 fn main() {
     let app = DeclarativeApp::default()

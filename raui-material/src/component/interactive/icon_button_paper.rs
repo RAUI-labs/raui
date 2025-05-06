@@ -1,5 +1,8 @@
 use crate::component::{icon_paper::icon_paper, interactive::button_paper::button_paper};
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{component::WidgetComponent, context::WidgetContext, node::WidgetNode},
+};
 
 pub fn icon_button_paper(context: WidgetContext) -> WidgetNode {
     icon_button_paper_impl(make_widget!(button_paper), context)

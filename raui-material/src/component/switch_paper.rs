@@ -1,5 +1,13 @@
 use crate::theme::{ThemeColor, ThemeProps, ThemedImageMaterial, ThemedWidgetProps};
-use raui_core::prelude::*;
+use raui_core::{
+    PropsData, Scalar, make_widget,
+    widget::{
+        component::image_box::{ImageBoxProps, image_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::image::{ImageBoxColor, ImageBoxImageScaling, ImageBoxMaterial, ImageBoxSizeValue},
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Default, Clone, Serialize, Deserialize)]

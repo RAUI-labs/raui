@@ -1,6 +1,12 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::text_box::{TextBoxProps, text_box},
+        unit::text::{TextBoxFont, TextBoxHorizontalAlign, TextBoxVerticalAlign},
+        utils::Color,
+    },
+};
 
 fn main() {
     let tree = make_widget!(text_box).with_props(TextBoxProps {

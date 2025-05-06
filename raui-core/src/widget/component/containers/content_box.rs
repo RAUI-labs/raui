@@ -9,7 +9,9 @@ use crate::{
         },
         context::WidgetContext,
         node::WidgetNode,
-        unit::content::{ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode},
+        unit::content::{
+            ContentBoxContentReposition, ContentBoxItemLayout, ContentBoxItemNode, ContentBoxNode,
+        },
         utils::Transform,
     },
 };
@@ -23,6 +25,8 @@ pub struct ContentBoxProps {
     /// Whether or not to clip the parts of items that overflow outside of the box bounds
     #[serde(default)]
     pub clipping: bool,
+    /// The content repositioning strategy to use.
+    pub content_reposition: ContentBoxContentReposition,
     /// The transform to apply to the box and it's contents
     #[serde(default)]
     pub transform: Transform,
@@ -76,6 +80,7 @@ pub fn content_box(context: WidgetContext) -> WidgetNode {
     let ContentBoxProps {
         clipping,
         transform,
+        content_reposition,
     } = props.read_cloned_or_default();
 
     let items = listed_slots
@@ -95,6 +100,7 @@ pub fn content_box(context: WidgetContext) -> WidgetNode {
         props: props.clone(),
         items,
         clipping,
+        content_reposition,
         transform,
     }
     .into()

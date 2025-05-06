@@ -2,7 +2,13 @@ use crate::AssetsManager;
 use fontdue::layout::{
     CoordinateSystem, HorizontalAlign, Layout, LayoutSettings, TextStyle, VerticalAlign,
 };
-use raui_core::prelude::*;
+use raui_core::{
+    layout::{CoordsMapping, default_layout_engine::TextMeasurementEngine},
+    widget::{
+        unit::text::{TextBox, TextBoxHorizontalAlign, TextBoxSizeValue, TextBoxVerticalAlign},
+        utils::{Rect, Vec2},
+    },
+};
 use raui_tesselate_renderer::*;
 use spitfire_fontdue::TextRenderer;
 

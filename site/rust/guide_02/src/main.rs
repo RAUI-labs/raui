@@ -1,4 +1,16 @@
-use raui::prelude::*;
+use raui::{
+    app::app::declarative::DeclarativeApp,
+    core::{
+        make_widget,
+        widget::{
+            component::text_box::{TextBoxProps, text_box},
+            context::WidgetContext,
+            node::WidgetNode,
+            unit::text::TextBoxFont,
+            utils::Color,
+        },
+    },
+};
 
 fn main() {
     DeclarativeApp::simple("RAUI Guide", make_widget!(app));

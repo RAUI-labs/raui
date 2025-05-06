@@ -7,7 +7,13 @@ use model::{
     quests::Quests,
     settings::Settings,
 };
-use raui::prelude::*;
+use raui::{
+    app::{
+        app::{App, AppConfig, declarative::DeclarativeApp},
+        event::{ElementState, Event, VirtualKeyCode, WindowEvent},
+    },
+    core::make_widget,
+};
 use ui::app::app;
 
 fn main() {

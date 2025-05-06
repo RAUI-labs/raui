@@ -1,6 +1,31 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{
+        component::{
+            containers::{
+                scroll_box::{SideScrollbarsProps, nav_scroll_box, nav_scroll_box_side_scrollbars},
+                size_box::{SizeBoxProps, size_box},
+                vertical_box::{VerticalBoxProps, vertical_box},
+                wrap_box::{WrapBoxProps, wrap_box},
+            },
+            image_box::{ImageBoxProps, image_box},
+            interactive::{
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                navigation::{NavItemActive, use_nav_container_active},
+                scroll_view::ScrollViewRange,
+            },
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            flex::FlexBoxItemLayout,
+            image::{ImageBoxColor, ImageBoxMaterial},
+            size::SizeBoxSizeValue,
+        },
+        utils::{Color, Rect},
+    },
+};
 
 // we make this root widget a navigable container to let scrol box perform scrolling.
 #[pre_hooks(use_nav_container_active)]
@@ -35,12 +60,12 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                             }),
                             ..Default::default()
                         })
-                        .listed_slot(make_widget!(item).with_props(true))
-                        .listed_slot(make_widget!(item).with_props(false))
-                        .listed_slot(make_widget!(item).with_props(true))
-                        .listed_slot(make_widget!(item).with_props(false))
-                        .listed_slot(make_widget!(item).with_props(true))
-                        .listed_slot(make_widget!(item).with_props(false)),
+                        .listed_slot(make_widget!(item).key(0).with_props(true))
+                        .listed_slot(make_widget!(item).key(1).with_props(false))
+                        .listed_slot(make_widget!(item).key(2).with_props(true))
+                        .listed_slot(make_widget!(item).key(3).with_props(false))
+                        .listed_slot(make_widget!(item).key(4).with_props(true))
+                        .listed_slot(make_widget!(item).key(5).with_props(false)),
                 )
                 .named_slot(
                     "scrollbars",
@@ -73,7 +98,20 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
         .into()
 }
 
-fn item(ctx: WidgetContext) -> WidgetNode {
+fn use_item(ctx: &mut WidgetContext) {
+    ctx.life_cycle.change(|ctx| {
+        for msg in ctx.messenger.messages {
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                if msg.trigger_start() {
+                    println!("Button clicked: {:?}", msg.sender.key());
+                }
+            }
+        }
+    });
+}
+
+#[pre_hooks(use_item)]
+fn item(mut ctx: WidgetContext) -> WidgetNode {
     let color = if ctx.props.read_cloned_or_default::<bool>() {
         Color {
             r: 0.5,
@@ -90,15 +128,21 @@ fn item(ctx: WidgetContext) -> WidgetNode {
         }
     };
 
-    make_widget!(size_box)
-        .with_props(SizeBoxProps {
-            width: SizeBoxSizeValue::Fill,
-            height: SizeBoxSizeValue::Exact(136.0),
-            ..Default::default()
-        })
+    make_widget!(button)
+        .with_props(NavItemActive)
+        .with_props(ButtonNotifyProps(ctx.id.to_owned().into()))
         .named_slot(
             "content",
-            make_widget!(image_box).with_props(ImageBoxProps::colored(color)),
+            make_widget!(size_box)
+                .with_props(SizeBoxProps {
+                    width: SizeBoxSizeValue::Fill,
+                    height: SizeBoxSizeValue::Exact(136.0),
+                    ..Default::default()
+                })
+                .named_slot(
+                    "content",
+                    make_widget!(image_box).with_props(ImageBoxProps::colored(color)),
+                ),
         )
         .into()
 }

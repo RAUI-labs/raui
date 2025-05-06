@@ -80,6 +80,7 @@ pub fn switch_box(context: WidgetContext) -> WidgetNode {
         props: props.clone(),
         items,
         clipping,
+        content_reposition: Default::default(),
         transform,
     }
     .into()

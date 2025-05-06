@@ -23,63 +23,11 @@ pub type Scalar = f32;
 pub type Integer = i32;
 pub type UnsignedInteger = u32;
 
+pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
 pub use raui_derive::*;
 use serde::{Serialize, de::DeserializeOwned};
-
 #[doc(inline)]
 pub use serde_json::{Number as PrefabNumber, Value as PrefabValue};
-
-pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
-
-#[doc(hidden)]
-pub mod prelude {
-    pub use crate::{
-        Integer, LogKind, Logger, MessageData, Prefab, PrefabError, PrintLogger, PropsData, Scalar,
-        animator::*,
-        application::*,
-        implement_message_data, implement_props_data,
-        interactive::default_interactions_engine::*,
-        interactive::*,
-        layout::default_layout_engine::*,
-        layout::*,
-        make_widget,
-        messenger::*,
-        post_hooks, pre_hooks,
-        props::*,
-        renderer::*,
-        signals::*,
-        state::*,
-        unpack_named_slots,
-        view_model::*,
-        widget,
-        widget::*,
-        widget::{
-            component::*,
-            component::{
-                containers::{
-                    anchor_box::*, area_box::*, content_box::*, context_box::*, flex_box::*,
-                    grid_box::*, hidden_box::*, horizontal_box::*, portal_box::*,
-                    responsive_box::*, scroll_box::*, size_box::*, switch_box::*, tabs_box::*,
-                    tooltip_box::*, variant_box::*, vertical_box::*, wrap_box::*,
-                },
-                image_box::*,
-                interactive::*,
-                interactive::{
-                    button::*, input_field::*, navigation::*, options_view::*, scroll_view::*,
-                    slider_view::*,
-                },
-                space_box::*,
-                text_box::*,
-            },
-            context::*,
-            node::*,
-            unit::*,
-            unit::{area::*, content::*, flex::*, grid::*, image::*, portal::*, size::*, text::*},
-            utils::*,
-        },
-    };
-    pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
-}
 
 /// An error that can occur while processing a [`Prefab`]
 #[derive(Debug, Clone)]

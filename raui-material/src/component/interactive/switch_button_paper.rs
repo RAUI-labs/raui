@@ -1,5 +1,8 @@
 use crate::component::{interactive::button_paper::button_paper, switch_paper::switch_paper};
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{component::WidgetComponent, context::WidgetContext, node::WidgetNode},
+};
 
 pub fn switch_button_paper(context: WidgetContext) -> WidgetNode {
     switch_button_paper_impl(make_widget!(button_paper), context)

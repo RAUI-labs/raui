@@ -152,23 +152,3 @@ pub fn setup(app: &mut Application) {
         FnWidget::pointer(component::text_paper::text_paper),
     );
 }
-
-pub mod prelude {
-    pub use crate::{
-        component::{
-            containers::{
-                context_paper::*, flex_paper::*, grid_paper::*, horizontal_paper::*,
-                modal_paper::*, paper::*, scroll_paper::*, text_tooltip_paper::*, tooltip_paper::*,
-                vertical_paper::*, window_paper::*, wrap_paper::*,
-            },
-            icon_paper::*,
-            interactive::{
-                button_paper::*, icon_button_paper::*, slider_paper::*, switch_button_paper::*,
-                text_button_paper::*, text_field_paper::*,
-            },
-            switch_paper::*,
-            text_paper::*,
-        },
-        theme::*,
-    };
-}

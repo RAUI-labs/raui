@@ -1,5 +1,12 @@
 use internal::immediate_effects_box;
-use raui_core::prelude::*;
+use raui_core::{
+    DynamicManaged, DynamicManagedLazy, Lifetime, ManagedLazy, Prefab, PropsData, TypeHash,
+    make_widget,
+    props::{Props, PropsData},
+    widget::{
+        component::WidgetComponent, context::WidgetContext, node::WidgetNode, unit::WidgetUnitNode,
+    },
+};
 use serde::{Deserialize, Serialize};
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
@@ -400,6 +407,7 @@ pub fn make_widgets(context: &ImmediateContext, mut f: impl FnMut()) -> Vec<Widg
 
 mod internal {
     use super::*;
+    use raui_core::{unpack_named_slots, widget::unit::area::AreaBoxNode};
 
     pub(crate) fn immediate_effects_box(mut ctx: WidgetContext) -> WidgetNode {
         for hook in ctx.props.read_cloned_or_default::<ImmediateHooks>().hooks {

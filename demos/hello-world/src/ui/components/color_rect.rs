@@ -1,4 +1,14 @@
-use raui::prelude::*;
+use raui::core::{
+    Prefab, PropsData, make_widget,
+    props::PropsData,
+    widget::{
+        component::image_box::{ImageBoxProps, image_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::image::{ImageBoxColor, ImageBoxImageScaling, ImageBoxMaterial},
+        utils::Color,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]

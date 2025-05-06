@@ -2,7 +2,16 @@ use crate::ui::components::{
     color_rect::{ColorRectProps, color_rect},
     image_button::{ImageButtonProps, image_button},
 };
-use raui::prelude::*;
+use raui::core::{
+    make_widget,
+    widget::{
+        component::containers::grid_box::{GridBoxProps, grid_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::grid::GridBoxItemLayout,
+        utils::{Color, IntRect, Rect},
+    },
+};
 
 pub fn content(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;

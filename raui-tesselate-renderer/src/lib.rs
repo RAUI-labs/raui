@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use bytemuck::Pod;
 use fontdue::{
     Font,
@@ -27,6 +25,7 @@ use raui_core::{
 };
 use spitfire_core::{Triangle, VertexStream};
 use spitfire_fontdue::{TextRenderer, TextVertex};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub enum Error {

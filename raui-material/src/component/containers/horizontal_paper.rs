@@ -1,5 +1,13 @@
 use crate::component::containers::paper::paper;
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::containers::horizontal_box::{horizontal_box, nav_horizontal_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::content::ContentBoxItemLayout,
+    },
+};
 
 pub fn nav_horizontal_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

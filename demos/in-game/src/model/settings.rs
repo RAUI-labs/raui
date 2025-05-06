@@ -1,4 +1,7 @@
-use raui::prelude::*;
+use raui::core::{
+    Managed, Scalar,
+    view_model::{ViewModel, ViewModelValue},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

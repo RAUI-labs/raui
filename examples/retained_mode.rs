@@ -4,12 +4,33 @@
 // within declarative mode widgets and vice versa - they
 // interleave quite seamingly.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
-#[allow(unused_imports)]
-use raui_retained::*;
 use std::any::Any;
+
+use raui_app::app::retained::RetainedApp;
+use raui_core::{
+    application::ChangeNotifier,
+    make_widget,
+    widget::{
+        component::{
+            containers::{
+                content_box::content_box,
+                horizontal_box::{HorizontalBoxProps, horizontal_box},
+                vertical_box::{VerticalBoxProps, vertical_box},
+            },
+            image_box::{ImageBoxProps, image_box},
+            interactive::{
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                navigation::{NavItemActive, use_nav_container_active},
+            },
+            text_box::{TextBoxProps, text_box},
+        },
+        context::{WidgetContext, WidgetMountOrChangeContext},
+        node::WidgetNode,
+        unit::{flex::FlexBoxItemLayout, text::TextBoxFont},
+        utils::Color,
+    },
+};
+use raui_retained::{View, ViewState, ViewValue};
 
 const FONT: &str = "./demos/hello-world/resources/verdana.ttf";
 

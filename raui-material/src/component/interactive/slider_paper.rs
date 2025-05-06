@@ -2,7 +2,25 @@ use crate::{
     component::text_paper::{TextPaperProps, text_paper},
     theme::{ThemeColor, ThemeProps, ThemedImageMaterial, ThemedSliderMaterial},
 };
-use raui_core::prelude::*;
+use raui_core::{
+    PropsData, make_widget, unpack_named_slots,
+    widget::{
+        component::{
+            WidgetComponent,
+            containers::content_box::content_box,
+            image_box::{ImageBoxProps, image_box},
+            interactive::slider_view::{SliderViewDirection, SliderViewProps, slider_view},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            content::ContentBoxItemLayout,
+            image::{ImageBoxColor, ImageBoxMaterial},
+            text::TextBoxSizeValue,
+        },
+        utils::Rect,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Clone, Serialize, Deserialize)]

@@ -1,8 +1,34 @@
 // Make sure you have seen `options_view` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::{App, AppConfig, declarative::DeclarativeApp};
+use raui_core::{
+    Managed, Scalar, make_widget, pre_hooks,
+    view_model::{ViewModel, ViewModelValue},
+    widget::{
+        WidgetRef,
+        component::{
+            containers::{
+                anchor_box::PivotBoxProps, content_box::content_box, portal_box::PortalsContainer,
+                size_box::SizeBoxProps,
+            },
+            image_box::{ImageBoxProps, image_box},
+            interactive::{
+                button::ButtonProps,
+                navigation::{NavItemActive, use_nav_container_active},
+                options_view::{OptionsViewMode, OptionsViewProps, options_view},
+            },
+            text_box::{TextBoxProps, text_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            content::ContentBoxItemLayout,
+            size::SizeBoxSizeValue,
+            text::{TextBoxFont, TextBoxHorizontalAlign, TextBoxVerticalAlign},
+        },
+        utils::{Color, Rect},
+    },
+};
 
 const DATA: &str = "data";
 const INDEX: &str = "index";

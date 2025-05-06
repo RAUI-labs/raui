@@ -1,5 +1,41 @@
 use crate::model::inventory::{Inventory, ItemsDatabase};
-use raui::prelude::*;
+use raui::{
+    core::{
+        make_widget, pre_hooks,
+        widget::{
+            WidgetIdMetaParams,
+            component::{
+                containers::{
+                    content_box::content_box,
+                    grid_box::GridBoxProps,
+                    size_box::{SizeBoxProps, size_box},
+                },
+                image_box::{ImageBoxProps, image_box},
+                interactive::{
+                    button::{ButtonNotifyMessage, ButtonNotifyProps},
+                    navigation::NavItemActive,
+                },
+            },
+            context::WidgetContext,
+            node::WidgetNode,
+            unit::{
+                content::ContentBoxItemLayout,
+                grid::GridBoxItemLayout,
+                image::{ImageBoxImage, ImageBoxMaterial},
+                size::SizeBoxSizeValue,
+            },
+            utils::{Color, IntRect, Rect, Vec2},
+        },
+    },
+    material::component::{
+        containers::{
+            grid_paper::nav_grid_paper,
+            window_paper::{WindowPaperProps, window_paper},
+        },
+        interactive::button_paper::button_paper,
+        text_paper::{TextPaperProps, text_paper},
+    },
+};
 
 #[pre_hooks(use_inventory)]
 pub fn inventory(mut context: WidgetContext) -> WidgetNode {

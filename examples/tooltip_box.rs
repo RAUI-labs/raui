@@ -1,8 +1,33 @@
 // Make sure you have seen `context_box` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{
+        WidgetRef,
+        component::{
+            containers::{
+                anchor_box::PivotBoxProps,
+                content_box::content_box,
+                horizontal_box::{HorizontalBoxProps, horizontal_box},
+                portal_box::PortalsContainer,
+                tooltip_box::portals_tooltip_box,
+            },
+            image_box::{ImageBoxProps, image_box},
+            interactive::{
+                button::button,
+                navigation::{NavItemActive, use_nav_container_active},
+            },
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            flex::FlexBoxItemLayout,
+            image::{ImageBoxColor, ImageBoxMaterial, ImageBoxSizeValue},
+        },
+        utils::{Color, Vec2},
+    },
+};
 
 // we mark app as an active navigable container to let all buttons down the tree register to the
 // navigation system so they can react on mouse hovering for example.

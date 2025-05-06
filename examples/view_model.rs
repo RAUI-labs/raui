@@ -1,8 +1,20 @@
 // Make sure you have seen `text_box` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::{
+    app::{App, AppConfig, declarative::DeclarativeApp},
+    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
+};
+use raui_core::{
+    make_widget, pre_hooks,
+    view_model::{ViewModel, ViewModelValue},
+    widget::{
+        component::text_box::{TextBoxProps, text_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::text::TextBoxFont,
+        utils::Color,
+    },
+};
 
 // Name of View-Model instance.
 const DATA: &str = "data";

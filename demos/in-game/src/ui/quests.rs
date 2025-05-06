@@ -1,5 +1,32 @@
 use crate::model::quests::{Quest, Quests};
-use raui::prelude::*;
+use raui::{
+    core::{
+        make_widget, pre_hooks,
+        widget::{
+            WidgetIdMetaParams,
+            component::{
+                containers::{
+                    content_box::content_box,
+                    tabs_box::{TabPlateProps, TabsBoxProps, nav_tabs_box},
+                    vertical_box::{VerticalBoxProps, vertical_box},
+                },
+                image_box::{ImageBoxProps, image_box},
+                interactive::{
+                    button::{ButtonNotifyMessage, ButtonNotifyProps},
+                    navigation::NavItemActive,
+                },
+            },
+            context::WidgetContext,
+            node::WidgetNode,
+            unit::flex::FlexBoxItemLayout,
+        },
+    },
+    material::component::{
+        containers::window_paper::{WindowPaperProps, window_paper},
+        interactive::text_button_paper::text_button_paper,
+        text_paper::{TextPaperProps, text_paper},
+    },
+};
 
 #[pre_hooks(use_quests)]
 pub fn quests(mut context: WidgetContext) -> WidgetNode {

@@ -144,6 +144,29 @@ pub struct ContentBoxItemNode {
     pub layout: ContentBoxItemLayout,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct ContentBoxContentReposition {
+    #[serde(default)]
+    pub offset: Vec2,
+    #[serde(default = "ContentBoxContentReposition::default_scale")]
+    pub scale: Vec2,
+}
+
+impl Default for ContentBoxContentReposition {
+    fn default() -> Self {
+        Self {
+            offset: Default::default(),
+            scale: Self::default_scale(),
+        }
+    }
+}
+
+impl ContentBoxContentReposition {
+    fn default_scale() -> Vec2 {
+        1.0.into()
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ContentBox {
     #[serde(default)]
@@ -153,6 +176,8 @@ pub struct ContentBox {
     pub items: Vec<ContentBoxItem>,
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub content_reposition: ContentBoxContentReposition,
     #[serde(default)]
     pub transform: Transform,
 }
@@ -175,6 +200,7 @@ impl TryFrom<ContentBoxNode> for ContentBox {
             id,
             items,
             clipping,
+            content_reposition,
             transform,
             ..
         } = node;
@@ -186,6 +212,7 @@ impl TryFrom<ContentBoxNode> for ContentBox {
             id,
             items,
             clipping,
+            content_reposition,
             transform,
         })
     }
@@ -197,6 +224,7 @@ pub struct ContentBoxNode {
     pub props: Props,
     pub items: Vec<ContentBoxItemNode>,
     pub clipping: bool,
+    pub content_reposition: ContentBoxContentReposition,
     pub transform: Transform,
 }
 
@@ -227,6 +255,8 @@ pub(crate) struct ContentBoxNodePrefab {
     pub items: Vec<ContentBoxItemNodePrefab>,
     #[serde(default)]
     pub clipping: bool,
+    #[serde(default)]
+    pub content_reposition: ContentBoxContentReposition,
     #[serde(default)]
     pub transform: Transform,
 }

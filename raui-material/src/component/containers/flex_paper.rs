@@ -1,5 +1,13 @@
 use crate::component::containers::paper::paper;
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::containers::flex_box::{flex_box, nav_flex_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::content::ContentBoxItemLayout,
+    },
+};
 
 pub fn nav_flex_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

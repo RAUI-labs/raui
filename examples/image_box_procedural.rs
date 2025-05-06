@@ -1,6 +1,13 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    layout::CoordsMappingScaling,
+    make_widget,
+    widget::{
+        component::image_box::{ImageBoxProps, image_box},
+        unit::image::{ImageBoxMaterial, ImageBoxProcedural, ImageBoxProceduralVertex},
+        utils::{Color, Vec2},
+    },
+};
 
 fn main() {
     let tree = make_widget!(image_box).with_props(ImageBoxProps {

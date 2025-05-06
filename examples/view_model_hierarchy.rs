@@ -1,8 +1,25 @@
 // Make sure you have seen `view_model_widget` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    view_model::{ViewModel, ViewModelValue},
+    widget::{
+        component::{
+            containers::vertical_box::nav_vertical_box,
+            image_box::{ImageBoxProps, image_box},
+            interactive::{
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                navigation::NavItemActive,
+            },
+            text_box::{TextBoxProps, text_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::text::TextBoxFont,
+        utils::Color,
+    },
+};
 
 const DATA: &str = "data";
 const COUNTER: &str = "counter";

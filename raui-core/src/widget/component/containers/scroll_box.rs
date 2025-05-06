@@ -203,6 +203,10 @@ pub fn use_nav_scroll_box_side_scrollbars(context: &mut WidgetContext) {
         let _ = context.state.write_with(SideScrollbarsState::default());
     });
 
+    context.life_cycle.unmount(|context| {
+        context.signals.write(NavSignal::Unlock);
+    });
+
     context.life_cycle.change(|context| {
         let mut dirty = false;
         let mut notify = false;
@@ -231,13 +235,13 @@ pub fn use_nav_scroll_box_side_scrollbars(context: &mut WidgetContext) {
                     && state.horizontal_state.selected
                     && (state.horizontal_state.trigger || state.horizontal_state.context)
                 {
-                    props.value.x = msg.state.0.x;
+                    props.value.x = msg.state.factor.x;
                     notify = true;
                 } else if msg.sender.key() == "vbar"
                     && state.vertical_state.selected
                     && (state.vertical_state.trigger || state.vertical_state.context)
                 {
-                    props.value.y = msg.state.0.y;
+                    props.value.y = msg.state.factor.y;
                     notify = true;
                 }
             }

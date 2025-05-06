@@ -1,4 +1,4 @@
-use raui::prelude::*;
+use raui::core::view_model::{ViewModel, ViewModelValue};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},

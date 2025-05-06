@@ -1,5 +1,8 @@
 use crate::component::{containers::tooltip_paper::tooltip_paper, text_paper::text_paper};
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget, unpack_named_slots,
+    widget::{context::WidgetContext, node::WidgetNode},
+};
 
 pub fn text_tooltip_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

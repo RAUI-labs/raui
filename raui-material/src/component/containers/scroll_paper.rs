@@ -2,7 +2,20 @@ use crate::{
     component::containers::paper::paper,
     theme::{ThemeColor, ThemeProps, ThemedImageMaterial, ThemedWidgetProps},
 };
-use raui_core::prelude::*;
+use raui_core::{
+    PropsData, Scalar, make_widget, unpack_named_slots,
+    widget::{
+        component::containers::scroll_box::{
+            SideScrollbarsProps, nav_scroll_box, nav_scroll_box_side_scrollbars,
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            content::ContentBoxItemLayout,
+            image::{ImageBoxColor, ImageBoxMaterial},
+        },
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Clone, Serialize, Deserialize)]

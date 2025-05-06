@@ -43,25 +43,6 @@ impl AnimationUpdate {
 /// An [`Animator`] can be used inside of the [`WidgetMountOrChangeContext`] that is provided when
 /// setting widget lifecycle handlers.
 ///
-/// # Example
-///
-/// ```
-/// # use raui_core::prelude::*;
-/// fn my_widget(context: WidgetContext) -> WidgetNode {
-///     // When my_widget changes
-///     context.life_cycle.change(|change_context| {
-///         // Get the `Animator`
-///         let animator = change_context.animator;
-///
-///         // Stop "my_animation"
-///         animator.change("my_animation", None);
-///     });
-///
-///     // some widget stuff...
-///     # Default::default()
-/// }
-/// ```
-///
 /// # Animations & Values
 ///
 /// The animator can manage any number of different animations identified by a string `anim_id`.
@@ -153,34 +134,6 @@ pub struct AnimatedValueProgress {
 ///
 /// The [`AnimatorStates`] can be accessed from the [`WidgetContext`] to get information about the
 /// current state of all component animations.
-///
-/// # Example
-///
-/// ```
-/// # use raui_core::prelude::*;
-/// # fn my_button(_: WidgetContext) -> WidgetNode { Default::default() }
-/// fn my_widget(context: WidgetContext) -> WidgetNode {
-///     // Get the animator from our context
-///     let WidgetContext { animator, .. } = context;
-///     
-///     // Create the properties for a size box
-///     let size_box_props = Props::new(SizeBoxProps {
-///         transform: Transform {
-///             // Get the `scale` value of the `my_anim` animation or and
-///             // scale our button based on the animation progress
-///             scale: Vec2::from(animator.value_progress_factor_or("my_anim", "scale", 1.)),
-///             ..Default::default()
-///         },
-///         ..Default::default()
-///     });
-///
-///     // Wrap our button in our animated size box
-///     make_widget!(size_box)
-///         .merge_props(size_box_props)
-///         .named_slot("content", make_widget!(my_button))
-///         .into()
-/// }
-/// ```
 ///
 /// # Animations & Values
 ///

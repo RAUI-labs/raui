@@ -1,4 +1,7 @@
-use raui::prelude::*;
+use raui::core::{
+    Managed,
+    view_model::{ViewModelProperties, ViewModelValue},
+};
 
 pub struct AppData {
     pub input: Managed<ViewModelValue<String>>,

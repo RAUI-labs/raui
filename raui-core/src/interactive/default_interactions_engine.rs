@@ -1173,18 +1173,38 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         if let Some(layout) = app.layout_data().items.get(who) {
                             let rect = layout.ui_space;
                             let size = rect.size();
-                            let x = if size.x > 0.0 {
-                                (x - rect.left) / size.x
-                            } else {
-                                0.0
-                            };
-                            let y = if size.y > 0.0 {
-                                (y - rect.top) / size.y
-                            } else {
-                                0.0
-                            };
-                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
-                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-x".to_owned(),
+                                    if size.x > 0.0 {
+                                        (x - rect.left) / size.x
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-y".to_owned(),
+                                    if size.y > 0.0 {
+                                        (y - rect.top) / size.y
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-x-unscaled".to_owned(), x - rect.left),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-y-unscaled".to_owned(), y - rect.top),
+                            );
+                            app.send_message(id, NavSignal::Axis("pointer-x-ui".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y-ui".to_owned(), y));
                             result.captured_pointer_location = true;
                             result.captured_pointer_action = true;
                         }
@@ -1213,18 +1233,38 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         if let Some(layout) = app.layout_data().items.get(who) {
                             let rect = layout.ui_space;
                             let size = rect.size();
-                            let x = if size.x > 0.0 {
-                                (x - rect.left) / size.x
-                            } else {
-                                0.0
-                            };
-                            let y = if size.y > 0.0 {
-                                (y - rect.top) / size.y
-                            } else {
-                                0.0
-                            };
-                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
-                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-x".to_owned(),
+                                    if size.x > 0.0 {
+                                        (x - rect.left) / size.x
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-y".to_owned(),
+                                    if size.y > 0.0 {
+                                        (y - rect.top) / size.y
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-x-unscaled".to_owned(), x - rect.left),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-y-unscaled".to_owned(), y - rect.top),
+                            );
+                            app.send_message(id, NavSignal::Axis("pointer-x-ui".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y-ui".to_owned(), y));
                             result.captured_pointer_location = true;
                             result.captured_pointer_action = true;
                         }
@@ -1242,18 +1282,38 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         if let Some(layout) = app.layout_data().items.get(who) {
                             let rect = layout.ui_space;
                             let size = rect.size();
-                            let x = if size.x > 0.0 {
-                                (x - rect.left) / size.x
-                            } else {
-                                0.0
-                            };
-                            let y = if size.y > 0.0 {
-                                (y - rect.top) / size.y
-                            } else {
-                                0.0
-                            };
-                            app.send_message(id, NavSignal::Axis("pointer-x".to_owned(), x));
-                            app.send_message(id, NavSignal::Axis("pointer-y".to_owned(), y));
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-x".to_owned(),
+                                    if size.x > 0.0 {
+                                        (x - rect.left) / size.x
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis(
+                                    "pointer-y".to_owned(),
+                                    if size.y > 0.0 {
+                                        (y - rect.top) / size.y
+                                    } else {
+                                        0.0
+                                    },
+                                ),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-x-unscaled".to_owned(), x - rect.left),
+                            );
+                            app.send_message(
+                                id,
+                                NavSignal::Axis("pointer-y-unscaled".to_owned(), y - rect.top),
+                            );
+                            app.send_message(id, NavSignal::Axis("pointer-x-ui".to_owned(), x));
+                            app.send_message(id, NavSignal::Axis("pointer-y-ui".to_owned(), y));
                             result.captured_pointer_location = true;
                             result.captured_pointer_action = true;
                         }

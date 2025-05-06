@@ -1,47 +1,50 @@
-#[allow(unused_imports)]
-use raui_app::prelude::*;
-use raui_immediate::*;
+use raui_app::app::immediate::ImmediateApp;
+use raui_core::widget::{
+    component::{image_box::ImageBoxProps, interactive::navigation::NavItemActive},
+    utils::Color,
+};
+use raui_immediate::{register_access, use_access};
+use raui_immediate_widgets::core::{
+    containers::nav_content_box,
+    image_box,
+    interactive::{ImmediateButton, button},
+};
 
-mod gui {
-    use raui_immediate::*;
-    use raui_immediate_widgets::prelude::*;
+pub fn app() {
+    nav_content_box((), || {
+        clickable_button();
+    });
+}
 
-    pub fn app() {
-        nav_content_box((), || {
-            clickable_button();
+pub fn clickable_button() {
+    if colored_button().trigger_start() {
+        // we use access point to some host data
+        let clicked = use_access::<bool>("clicked");
+
+        *clicked.write().unwrap() = true;
+    }
+}
+
+fn colored_button() -> ImmediateButton {
+    button(NavItemActive, |state| {
+        let props = ImageBoxProps::colored(if state.state.trigger {
+            Color {
+                r: 0.5,
+                g: 0.0,
+                b: 0.0,
+                a: 1.0,
+            }
+        } else {
+            Color {
+                r: 0.0,
+                g: 0.5,
+                b: 0.0,
+                a: 1.0,
+            }
         });
-    }
 
-    pub fn clickable_button() {
-        if colored_button().trigger_start() {
-            // we use access point to some host data
-            let clicked = use_access::<bool>("clicked");
-
-            *clicked.write().unwrap() = true;
-        }
-    }
-
-    fn colored_button() -> ImmediateButton {
-        button(NavItemActive, |state| {
-            let props = ImageBoxProps::colored(if state.state.trigger {
-                Color {
-                    r: 0.5,
-                    g: 0.0,
-                    b: 0.0,
-                    a: 1.0,
-                }
-            } else {
-                Color {
-                    r: 0.0,
-                    g: 0.5,
-                    b: 0.0,
-                    a: 1.0,
-                }
-            });
-
-            image_box(props);
-        })
-    }
+        image_box(props);
+    })
 }
 
 fn main() {
@@ -51,15 +54,12 @@ fn main() {
         // here we register access point to some game state
         let _lifetime = register_access("clicked", &mut clicked);
 
-        gui::app();
+        app();
     });
 }
 
 #[test]
 fn test_tracked_button() {
-    use raui_core::prelude::*;
-    use raui_core::tester::AppCycleTester;
-
     let mut tester = AppCycleTester::new(
         CoordsMapping::new(Rect {
             left: 0.0,
@@ -86,7 +86,7 @@ fn test_tracked_button() {
             // and here we register access point to mock data
             let _lifetime = register_access("clicked", &mut mock);
 
-            gui::app();
+            app();
         }));
     }
 

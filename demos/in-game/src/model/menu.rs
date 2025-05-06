@@ -1,4 +1,4 @@
-use raui::prelude::*;
+use raui::core::view_model::{ViewModel, ViewModelValue};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum MenuScreen {

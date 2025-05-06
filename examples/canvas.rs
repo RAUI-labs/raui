@@ -1,9 +1,19 @@
 // Make sure you have seen `render_workers` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
-use raui_app::{Vertex, third_party::spitfire_glow::prelude::*};
+use raui_app::{
+    Vertex,
+    app::declarative::DeclarativeApp,
+    components::canvas::{CanvasProps, DrawOnCanvasMessage, RequestCanvasRedrawMessage, canvas},
+    render_worker::RenderWorkerTaskContext,
+    third_party::spitfire_glow::{
+        graphics::GraphicsBatch,
+        renderer::{GlowBlending, GlowUniformValue},
+    },
+};
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{context::WidgetContext, node::WidgetNode, utils::Color},
+};
 
 fn use_my_canvas(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|ctx| {

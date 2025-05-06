@@ -8,8 +8,7 @@ use raui_core::widget::{
 use raui_tesselate_renderer::TesselateResourceProvider;
 use serde::{Deserialize, Serialize};
 use spitfire_glow::{
-    graphics::{Graphics, Texture},
-    prelude::Shader,
+    graphics::{Graphics, Shader, Texture},
     renderer::GlowTextureFormat,
 };
 use std::{collections::HashMap, path::PathBuf};

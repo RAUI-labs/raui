@@ -10,83 +10,6 @@
 //!
 //! You _will_ need to interact with [`Application`] if you are building your own RAUI integration
 //! with another renderer or game engine.
-//!
-//! # Example
-//!
-//! ```rust
-//! # use raui_core::prelude::*;
-//! // Create the application
-//! let mut application = Application::default();
-//!
-//! // We need to run the "setup" functions for the application to register components and
-//! // properties if we want to support serialization of the UI. We pass it a function that
-//! // will do the actual registration
-//! application.setup(setup /* the core setup function from the RAUI prelude */);
-//!
-//! // If we used RAUI material we would also want to call it's setup ( but we don't need
-//! // it here )
-//! // application.setup(raui_material::setup);
-//!
-//! // Create the renderer. In this case we use the raw renderer that will return raw
-//! // [`WidgetUnit`]'s, but usually you would have a custom renderer for your game
-//! // engine or renderer.
-//! let mut renderer = RawRenderer;
-//!
-//! // Create the interactions engine. The default interactions engine covers typical
-//! // pointer + keyboard + gamepad navigation/interactions.
-//! let mut interactions = DefaultInteractionsEngine::default();
-//!
-//! // We create our widget tree
-//! let tree = make_widget!(nav_content_box)
-//!     .key("app")
-//!     .listed_slot(make_widget!(button)
-//!         .key("button")
-//!         .with_props(NavItemActive)
-//!         .named_slot("content", make_widget!(image_box).key("icon"))
-//!     );
-//!
-//! // We apply the tree to the application. This must be done again if we wish to change the
-//! // tree.
-//! application.apply(tree);
-//!
-//! // This and the following function calls would need to be called every frame
-//! loop {
-//!     // Telling the app to `process` will make it perform any necessary updates.
-//!     application.process();
-//!
-//!     // To properly handle layout we need to create a mapping of the screen coordinates to
-//!     // the RAUI coordinates. We would update this with the size of the window every frame.
-//!     let mapping = CoordsMapping::new(Rect {
-//!         left: 0.0,
-//!         right: 1024.0,
-//!         top: 0.0,
-//!         bottom: 576.0,
-//!     });
-//!
-//!     // We apply the application layout
-//!     let mut layout_engine = DefaultLayoutEngine::<()>::default();
-//!     application
-//!         // We use the default layout engine, but you could make your own layout engine
-//!         .layout(&mapping, &mut layout_engine)
-//!         .unwrap();
-//!
-//!     // we interact with UI by sending interaction messages to the engine. You would hook this
-//!     // up to whatever game engine or window event loop to perform the proper interactions when
-//!     // different events are emitted.
-//!     interactions.interact(Interaction::PointerMove(Vec2 { x: 200.0, y: 100.0 }));
-//!     interactions.interact(Interaction::PointerDown(
-//!         PointerButton::Trigger,
-//!         Vec2 { x: 200.0, y: 100.0 },
-//!     ));
-//!
-//!     // Since interactions engines require constructed layout to process interactions we
-//!     // have to process interactions after we layout the UI.
-//!     application.interact(&mut interactions).unwrap();
-//!
-//!     // Now we render the app, printing it's raw widget units
-//!     println!("{:?}", application.render(&mapping, &mut renderer).unwrap());
-//! #   break;
-//! }
 //! ```
 
 use crate::{
@@ -241,21 +164,6 @@ impl Application {
     ///
     /// > **Note:** RAUI will work fine without running any `setup` if UI serialization is not
     /// > required.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use raui_core::prelude::*;
-    /// # let mut application = Application::default();
-    /// application.setup(setup /* the core setup function from the RAUI prelude */);
-    /// ```
-    ///
-    /// If you use crates like the `raui_material` crate you will want to call it's setup function
-    /// as well.
-    ///
-    /// ```ignore
-    /// application.setup(raui_material::setup);
-    /// ```
     #[inline]
     pub fn setup<F>(&mut self, mut f: F)
     where
@@ -272,23 +180,6 @@ impl Application {
     ///
     /// This function is often used in [`setup`][Self::setup] functions for registering batches of
     /// components.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use raui_core::prelude::*;
-    /// fn my_widget(ctx: WidgetContext) -> WidgetNode {
-    ///     todo!("make awesome widget");
-    /// }
-    ///
-    /// fn setup_widgets(app: &mut Application) {
-    ///     app.register_component("my_widget", FnWidget::pointer(my_widget));
-    /// }
-    ///
-    /// let mut application = Application::default();
-    ///
-    /// application.setup(setup_widgets);
-    /// ```
     #[inline]
     pub fn register_component(&mut self, type_name: &str, processor: FnWidget) {
         self.component_mappings
@@ -307,25 +198,6 @@ impl Application {
     ///
     /// This function is often used in [`setup`][Self::setup] functions for registering batches of
     /// properties.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use raui_core::prelude::*;
-    /// # use serde::{Serialize, Deserialize};
-    /// #[derive(PropsData, Debug, Default, Copy, Clone, Serialize, Deserialize)]
-    /// struct MyProp {
-    ///     awesome: bool,
-    /// }
-    ///
-    /// fn setup_properties(app: &mut Application) {
-    ///     app.register_props::<MyProp>("MyProp");
-    /// }
-    ///
-    /// let mut application = Application::default();
-    ///
-    /// application.setup(setup_properties);
-    /// ```
     #[inline]
     pub fn register_props<T>(&mut self, name: &str)
     where
@@ -531,61 +403,6 @@ impl Application {
     }
 
     /// [Process][Self::process] the application.
-    ///
-    /// ## Example
-    ///
-    /// ```
-    /// # use raui_core::prelude::*;
-    /// const APP_DATA: &str = "app-data";
-    /// const COUNTER: &str = "counter";
-    ///
-    /// /// Some sort of application data.
-    /// struct AppData {
-    ///     counter: ViewModelValue<i32>,
-    /// }
-    ///
-    /// // Make view-model of that data.
-    /// let mut view_model = ViewModel::produce(|properties| {
-    ///     AppData {
-    ///         counter: ViewModelValue::new(0, properties.notifier(COUNTER)),
-    ///     }
-    /// });
-    ///
-    /// // Get handle to view-model data for access on host side.
-    /// // This handle is valid as long as it's view-model is alive.
-    /// let mut app_data = view_model.lazy::<AppData>().unwrap();
-    ///
-    /// let mut app = Application::default();
-    /// app.view_models.insert(APP_DATA.to_owned(), view_model);
-    /// // Do application stuff like interactions, layout, etc...
-    ///
-    /// // Now we call `process` with our process context
-    /// app.process();
-    /// ```
-    ///
-    /// Now, in our components we can access the `AppData` from view-model
-    /// through the widget's `WidgetContext`.
-    ///
-    /// ```
-    /// # use raui_core::prelude::*;
-    /// # struct AppData {
-    /// #    counter: ViewModelValue<i32>,
-    /// # }
-    /// # const APP_DATA: &str = "app-data";
-    /// # const COUNTER: &str = "counter";
-    /// fn my_component(mut ctx: WidgetContext) -> WidgetNode {
-    ///     let mut data = ctx
-    ///         .view_models
-    ///         .view_model_mut(APP_DATA)
-    ///         .unwrap()
-    ///         .write::<AppData>()
-    ///         .unwrap();
-    ///     *data.counter += 1;
-    ///
-    ///     // widget stuff...
-    /// #   Default::default()
-    /// }
-    /// ```
     pub fn process(&mut self) -> bool {
         self.dirty
             .include_other(&self.view_models.consume_notified_common_root());
@@ -1438,6 +1255,7 @@ impl Application {
                 })
                 .collect::<Result<_, ApplicationError>>()?,
             clipping: data.clipping,
+            content_reposition: data.content_reposition,
             transform: data.transform,
         })
     }
@@ -1686,6 +1504,7 @@ impl Application {
                 })
                 .collect::<Result<_, ApplicationError>>()?,
             clipping: data.clipping,
+            content_reposition: data.content_reposition,
             transform: data.transform,
         })
     }

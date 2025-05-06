@@ -1,5 +1,21 @@
-use raui::prelude::*;
-use raui::renderer::json::JsonRenderer;
+use raui_core::{
+    application::Application,
+    interactive::default_interactions_engine::{
+        DefaultInteractionsEngine, Interaction, PointerButton,
+    },
+    layout::{CoordsMapping, default_layout_engine::DefaultLayoutEngine},
+    make_widget,
+    widget::{
+        component::{
+            containers::content_box::nav_content_box,
+            image_box::image_box,
+            interactive::{button::button, navigation::NavItemActive},
+        },
+        setup,
+        utils::{Rect, Vec2},
+    },
+};
+use raui_json_renderer::JsonRenderer;
 
 fn main() {
     // Create the application
@@ -8,9 +24,7 @@ fn main() {
     // We need to run the "setup" functions for the application to register components and
     // properties if we want to support serialization of the UI. We pass it a function that
     // will do the actual registration
-    application.setup(
-        setup, /* the core setup function, in the raui prelude */
-    );
+    application.setup(setup);
     // application.setup(raui_material::setup /* and the raui_material setup if we need it */);
 
     // Create the renderer. In this case we render the UI to JSON for simplicity, but usually

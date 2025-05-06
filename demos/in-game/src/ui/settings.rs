@@ -1,5 +1,38 @@
 use crate::model::settings::Settings;
-use raui::prelude::*;
+use raui::{
+    core::{
+        make_widget, pre_hooks, unpack_named_slots,
+        widget::{
+            WidgetIdMetaParams,
+            component::{
+                containers::{
+                    horizontal_box::{HorizontalBoxProps, horizontal_box},
+                    vertical_box::{VerticalBoxProps, nav_vertical_box},
+                },
+                interactive::{
+                    button::{ButtonNotifyMessage, ButtonNotifyProps},
+                    navigation::NavItemActive,
+                    slider_view::{SliderInput, SliderViewDirection, SliderViewProps},
+                },
+            },
+            context::WidgetContext,
+            node::WidgetNode,
+            unit::{flex::FlexBoxItemLayout, text::TextBoxHorizontalAlign},
+        },
+    },
+    material::{
+        component::{
+            containers::window_paper::{WindowPaperProps, window_paper},
+            interactive::{
+                slider_paper::{NumericSliderPaperProps, numeric_slider_paper},
+                switch_button_paper::switch_button_paper,
+            },
+            switch_paper::SwitchPaperProps,
+            text_paper::{TextPaperProps, text_paper},
+        },
+        theme::{ThemeColor, ThemeVariant, ThemedWidgetProps},
+    },
+};
 
 #[pre_hooks(use_settings)]
 pub fn settings(mut context: WidgetContext) -> WidgetNode {

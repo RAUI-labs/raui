@@ -34,7 +34,14 @@ pub struct NavTrackingNotifyProps(
 #[derive(PropsData, Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[props_data(crate::props::PropsData)]
 #[prefab(crate::Prefab)]
-pub struct NavTrackingProps(#[serde(default)] pub Vec2);
+pub struct NavTrackingProps {
+    #[serde(default)]
+    pub factor: Vec2,
+    #[serde(default)]
+    pub unscaled: Vec2,
+    #[serde(default)]
+    pub ui_space: Vec2,
+}
 
 #[derive(MessageData, Debug, Default, Clone)]
 #[message_data(crate::messenger::MessageData)]
@@ -45,15 +52,30 @@ pub struct NavTrackingNotifyMessage {
 }
 
 impl NavTrackingNotifyMessage {
-    pub fn pointer_delta(&self) -> Vec2 {
+    pub fn pointer_delta_factor(&self) -> Vec2 {
         Vec2 {
-            x: self.state.0.x - self.prev.0.x,
-            y: self.state.0.y - self.prev.0.y,
+            x: self.state.factor.x - self.prev.factor.x,
+            y: self.state.factor.y - self.prev.factor.y,
+        }
+    }
+
+    pub fn pointer_delta_unscaled(&self) -> Vec2 {
+        Vec2 {
+            x: self.state.unscaled.x - self.prev.unscaled.x,
+            y: self.state.unscaled.y - self.prev.unscaled.y,
+        }
+    }
+
+    pub fn pointer_delta_ui_space(&self) -> Vec2 {
+        Vec2 {
+            x: self.state.ui_space.x - self.prev.ui_space.x,
+            y: self.state.ui_space.y - self.prev.ui_space.y,
         }
     }
 
     pub fn pointer_moved(&self) -> bool {
-        (self.state.0.x - self.prev.0.x) + (self.state.0.y - self.prev.0.y) > 1.0e-6
+        (self.state.factor.x - self.prev.factor.x) + (self.state.factor.y - self.prev.factor.y)
+            > 1.0e-6
     }
 }
 
@@ -532,12 +554,32 @@ pub fn use_nav_tracking(context: &mut WidgetContext) {
             for msg in context.messenger.messages {
                 if let Some(NavSignal::Axis(axis, value)) = msg.as_any().downcast_ref::<NavSignal>()
                 {
-                    if axis == "pointer-x" {
-                        data.0.x = *value;
-                        dirty = true;
-                    } else if axis == "pointer-y" {
-                        data.0.y = *value;
-                        dirty = true;
+                    match axis.as_str() {
+                        "pointer-x" => {
+                            data.factor.x = *value;
+                            dirty = true;
+                        }
+                        "pointer-y" => {
+                            data.factor.y = *value;
+                            dirty = true;
+                        }
+                        "pointer-x-unscaled" => {
+                            data.unscaled.x = *value;
+                            dirty = true;
+                        }
+                        "pointer-y-unscaled" => {
+                            data.unscaled.y = *value;
+                            dirty = true;
+                        }
+                        "pointer-x-ui" => {
+                            data.ui_space.x = *value;
+                            dirty = true;
+                        }
+                        "pointer-y-ui" => {
+                            data.ui_space.y = *value;
+                            dirty = true;
+                        }
+                        _ => {}
                     }
                 }
             }

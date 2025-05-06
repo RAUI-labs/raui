@@ -1,5 +1,11 @@
 use crate::component::containers::paper::paper;
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget, unpack_named_slots,
+    widget::{
+        component::containers::wrap_box::wrap_box, context::WidgetContext, node::WidgetNode,
+        unit::content::ContentBoxItemLayout,
+    },
+};
 
 pub fn wrap_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

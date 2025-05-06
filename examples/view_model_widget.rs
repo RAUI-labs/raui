@@ -1,8 +1,18 @@
 // Make sure you have seen `view_model` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    animator::{AnimatedValue, Animation, AnimationMessage},
+    make_widget, pre_hooks,
+    view_model::{ViewModel, ViewModelValue},
+    widget::{
+        component::text_box::{TextBoxProps, text_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::text::TextBoxFont,
+        utils::Color,
+    },
+};
 
 // animation message name used to trigger counter change.
 const TICK: &str = "tick";

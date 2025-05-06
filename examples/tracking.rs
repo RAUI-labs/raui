@@ -1,6 +1,21 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{
+        component::{
+            containers::horizontal_box::horizontal_box,
+            image_box::{ImageBoxProps, image_box},
+            interactive::navigation::{
+                NavTrackingNotifyMessage, NavTrackingNotifyProps, self_tracking,
+                use_nav_container_active,
+            },
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::flex::FlexBoxItemLayout,
+        utils::Color,
+    },
+};
 
 fn use_app(ctx: &mut WidgetContext) {
     // whenever we receive tracking message, we store it's horizontal
@@ -8,7 +23,7 @@ fn use_app(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|ctx| {
         for msg in ctx.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
-                let _ = ctx.state.write_with(msg.state.0.x);
+                let _ = ctx.state.write_with(msg.state.factor.x);
             }
         }
     });

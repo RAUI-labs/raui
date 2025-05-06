@@ -1,8 +1,31 @@
 // Make sure you have seen `anchor_box` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{
+        WidgetRef,
+        component::{
+            RelativeLayoutProps,
+            containers::{
+                anchor_box::{
+                    AnchorNotifyProps, AnchorProps, PivotBoxProps, anchor_box, pivot_box,
+                    use_anchor_box_notified_state,
+                },
+                content_box::content_box,
+                portal_box::{PortalsContainer, portal_box},
+            },
+            image_box::{ImageBoxProps, image_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{
+            content::ContentBoxItemLayout,
+            image::{ImageBoxColor, ImageBoxMaterial, ImageBoxSizeValue},
+        },
+        utils::Color,
+    },
+};
 
 // we use this hook that receives anchor box state change and store that in this component state.
 #[pre_hooks(use_anchor_box_notified_state)]

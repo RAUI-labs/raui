@@ -33,7 +33,7 @@ In our demo app we've been working on, let's put our text in a content box so th
 {% rustdoc_test() %}
 
 ```rust
-# use raui::prelude::*;
+# use raui::import_all::*;
 /// Our app widget from earlier
 pub fn app(_ctx: WidgetContext) -> WidgetNode {
     // Create our text box properties
@@ -78,7 +78,7 @@ But what if we want to add another item to our box, like maybe an image? Let's s
 {% rustdoc_test() %}
 
 ```rust
-# use raui::prelude::*;
+# use raui::import_all::*;
 pub fn app(_ctx: WidgetContext) -> WidgetNode {
     // Create our text box properties
     // ...
@@ -153,7 +153,7 @@ Let's go ahead and use a [`vertical_box`] to put our text above our cat photo:
 {% rustdoc_test() %}
 
 ```rust
-# use raui::prelude::*;
+# use raui::import_all::*;
 pub fn app(_ctx: WidgetContext) -> WidgetNode {
     // Create our text box properties
     let text_box_props = Props::new(TextBoxProps {

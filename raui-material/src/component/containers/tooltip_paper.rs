@@ -2,7 +2,20 @@ use crate::{
     component::containers::{paper::PaperProps, wrap_paper::wrap_paper},
     theme::{ThemeColor, ThemedWidgetProps},
 };
-use raui_core::prelude::*;
+use raui_core::{
+    PropsData, Scalar, make_widget, unpack_named_slots,
+    widget::{
+        component::containers::{
+            size_box::{SizeBoxProps, size_box},
+            tooltip_box::portals_tooltip_box,
+            wrap_box::WrapBoxProps,
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::{image::ImageBoxFrame, size::SizeBoxSizeValue},
+        utils::Rect,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(PropsData, Debug, Copy, Clone, Serialize, Deserialize)]

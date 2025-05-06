@@ -183,6 +183,10 @@ pub fn use_slider_view(context: &mut WidgetContext) {
         .props
         .write(NavTrackingNotifyProps(context.id.to_owned().into()));
 
+    context.life_cycle.unmount(|context| {
+        context.signals.write(NavSignal::Unlock);
+    });
+
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
@@ -197,10 +201,10 @@ pub fn use_slider_view(context: &mut WidgetContext) {
                 if button.selected && button.trigger {
                     let mut props = context.props.read_cloned_or_default::<SliderViewProps>();
                     let value = match props.direction {
-                        SliderViewDirection::LeftToRight => msg.state.0.x,
-                        SliderViewDirection::RightToLeft => 1.0 - msg.state.0.x,
-                        SliderViewDirection::TopToBottom => msg.state.0.y,
-                        SliderViewDirection::BottomToTop => 1.0 - msg.state.0.y,
+                        SliderViewDirection::LeftToRight => msg.state.factor.x,
+                        SliderViewDirection::RightToLeft => 1.0 - msg.state.factor.x,
+                        SliderViewDirection::TopToBottom => msg.state.factor.y,
+                        SliderViewDirection::BottomToTop => 1.0 - msg.state.factor.y,
                     }
                     .clamp(0.0, 1.0);
                     let value = value * (props.to - props.from) + props.from;

@@ -1,6 +1,19 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget, pre_hooks,
+    widget::{
+        component::{
+            containers::tabs_box::{
+                TabPlateProps, TabsBoxProps, TabsBoxTabsLocation, nav_tabs_box,
+            },
+            image_box::{ImageBoxProps, image_box},
+            interactive::navigation::{NavItemActive, use_nav_container_active},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        utils::Color,
+    },
+};
 
 #[pre_hooks(use_nav_container_active)]
 fn app(mut ctx: WidgetContext) -> WidgetNode {

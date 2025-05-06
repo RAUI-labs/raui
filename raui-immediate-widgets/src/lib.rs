@@ -1,15 +1,5 @@
 use raui_immediate::*;
 
-#[allow(ambiguous_glob_reexports)]
-pub mod prelude {
-    pub use crate::{
-        core::*,
-        core::{containers::*, interactive::*},
-        material::*,
-        material::{containers::*, interactive::*},
-    };
-}
-
 macro_rules! impl_list_components {
     ($($name:ident),+ $(,)?) => {
         $(
@@ -17,10 +7,65 @@ macro_rules! impl_list_components {
                 props: impl Into<raui_core::props::Props>,
                 f: impl FnMut() -> R,
             ) -> R {
-                use raui_core::prelude::*;
                 #[allow(unused_imports)]
-                use raui_material::prelude::*;
-                crate::list_component(make_widget!($name), props, f)
+                use raui_core::widget::component::{
+                    containers::{
+                        anchor_box::*,
+                        area_box::*,
+                        content_box::*,
+                        context_box::*,
+                        flex_box::*,
+                        float_box::*,
+                        grid_box::*,
+                        hidden_box::*,
+                        horizontal_box::*,
+                        portal_box::*,
+                        responsive_box::*,
+                        scroll_box::*,
+                        size_box::*,
+                        switch_box::*,
+                        tabs_box::*,
+                        tooltip_box::*,
+                        variant_box::*,
+                        vertical_box::*,
+                        wrap_box::*,
+                    },
+                    interactive::{
+                        button::*,
+                        float_view::*,
+                        input_field::*,
+                        navigation::*,
+                        options_view::*,
+                        scroll_view::*,
+                        slider_view::*,
+                    },
+                };
+                #[allow(unused_imports)]
+                use raui_material::component::{
+                    containers::{
+                        context_paper::*,
+                        flex_paper::*,
+                        grid_paper::*,
+                        horizontal_paper::*,
+                        modal_paper::*,
+                        paper::*,
+                        scroll_paper::*,
+                        text_tooltip_paper::*,
+                        tooltip_paper::*,
+                        vertical_paper::*,
+                        window_paper::*,
+                        wrap_paper::*,
+                    },
+                    interactive::{
+                        button_paper::*,
+                        icon_button_paper::*,
+                        slider_paper::*,
+                        switch_button_paper::*,
+                        text_button_paper::*,
+                        text_field_paper::*,
+                    },
+                };
+                crate::list_component(raui_core::make_widget!($name), props, f)
             }
         )+
     };
@@ -33,10 +78,65 @@ macro_rules! impl_content_components {
                 props: impl Into<raui_core::props::Props>,
                 f: impl FnMut() -> R,
             ) -> R {
-                use raui_core::prelude::*;
                 #[allow(unused_imports)]
-                use raui_material::prelude::*;
-                crate::content_component(make_widget!($name), $content, props, f)
+                use raui_core::widget::component::{
+                    containers::{
+                        anchor_box::*,
+                        area_box::*,
+                        content_box::*,
+                        context_box::*,
+                        flex_box::*,
+                        float_box::*,
+                        grid_box::*,
+                        hidden_box::*,
+                        horizontal_box::*,
+                        portal_box::*,
+                        responsive_box::*,
+                        scroll_box::*,
+                        size_box::*,
+                        switch_box::*,
+                        tabs_box::*,
+                        tooltip_box::*,
+                        variant_box::*,
+                        vertical_box::*,
+                        wrap_box::*,
+                    },
+                    interactive::{
+                        button::*,
+                        float_view::*,
+                        input_field::*,
+                        navigation::*,
+                        options_view::*,
+                        scroll_view::*,
+                        slider_view::*,
+                    },
+                };
+                #[allow(unused_imports)]
+                use raui_material::component::{
+                    containers::{
+                        context_paper::*,
+                        flex_paper::*,
+                        grid_paper::*,
+                        horizontal_paper::*,
+                        modal_paper::*,
+                        paper::*,
+                        scroll_paper::*,
+                        text_tooltip_paper::*,
+                        tooltip_paper::*,
+                        vertical_paper::*,
+                        window_paper::*,
+                        wrap_paper::*,
+                    },
+                    interactive::{
+                        button_paper::*,
+                        icon_button_paper::*,
+                        slider_paper::*,
+                        switch_button_paper::*,
+                        text_button_paper::*,
+                        text_field_paper::*,
+                    },
+                };
+                crate::content_component(raui_core::make_widget!($name), $content, props, f)
             }
         )+
     };
@@ -48,35 +148,28 @@ macro_rules! impl_components {
             pub fn $name(
                 props: impl Into<raui_core::props::Props>,
             ) {
-                use raui_core::prelude::*;
                 #[allow(unused_imports)]
-                use raui_material::prelude::*;
-                crate::component(make_widget!($name), props)
+                use raui_core::widget::{
+                    none_widget,
+                    component::{
+                        image_box::*,
+                        space_box::*,
+                        text_box::*,
+                    },
+                };
+                #[allow(unused_imports)]
+                use raui_material::component::{
+                    icon_paper::*,
+                    switch_paper::*,
+                    text_paper::*,
+                };
+                crate::component(raui_core::make_widget!($name), props)
             }
         )+
     };
 }
 
 pub mod core {
-    pub use raui_core::widget::{
-        component::{image_box::ImageBoxProps, space_box::SpaceBoxProps, text_box::TextBoxProps},
-        unit::{
-            content::{ContentBoxItem, ContentBoxItemLayout},
-            flex::{FlexBoxItem, FlexBoxItemLayout},
-            grid::{GridBoxItem, GridBoxItemLayout},
-            image::{
-                ImageBoxAspectRatio, ImageBoxColor, ImageBoxFrame, ImageBoxImage,
-                ImageBoxImageScaling, ImageBoxMaterial, ImageBoxProcedural, ImageBoxSizeValue,
-            },
-            size::SizeBoxSizeValue,
-            text::{
-                TextBoxDirection, TextBoxFont, TextBoxHorizontalAlign, TextBoxSizeValue,
-                TextBoxVerticalAlign,
-            },
-        },
-        utils::*,
-    };
-
     impl_components! {
         none_widget,
         image_box,
@@ -85,26 +178,6 @@ pub mod core {
     }
 
     pub mod containers {
-        pub use raui_core::widget::component::containers::{
-            anchor_box::{AnchorNotifyProps, AnchorProps, PivotBoxProps},
-            content_box::ContentBoxProps,
-            context_box::ContextBoxProps,
-            flex_box::FlexBoxProps,
-            grid_box::GridBoxProps,
-            hidden_box::HiddenBoxProps,
-            horizontal_box::HorizontalBoxProps,
-            portal_box::PortalsContainer,
-            responsive_box::MediaQueryExpression,
-            responsive_box::ResponsiveBoxState,
-            scroll_box::ScrollBoxOwner,
-            size_box::SizeBoxProps,
-            switch_box::SwitchBoxProps,
-            tabs_box::{TabPlateProps, TabsBoxProps, TabsBoxTabsLocation},
-            variant_box::VariantBoxProps,
-            vertical_box::VerticalBoxProps,
-            wrap_box::WrapBoxProps,
-        };
-
         impl_content_components! {
             "content":
             anchor_box,
@@ -147,25 +220,14 @@ pub mod core {
             make_widget,
             props::Props,
             widget::component::interactive::{
-                options_view::OptionsViewProxy, slider_view::SliderViewProxy,
+                button::ButtonProps,
+                input_field::{TextInputProps, TextInputState},
+                options_view::{OptionsViewProps, OptionsViewProxy},
+                slider_view::{SliderViewProps, SliderViewProxy},
             },
         };
         use raui_immediate::{begin, end, pop, push, use_state};
         use std::str::FromStr;
-
-        pub use raui_core::widget::component::interactive::{
-            button::{ButtonNotifyProps, ButtonProps},
-            input_field::{
-                TextInput, TextInputControlNotifyProps, TextInputMode, TextInputNotifyProps,
-                TextInputProps, TextInputState,
-            },
-            navigation::{
-                NavContainerActive, NavDirection, NavItemActive, NavJump, NavJumpActive,
-                NavJumpLooped, NavJumpMapProps, NavJumpMode, NavScroll, NavTextChange,
-                NavTrackingActive, NavType,
-            },
-            scroll_view::{ScrollViewNotifyProps, ScrollViewRange, ScrollViewState},
-        };
 
         #[derive(Debug, Default, Copy, Clone)]
         pub struct ImmediateButton {
@@ -221,7 +283,6 @@ pub mod core {
             mut f: impl FnMut(ImmediateButton),
         ) -> ImmediateButton {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let state = use_state(ImmediateButton::default);
             let result = state.read().unwrap().to_owned();
             begin();
@@ -242,7 +303,6 @@ pub mod core {
             mut f: impl FnMut(&str, TextInputState),
         ) -> (Option<T>, TextInputState) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_string());
             let props = props.into();
             let TextInputProps { allow_new_line, .. } = props.read_cloned_or_default();
@@ -276,7 +336,6 @@ pub mod core {
             mut f: impl FnMut(&str, TextInputState, ImmediateButton),
         ) -> (Option<T>, TextInputState, ImmediateButton) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_string());
             let props = props.into();
             let TextInputProps { allow_new_line, .. } = props.read_cloned_or_default();
@@ -315,7 +374,6 @@ pub mod core {
             mut f: impl FnMut(&T, ImmediateButton),
         ) -> (T, ImmediateButton) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
             let SliderViewProps {
@@ -353,7 +411,6 @@ pub mod core {
             mut f_items: impl FnMut(&T),
             mut f_content: impl FnMut(),
         ) -> T {
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
             let result = content.read().unwrap().to_owned();
@@ -378,14 +435,6 @@ pub mod core {
 }
 
 pub mod material {
-    pub use raui_material::theme;
-
-    pub use raui_material::component::{
-        icon_paper::{IconImage, IconPaperProps},
-        switch_paper::SwitchPaperProps,
-        text_paper::TextPaperProps,
-    };
-
     impl_components! {
         icon_paper,
         switch_paper,
@@ -393,14 +442,6 @@ pub mod material {
     }
 
     pub mod containers {
-        pub use raui_material::component::containers::{
-            context_paper::ContextPaperProps,
-            modal_paper::ModalPaperProps,
-            paper::{PaperContentLayoutProps, PaperProps},
-            scroll_paper::SideScrollbarsPaperProps,
-            tooltip_paper::TooltipPaperProps,
-        };
-
         impl_list_components! {
             context_paper,
             flex_paper,
@@ -424,24 +465,21 @@ pub mod material {
     pub mod interactive {
         use crate::core::interactive::ImmediateButton;
         use raui_core::{
+            make_widget,
             props::Props,
             widget::component::interactive::{
-                input_field::TextInputState, slider_view::SliderViewProxy,
+                input_field::{TextInputProps, TextInputState},
+                slider_view::{SliderViewProps, SliderViewProxy},
             },
         };
         use raui_immediate::{begin, end, push, use_state};
         use std::str::FromStr;
-
-        pub use raui_material::component::interactive::{
-            button_paper::ButtonPaperOverrideStyle, text_field_paper::TextFieldPaperProps,
-        };
 
         pub fn button_paper(
             props: impl Into<Props>,
             mut f: impl FnMut(ImmediateButton),
         ) -> ImmediateButton {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let state = use_state(ImmediateButton::default);
             let result = state.read().unwrap().to_owned();
             begin();
@@ -458,7 +496,6 @@ pub mod material {
 
         pub fn icon_button_paper(props: impl Into<Props>) -> ImmediateButton {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let state = use_state(ImmediateButton::default);
             let result = state.read().unwrap().to_owned();
             push(
@@ -471,7 +508,6 @@ pub mod material {
 
         pub fn switch_button_paper(props: impl Into<Props>) -> ImmediateButton {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let state = use_state(ImmediateButton::default);
             let result = state.read().unwrap().to_owned();
             push(
@@ -484,7 +520,6 @@ pub mod material {
 
         pub fn text_button_paper(props: impl Into<Props>) -> ImmediateButton {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let state = use_state(ImmediateButton::default);
             let result = state.read().unwrap().to_owned();
             push(
@@ -500,7 +535,6 @@ pub mod material {
             props: impl Into<Props>,
         ) -> (Option<T>, TextInputState, ImmediateButton) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_string());
             let props = props.into();
             let TextInputProps { allow_new_line, .. } =
@@ -536,7 +570,6 @@ pub mod material {
             mut f: impl FnMut(&T, ImmediateButton),
         ) -> (T, ImmediateButton) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
             let SliderViewProps {
@@ -573,7 +606,6 @@ pub mod material {
             props: impl Into<Props>,
         ) -> (T, ImmediateButton) {
             use crate::internal::*;
-            use raui_core::prelude::*;
             let content = use_state(|| value.to_owned());
             let props = props.into();
             let SliderViewProps {
@@ -605,12 +637,31 @@ pub mod material {
 
 mod internal {
     use super::core::interactive::ImmediateButton;
-    use raui_core::prelude::*;
-    use raui_material::prelude::*;
+    use raui_core::{
+        ManagedLazy, Prefab, PropsData, make_widget, pre_hooks,
+        widget::{
+            component::interactive::{
+                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                input_field::{TextInputState, input_field, text_input},
+                slider_view::slider_view,
+            },
+            context::WidgetContext,
+            node::WidgetNode,
+        },
+    };
+    use raui_material::component::interactive::{
+        button_paper::button_paper_impl,
+        icon_button_paper::icon_button_paper_impl,
+        slider_paper::{numeric_slider_paper_impl, slider_paper_impl},
+        switch_button_paper::switch_button_paper_impl,
+        text_button_paper::text_button_paper_impl,
+        text_field_paper::text_field_paper_impl,
+    };
     use serde::{Deserialize, Serialize};
 
     #[derive(PropsData, Default, Clone, Serialize, Deserialize)]
     #[props_data(raui_core::props::PropsData)]
+    #[prefab(raui_core::Prefab)]
     pub struct ImmediateButtonProps {
         #[serde(default, skip)]
         pub state: Option<ManagedLazy<ImmediateButton>>,

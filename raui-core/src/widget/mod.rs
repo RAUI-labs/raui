@@ -747,6 +747,11 @@ pub fn setup(app: &mut Application) {
     app.register_props::<component::containers::anchor_box::PivotBoxProps>("PivotBoxProps");
     app.register_props::<component::containers::content_box::ContentBoxProps>("ContentBoxProps");
     app.register_props::<component::containers::flex_box::FlexBoxProps>("FlexBoxProps");
+    app.register_props::<component::containers::float_box::FloatBoxProps>("FloatBoxProps");
+    app.register_props::<component::containers::float_box::FloatBoxNotifyProps>(
+        "FloatBoxNotifyProps",
+    );
+    app.register_props::<component::containers::float_box::FloatBoxState>("FloatBoxState");
     app.register_props::<component::containers::grid_box::GridBoxProps>("GridBoxProps");
     app.register_props::<component::containers::horizontal_box::HorizontalBoxProps>(
         "HorizontalBoxProps",
@@ -841,6 +846,10 @@ pub fn setup(app: &mut Application) {
     app.register_component(
         "flex_box",
         FnWidget::pointer(component::containers::flex_box::flex_box),
+    );
+    app.register_component(
+        "float_box",
+        FnWidget::pointer(component::containers::float_box::float_box),
     );
     app.register_component(
         "nav_grid_box",
@@ -974,16 +983,6 @@ pub fn setup(app: &mut Application) {
 ///
 /// Users will not usually need this macro, but it can be useful in some advanced cases or where you
 /// don't want to use the [`widget`] macro.
-///
-/// # Example
-///
-/// ```
-/// # use raui_core::prelude::*;
-/// let component: WidgetComponent = make_widget!(my_component);
-///
-/// fn my_component(context: WidgetContext) -> WidgetNode {
-///     todo!("Make an awesome widget")
-/// }
 /// ```
 #[macro_export]
 macro_rules! make_widget {
@@ -997,40 +996,7 @@ macro_rules! make_widget {
     }};
 }
 
-/// A helper for getting the named children out of a widget context
-///
-/// # Example
-///
-/// ```
-/// # use raui_core::prelude::*;
-/// fn my_component(context: WidgetContext) -> WidgetNode {
-///     // Destructure our context to get our named slots
-///     let WidgetContext {
-///         named_slots,
-///         ..
-///     } = context;
-///
-///     // Unpack our named `body` slot
-///     unpack_named_slots!(named_slots => body);
-///
-///     make_widget!(content_box).named_slot("content", body).into()
-/// }
-/// ```
-///
-/// You can also unpack multiple slots at a time like this:
-///
-/// ```
-/// # use raui_core::prelude::*;
-/// # fn my_component(context: WidgetContext) -> WidgetNode {
-/// #    let WidgetContext {
-/// #        named_slots,
-/// #        ..
-/// #    } = context;
-///      // Unpack the `header`, `body`, and `footer` slots
-///      unpack_named_slots!(named_slots => { header, body, footer });
-/// #    Default::default()
-/// # }
-/// ```
+/// A helper for getting the named children out of a widget context.
 #[macro_export]
 macro_rules! unpack_named_slots {
     ($map:expr => $name:ident) => {

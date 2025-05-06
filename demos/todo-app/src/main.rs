@@ -2,7 +2,10 @@ mod model;
 mod ui;
 
 use crate::{model::AppState, ui::components::app::app};
-use raui::prelude::*;
+use raui::{
+    app::app::{App, AppConfig, declarative::DeclarativeApp},
+    core::{make_widget, view_model::ViewModel},
+};
 
 fn main() {
     let app = DeclarativeApp::default()

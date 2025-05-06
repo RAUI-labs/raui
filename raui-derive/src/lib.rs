@@ -1,4 +1,5 @@
 extern crate proc_macro;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -55,36 +56,6 @@ fn is_arg_context(arg: &FnArg) -> Option<Ident> {
 /// > **See Also:** [`macro@post_hooks`] for an alternative that runs _after_ your component body
 ///
 /// Hooks allow you to create reusable logic that can be applied to multiple components.
-///
-/// # Usage Example
-///
-/// ```rust,ignore
-/// # use raui::prelude::*;
-/// #[pre_hooks(use_button_notified_state)]
-/// pub fn image_button(mut context: WidgetContext) -> WidgetNode {
-///    // Do stuff and potentially use state added by the `use_button_notified_state` hook
-/// }
-/// ```
-///
-/// # Creating a Hook
-///
-/// Hooks are simply functions that take a mutable reference to the component's
-/// [`WidgetContext`][raui_core::widget::context::WidgetContext].
-///
-/// ```ignore
-/// pub fn use_button_notified_state(context: &mut WidgetContext) {
-///     // hook into the lifecycle of whatever widget this hook is applied to
-///     context.life_cycle.change(|context| {
-///         for msg in context.messenger.messages {
-///             // listen for button messages
-///             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-///                 // And modify the context state with the button info
-///                 let _ = context.state.write_with(msg.state);
-///             }
-///         }
-///     });
-/// }
-/// ```
 #[proc_macro_attribute]
 pub fn pre_hooks(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ItemFn {

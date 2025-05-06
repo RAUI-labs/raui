@@ -11,6 +11,7 @@ format:
 
 build:
     cargo build --all
+    cargo build --examples
 
 clippy:
     cargo clippy --all

@@ -1,6 +1,11 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::image_box::{ImageBoxProps, image_box},
+        unit::image::{ImageBoxAspectRatio, ImageBoxImage, ImageBoxMaterial},
+    },
+};
 
 fn main() {
     let tree = make_widget!(image_box).with_props(ImageBoxProps {

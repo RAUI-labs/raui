@@ -1,5 +1,13 @@
 use crate::component::containers::paper::paper;
-use raui_core::prelude::*;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::containers::vertical_box::{nav_vertical_box, vertical_box},
+        context::WidgetContext,
+        node::WidgetNode,
+        unit::content::ContentBoxItemLayout,
+    },
+};
 
 pub fn nav_vertical_paper(context: WidgetContext) -> WidgetNode {
     let WidgetContext {

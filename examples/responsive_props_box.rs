@@ -1,8 +1,26 @@
 // Make sure you have seen `responsive_box` code example first, because this is an evolution of that.
 
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::{
+            containers::{
+                content_box::content_box,
+                responsive_box::{
+                    MediaQueryExpression, MediaQueryOrientation, responsive_props_box,
+                },
+            },
+            image_box::{ImageBoxProps, image_box},
+            text_box::{TextBoxProps, text_box},
+        },
+        context::WidgetContext,
+        node::WidgetNode,
+        none_widget,
+        unit::text::{TextBoxFont, TextBoxHorizontalAlign, TextBoxVerticalAlign},
+        utils::Color,
+    },
+};
 
 fn widget(context: WidgetContext) -> WidgetNode {
     let WidgetContext { key, props, .. } = context;

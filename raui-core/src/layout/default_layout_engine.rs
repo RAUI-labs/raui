@@ -124,13 +124,27 @@ impl<TME: TextMeasurementEngine> DefaultLayoutEngine<TME> {
             .iter()
             .filter_map(|item| {
                 let left = lerp(0.0, size_available.x, item.layout.anchors.left);
-                let left = left + item.layout.margin.left + item.layout.offset.x;
+                let left = left
+                    + item.layout.margin.left
+                    + item.layout.offset.x
+                    + unit.content_reposition.offset.x;
+                let left = left * unit.content_reposition.scale.x;
                 let right = lerp(0.0, size_available.x, item.layout.anchors.right);
-                let right = right - item.layout.margin.right + item.layout.offset.x;
+                let right = right - item.layout.margin.right
+                    + item.layout.offset.x
+                    + unit.content_reposition.offset.x;
+                let right = right * unit.content_reposition.scale.x;
                 let top = lerp(0.0, size_available.y, item.layout.anchors.top);
-                let top = top + item.layout.margin.top + item.layout.offset.y;
+                let top = top
+                    + item.layout.margin.top
+                    + item.layout.offset.y
+                    + unit.content_reposition.offset.y;
+                let top = top * unit.content_reposition.scale.y;
                 let bottom = lerp(0.0, size_available.y, item.layout.anchors.bottom);
-                let bottom = bottom - item.layout.margin.bottom + item.layout.offset.y;
+                let bottom = bottom - item.layout.margin.bottom
+                    + item.layout.offset.y
+                    + unit.content_reposition.offset.y;
+                let bottom = bottom * unit.content_reposition.scale.y;
                 let width = (right - left).max(0.0);
                 let height = (bottom - top).max(0.0);
                 let size = Vec2 {

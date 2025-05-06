@@ -1,4 +1,8 @@
-use raui::prelude::*;
+use raui::core::{
+    Managed, ManagedLazy, Prefab, PropsData,
+    props::PropsData,
+    view_model::{ViewModelProperties, ViewModelValue},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]

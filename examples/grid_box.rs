@@ -1,6 +1,15 @@
-use raui::prelude::*;
-#[allow(unused_imports)]
-use raui_app::prelude::*;
+use raui_app::app::declarative::DeclarativeApp;
+use raui_core::{
+    make_widget,
+    widget::{
+        component::{
+            containers::grid_box::{GridBoxProps, grid_box},
+            image_box::{ImageBoxProps, image_box},
+        },
+        unit::grid::GridBoxItemLayout,
+        utils::{Color, IntRect},
+    },
+};
 
 fn main() {
     let tree = make_widget!(grid_box)

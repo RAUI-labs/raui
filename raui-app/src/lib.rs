@@ -17,8 +17,9 @@ use raui_core::{
 use raui_tesselate_renderer::{TesselateBatch, TesselateBatchConverter, TesselateVertex};
 use spitfire_fontdue::TextVertex;
 use spitfire_glow::{
-    graphics::Texture,
-    prelude::{GraphicsBatch, Shader},
+    graphics::{
+        Texture, {GraphicsBatch, Shader},
+    },
     renderer::{
         GlowBlending, GlowTextureFiltering, GlowUniformValue, GlowVertexAttrib, GlowVertexAttribs,
     },
@@ -27,16 +28,6 @@ use vek::Rect;
 
 pub use glutin::{event, window};
 
-pub mod prelude {
-    pub use crate::{
-        app::*,
-        app::{declarative::*, immediate::*, retained::*},
-        components::{canvas::*, *},
-        event::*,
-        render_worker::*,
-        window::*,
-    };
-}
 pub mod third_party {
     pub use spitfire_fontdue;
     pub use spitfire_glow;

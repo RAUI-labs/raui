@@ -13,8 +13,8 @@
 [`NavSignal`]: https://docs.rs/raui/latest/raui/core/widget/component/interactive/navigation/enum.NavSignal.html
 [`NavItemActive`]: https://docs.rs/raui/latest/raui/core/widget/component/interactive/navigation/struct.NavItemActive.html
 [`perform_interactions`]: https://docs.rs/raui/latest/raui/core/interactive/trait.InteractionsEngine.html#tymethod.perform_interactions
-[`interact`]: https://docs.rs/raui/latest/raui/prelude/struct.DefaultInteractionsEngine.html#method.interact
-[`DefaultInteractionsEngine`]: https://docs.rs/raui/latest/raui/prelude/struct.DefaultInteractionsEngine.html
+[`interact`]: https://docs.rs/raui/latest/raui/interactive/struct.DefaultInteractionsEngine.html#method.interact
+[`DefaultInteractionsEngine`]: https://docs.rs/raui/latest/raui/interactive/struct.DefaultInteractionsEngine.html
 
 ## Media
 - [`RAUI + Spitfire In-Game`](https://github.com/RAUI-labs/raui/tree/master/demos/in-game)
