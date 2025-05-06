@@ -1,6 +1,6 @@
 [package]
 name = "raui-immediate"
-version = "0.69.0"
+version = "0.69.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI immediate mode UI layer"

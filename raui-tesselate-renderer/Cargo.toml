@@ -1,6 +1,6 @@
 [package]
 name = "raui-tesselate-renderer"
-version = "0.69.0"
+version = "0.69.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI renderer that tesselates layout into vertex and index buffers"
@@ -17,7 +17,7 @@ index32 = []
 raui-core = { path = "../raui-core", version = "0.69" }
 serde = { version = "1", features = ["derive"] }
 vek = "0.17"
-spitfire-core = "0.32"
-spitfire-fontdue = "0.32"
+spitfire-core = "0.33"
+spitfire-fontdue = "0.33"
 bytemuck = { version = "1", features = ["derive"] }
 fontdue = "0.9"
