@@ -9,7 +9,7 @@ use raui_core::{
 use raui_retained::{View, ViewState};
 use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
-    app::{App, AppConfig, AppState},
+    app::{App, AppConfig, AppControl, AppState},
     graphics::Graphics,
 };
 
@@ -105,11 +105,11 @@ impl<T: ViewState> RetainedApp<T> {
 }
 
 impl<T: ViewState> AppState<Vertex> for RetainedApp<T> {
-    fn on_init(&mut self, graphics: &mut Graphics<Vertex>) {
+    fn on_init(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
         self.shared.init(graphics);
     }
 
-    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>) {
+    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
         self.shared.redraw(graphics);
     }
 

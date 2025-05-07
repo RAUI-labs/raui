@@ -11,7 +11,7 @@ use raui_core::{
 use raui_immediate::{ImmediateContext, make_widgets};
 use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
-    app::{App, AppConfig, AppState},
+    app::{App, AppConfig, AppControl, AppState},
     graphics::Graphics,
 };
 
@@ -105,11 +105,11 @@ impl ImmediateApp {
 }
 
 impl AppState<Vertex> for ImmediateApp {
-    fn on_init(&mut self, graphics: &mut Graphics<Vertex>) {
+    fn on_init(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
         self.shared.init(graphics);
     }
 
-    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>) {
+    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
         self.shared.redraw(graphics);
     }
 
