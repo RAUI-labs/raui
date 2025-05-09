@@ -46,14 +46,14 @@ impl DeclarativeApp {
             .run(Self::default().coords_mapping_scaling(scaling).tree(root));
     }
 
-    pub fn update(mut self, f: impl FnMut(&mut Application) + 'static) -> Self {
+    pub fn update(mut self, f: impl FnMut(&mut Application, &mut AppControl) + 'static) -> Self {
         self.shared.on_update = Some(Box::new(f));
         self
     }
 
     pub fn redraw(
         mut self,
-        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>) + 'static,
+        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>, &mut AppControl) + 'static,
     ) -> Self {
         self.shared.on_redraw = Some(Box::new(f));
         self
@@ -102,8 +102,8 @@ impl AppState<Vertex> for DeclarativeApp {
         self.shared.init(graphics);
     }
 
-    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
-        self.shared.redraw(graphics);
+    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, control: &mut AppControl) {
+        self.shared.redraw(graphics, control);
     }
 
     fn on_event(&mut self, event: Event<()>, window: &mut Window) -> bool {

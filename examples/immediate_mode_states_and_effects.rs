@@ -111,7 +111,7 @@ fn text_button(text: &str) -> ImmediateButton {
 }
 
 fn main() {
-    ImmediateApp::simple("Immediate mode UI - States and Effects", move || {
+    ImmediateApp::simple("Immediate mode UI - States and Effects", |_| {
         app();
     });
 }

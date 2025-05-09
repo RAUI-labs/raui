@@ -66,7 +66,7 @@ impl<T: ViewState> RetainedApp<T> {
 
     pub fn redraw(
         mut self,
-        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>) + 'static,
+        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>, &mut AppControl) + 'static,
     ) -> Self {
         self.shared.on_redraw = Some(Box::new(f));
         self
@@ -109,8 +109,8 @@ impl<T: ViewState> AppState<Vertex> for RetainedApp<T> {
         self.shared.init(graphics);
     }
 
-    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
-        self.shared.redraw(graphics);
+    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, control: &mut AppControl) {
+        self.shared.redraw(graphics, control);
     }
 
     fn on_event(&mut self, event: Event<()>, window: &mut Window) -> bool {

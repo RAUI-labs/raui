@@ -81,5 +81,5 @@ pub fn label(text: impl ToString) {
 }
 
 fn main() {
-    ImmediateApp::simple("Immediate mode UI - Stack props", app);
+    ImmediateApp::simple("Immediate mode UI - Stack props", |_| app());
 }

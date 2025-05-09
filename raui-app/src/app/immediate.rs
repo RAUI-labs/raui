@@ -21,14 +21,14 @@ pub struct ImmediateApp {
 }
 
 impl ImmediateApp {
-    pub fn simple(title: impl ToString, callback: impl FnMut() + 'static) {
+    pub fn simple(title: impl ToString, callback: impl FnMut(&mut AppControl) + 'static) {
         App::<Vertex>::new(AppConfig::default().title(title)).run(Self::default().update(callback));
     }
 
     pub fn simple_scaled(
         title: impl ToString,
         scaling: CoordsMappingScaling,
-        callback: impl FnMut() + 'static,
+        callback: impl FnMut(&mut AppControl) + 'static,
     ) {
         App::<Vertex>::new(AppConfig::default().title(title)).run(
             Self::default()
@@ -37,7 +37,10 @@ impl ImmediateApp {
         );
     }
 
-    pub fn simple_fullscreen(title: impl ToString, callback: impl FnMut() + 'static) {
+    pub fn simple_fullscreen(
+        title: impl ToString,
+        callback: impl FnMut(&mut AppControl) + 'static,
+    ) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true))
             .run(Self::default().update(callback));
     }
@@ -45,7 +48,7 @@ impl ImmediateApp {
     pub fn simple_fullscreen_scaled(
         title: impl ToString,
         scaling: CoordsMappingScaling,
-        callback: impl FnMut() + 'static,
+        callback: impl FnMut(&mut AppControl) + 'static,
     ) {
         App::<Vertex>::new(AppConfig::default().title(title).fullscreen(true)).run(
             Self::default()
@@ -58,13 +61,13 @@ impl ImmediateApp {
         ImmediateAppCycleFrameRunner(f)
     }
 
-    pub fn update(mut self, callback: impl FnMut() + 'static) -> Self {
+    pub fn update(mut self, callback: impl FnMut(&mut AppControl) + 'static) -> Self {
         let mut callback = Box::new(callback);
         let context = ImmediateContext::default();
-        self.shared.on_update = Some(Box::new(move |application| {
+        self.shared.on_update = Some(Box::new(move |application, control| {
             raui_immediate::reset();
             let widgets = make_widgets(&context, || {
-                callback();
+                callback(control);
             });
             application.apply(make_widget!(content_box).listed_slots(widgets));
         }));
@@ -73,7 +76,7 @@ impl ImmediateApp {
 
     pub fn redraw(
         mut self,
-        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>) + 'static,
+        f: impl FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>, &mut AppControl) + 'static,
     ) -> Self {
         self.shared.on_redraw = Some(Box::new(f));
         self
@@ -109,8 +112,8 @@ impl AppState<Vertex> for ImmediateApp {
         self.shared.init(graphics);
     }
 
-    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, _: &mut AppControl) {
-        self.shared.redraw(graphics);
+    fn on_redraw(&mut self, graphics: &mut Graphics<Vertex>, control: &mut AppControl) {
+        self.shared.redraw(graphics, control);
     }
 
     fn on_event(&mut self, event: Event<()>, window: &mut Window) -> bool {

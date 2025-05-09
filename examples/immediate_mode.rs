@@ -149,7 +149,7 @@ fn main() {
     // some applciation state.
     let mut counter = 0usize;
 
-    ImmediateApp::simple("Immediate mode UI", move || {
+    ImmediateApp::simple("Immediate mode UI", move |_| {
         app(&mut counter);
     });
 }

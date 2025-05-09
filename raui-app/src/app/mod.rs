@@ -20,6 +20,7 @@ use raui_core::{
 use raui_tesselate_renderer::{TesselateRenderer, TessselateRendererDebug};
 use spitfire_fontdue::TextRenderer;
 use spitfire_glow::{
+    app::AppControl,
     graphics::{Graphics, GraphicsBatch, Shader, Texture},
     renderer::{GlowTextureFormat, GlowUniformValue},
 };
@@ -70,10 +71,12 @@ macro_rules! hash_map {
 
 pub(crate) struct SharedApp {
     #[allow(clippy::type_complexity)]
-    on_update: Option<Box<dyn FnMut(&mut Application)>>,
+    on_update: Option<Box<dyn FnMut(&mut Application, &mut AppControl)>>,
     /// fn(delta time, graphics interface)
     #[allow(clippy::type_complexity)]
-    on_redraw: Option<Box<dyn FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>)>>,
+    on_redraw: Option<
+        Box<dyn FnMut(f32, &mut Graphics<Vertex>, &mut TextRenderer<Color>, &mut AppControl)>,
+    >,
     #[allow(clippy::type_complexity)]
     on_event: Option<
         Box<
@@ -179,16 +182,21 @@ impl SharedApp {
         }
     }
 
-    fn redraw(&mut self, graphics: &mut Graphics<Vertex>) {
+    fn redraw(&mut self, graphics: &mut Graphics<Vertex>, control: &mut AppControl) {
         let elapsed = self.timer.elapsed();
         self.timer = Instant::now();
         self.time += elapsed.as_secs_f32();
         if let Some(callback) = self.on_update.as_mut() {
-            callback(&mut self.application);
+            callback(&mut self.application, control);
         }
         self.text_renderer.clear();
         if let Some(callback) = self.on_redraw.as_mut() {
-            callback(elapsed.as_secs_f32(), graphics, &mut self.text_renderer);
+            callback(
+                elapsed.as_secs_f32(),
+                graphics,
+                &mut self.text_renderer,
+                control,
+            );
         }
         {
             self.application

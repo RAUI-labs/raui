@@ -7,4 +7,4 @@ publish = false
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-raui = { version = "0.69", path = "../../", features = ["app"] }
+raui = { version = "0.70", path = "../../", features = ["app"] }

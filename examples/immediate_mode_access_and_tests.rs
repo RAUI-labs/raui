@@ -50,7 +50,7 @@ fn colored_button() -> ImmediateButton {
 fn main() {
     let mut clicked = false;
 
-    ImmediateApp::simple("Immediate mode UI - Access and tests", move || {
+    ImmediateApp::simple("Immediate mode UI - Access and tests", move |_| {
         // here we register access point to some game state
         let _lifetime = register_access("clicked", &mut clicked);
 
