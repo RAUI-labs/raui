@@ -26,7 +26,10 @@ use spitfire_glow::{
 };
 use vek::Rect;
 
-pub use glutin::{event, window};
+#[cfg(not(target_arch = "wasm32"))]
+pub use glutin::{dpi, event, window};
+#[cfg(target_arch = "wasm32")]
+pub use winit::{dpi, event, window};
 
 pub mod third_party {
     pub use spitfire_fontdue;

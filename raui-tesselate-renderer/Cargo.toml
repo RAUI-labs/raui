@@ -1,6 +1,6 @@
 [package]
 name = "raui-tesselate-renderer"
-version = "0.70.0"
+version = "0.70.1"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI renderer that tesselates layout into vertex and index buffers"
