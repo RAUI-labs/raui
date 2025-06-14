@@ -1,11 +1,16 @@
 //! Widget messaging
 
 use crate::widget::WidgetId;
+use intuicio_data::type_hash::TypeHash;
 use std::{any::Any, sync::mpsc::Sender};
 
 pub trait MessageData: std::fmt::Debug + Send + Sync {
     fn clone_message(&self) -> Box<dyn MessageData>;
     fn as_any(&self) -> &dyn Any;
+
+    fn type_hash(&self) -> TypeHash {
+        TypeHash::of::<Self>()
+    }
 }
 
 impl Clone for Box<dyn MessageData> {

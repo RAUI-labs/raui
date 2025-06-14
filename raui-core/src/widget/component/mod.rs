@@ -15,8 +15,9 @@ use crate::{
         utils::{Rect, Vec2},
     },
 };
+use intuicio_data::type_hash::TypeHash;
 use serde::{Deserialize, Serialize};
-use std::{any::TypeId, collections::HashMap, convert::TryFrom};
+use std::{collections::HashMap, convert::TryFrom};
 
 fn is_false(v: &bool) -> bool {
     !*v
@@ -31,10 +32,17 @@ pub struct MessageForwardProps {
     pub to: WidgetIdOrRef,
     #[serde(default)]
     #[serde(skip)]
-    pub types: Vec<TypeId>,
+    pub types: Vec<TypeHash>,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub no_wrap: bool,
+}
+
+impl MessageForwardProps {
+    pub fn with_type<T>(mut self) -> Self {
+        self.types.push(TypeHash::of::<T>());
+        self
+    }
 }
 
 #[derive(MessageData, Debug, Clone)]
@@ -60,7 +68,7 @@ pub fn use_message_forward(context: &mut WidgetContext) {
             },
         };
         for msg in context.messenger.messages {
-            let t = msg.as_any().type_id();
+            let t = msg.type_hash();
             if types.contains(&t) {
                 if no_wrap {
                     context

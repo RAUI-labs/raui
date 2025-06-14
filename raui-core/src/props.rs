@@ -1,9 +1,10 @@
 //! Widget property types
 
 use crate::{Prefab, PrefabError, PrefabValue};
+use intuicio_data::type_hash::TypeHash;
 use serde::{Deserialize, Serialize};
 use std::{
-    any::{Any, TypeId, type_name},
+    any::{Any, type_name},
     collections::HashMap,
 };
 
@@ -14,7 +15,7 @@ type PropsDeserializeFactory =
 
 #[derive(Default)]
 pub struct PropsRegistry {
-    type_mapping: HashMap<TypeId, String>,
+    type_mapping: HashMap<TypeHash, String>,
     factories: HashMap<String, (PropsSerializeFactory, PropsDeserializeFactory)>,
 }
 
@@ -37,7 +38,8 @@ impl PropsRegistry {
             Ok(())
         });
         self.factories.insert(name.to_owned(), (s, d));
-        self.type_mapping.insert(TypeId::of::<T>(), name.to_owned());
+        self.type_mapping
+            .insert(TypeHash::of::<T>(), name.to_owned());
     }
 
     pub fn unregister_factory(&mut self, name: &str) {
@@ -127,6 +129,10 @@ where
 pub trait PropsData: Any + std::fmt::Debug + Send + Sync {
     fn clone_props(&self) -> Box<dyn PropsData>;
     fn as_any(&self) -> &dyn Any;
+
+    fn type_hash(&self) -> TypeHash {
+        TypeHash::of::<Self>()
+    }
 }
 
 impl Clone for Box<dyn PropsData> {
@@ -136,7 +142,7 @@ impl Clone for Box<dyn PropsData> {
 }
 
 #[derive(Default, Clone)]
-pub struct Props(HashMap<TypeId, Box<dyn PropsData>>);
+pub struct Props(HashMap<TypeHash, Box<dyn PropsData>>);
 
 impl Props {
     pub fn new<T>(data: T) -> Self
@@ -144,7 +150,7 @@ impl Props {
         T: 'static + PropsData,
     {
         let mut result = HashMap::with_capacity(1);
-        result.insert(TypeId::of::<T>(), Box::new(data) as Box<dyn PropsData>);
+        result.insert(TypeHash::of::<T>(), Box::new(data) as Box<dyn PropsData>);
         Self(result)
     }
 
@@ -156,7 +162,7 @@ impl Props {
     where
         T: 'static + PropsData,
     {
-        let e = TypeId::of::<T>();
+        let e = TypeHash::of::<T>();
         self.0.iter().any(|(t, _)| *t == e)
     }
 
@@ -164,10 +170,10 @@ impl Props {
     where
         T: 'static + PropsData,
     {
-        self.0.remove(&TypeId::of::<T>());
+        self.0.remove(&TypeHash::of::<T>());
     }
 
-    pub(crate) unsafe fn remove_by_type(&mut self, id: TypeId) {
+    pub(crate) unsafe fn remove_by_type(&mut self, id: TypeHash) {
         self.0.remove(&id);
     }
 
@@ -175,7 +181,7 @@ impl Props {
     where
         T: 'static + PropsData,
     {
-        if let Some(v) = self.0.remove(&TypeId::of::<T>()) {
+        if let Some(v) = self.0.remove(&TypeHash::of::<T>()) {
             Ok(v)
         } else {
             Err(PropsError::HasNoDataOfType(type_name::<T>().to_owned()))
@@ -197,7 +203,7 @@ impl Props {
     where
         T: 'static + PropsData,
     {
-        let e = TypeId::of::<T>();
+        let e = TypeHash::of::<T>();
         if let Some((_, v)) = self.0.iter().find(|(t, _)| **t == e) {
             if let Some(data) = v.as_any().downcast_ref::<T>() {
                 Ok(data)
@@ -260,7 +266,7 @@ impl Props {
         T: 'static + PropsData,
     {
         self.0
-            .insert(TypeId::of::<T>(), Box::new(data) as Box<dyn PropsData>);
+            .insert(TypeHash::of::<T>(), Box::new(data) as Box<dyn PropsData>);
     }
 
     pub fn mutate<T, F>(&mut self, mut f: F)
@@ -313,7 +319,7 @@ impl Props {
     where
         T: 'static + PropsData,
     {
-        self.0.remove(&TypeId::of::<T>());
+        self.0.remove(&TypeHash::of::<T>());
         self
     }
 
@@ -327,7 +333,7 @@ impl Props {
         self.0.extend(other.into_inner());
     }
 
-    pub(crate) fn into_inner(self) -> HashMap<TypeId, Box<dyn PropsData>> {
+    pub(crate) fn into_inner(self) -> HashMap<TypeHash, Box<dyn PropsData>> {
         self.0
     }
 }
@@ -405,7 +411,7 @@ macro_rules! impl_tuple_props_conversion {
                 let mut result = std::collections::HashMap::default();
                 $(
                     result.insert(
-                        std::any::TypeId::of::<$id>(),
+                        $crate::TypeHash::of::<$id>(),
                         Box::new($id) as Box<dyn $crate::props::PropsData>,
                     );
                 )+

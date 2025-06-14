@@ -1,7 +1,8 @@
 //! Widget state types
 
 use crate::props::{Props, PropsData, PropsError};
-use std::{any::TypeId, sync::mpsc::Sender};
+use intuicio_data::type_hash::TypeHash;
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
 pub enum StateError {
@@ -13,7 +14,7 @@ pub enum StateError {
 pub enum StateChange {
     Set(Props),
     Include(Props),
-    Exclude(TypeId),
+    Exclude(TypeHash),
 }
 
 #[derive(Clone)]
@@ -53,7 +54,7 @@ impl StateUpdate {
     {
         if self
             .0
-            .send(StateChange::Exclude(TypeId::of::<T>()))
+            .send(StateChange::Exclude(TypeHash::of::<T>()))
             .is_err()
         {
             Err(StateError::CouldNotWriteChange)
