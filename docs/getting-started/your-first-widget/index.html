@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" as="font" href="https://RAUI-labs.github.io/raui/fonts/vendor/jost/jost-v4-latin-regular.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="https://RAUI-labs.github.io/raui/fonts/vendor/jost/jost-v4-latin-700.woff2"  type="font/woff2" crossorigin>
+
+
+<link rel="stylesheet" href="https://RAUI-labs.github.io/raui/main.css">
+
+
+
+  
+  
+    
+  
+
+  
+  
+    
+    
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+
+
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+
+	
+
+
+	
+
+<title>Your First Widget | RAUI</title>
+<meta name="description" content="Learn how to create your first widget">
+<link rel="canonical" href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/">
+
+
+
+
+
+
+  
+
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BreadcrumbList",
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+          {
+            "@type": "ListItem",
+            "position":  1 ,
+            "name": "Home",
+            "item": "https://RAUI-labs.github.io/raui/"
+          },
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  2 ,
+            "name": "Docs",
+            "item": "https://RAUI-labs.github.io/raui/docs/"
+          },
+        
+      
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  3 ,
+            "name": "Getting Started",
+            "item": "https://RAUI-labs.github.io/raui/docs/getting-started/"
+          },
+        
+      
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+          
+          
+          {
+            "@type": "ListItem",
+            "position":  4 ,
+            "name": "Your First Widget",
+            "item": "https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/"
+          },
+        
+      
+    
+  }
+</script>
+
+
+
+
+  <meta name="theme-color" content="#fff">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://RAUI-labs.github.io/raui/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://RAUI-labs.github.io/raui/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://RAUI-labs.github.io/raui/favicon-16x16.png">
+  
+
+
+  
+
+</head>
+
+  
+
+<body class="docs single">
+  
+  
+  
+  
+<div class="header-bar fixed-top"></div>
+<header class="navbar fixed-top navbar-expand-md navbar-light">
+	<div class="container">
+		<input class="menu-btn order-0" type="checkbox" id="menu-btn">
+		<label class="menu-icon d-md-none" for="menu-btn"><span class="navicon"></span></label>
+		<a class="navbar-brand order-1 order-md-0 me-auto" href="https://RAUI-labs.github.io/raui">RAUI</a>
+		<button id="mode" class="btn btn-link order-2 order-md-4" type="button" aria-label="Toggle mode">
+			<span class="toggle-dark"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+			<span class="toggle-light"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
+		</button>
+		<ul class="navbar-nav fork-me order-3 order-md-5">
+			
+				
+					<li class="nav-item">
+						<a class="nav-link" href="https://github.com/RAUI-labs/raui"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg><span class="ms-2 visually-hidden">GitHub</span></a>
+					</li>
+				
+			
+		</ul>
+		<div class="collapse navbar-collapse order-4 order-md-1">
+			<ul class="navbar-nav main-nav me-auto order-5 order-md-2">
+				
+					
+						<li class="nav-item docs active">
+							<a class="nav-link" href="https://RAUI-labs.github.io/raui/docs/about/introduction/">Docs</a>
+						</li>
+					
+						<li class="nav-item">
+							<a class="nav-link" href="https://RAUI-labs.github.io/raui/blog/">Blog</a>
+						</li>
+					
+				
+			</ul>
+			<div class="break order-6 d-md-none"></div>
+			
+				<form class="navbar-form flex-grow-1 order-7 order-md-3">
+					<input id="userinput" class="form-control is-search" type="search" placeholder="Search docs..."
+						aria-label="Search docs..." autocomplete="off">
+					<div id="suggestions" class="shadow bg-white rounded"></div>
+				</form>
+			
+		</div>
+	</div>
+</header>
+
+
+
+  
+<div class="wrap container" role="document">
+  <div class="content">
+    <div class="row flex-xl-nowrap">
+	  
+<div class="col-lg-3 col-xl-2 docs-sidebar">
+	<nav class="docs-links" aria-label="Main navigation">
+			
+			
+			
+			
+					
+					
+					
+							<h3>About</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://RAUI-labs.github.io/raui/docs/about/introduction/">Introduction</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Getting Started</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://RAUI-labs.github.io/raui/docs/getting-started/setting-up/">Setting Up</a></li>
+							                           
+									<li><a class="docs-link active" href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/">Your First Widget</a></li>
+							                           
+									<li><a class="docs-link" href="https://RAUI-labs.github.io/raui/docs/getting-started/containers/">Containers</a></li>
+							
+					</ul>
+					
+					
+					
+					
+							<h3>Layout</h3>
+							<ul class="list-unstyled">
+							                           
+									<li><a class="docs-link" href="https://RAUI-labs.github.io/raui/docs/layout/layout-in-depth/">Layout In Depth</a></li>
+							
+					</ul>
+					
+					
+			
+	</nav>
+</div>
+
+	  
+  
+  <nav class="docs-toc d-none d-xl-block col-xl-2" aria-label="Secondary navigation">
+  	<div class="page-links">
+  			<h3>On this page</h3>
+  			<nav id="TableOfContents">
+  					<ul>
+  							
+  							<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#what-is-a-widget">What is a Widget?</a></li>
+  							
+  							
+  							<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#making-a-widget">Making a Widget</a></li>
+  							
+  									<ul>
+  											
+  											<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#setting-the-widget-tree">Setting the Widget Tree</a></li>
+  											
+  											<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#the-app-component">The app Component</a></li>
+  											
+  									</ul>
+  							
+  							
+  							<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#summary">Summary</a></li>
+  							
+  							
+  							<li><a href="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/#construction-under-construction-construction-worker">🚧 Under Construction 👷</a></li>
+  							
+  							
+  					</ul>
+  			</nav>
+  	</div>
+  </nav>
+  
+
+      <main class="docs-content col-lg-13 col-xl-12">
+        <h1>Your First Widget</h1>
+        <p class="lead">Now we get to create our first RAUI widget!</p>
+        <h2 id="what-is-a-widget">What is a Widget?</h2>
+<p>Before we create a widget, let's talk about what a widget actually <em>is</em>. To be precise, there are a few different types of widgets and the type widget that we will be creating is a <strong><em>widget component</em></strong>. Widget components are made out of normal Rust functions that have a specific signature. The job of widget components is to look at it's properties and child widgets ( if it has any ), to do any processing that it needs to, and to output a new widget tree that will rendered in place of the component.</p>
+<p>Because components can return whole new widget trees, they can combine the functionality of multiple <em>other</em> components together. This allows you to build components into larger structures like LEGO® bricks, where a complex UI can be made out of many simple pieces put together in different combinations. This high modularity is the true power of RAUI, your imagination is the only limit!</p>
+<h2 id="making-a-widget">Making a Widget</h2>
+<p>Without further ado, let's make a widget!</p>
+<p>Update your <code>main.rs</code> file to look like this:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">use </span><span>raui::{
+</span><span>    app::app::declarative::DeclarativeApp,
+</span><span>    core::{
+</span><span>        make_widget,
+</span><span>        widget::{
+</span><span>            component::text_box::{TextBoxProps, text_box},
+</span><span>            context::WidgetContext,
+</span><span>            node::WidgetNode,
+</span><span>            unit::text::TextBoxFont,
+</span><span>            utils::Color,
+</span><span>        },
+</span><span>    },
+</span><span>};
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    DeclarativeApp::simple(&quot;</span><span style="color:#a3be8c;">RAUI Guide</span><span>&quot;, make_widget!(app));
+</span><span>}
+</span><span>
+</span><span style="color:#65737e;">/// We create our own widget by making a function that takes a `WidgetContext`
+</span><span style="color:#65737e;">/// and that returns `WidgetNode`.
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">app</span><span>(</span><span style="color:#bf616a;">_ctx</span><span>: WidgetContext) -&gt; WidgetNode {
+</span><span>    </span><span style="color:#65737e;">// Our _ctx variable starts with an underscore so rust doesn&#39;t complain
+</span><span>    </span><span style="color:#65737e;">// that it is unused. We will be using the context later in the guide.
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// We may do any amount of processing in the body of the function.
+</span><span>    </span><span style="color:#65737e;">// For now we will simply be creating a text box properties struct that we
+</span><span>    </span><span style="color:#65737e;">// will use to configure the `text_box` component.
+</span><span>    make_widget!(text_box)
+</span><span>        .</span><span style="color:#96b5b4;">with_props</span><span>(TextBoxProps {
+</span><span>            text: &quot;</span><span style="color:#a3be8c;">Hello world!</span><span>&quot;.</span><span style="color:#96b5b4;">to_owned</span><span>(),
+</span><span>            color: Color {
+</span><span>                r: </span><span style="color:#d08770;">0.0</span><span>,
+</span><span>                g: </span><span style="color:#d08770;">0.0</span><span>,
+</span><span>                b: </span><span style="color:#d08770;">0.0</span><span>,
+</span><span>                a: </span><span style="color:#d08770;">1.0</span><span>,
+</span><span>            },
+</span><span>            font: TextBoxFont {
+</span><span>                </span><span style="color:#65737e;">// We specify the path to our font
+</span><span>                name: &quot;</span><span style="color:#a3be8c;">resources/verdana.ttf</span><span>&quot;.</span><span style="color:#96b5b4;">to_owned</span><span>(),
+</span><span>                size: </span><span style="color:#d08770;">60.0</span><span>,
+</span><span>            },
+</span><span>            </span><span style="color:#65737e;">// Use the defaults for the rest of the text box settings
+</span><span>            ..Default::default()
+</span><span>        })
+</span><span>        .</span><span style="color:#96b5b4;">into</span><span>()
+</span><span>}
+</span></code></pre>
+<p>There's plenty of comments in the above example, but there's a lot going on here so lets break it down piece by piece.</p>
+<h3 id="setting-the-widget-tree">Setting the Widget Tree</h3>
+<p>The first thing we changed was to add our app component to the widget tree in our <code>DeclarativeApp</code> instance.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    core::{
+</span><span>        make_widget,
+</span><span>        widget::{
+</span></code></pre>
+<p>Every RAUI app has a root widget tree that holds the whole structure of application in it. It is essentially the "main" of the UI. In this case we set our widget to a single <code>app</code> component. This is the <code>app</code> component that we define in the function below.</p>
+<p>Here we use the strategy of keeping our root widget tree very simple and putting all of our real logic in the <code>app</code> component.</p>
+<h3 id="the-app-component">The <code>app</code> Component</h3>
+<p>Now we get to the definition of our <code>app</code> component:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>            unit::text::TextBoxFont,
+</span></code></pre>
+<p>As we mentioned before, components are just normal Rust functions with a specific signature. Components are required to take a <a href="https://docs.rs/raui/latest/raui/core/widget/context/struct.WidgetContext.html"><code>WidgetContext</code></a> as an argument and they must return a <a href="https://docs.rs/raui/latest/raui/core/widget/node/enum.WidgetNode.html"><code>WidgetNode</code></a>.</p>
+<h4 id="widgetcontext"><a href="https://docs.rs/raui/latest/raui/core/widget/context/struct.WidgetContext.html"><code>WidgetContext</code></a></h4>
+<p>The widget context is the way that a widget can access it's own state, properties, children, and other information that may be important to the function of the widget. It also allows the widget to respond to events or send messages to other widgets. We will learn more about the <a href="https://docs.rs/raui/latest/raui/core/widget/context/struct.WidgetContext.html"><code>WidgetContext</code></a> later.</p>
+<h4 id="widgetnode"><a href="https://docs.rs/raui/latest/raui/core/widget/node/enum.WidgetNode.html"><code>WidgetNode</code></a></h4>
+<p>That brings us to what a <strong>widget <em>node</em></strong> is. As we mentioned above, there are a few different kinds of <em>widgets</em>. Widget components are one of them and widget nodes are another. The easiest way to think of a <a href="https://docs.rs/raui/latest/raui/core/widget/node/enum.WidgetNode.html"><code>WidgetNode</code></a> is that it is a tree of other widgets. <a href="https://docs.rs/raui/latest/raui/core/widget/node/enum.WidgetNode.html"><code>WidgetNode</code></a>s are most commonly created with the <a href="https://docs.rs/raui/latest/raui/core/macro.make_widget.html"><code>make_widget!</code></a> macro and filled with builder pattern of <a href="https://docs.rs/raui/latest/raui/core/widget/component/enum.WidgetComponent.html"><code>WidgetComponent</code></a>.</p>
+<blockquote>
+<p><strong>Note:</strong> There is a third kind of widget is called a <a href="https://docs.rs/raui/latest/raui/core/widget/unit/enum.WidgetUnit.html"><code>WidgetUnit</code></a>, but you don't usually need to think about those, since they are the final representation of processed widgets tree.</p>
+</blockquote>
+<p>We can see the <a href="https://docs.rs/raui/latest/raui/core/macro.make_widget.html"><code>make_widget!</code></a> macro with builder pattern in action in our example:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>    DeclarativeApp::simple(&quot;</span><span style="color:#a3be8c;">RAUI Guide</span><span>&quot;, make_widget!(app));
+</span><span>}
+</span><span>
+</span><span style="color:#65737e;">/// We create our own widget by making a function that takes a `WidgetContext`
+</span><span style="color:#65737e;">/// and that returns `WidgetNode`.
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">app</span><span>(</span><span style="color:#bf616a;">_ctx</span><span>: WidgetContext) -&gt; WidgetNode {
+</span><span>    </span><span style="color:#65737e;">// Our _ctx variable starts with an underscore so rust doesn&#39;t complain
+</span><span>    </span><span style="color:#65737e;">// that it is unused. We will be using the context later in the guide.
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// We may do any amount of processing in the body of the function.
+</span><span>    </span><span style="color:#65737e;">// For now we will simply be creating a text box properties struct that we
+</span><span>    </span><span style="color:#65737e;">// will use to configure the `text_box` component.
+</span><span>    make_widget!(text_box)
+</span><span>        .</span><span style="color:#96b5b4;">with_props</span><span>(TextBoxProps {
+</span><span>            text: &quot;</span><span style="color:#a3be8c;">Hello world!</span><span>&quot;.</span><span style="color:#96b5b4;">to_owned</span><span>(),
+</span><span>            color: Color {
+</span><span>                r: </span><span style="color:#d08770;">0.0</span><span>,
+</span><span>                g: </span><span style="color:#d08770;">0.0</span><span>,
+</span></code></pre>
+<p>We use that pattern to create a simple tree with a single <a href="https://docs.rs/raui/latest/raui/core/widget/component/text_box/fn.text_box.html"><code>text_box</code></a> component in it and we apply our <code>text_box_props</code> to it to configure how the text box renders the text inside.</p>
+<h4 id="properties">Properties</h4>
+<p>That brings us to the concept of <strong><em>properties</em></strong>. Properties are data, made up of Rust structs, that can be applied to components additively to customize their behavior.</p>
+<p>In this case we created <a href="https://docs.rs/raui/0.34.0/raui/core/widget/component/text_box/struct.TextBoxProps.html"><code>TextBoxProps</code></a> data that we used to configure the <a href="https://docs.rs/raui/latest/raui/core/widget/component/text_box/fn.text_box.html"><code>text_box</code></a> component.</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>}
+</span><span>
+</span><span style="color:#65737e;">/// We create our own widget by making a function that takes a `WidgetContext`
+</span><span style="color:#65737e;">/// and that returns `WidgetNode`.
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">app</span><span>(</span><span style="color:#bf616a;">_ctx</span><span>: WidgetContext) -&gt; WidgetNode {
+</span><span>    </span><span style="color:#65737e;">// Our _ctx variable starts with an underscore so rust doesn&#39;t complain
+</span><span>    </span><span style="color:#65737e;">// that it is unused. We will be using the context later in the guide.
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// We may do any amount of processing in the body of the function.
+</span><span>    </span><span style="color:#65737e;">// For now we will simply be creating a text box properties struct that we
+</span><span>    </span><span style="color:#65737e;">// will use to configure the `text_box` component.
+</span><span>    make_widget!(text_box)
+</span><span>        .</span><span style="color:#96b5b4;">with_props</span><span>(TextBoxProps {
+</span><span>            text: &quot;</span><span style="color:#a3be8c;">Hello world!</span><span>&quot;.</span><span style="color:#96b5b4;">to_owned</span><span>(),
+</span><span>            color: Color {
+</span><span>                r: </span><span style="color:#d08770;">0.0</span><span>,
+</span></code></pre>
+<p>We use the properties to configure the font, content, and color of our text.</p>
+<p>We are not limited to using just one struct for our property data. We could add any number of different properties structs to our component, allowing us to configure how the component responds to layout, for instance. We will see how to do more of that later.</p>
+<blockquote>
+<p><strong>Note:</strong> You can download the <a href="https://github.com/PsichiX/raui/raw/master/site/rust/guide_02/resources/verdana.ttf">Verdana</a> font or use your own font to follow along. We chose to place it in a <code>resources/</code> folder adjacent to our <code>Cargo.toml</code> file in our Rust project, but you can place it wherever you like as long as you update the path to the font in the <a href="https://docs.rs/raui/0.34.0/raui/core/widget/component/text_box/struct.TextBoxProps.html"><code>TextBoxProps</code></a>.</p>
+</blockquote>
+<h2 id="summary">Summary</h2>
+<p>Now that we've explained it all, go try it out! When you <code>cargo run</code> you should get a window displaying your "Hello World!".</p>
+<p><img src="https://RAUI-labs.github.io/raui/docs/getting-started/your-first-widget/hello_world.png" alt="hello world screenshot" /></p>
+<blockquote>
+<p><strong>Note:</strong> You can find the whole code for this chapter <a href="https://github.com/RAUI-labs/raui/tree/master/site/rust/guide_02">here</a>.</p>
+</blockquote>
+<h2 id="construction-under-construction-construction-worker">🚧 Under Construction 👷</h2>
+<p>There should be more to this guide but it isn't written yet! If you've gotten this far, congratulations and thank you for reading! Come back later and see whether or not more of the guide has been written.</p>
+<p>If you need help or have questions, feel free to open up a <a href="https://github.com/RAUI-labs/raui/discussions">discussion</a> on GitHub. 👋</p>
+
+        
+          
+<p class="edit-page"><a href="https:&#x2F;&#x2F;github.com&#x2F;RAUI-labs&#x2F;raui/blob/next/content&#x2F;docs&#x2F;getting-started&#x2F;your-first-widget.md"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>Edit this page on GitHub</a></p>
+
+        
+        
+<div class="docs-navigation d-flex justify-content-between">
+  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+          
+        
+      
+        
+        
+          
+        
+      
+        
+        
+          
+            
+              
+              <a href="https:&#x2F;&#x2F;RAUI-labs.github.io&#x2F;raui&#x2F;docs&#x2F;about&#x2F;introduction&#x2F;">
+                <div class="card my-1">
+                  <div class="card-body py-2">
+                    &larr; Introduction
+                  </div>
+                </div>
+              </a>
+            
+            
+            
+          
+        
+      
+    
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+          
+          
+          <a class="ms-auto" href="https:&#x2F;&#x2F;RAUI-labs.github.io&#x2F;raui&#x2F;docs&#x2F;layout&#x2F;layout-in-depth&#x2F;">
+            <div class="card my-1">
+              <div class="card-body py-2">
+                Layout In Depth &rarr;
+              </div>
+            </div>
+          </a>
+          
+          
+          
+        
+      
+    
+  
+</div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+
+  
+    
+<footer class="footer text-muted">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8 order-last order-lg-first">
+				<ul class="list-inline">
+					
+						<li class="list-inline-item">Powered by <a href="https://www.getzola.org/">Zola</a> and <a href="https://github.com/aaranxu/adidoks">AdiDoks</a></li>
+					
+				</ul>
+			</div>
+			<div class="col-lg-8 order-first order-lg-last text-lg-end">
+				<ul class="list-inline">
+					
+				</ul>
+			</div>
+		</div>
+	</div>
+</footer>
+
+  
+
+  
+<script src="https://RAUI-labs.github.io/raui/js/main.js" defer></script>
+
+  <script src="https://RAUI-labs.github.io/raui/plugins/elasticlunr.min.js" defer></script>
+  <script src="https://RAUI-labs.github.io/raui/search_index.en.js" defer></script>
+  <script src="https://RAUI-labs.github.io/raui/js/search.js" defer></script>
+
+  
+</body>
+</html>
