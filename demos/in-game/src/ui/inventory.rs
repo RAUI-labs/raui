@@ -58,7 +58,7 @@ pub fn inventory(mut context: WidgetContext) -> WidgetNode {
             let col = index as i32 % 5;
             let row = index as i32 / 5;
             make_widget!(inventory_item)
-                .key(format!("{}?item={}", index, id))
+                .key(format!("{index}?item={id}"))
                 .with_props(ButtonNotifyProps(context.id.to_owned().into()))
                 .with_props(GridBoxItemLayout {
                     space_occupancy: IntRect {

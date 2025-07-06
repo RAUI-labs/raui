@@ -20,16 +20,10 @@ impl ItemsDatabase {
     pub fn view_model(database_path: impl AsRef<Path>) -> ViewModel {
         let database_path = database_path.as_ref();
         let items = File::open(database_path).unwrap_or_else(|err| {
-            panic!(
-                "Could not load items database: {:?}. Error: {}",
-                database_path, err
-            )
+            panic!("Could not load items database: {database_path:?}. Error: {err}")
         });
         let items = serde_json::from_reader(items).unwrap_or_else(|err| {
-            panic!(
-                "Could not deserialize items database: {:?}. Error: {}",
-                database_path, err
-            )
+            panic!("Could not deserialize items database: {database_path:?}. Error: {err}")
         });
 
         ViewModel::new_object(Self { items })

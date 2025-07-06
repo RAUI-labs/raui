@@ -23,16 +23,10 @@ impl Quests {
     pub fn view_model(database_path: impl AsRef<Path>) -> ViewModel {
         let database_path = database_path.as_ref();
         let database = File::open(database_path).unwrap_or_else(|err| {
-            panic!(
-                "Could not load quests database: {:?}. Error: {}",
-                database_path, err
-            )
+            panic!("Could not load quests database: {database_path:?}. Error: {err}")
         });
         let database = serde_json::from_reader(database).unwrap_or_else(|err| {
-            panic!(
-                "Could not deserialize quests database: {:?}. Error: {}",
-                database_path, err
-            )
+            panic!("Could not deserialize quests database: {database_path:?}. Error: {err}")
         });
 
         ViewModel::produce(|properties| {

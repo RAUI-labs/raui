@@ -169,8 +169,8 @@ fn option(ctx: WidgetContext) -> WidgetNode {
     // We can also read options view mode property to render our option widget
     // diferently, depending if option is shown as selected or as content item.
     let text = match ctx.props.read_cloned_or_default::<OptionsViewMode>() {
-        OptionsViewMode::Selected => format!("> {}", text),
-        OptionsViewMode::Option => format!("# {}", text),
+        OptionsViewMode::Selected => format!("> {text}"),
+        OptionsViewMode::Option => format!("# {text}"),
     };
 
     make_widget!(content_box)

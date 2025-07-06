@@ -147,7 +147,7 @@ fn make_tasks_list<'a>(
         })
         .listed_slots(tasks.enumerate().map(|(index, (id, task))| {
             make_widget!(quest_task)
-                .key(format!("{}?item={}", index, id))
+                .key(format!("{index}?item={id}"))
                 .with_props(task.name.to_owned())
                 .with_props(notify.to_owned())
         }))

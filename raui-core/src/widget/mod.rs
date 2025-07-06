@@ -125,7 +125,7 @@ impl WidgetId {
     pub fn new(type_name: &str, path: &[Cow<'_, str>]) -> Self {
         if path.is_empty() {
             return Self {
-                id: format!("{}:", type_name),
+                id: format!("{type_name}:"),
                 type_name: 0..type_name.len(),
                 parts: Default::default(),
             };
@@ -580,7 +580,7 @@ impl std::fmt::Display for WidgetRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Ok(id) = self.0.read() {
             if let Some(id) = id.as_ref() {
-                write!(f, "{}", id)
+                write!(f, "{id}")
             } else {
                 Ok(())
             }
@@ -645,8 +645,8 @@ impl std::fmt::Display for WidgetIdOrRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::None => Ok(()),
-            Self::Id(id) => write!(f, "{}", id),
-            Self::Ref(id) => write!(f, "{}", id),
+            Self::Id(id) => write!(f, "{id}"),
+            Self::Ref(id) => write!(f, "{id}"),
         }
     }
 }

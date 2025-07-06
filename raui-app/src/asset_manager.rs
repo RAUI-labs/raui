@@ -257,14 +257,14 @@ impl AssetsManager {
                     let content = match std::fs::read_to_string(&path) {
                         Ok(content) => content,
                         _ => {
-                            eprintln!("Could not load image atlas file: {:?}", path);
+                            eprintln!("Could not load image atlas file: {path:?}");
                             return;
                         }
                     };
                     let atlas = match toml::from_str::<AssetAtlas>(&content) {
                         Ok(atlas) => atlas,
                         _ => {
-                            eprintln!("Could not parse image atlas file: {:?}", path);
+                            eprintln!("Could not parse image atlas file: {path:?}");
                             return;
                         }
                     };
@@ -273,7 +273,7 @@ impl AssetsManager {
                     let image = match image::open(&path) {
                         Ok(image) => image.to_rgba8(),
                         _ => {
-                            eprintln!("Could not load image file: {:?}", path);
+                            eprintln!("Could not load image file: {path:?}");
                             return;
                         }
                     };
@@ -286,7 +286,7 @@ impl AssetsManager {
                     ) {
                         Ok(texture) => texture,
                         _ => {
-                            eprintln!("Could not create texture for image file: {:?}", path);
+                            eprintln!("Could not create texture for image file: {path:?}");
                             return;
                         }
                     };
@@ -323,7 +323,7 @@ impl AssetsManager {
                     let image = match image::open(&path) {
                         Ok(image) => image.to_rgba8(),
                         _ => {
-                            eprintln!("Could not load image file: {:?}", path);
+                            eprintln!("Could not load image file: {path:?}");
                             return;
                         }
                     };
@@ -336,7 +336,7 @@ impl AssetsManager {
                     ) {
                         Ok(texture) => texture,
                         _ => {
-                            eprintln!("Could not create texture for image file: {:?}", path);
+                            eprintln!("Could not create texture for image file: {path:?}");
                             return;
                         }
                     };
@@ -362,7 +362,7 @@ impl AssetsManager {
             let content = match std::fs::read(&path) {
                 Ok(content) => content,
                 _ => {
-                    eprintln!("Could not load font file: {:?}", path);
+                    eprintln!("Could not load font file: {path:?}");
                     return;
                 }
             };
@@ -390,7 +390,7 @@ impl AssetsManager {
                 "@pass" => match graphics.shader(Shader::PASS_VERTEX_2D, Shader::PASS_FRAGMENT) {
                     Ok(shader) => shader,
                     _ => {
-                        eprintln!("Could not create shader for: {:?}", id);
+                        eprintln!("Could not create shader for: {id:?}");
                         return;
                     }
                 },
@@ -398,7 +398,7 @@ impl AssetsManager {
                     match graphics.shader(Shader::COLORED_VERTEX_2D, Shader::PASS_FRAGMENT) {
                         Ok(shader) => shader,
                         _ => {
-                            eprintln!("Could not create shader for: {:?}", id);
+                            eprintln!("Could not create shader for: {id:?}");
                             return;
                         }
                     }
@@ -407,32 +407,32 @@ impl AssetsManager {
                     match graphics.shader(Shader::TEXTURED_VERTEX_2D, Shader::TEXTURED_FRAGMENT) {
                         Ok(shader) => shader,
                         _ => {
-                            eprintln!("Could not create shader for: {:?}", id);
+                            eprintln!("Could not create shader for: {id:?}");
                             return;
                         }
                     }
                 }
                 _ => {
-                    let path = self.root_path.join(format!("{}.vs", id));
+                    let path = self.root_path.join(format!("{id}.vs"));
                     let vertex = match std::fs::read_to_string(&path) {
                         Ok(content) => content,
                         _ => {
-                            eprintln!("Could not load vertex shader file: {:?}", path);
+                            eprintln!("Could not load vertex shader file: {path:?}");
                             return;
                         }
                     };
-                    let path = self.root_path.join(format!("{}.fs", id));
+                    let path = self.root_path.join(format!("{id}.fs"));
                     let fragment = match std::fs::read_to_string(&path) {
                         Ok(content) => content,
                         _ => {
-                            eprintln!("Could not load fragment shader file: {:?}", path);
+                            eprintln!("Could not load fragment shader file: {path:?}");
                             return;
                         }
                     };
                     match graphics.shader(&vertex, &fragment) {
                         Ok(shader) => shader,
                         _ => {
-                            eprintln!("Could not create shader for: {:?}", id);
+                            eprintln!("Could not create shader for: {id:?}");
                             return;
                         }
                     }

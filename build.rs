@@ -89,12 +89,12 @@ fn visit_dirs(
                 let mod_path = path.strip_prefix(dir).unwrap();
                 let mod_name = mod_path.to_string_lossy().replace("/", "::");
                 if let Some(feature) = feature {
-                    output.push_str(&format!("#[cfg(feature = \"{}\")]\n", feature));
+                    output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
                 }
-                output.push_str(&format!("pub use {}::{}::*;\n", prefix, mod_name));
+                output.push_str(&format!("pub use {prefix}::{mod_name}::*;\n"));
                 visit_dirs(
                     &path,
-                    &format!("{}::{}", prefix, mod_name),
+                    &format!("{prefix}::{mod_name}"),
                     feature,
                     output,
                     ignore,
@@ -104,9 +104,9 @@ fn visit_dirs(
             if ext == "rs" {
                 if path.file_name().unwrap() == "lib.rs" {
                     if let Some(feature) = feature {
-                        output.push_str(&format!("#[cfg(feature = \"{}\")]\n", feature));
+                        output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
                     }
-                    output.push_str(&format!("pub use {}::*;\n", prefix));
+                    output.push_str(&format!("pub use {prefix}::*;\n"));
                     continue;
                 }
 
@@ -121,9 +121,9 @@ fn visit_dirs(
                 let mut mod_name = mod_path.to_string_lossy().replace("/", "::");
                 mod_name = mod_name.trim_end_matches(".rs").to_string();
                 if let Some(feature) = feature {
-                    output.push_str(&format!("#[cfg(feature = \"{}\")]\n", feature));
+                    output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
                 }
-                output.push_str(&format!("pub use {}::{}::*;\n", prefix, mod_name));
+                output.push_str(&format!("pub use {prefix}::{mod_name}::*;\n"));
             }
         }
     }

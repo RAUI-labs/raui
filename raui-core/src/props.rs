@@ -74,8 +74,7 @@ impl PropsRegistry {
                 (factory.1)(value, &mut props)?;
             } else {
                 return Err(PrefabError::CouldNotDeserialize(format!(
-                    "Could not find properties factory: {:?}",
-                    key
+                    "Could not find properties factory: {key:?}"
                 )));
             }
         }

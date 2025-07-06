@@ -230,7 +230,7 @@ pub fn numeric_slider_paper_impl(component: WidgetComponent, context: WidgetCont
         .read_cloned_or_default::<NumericSliderPaperProps>()
         .fractional_digits_count
     {
-        format!("{:.1$}", value, count)
+        format!("{value:.count$}")
     } else {
         value.to_string()
     };

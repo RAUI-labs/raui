@@ -126,11 +126,11 @@ fn use_input(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|ctx| {
         for msg in ctx.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<TextInputNotifyMessage>() {
-                println!("* Text input: {:#?}", msg);
+                println!("* Text input: {msg:#?}");
             } else if let Some(msg) = msg.as_any().downcast_ref::<TextInputControlNotifyMessage>() {
-                println!("* Text input control: {:#?}", msg);
+                println!("* Text input control: {msg:#?}");
             } else if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                println!("* Button: {:#?}", msg);
+                println!("* Button: {msg:#?}");
             }
         }
     });

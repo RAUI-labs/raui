@@ -84,6 +84,6 @@ pub struct PrintLogger;
 
 impl Logger for PrintLogger {
     fn log(&mut self, kind: LogKind, message: &str) {
-        println!("{:?} | {}", kind, message);
+        println!("{kind:?} | {message}");
     }
 }

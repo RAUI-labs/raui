@@ -138,8 +138,8 @@ pub enum ImageBoxProceduralMesh {
 impl std::fmt::Debug for ImageBoxProceduralMesh {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Owned(data) => write!(f, "Owned({:?})", data),
-            Self::Shared(data) => write!(f, "Shared({:?})", data),
+            Self::Owned(data) => write!(f, "Owned({data:?})"),
+            Self::Shared(data) => write!(f, "Shared({data:?})"),
             Self::Generator(_) => write!(f, "Generator(...)"),
         }
     }

@@ -23,7 +23,7 @@ fn use_app(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|ctx| {
         for msg in ctx.messenger.messages {
             if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                println!("Button message: {:#?}", msg);
+                println!("Button message: {msg:#?}");
             }
         }
     });

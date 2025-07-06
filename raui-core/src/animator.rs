@@ -488,16 +488,16 @@ mod tests {
             }),
             Animation::Message("next".to_owned()),
         ]);
-        println!("Animation: {:#?}", animation);
+        println!("Animation: {animation:#?}");
         let mut states = AnimatorStates::new("".to_owned(), animation);
-        println!("States 0: {:#?}", states);
+        println!("States 0: {states:#?}");
         let id = WidgetId::from_str("type:/widget").unwrap();
         let (sender, receiver) = channel();
         let sender = MessageSender::new(sender);
         states.process(0.5, &id, &sender);
-        println!("States 1: {:#?}", states);
+        println!("States 1: {states:#?}");
         states.process(0.6, &id, &sender);
-        println!("States 2: {:#?}", states);
+        println!("States 2: {states:#?}");
         println!(
             "Message: {:#?}",
             receiver

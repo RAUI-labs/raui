@@ -209,7 +209,7 @@ pub fn options_view(mut context: WidgetContext) -> WidgetNode {
                     |(index, mut slot)| {
                         slot.remap_props(|props| props.with(OptionsViewMode::Option));
                         make_widget!(button)
-                            .key(format!("button-item?index={}", index))
+                            .key(format!("button-item?index={index}"))
                             .merge_props(slot.props().cloned().unwrap_or_default())
                             .with_props(ButtonNotifyProps(id.to_owned().into()))
                             .named_slot("content", slot)

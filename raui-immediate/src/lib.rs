@@ -291,7 +291,7 @@ pub fn apply_key<R>(key: impl ToString, mut f: impl FnMut() -> R) -> R {
         _ => {
             for (index, widget) in widgets.iter_mut().enumerate() {
                 if let WidgetNode::Component(widget) = widget {
-                    widget.key = Some(format!("{}-{}", key, index));
+                    widget.key = Some(format!("{key}-{index}"));
                 }
             }
             extend(widgets);

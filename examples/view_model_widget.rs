@@ -86,7 +86,7 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 
     make_widget!(text_box)
         .with_props(TextBoxProps {
-            text: format!("Counter: {}", counter),
+            text: format!("Counter: {counter}"),
             font: TextBoxFont {
                 name: "./demos/hello-world/resources/verdana.ttf".to_owned(),
                 size: 48.0,

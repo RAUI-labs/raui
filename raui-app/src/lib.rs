@@ -169,7 +169,7 @@ impl TesselateBatchConverter<GraphicsBatch> for TesselateToGraphics<'_> {
                     .chain((0..images.len()).map(|index| {
                         (
                             if index > 0 {
-                                format!("u_image{}", index).into()
+                                format!("u_image{index}").into()
                             } else {
                                 "u_image".into()
                             },
