@@ -70,34 +70,34 @@ website-live-dev:
     cd site && zola serve
 
 update:
-    cargo update --manifest-path ./raui-derive/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-core/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-material/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-retained/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-immediate/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-immediate-widgets/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-json-renderer/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-tesselate-renderer/Cargo.toml --aggressive
-    cargo update --manifest-path ./raui-app/Cargo.toml --aggressive
-    cargo update --manifest-path ./Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/derive/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/core/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/material/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/retained/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/immediate/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/immediate-widgets/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/json-renderer/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/tesselate-renderer/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/app/Cargo.toml --aggressive
+    cargo update --manifest-path ./crates/_/Cargo.toml --aggressive
 
 publish:
-    cargo publish --no-verify --manifest-path ./raui-derive/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/derive/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-core/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/core/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-material/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/material/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-retained/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/retained/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-immediate/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/immediate/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-immediate-widgets/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/immediate-widgets/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-json-renderer/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/json-renderer/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-tesselate-renderer/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/tesselate-renderer/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./raui-app/Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/app/Cargo.toml
     sleep 1
-    cargo publish --no-verify --manifest-path ./Cargo.toml
+    cargo publish --no-verify --manifest-path ./crates/_/Cargo.toml
