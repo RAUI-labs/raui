@@ -8,56 +8,56 @@ fn main() {
     output.push_str("#![allow(unused_variables)]\n");
 
     visit_dirs(
-        Path::new("./raui-core/src"),
+        Path::new("../core/src"),
         "raui_core",
         None,
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-material/src"),
+        Path::new("../material/src"),
         "raui_material",
         Some("material"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-retained/src"),
+        Path::new("../retained/src"),
         "raui_retained",
         Some("retained"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-immediate/src"),
+        Path::new("../immediate/src"),
         "raui_immediate",
         Some("immediate"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-immediate-widgets/src"),
+        Path::new("../immediate-widgets/src"),
         "raui_immediate_widgets",
         Some("immediate-widgets"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-tesselate-renderer/src"),
+        Path::new("../tesselate-renderer/src"),
         "raui_tesselate_renderer",
         Some("tesselate"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-json-renderer/src"),
+        Path::new("../json-renderer/src"),
         "raui_json_renderer",
         Some("json"),
         &mut output,
         &[],
     );
     visit_dirs(
-        Path::new("./raui-app/src"),
+        Path::new("../app/src"),
         "raui_app",
         Some("app"),
         &mut output,

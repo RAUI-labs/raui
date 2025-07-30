@@ -58,37 +58,49 @@ fn main() {
     });
 }
 
-#[test]
-fn test_tracked_button() {
-    let mut tester = AppCycleTester::new(
-        CoordsMapping::new(Rect {
-            left: 0.0,
-            right: 1024.0,
-            top: 0.0,
-            bottom: 576.0,
-        }),
-        ImmediateContext::default(),
-    );
-    let mut mock = false;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use raui_core::{
+        interactive::default_interactions_engine::{Interaction, PointerButton},
+        layout::CoordsMapping,
+        tester::AppCycleTester,
+        widget::utils::Rect,
+    };
+    use raui_immediate::ImmediateContext;
 
-    tester
-        .interactions_engine
-        .interact(Interaction::PointerDown(
-            PointerButton::Trigger,
-            [100.0, 100.0].into(),
-        ));
+    #[test]
+    fn test_tracked_button() {
+        let mut tester = AppCycleTester::new(
+            CoordsMapping::new(Rect {
+                left: 0.0,
+                right: 1024.0,
+                top: 0.0,
+                bottom: 576.0,
+            }),
+            ImmediateContext::default(),
+        );
+        let mut mock = false;
 
-    // since RAUI has deferred UI resolution, signal will take
-    // few frames to go through declarative layer to immediate
-    // layer and then back to user site.
-    for _ in 0..4 {
-        tester.run_frame(ImmediateApp::test_frame(|| {
-            // and here we register access point to mock data
-            let _lifetime = register_access("clicked", &mut mock);
+        tester
+            .interactions_engine
+            .interact(Interaction::PointerDown(
+                PointerButton::Trigger,
+                [100.0, 100.0].into(),
+            ));
 
-            app();
-        }));
+        // since RAUI has deferred UI resolution, signal will take
+        // few frames to go through declarative layer to immediate
+        // layer and then back to user site.
+        for _ in 0..4 {
+            tester.run_frame(ImmediateApp::test_frame(|| {
+                // and here we register access point to mock data
+                let _lifetime = register_access("clicked", &mut mock);
+
+                app();
+            }));
+        }
+
+        assert_eq!(mock, true);
     }
-
-    assert_eq!(mock, true);
 }

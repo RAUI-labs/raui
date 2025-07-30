@@ -1,0 +1,81 @@
+[package]
+name = "raui"
+version = "0.70.5"
+authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
+edition = "2024"
+description = "Renderer Agnostic User Interface"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/RAUI-labs/raui"
+keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
+categories = ["gui", "rendering::graphics-api"]
+
+[features]
+material = ["raui-material"]
+retained = ["raui-retained"]
+immediate = ["raui-immediate"]
+immediate-widgets = ["raui-immediate-widgets"]
+json = ["raui-json-renderer"]
+tesselate = ["raui-tesselate-renderer"]
+app = ["raui-app"]
+all = [
+  "material",
+  "retained",
+  "immediate",
+  "immediate-widgets",
+  "tesselate",
+  "json",
+  "app",
+]
+import-all = []
+
+[dependencies]
+raui-core = { path = "../core", version = "0.70" }
+
+[dependencies.raui-material]
+path = "../material"
+version = "0.70"
+optional = true
+
+[dependencies.raui-retained]
+path = "../retained"
+version = "0.70"
+optional = true
+
+[dependencies.raui-immediate]
+path = "../immediate"
+version = "0.70"
+optional = true
+
+[dependencies.raui-immediate-widgets]
+path = "../immediate-widgets"
+version = "0.70"
+optional = true
+
+[dependencies.raui-json-renderer]
+path = "../json-renderer"
+version = "0.70"
+optional = true
+
+[dependencies.raui-tesselate-renderer]
+path = "../tesselate-renderer"
+version = "0.70"
+optional = true
+
+[dependencies.raui-app]
+path = "../app"
+version = "0.70"
+optional = true
+
+[dev-dependencies]
+raui-core = { path = "../core" }
+raui-immediate = { path = "../immediate" }
+raui-immediate-widgets = { path = "../immediate-widgets" }
+raui-retained = { path = "../retained" }
+raui-app = { path = "../app" }
+raui-json-renderer = { path = "../json-renderer" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[package.metadata.docs.rs]
+features = ["all"]

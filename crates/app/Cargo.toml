@@ -1,6 +1,6 @@
 [package]
 name = "raui-app"
-version = "0.70.4"
+version = "0.70.5"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI application layer to focus only on making UI"
@@ -11,18 +11,18 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.70" }
-raui-material = { path = "../raui-material", version = "0.70" }
-raui-immediate = { path = "../raui-immediate", version = "0.70" }
-raui-retained = { path = "../raui-retained", version = "0.70" }
-raui-tesselate-renderer = { path = "../raui-tesselate-renderer", version = "0.70" }
-spitfire-core = "0.34"
-spitfire-glow = "0.34"
-spitfire-fontdue = "0.34"
+raui-core = { path = "../core", version = "0.70" }
+raui-material = { path = "../material", version = "0.70" }
+raui-immediate = { path = "../immediate", version = "0.70" }
+raui-retained = { path = "../retained", version = "0.70" }
+raui-tesselate-renderer = { path = "../tesselate-renderer", version = "0.70" }
+spitfire-core = "0.35"
+spitfire-glow = "0.35"
+spitfire-fontdue = "0.35"
 bytemuck = { version = "1", features = ["derive"] }
 glutin = "0.28"
 fontdue = "0.9"
 image = "0.25"
 vek = "0.17"
 serde = { version = "1", features = ["derive"] }
-toml = "0.8"
+toml = "0.9"

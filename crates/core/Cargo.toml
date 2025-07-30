@@ -1,18 +1,17 @@
 [package]
-name = "raui-derive"
-version = "0.70.4"
+name = "raui-core"
+version = "0.70.5"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
-description = "Macros for Renderer Agnostic User Interface"
+description = "RAUI application layer"
 readme = "../README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
-[lib]
-proc-macro = true
-
 [dependencies]
-quote = "1.0"
-syn = { version = "1.0", features = ["extra-traits", "full"] }
+raui-derive = { version = "0.70", path = "../derive" }
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = "1"
+intuicio-data = "0.46"

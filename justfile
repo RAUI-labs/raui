@@ -4,7 +4,7 @@ list:
 
 # Bake the README.md from the template
 readme:
-    cargo readme > README.md
+    cargo readme -r ./crates/_ > README.md
 
 format:
     cargo fmt --all
@@ -18,6 +18,7 @@ clippy:
 
 test:
     cargo test --all --features all
+    cargo test --all --examples --features all
 
 example NAME="setup":
     cargo run --example {{NAME}}

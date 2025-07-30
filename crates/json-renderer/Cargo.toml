@@ -1,9 +1,9 @@
 [package]
-name = "raui-core"
-version = "0.70.4"
+name = "raui-json-renderer"
+version = "0.70.5"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
-description = "RAUI application layer"
+description = "RAUI renderer for JSON format"
 readme = "../README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/RAUI-labs/raui"
@@ -11,7 +11,6 @@ keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
 [dependencies]
-raui-derive = { version = "0.70", path = "../raui-derive" }
-serde = { version = "1", features = ["derive", "rc"] }
+raui-core = { path = "../core", version = "0.70" }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-intuicio-data = "0.46"

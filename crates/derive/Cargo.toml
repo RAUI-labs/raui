@@ -1,15 +1,18 @@
 [package]
-name = "raui-immediate"
-version = "0.70.4"
+name = "raui-derive"
+version = "0.70.5"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
-description = "RAUI immediate mode UI layer"
+description = "Macros for Renderer Agnostic User Interface"
 readme = "../README.md"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/RAUI-labs/raui"
 keywords = ["renderer", "agnostic", "ui", "interface", "gamedev"]
 categories = ["gui", "rendering::graphics-api"]
 
+[lib]
+proc-macro = true
+
 [dependencies]
-raui-core = { path = "../raui-core", version = "0.70" }
-serde = { version = "1", features = ["derive"] }
+quote = "1.0"
+syn = { version = "1.0", features = ["extra-traits", "full"] }
