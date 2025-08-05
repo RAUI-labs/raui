@@ -81,11 +81,17 @@ fn main() {
 
 // Function representing render task that will paint some surface content.
 fn render_task(ctx: RenderWorkerTaskContext) {
-    ctx.graphics.stream.batch_optimized(GraphicsBatch {
+    ctx.graphics.state.stream.batch_optimized(GraphicsBatch {
         shader: Some(ctx.colored_shader.clone()),
         uniforms: [(
             "u_projection_view".into(),
-            GlowUniformValue::M4(ctx.graphics.main_camera.world_matrix().into_col_array()),
+            GlowUniformValue::M4(
+                ctx.graphics
+                    .state
+                    .main_camera
+                    .world_matrix()
+                    .into_col_array(),
+            ),
         )]
         .into_iter()
         .collect(),
@@ -94,35 +100,35 @@ fn render_task(ctx: RenderWorkerTaskContext) {
         scissor: None,
         wireframe: false,
     });
-    ctx.graphics.stream.quad([
+    ctx.graphics.state.stream.quad([
         Vertex {
             position: [
-                ctx.graphics.main_camera.screen_size.x * 0.25,
-                ctx.graphics.main_camera.screen_size.y * 0.25,
+                ctx.graphics.state.main_camera.screen_size.x * 0.25,
+                ctx.graphics.state.main_camera.screen_size.y * 0.25,
             ],
             uv: [0.0, 0.0, 0.0],
             color: [1.0, 0.0, 0.0, 1.0],
         },
         Vertex {
             position: [
-                ctx.graphics.main_camera.screen_size.x * 0.75,
-                ctx.graphics.main_camera.screen_size.y * 0.25,
+                ctx.graphics.state.main_camera.screen_size.x * 0.75,
+                ctx.graphics.state.main_camera.screen_size.y * 0.25,
             ],
             uv: [0.0, 0.0, 0.0],
             color: [0.0, 1.0, 0.0, 1.0],
         },
         Vertex {
             position: [
-                ctx.graphics.main_camera.screen_size.x * 0.75,
-                ctx.graphics.main_camera.screen_size.y * 0.75,
+                ctx.graphics.state.main_camera.screen_size.x * 0.75,
+                ctx.graphics.state.main_camera.screen_size.y * 0.75,
             ],
             uv: [0.0, 0.0, 0.0],
             color: [0.0, 0.0, 1.0, 1.0],
         },
         Vertex {
             position: [
-                ctx.graphics.main_camera.screen_size.x * 0.25,
-                ctx.graphics.main_camera.screen_size.y * 0.75,
+                ctx.graphics.state.main_camera.screen_size.x * 0.25,
+                ctx.graphics.state.main_camera.screen_size.y * 0.75,
             ],
             uv: [0.0, 0.0, 0.0],
             color: [1.0, 1.0, 0.0, 1.0],

@@ -218,9 +218,9 @@ impl SharedApp {
         self.coords_mapping = CoordsMapping::new_scaling(
             Rect {
                 left: 0.0,
-                right: graphics.main_camera.screen_size.x,
+                right: graphics.state.main_camera.screen_size.x,
                 top: 0.0,
-                bottom: graphics.main_camera.screen_size.y,
+                bottom: graphics.state.main_camera.screen_size.y,
             },
             self.coords_mapping_scaling,
         );
@@ -238,10 +238,11 @@ impl SharedApp {
         let _ = self.application.interact(&mut self.interactions);
         self.application.consume_signals();
         let matrix = graphics
+            .state
             .main_camera
             .world_projection_matrix()
             .into_col_array();
-        graphics.stream.batch_end();
+        graphics.state.stream.batch_end();
         for shader in [
             self.colored_shader.clone(),
             self.textured_shader.clone(),
@@ -249,7 +250,7 @@ impl SharedApp {
             #[cfg(debug_assertions)]
             self.debug_shader.clone(),
         ] {
-            graphics.stream.batch(GraphicsBatch {
+            graphics.state.stream.batch(GraphicsBatch {
                 shader,
                 uniforms: hash_map! {
                     u_image => GlowUniformValue::I1(0),
@@ -258,7 +259,7 @@ impl SharedApp {
                 },
                 ..Default::default()
             });
-            graphics.stream.batch_end();
+            graphics.state.stream.batch_end();
         }
         let mut converter = TesselateToGraphics {
             colored_shader: self.colored_shader.as_ref().unwrap(),
@@ -270,13 +271,13 @@ impl SharedApp {
             missing_texture: self.missing_texutre.as_ref().unwrap(),
             assets: &self.assets,
             clip_stack: Vec::with_capacity(64),
-            viewport_height: graphics.main_camera.screen_size.y as _,
+            viewport_height: graphics.state.main_camera.screen_size.y as _,
             projection_view_matrix: matrix,
         };
         let mut renderer = TesselateRenderer::new(
             &self.assets,
             &mut converter,
-            &mut graphics.stream,
+            &mut graphics.state.stream,
             &mut self.text_renderer,
             if cfg!(debug_assertions) {
                 match self.show_raui_aabb_mode {

@@ -1,6 +1,6 @@
 [package]
 name = "raui-app"
-version = "0.70.6"
+version = "0.70.7"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI application layer to focus only on making UI"
@@ -16,9 +16,9 @@ raui-material = { path = "../material", version = "0.70" }
 raui-immediate = { path = "../immediate", version = "0.70" }
 raui-retained = { path = "../retained", version = "0.70" }
 raui-tesselate-renderer = { path = "../tesselate-renderer", version = "0.70" }
-spitfire-core = "0.35"
-spitfire-glow = "0.35"
-spitfire-fontdue = "0.35"
+spitfire-core = "0.36"
+spitfire-glow = "0.36"
+spitfire-fontdue = "0.36"
 bytemuck = { version = "1", features = ["derive"] }
 glutin = "0.28"
 fontdue = "0.9"
