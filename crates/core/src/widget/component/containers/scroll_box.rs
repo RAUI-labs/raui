@@ -79,12 +79,12 @@ pub struct SideScrollbarsState {
 pub fn use_nav_scroll_box_content(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(ResizeListenerSignal::Change(size)) = msg.as_any().downcast_ref() {
-                if let Ok(data) = context.props.read::<ScrollBoxOwner>() {
-                    context
-                        .messenger
-                        .write(data.0.to_owned(), ResizeListenerSignal::Change(*size));
-                }
+            if let Some(ResizeListenerSignal::Change(size)) = msg.as_any().downcast_ref()
+                && let Ok(data) = context.props.read::<ScrollBoxOwner>()
+            {
+                context
+                    .messenger
+                    .write(data.0.to_owned(), ResizeListenerSignal::Change(*size));
             }
         }
     });
@@ -113,14 +113,14 @@ pub fn nav_scroll_box_content(mut context: WidgetContext) -> WidgetNode {
 pub fn use_nav_scroll_box(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(ResizeListenerSignal::Change(_)) = msg.as_any().downcast_ref() {
-                if let Ok(data) = context.state.read::<ScrollViewState>() {
-                    context
-                        .signals
-                        .write(NavSignal::Jump(NavJump::Scroll(NavScroll::Factor(
-                            data.value, false,
-                        ))));
-                }
+            if let Some(ResizeListenerSignal::Change(_)) = msg.as_any().downcast_ref()
+                && let Ok(data) = context.state.read::<ScrollViewState>()
+            {
+                context
+                    .signals
+                    .write(NavSignal::Jump(NavJump::Scroll(NavScroll::Factor(
+                        data.value, false,
+                    ))));
             }
         }
     });

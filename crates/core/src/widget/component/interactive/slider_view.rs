@@ -103,10 +103,10 @@ impl SliderInput {
     }
 
     pub fn set<T: TryInto<Scalar>>(&mut self, value: T) {
-        if let Some(mut data) = self.0.write() {
-            if let Ok(value) = value.try_into() {
-                data.set(value);
-            }
+        if let Some(mut data) = self.0.write()
+            && let Ok(value) = value.try_into()
+        {
+            data.set(value);
         }
     }
 }

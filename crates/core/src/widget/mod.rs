@@ -59,7 +59,7 @@ impl<'a> WidgetIdMetaParams<'a> {
         Self(meta)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = WidgetIdMetaParam> {
+    pub fn iter(&'_ self) -> impl Iterator<Item = WidgetIdMetaParam<'_>> {
         self.0.split('&').filter_map(|part| {
             if let Some(index) = part.find('=') {
                 let name = &part[0..index];
@@ -83,7 +83,7 @@ impl<'a> WidgetIdMetaParams<'a> {
         })
     }
 
-    pub fn find(&self, name: &str) -> Option<WidgetIdMetaParam> {
+    pub fn find(&'_ self, name: &str) -> Option<WidgetIdMetaParam<'_>> {
         self.iter().find(|param| param.name == name)
     }
 

@@ -99,10 +99,10 @@ pub fn use_button_notified_state(context: &mut WidgetContext) {
 #[pre_hooks(use_nav_item, use_nav_button)]
 pub fn use_button(context: &mut WidgetContext) {
     fn notify(context: &WidgetMountOrChangeContext, data: ButtonNotifyMessage) {
-        if let Ok(ButtonNotifyProps(notify)) = context.props.read() {
-            if let Some(to) = notify.read() {
-                context.messenger.write(to, data);
-            }
+        if let Ok(ButtonNotifyProps(notify)) = context.props.read()
+            && let Some(to) = notify.read()
+        {
+            context.messenger.write(to, data);
         }
     }
 

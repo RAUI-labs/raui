@@ -58,15 +58,13 @@ fn use_app(ctx: &mut WidgetContext) {
         for msg in ctx.messenger.messages {
             // We listen for float box change messages sent from `float_view_control`
             // widgets and move sender panel by delta of change.
-            if let Some(msg) = msg.as_any().downcast_ref::<FloatBoxChangeMessage>() {
-                if let Ok(index) = msg.sender.key().parse::<usize>() {
-                    if let FloatBoxChange::RelativePosition(delta) = msg.change {
-                        if let Some((position, _)) = view_model.panels.get_mut(index) {
-                            position.x += delta.x;
-                            position.y += delta.y;
-                        }
-                    }
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<FloatBoxChangeMessage>()
+                && let Ok(index) = msg.sender.key().parse::<usize>()
+                && let FloatBoxChange::RelativePosition(delta) = msg.change
+                && let Some((position, _)) = view_model.panels.get_mut(index)
+            {
+                position.x += delta.x;
+                position.y += delta.y;
             }
         }
     });

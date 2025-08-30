@@ -218,10 +218,10 @@ impl DefaultInteractionsEngine {
         if self.locked_widget.is_some() || self.selected_chain.last() == id.as_ref() {
             return false;
         }
-        if let Some(id) = &id {
-            if self.containers.contains_key(id) {
-                app.send_message(id, NavSignal::Select(id.to_owned().into()));
-            }
+        if let Some(id) = &id
+            && self.containers.contains_key(id)
+        {
+            app.send_message(id, NavSignal::Select(id.to_owned().into()));
         }
         match (self.selected_chain.is_empty(), id) {
             (false, None) => {
@@ -291,11 +291,11 @@ impl DefaultInteractionsEngine {
             app.send_message(focused, NavSignal::FocusTextInput(().into()));
         }
         self.focused_text_input = None;
-        if let Some(id) = id {
-            if self.text_inputs.contains(&id) {
-                app.send_message(&id, NavSignal::FocusTextInput(id.to_owned().into()));
-                self.focused_text_input = Some(id);
-            }
+        if let Some(id) = id
+            && self.text_inputs.contains(&id)
+        {
+            app.send_message(&id, NavSignal::FocusTextInput(id.to_owned().into()));
+            self.focused_text_input = Some(id);
         }
     }
 
@@ -344,12 +344,12 @@ impl DefaultInteractionsEngine {
     }
 
     fn find_scroll_view_content(&self, id: &WidgetId) -> Option<WidgetId> {
-        if self.scroll_views.contains(id) {
-            if let Some(items) = self.containers.get(id) {
-                for item in items {
-                    if self.scroll_view_contents.contains(item) {
-                        return Some(item.to_owned());
-                    }
+        if self.scroll_views.contains(id)
+            && let Some(items) = self.containers.get(id)
+        {
+            for item in items {
+                if self.scroll_view_contents.contains(item) {
+                    return Some(item.to_owned());
                 }
             }
         }
@@ -726,37 +726,36 @@ impl DefaultInteractionsEngine {
                         NavScroll::Widget(idref, anchor) => {
                             if let (Some(wid), Some(oid)) =
                                 (idref.read(), self.find_scroll_view_content(id))
+                                && let Some(rect) = app.layout_data().rect_relative_to(&wid, &oid)
                             {
-                                if let Some(rect) = app.layout_data().rect_relative_to(&wid, &oid) {
-                                    let aitem = app.layout_data().find_or_ui_space(oid.path());
-                                    let bitem = app.layout_data().find_or_ui_space(id.path());
-                                    let x = lerp(rect.left, rect.right, anchor.x);
-                                    let y = lerp(rect.top, rect.bottom, anchor.y);
-                                    let asize = aitem.local_space.size();
-                                    let bsize = bitem.local_space.size();
-                                    let v = Vec2 {
-                                        x: if asize.x > 0.0 { x / asize.x } else { 0.0 },
-                                        y: if asize.y > 0.0 { y / asize.y } else { 0.0 },
-                                    };
-                                    let f = Vec2 {
-                                        x: if bsize.x > 0.0 {
-                                            asize.x / bsize.x
-                                        } else {
-                                            0.0
-                                        },
-                                        y: if bsize.y > 0.0 {
-                                            asize.y / bsize.y
-                                        } else {
-                                            0.0
-                                        },
-                                    };
-                                    app.send_message(
-                                        id,
-                                        NavSignal::Jump(NavJump::Scroll(NavScroll::Change(
-                                            v, f, false,
-                                        ))),
-                                    );
-                                }
+                                let aitem = app.layout_data().find_or_ui_space(oid.path());
+                                let bitem = app.layout_data().find_or_ui_space(id.path());
+                                let x = lerp(rect.left, rect.right, anchor.x);
+                                let y = lerp(rect.top, rect.bottom, anchor.y);
+                                let asize = aitem.local_space.size();
+                                let bsize = bitem.local_space.size();
+                                let v = Vec2 {
+                                    x: if asize.x > 0.0 { x / asize.x } else { 0.0 },
+                                    y: if asize.y > 0.0 { y / asize.y } else { 0.0 },
+                                };
+                                let f = Vec2 {
+                                    x: if bsize.x > 0.0 {
+                                        asize.x / bsize.x
+                                    } else {
+                                        0.0
+                                    },
+                                    y: if bsize.y > 0.0 {
+                                        asize.y / bsize.y
+                                    } else {
+                                        0.0
+                                    },
+                                };
+                                app.send_message(
+                                    id,
+                                    NavSignal::Jump(NavJump::Scroll(NavScroll::Change(
+                                        v, f, false,
+                                    ))),
+                                );
                             }
                         }
                         _ => {}
@@ -782,27 +781,26 @@ impl DefaultInteractionsEngine {
             return None;
         }
         let mut result = None;
-        if let Some(data) = unit.as_data() {
-            if self.buttons.contains(data.id()) {
-                if let Some(layout) = app.layout_data().items.get(data.id()) {
-                    let rect = layout.ui_space;
-                    if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
-                        let size = rect.size();
-                        let pos = Vec2 {
-                            x: if size.x > 0.0 {
-                                (x - rect.left) / size.x
-                            } else {
-                                0.0
-                            },
-                            y: if size.y > 0.0 {
-                                (y - rect.top) / size.y
-                            } else {
-                                0.0
-                            },
-                        };
-                        result = Some((data.id().to_owned(), pos));
-                    }
-                }
+        if let Some(data) = unit.as_data()
+            && self.buttons.contains(data.id())
+            && let Some(layout) = app.layout_data().items.get(data.id())
+        {
+            let rect = layout.ui_space;
+            if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
+                let size = rect.size();
+                let pos = Vec2 {
+                    x: if size.x > 0.0 {
+                        (x - rect.left) / size.x
+                    } else {
+                        0.0
+                    },
+                    y: if size.y > 0.0 {
+                        (y - rect.top) / size.y
+                    } else {
+                        0.0
+                    },
+                };
+                result = Some((data.id().to_owned(), pos));
             }
         }
         match unit {
@@ -812,10 +810,10 @@ impl DefaultInteractionsEngine {
                 }
             }
             WidgetUnit::ContentBox(unit) => {
-                if unit.clipping {
-                    if let Some(item) = app.layout_data().items.get(&unit.id) {
-                        clip = item.ui_space;
-                    }
+                if unit.clipping
+                    && let Some(item) = app.layout_data().items.get(&unit.id)
+                {
+                    clip = item.ui_space;
                 }
                 for item in &unit.items {
                     if let Some(id) = self.find_button_inner(app, x, y, &item.slot, clip) {
@@ -852,12 +850,12 @@ impl DefaultInteractionsEngine {
     }
 
     fn does_hover_widget_inner(app: &Application, x: Scalar, y: Scalar, unit: &WidgetUnit) -> bool {
-        if let Some(data) = unit.as_data() {
-            if let Some(layout) = app.layout_data().items.get(data.id()) {
-                let rect = layout.ui_space;
-                if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
-                    return true;
-                }
+        if let Some(data) = unit.as_data()
+            && let Some(layout) = app.layout_data().items.get(data.id())
+        {
+            let rect = layout.ui_space;
+            if x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom {
+                return true;
             }
         }
         match unit {
@@ -991,15 +989,15 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                             }
                         }
                         NavType::Item => {
-                            if let Some(key) = self.items_owners.remove(id) {
-                                if let Some(items) = self.containers.get_mut(&key) {
-                                    items.remove(&key);
-                                }
+                            if let Some(key) = self.items_owners.remove(id)
+                                && let Some(items) = self.containers.get_mut(&key)
+                            {
+                                items.remove(&key);
                             }
-                            if let Some(lid) = &self.locked_widget {
-                                if lid == id {
-                                    self.locked_widget = None;
-                                }
+                            if let Some(lid) = &self.locked_widget
+                                && lid == id
+                            {
+                                self.locked_widget = None;
                             }
                         }
                         NavType::Button => {
@@ -1007,10 +1005,10 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         }
                         NavType::TextInput => {
                             self.text_inputs.remove(id);
-                            if let Some(focused) = &self.focused_text_input {
-                                if focused == id {
-                                    self.focused_text_input = None;
-                                }
+                            if let Some(focused) = &self.focused_text_input
+                                && focused == id
+                            {
+                                self.focused_text_input = None;
                             }
                         }
                         NavType::ScrollView => {
@@ -1031,10 +1029,10 @@ impl InteractionsEngine<DefaultInteractionsEngineResult, ()> for DefaultInteract
                         }
                     }
                     NavSignal::Unlock => {
-                        if let Some(lid) = &self.locked_widget {
-                            if lid == id {
-                                self.locked_widget = None;
-                            }
+                        if let Some(lid) = &self.locked_widget
+                            && lid == id
+                        {
+                            self.locked_widget = None;
                         }
                     }
                     NavSignal::Jump(data) => {

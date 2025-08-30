@@ -35,77 +35,76 @@ fn main() {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..
             } = event
+                && input.state == ElementState::Pressed
             {
-                if input.state == ElementState::Pressed {
-                    match input.virtual_keycode {
-                        Some(VirtualKeyCode::Key1) => {
-                            *app.view_models
-                                .get_mut(Menu::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Menu>()
-                                .unwrap()
-                                .screen = MenuScreen::None;
-                            println!("Changed menu: None");
-                        }
-                        Some(VirtualKeyCode::Key2) => {
-                            *app.view_models
-                                .get_mut(Menu::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Menu>()
-                                .unwrap()
-                                .screen = MenuScreen::Settings;
-                            println!("Changed menu: Settings");
-                        }
-                        Some(VirtualKeyCode::Key3) => {
-                            *app.view_models
-                                .get_mut(Menu::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Menu>()
-                                .unwrap()
-                                .screen = MenuScreen::Quests;
-                            println!("Changed menu: Quests");
-                        }
-                        Some(VirtualKeyCode::Key4) => {
-                            *app.view_models
-                                .get_mut(Menu::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Menu>()
-                                .unwrap()
-                                .screen = MenuScreen::Inventory;
-                            println!("Changed menu: Inventory");
-                        }
-                        Some(VirtualKeyCode::Key5) => {
-                            app.view_models
-                                .get_mut(Inventory::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Inventory>()
-                                .unwrap()
-                                .add("potion", 1);
-                            println!("Added item: Potion");
-                        }
-                        Some(VirtualKeyCode::Key6) => {
-                            app.view_models
-                                .get_mut(Inventory::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Inventory>()
-                                .unwrap()
-                                .add("sword", 1);
-                            println!("Added item: Sword");
-                        }
-                        Some(VirtualKeyCode::Key7) => {
-                            app.view_models
-                                .get_mut(Inventory::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Inventory>()
-                                .unwrap()
-                                .add("shield", 1);
-                            println!("Added item: Shield");
-                        }
-                        Some(VirtualKeyCode::Escape) => {
-                            return false;
-                        }
-                        _ => {}
+                match input.virtual_keycode {
+                    Some(VirtualKeyCode::Key1) => {
+                        *app.view_models
+                            .get_mut(Menu::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Menu>()
+                            .unwrap()
+                            .screen = MenuScreen::None;
+                        println!("Changed menu: None");
                     }
+                    Some(VirtualKeyCode::Key2) => {
+                        *app.view_models
+                            .get_mut(Menu::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Menu>()
+                            .unwrap()
+                            .screen = MenuScreen::Settings;
+                        println!("Changed menu: Settings");
+                    }
+                    Some(VirtualKeyCode::Key3) => {
+                        *app.view_models
+                            .get_mut(Menu::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Menu>()
+                            .unwrap()
+                            .screen = MenuScreen::Quests;
+                        println!("Changed menu: Quests");
+                    }
+                    Some(VirtualKeyCode::Key4) => {
+                        *app.view_models
+                            .get_mut(Menu::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Menu>()
+                            .unwrap()
+                            .screen = MenuScreen::Inventory;
+                        println!("Changed menu: Inventory");
+                    }
+                    Some(VirtualKeyCode::Key5) => {
+                        app.view_models
+                            .get_mut(Inventory::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Inventory>()
+                            .unwrap()
+                            .add("potion", 1);
+                        println!("Added item: Potion");
+                    }
+                    Some(VirtualKeyCode::Key6) => {
+                        app.view_models
+                            .get_mut(Inventory::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Inventory>()
+                            .unwrap()
+                            .add("sword", 1);
+                        println!("Added item: Sword");
+                    }
+                    Some(VirtualKeyCode::Key7) => {
+                        app.view_models
+                            .get_mut(Inventory::VIEW_MODEL)
+                            .unwrap()
+                            .write::<Inventory>()
+                            .unwrap()
+                            .add("shield", 1);
+                        println!("Added item: Shield");
+                    }
+                    Some(VirtualKeyCode::Escape) => {
+                        return false;
+                    }
+                    _ => {}
                 }
             }
             true

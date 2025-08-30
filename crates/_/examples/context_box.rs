@@ -176,23 +176,21 @@ fn main() {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..
             } = event
+                && input.state == ElementState::Pressed
+                && let Some(key) = input.virtual_keycode
             {
-                if input.state == ElementState::Pressed {
-                    if let Some(key) = input.virtual_keycode {
-                        match key {
-                            VirtualKeyCode::Key1 | VirtualKeyCode::Numpad1 => {
-                                // change state of given context box in app data.
-                                data.0 = !data.0;
-                            }
-                            VirtualKeyCode::Key2 | VirtualKeyCode::Numpad2 => {
-                                data.1 = !data.1;
-                            }
-                            VirtualKeyCode::Key3 | VirtualKeyCode::Numpad3 => {
-                                data.2 = !data.2;
-                            }
-                            _ => {}
-                        }
+                match key {
+                    VirtualKeyCode::Key1 | VirtualKeyCode::Numpad1 => {
+                        // change state of given context box in app data.
+                        data.0 = !data.0;
                     }
+                    VirtualKeyCode::Key2 | VirtualKeyCode::Numpad2 => {
+                        data.1 = !data.1;
+                    }
+                    VirtualKeyCode::Key3 | VirtualKeyCode::Numpad3 => {
+                        data.2 = !data.2;
+                    }
+                    _ => {}
                 }
             }
             true

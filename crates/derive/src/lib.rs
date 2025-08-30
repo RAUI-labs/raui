@@ -26,12 +26,11 @@ impl Parse for IdentList {
 fn unpack_context(ty: &Type, pat: &Pat) -> Option<Ident> {
     match ty {
         Type::Path(TypePath { path, .. }) => {
-            if let Some(segment) = path.segments.iter().next_back() {
-                if segment.ident == "WidgetContext" {
-                    if let Pat::Ident(PatIdent { ident, .. }) = pat {
-                        return Some(ident.to_owned());
-                    }
-                }
+            if let Some(segment) = path.segments.iter().next_back()
+                && segment.ident == "WidgetContext"
+                && let Pat::Ident(PatIdent { ident, .. }) = pat
+            {
+                return Some(ident.to_owned());
             }
         }
         Type::Reference(TypeReference { elem, .. }) => {

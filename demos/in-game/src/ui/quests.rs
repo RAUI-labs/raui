@@ -190,12 +190,11 @@ fn use_quests(context: &mut WidgetContext) {
             .unwrap();
 
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("item") {
-                    if msg.trigger_start() {
-                        quests.toggle(id);
-                    }
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("item")
+                && msg.trigger_start()
+            {
+                quests.toggle(id);
             }
         }
     });

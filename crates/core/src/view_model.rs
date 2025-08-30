@@ -109,10 +109,10 @@ impl ViewModelProperties {
             .inner
             .iter()
             .filter_map(|(key, bindings)| {
-                if let Some(bindings) = bindings.read() {
-                    if bindings.is_empty() {
-                        return Some(key.to_owned());
-                    }
+                if let Some(bindings) = bindings.read()
+                    && bindings.is_empty()
+                {
+                    return Some(key.to_owned());
                 }
                 None
             })
@@ -122,7 +122,10 @@ impl ViewModelProperties {
         }
     }
 
-    pub fn bindings(&mut self, id: impl ToString) -> Option<ValueWriteAccess<ViewModelBindings>> {
+    pub fn bindings(
+        &'_ mut self,
+        id: impl ToString,
+    ) -> Option<ValueWriteAccess<'_, ViewModelBindings>> {
         self.inner.entry(id.to_string()).or_default().write()
     }
 
@@ -144,11 +147,11 @@ impl ViewModelProperties {
     pub fn consume_notified_common_root(&mut self) -> WidgetIdCommon {
         let mut result = WidgetIdCommon::default();
         for bindings in self.inner.values_mut() {
-            if let Some(mut bindings) = bindings.write() {
-                if bindings.consume_notification() {
-                    let root = bindings.common_root();
-                    result.include_other(root);
-                }
+            if let Some(mut bindings) = bindings.write()
+                && bindings.consume_notification()
+            {
+                let root = bindings.common_root();
+                result.include_other(root);
             }
         }
         result
@@ -210,15 +213,15 @@ impl ViewModel {
         self.object.lazy().into_typed::<T>().ok()
     }
 
-    pub fn read<T: 'static>(&self) -> Option<ValueReadAccess<T>> {
+    pub fn read<T: 'static>(&'_ self) -> Option<ValueReadAccess<'_, T>> {
         self.object.read::<T>()
     }
 
-    pub fn write<T: 'static>(&mut self) -> Option<ValueWriteAccess<T>> {
+    pub fn write<T: 'static>(&'_ mut self) -> Option<ValueWriteAccess<'_, T>> {
         self.object.write::<T>()
     }
 
-    pub fn write_notified<T: 'static>(&mut self) -> Option<ViewModelObject<T>> {
+    pub fn write_notified<T: 'static>(&'_ mut self) -> Option<ViewModelObject<'_, T>> {
         if let Some(access) = self.object.write::<T>() {
             Some(ViewModelObject {
                 access,
@@ -327,10 +330,10 @@ impl<'a> ViewModelCollectionView<'a> {
     }
 
     pub fn bindings(
-        &mut self,
+        &'_ mut self,
         view_model: &str,
         property: impl ToString,
-    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
+    ) -> Option<ValueWriteAccess<'_, ViewModelBindings>> {
         self.collection
             .get_mut(view_model)?
             .properties
@@ -363,10 +366,10 @@ impl<'a> ViewModelCollectionView<'a> {
     }
 
     pub fn widget_bindings(
-        &mut self,
+        &'_ mut self,
         view_model: &str,
         property: impl ToString,
-    ) -> Option<ValueWriteAccess<ViewModelBindings>> {
+    ) -> Option<ValueWriteAccess<'_, ViewModelBindings>> {
         self.collection
             .widgets
             .get_mut(self.id)?

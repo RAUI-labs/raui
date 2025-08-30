@@ -92,10 +92,10 @@ impl OptionsInput {
     }
 
     pub fn set<T: TryInto<usize>>(&mut self, value: T) {
-        if let Some(mut data) = self.0.write() {
-            if let Ok(value) = value.try_into() {
-                data.set(value);
-            }
+        if let Some(mut data) = self.0.write()
+            && let Ok(value) = value.try_into()
+        {
+            data.set(value);
         }
     }
 }
@@ -150,26 +150,23 @@ impl OptionsViewProps {
 fn use_options_view(context: &mut WidgetContext) {
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_stop() {
-                    if msg.sender.key() == "button-selected" {
-                        let mut state = context.state.read_cloned_or_default::<ContextBoxProps>();
-                        state.show = !state.show;
-                        let _ = context.state.write_with(state);
-                    } else if msg.sender.key() == "button-item" {
-                        let mut state = context.state.read_cloned_or_default::<ContextBoxProps>();
-                        state.show = !state.show;
-                        let _ = context.state.write_with(state);
-                        let params = WidgetIdMetaParams::new(msg.sender.meta());
-                        if let Some(value) = params.find_value("index") {
-                            if let Ok(value) = value.parse::<usize>() {
-                                if let Ok(mut options) =
-                                    context.props.read_cloned::<OptionsViewProps>()
-                                {
-                                    options.set_index(value);
-                                }
-                            }
-                        }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_stop()
+            {
+                if msg.sender.key() == "button-selected" {
+                    let mut state = context.state.read_cloned_or_default::<ContextBoxProps>();
+                    state.show = !state.show;
+                    let _ = context.state.write_with(state);
+                } else if msg.sender.key() == "button-item" {
+                    let mut state = context.state.read_cloned_or_default::<ContextBoxProps>();
+                    state.show = !state.show;
+                    let _ = context.state.write_with(state);
+                    let params = WidgetIdMetaParams::new(msg.sender.meta());
+                    if let Some(value) = params.find_value("index")
+                        && let Ok(value) = value.parse::<usize>()
+                        && let Ok(mut options) = context.props.read_cloned::<OptionsViewProps>()
+                    {
+                        options.set_index(value);
                     }
                 }
             }

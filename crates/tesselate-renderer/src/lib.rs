@@ -559,11 +559,11 @@ where
                     for (_, item) in items {
                         self.render_node(&item.slot, mapping, layout, true)?;
                     }
-                    if unit.clipping {
-                        if let Some(batch) = self.converter.convert(TesselateBatch::ClipPop) {
-                            self.stream.batch(batch);
-                            self.stream.batch_end();
-                        }
+                    if unit.clipping
+                        && let Some(batch) = self.converter.convert(TesselateBatch::ClipPop)
+                    {
+                        self.stream.batch(batch);
+                        self.stream.batch_end();
                     }
                     self.pop_transform();
                     Ok(())

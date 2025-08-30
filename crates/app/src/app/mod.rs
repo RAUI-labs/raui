@@ -319,23 +319,21 @@ impl SharedApp {
             event: WindowEvent::KeyboardInput { input, .. },
             ..
         } = &event
+            && input.state == ElementState::Pressed
+            && let Some(key) = input.virtual_keycode
         {
-            if input.state == ElementState::Pressed {
-                if let Some(key) = input.virtual_keycode {
-                    if key == self.show_raui_aabb_key {
-                        self.show_raui_aabb_mode = (self.show_raui_aabb_mode + 1) % 3;
-                        println!(
-                            "* SHOW RAUI LAYOUT AABB MODE: {:#?}",
-                            self.show_raui_aabb_mode
-                        );
-                    } else if key == self.print_raui_tree_key {
-                        println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
-                    } else if key == self.print_raui_layout_key {
-                        println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());
-                    } else if key == self.print_raui_interactions_key {
-                        println!("* RAUI INTERACTIONS: {:#?}", self.interactions);
-                    }
-                }
+            if key == self.show_raui_aabb_key {
+                self.show_raui_aabb_mode = (self.show_raui_aabb_mode + 1) % 3;
+                println!(
+                    "* SHOW RAUI LAYOUT AABB MODE: {:#?}",
+                    self.show_raui_aabb_mode
+                );
+            } else if key == self.print_raui_tree_key {
+                println!("* RAUI TREE: {:#?}", self.application.rendered_tree());
+            } else if key == self.print_raui_layout_key {
+                println!("* RAUI LAYOUT: {:#?}", self.application.layout_data());
+            } else if key == self.print_raui_interactions_key {
+                println!("* RAUI INTERACTIONS: {:#?}", self.interactions);
             }
         }
         self.on_event

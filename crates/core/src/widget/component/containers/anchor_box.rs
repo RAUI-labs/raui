@@ -81,10 +81,10 @@ pub fn use_anchor_box(context: &mut WidgetContext) {
     where
         T: 'static + MessageData,
     {
-        if let Ok(AnchorNotifyProps(notify)) = context.props.read() {
-            if let Some(to) = notify.read() {
-                context.messenger.write(to, data);
-            }
+        if let Ok(AnchorNotifyProps(notify)) = context.props.read()
+            && let Some(to) = notify.read()
+        {
+            context.messenger.write(to, data);
         }
     }
 

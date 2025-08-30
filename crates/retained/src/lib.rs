@@ -48,19 +48,19 @@ impl<T: ViewState> View<T> {
         self.inner
     }
 
-    pub fn as_dyn(&self) -> Option<ValueReadAccess<dyn ViewState>> {
+    pub fn as_dyn(&'_ self) -> Option<ValueReadAccess<'_, dyn ViewState>> {
         self.lifetime.read(&*self.inner)
     }
 
-    pub fn as_dyn_mut(&mut self) -> Option<ValueWriteAccess<dyn ViewState>> {
+    pub fn as_dyn_mut(&'_ mut self) -> Option<ValueWriteAccess<'_, dyn ViewState>> {
         self.lifetime.write(&mut *self.inner)
     }
 
-    pub fn read(&self) -> Option<ValueReadAccess<T>> {
+    pub fn read(&'_ self) -> Option<ValueReadAccess<'_, T>> {
         self.lifetime.read(self.inner.as_any().downcast_ref::<T>()?)
     }
 
-    pub fn write(&mut self) -> Option<ValueWriteAccess<T>> {
+    pub fn write(&'_ mut self) -> Option<ValueWriteAccess<'_, T>> {
         self.lifetime
             .write(self.inner.as_any_mut().downcast_mut::<T>()?)
     }
@@ -125,19 +125,19 @@ impl<T: ViewState> Clone for LazyView<T> {
 }
 
 impl<T: ViewState> LazyView<T> {
-    pub fn as_dyn(&self) -> Option<ValueReadAccess<dyn ViewState>> {
+    pub fn as_dyn(&'_ self) -> Option<ValueReadAccess<'_, dyn ViewState>> {
         unsafe { self.lifetime.read(self.inner.as_ref()) }
     }
 
-    pub fn as_dyn_mut(&self) -> Option<ValueWriteAccess<dyn ViewState>> {
+    pub fn as_dyn_mut(&'_ self) -> Option<ValueWriteAccess<'_, dyn ViewState>> {
         unsafe { self.lifetime.write(self.inner.as_ptr().as_mut()?) }
     }
 
-    pub fn read(&self) -> Option<ValueReadAccess<T>> {
+    pub fn read(&'_ self) -> Option<ValueReadAccess<'_, T>> {
         unsafe { self.lifetime.read(self.inner.as_ref()) }
     }
 
-    pub fn write(&self) -> Option<ValueWriteAccess<T>> {
+    pub fn write(&'_ self) -> Option<ValueWriteAccess<'_, T>> {
         unsafe { self.lifetime.write(self.inner.as_ptr().as_mut()?) }
     }
 }
@@ -163,10 +163,10 @@ impl<T> ViewValue<T> {
     }
 
     pub fn bind_notifier(&mut self, notifier: ChangeNotifier) {
-        if self.notifier.is_none() {
-            if let Some(id) = self.id.read() {
-                notifier.notify(id);
-            }
+        if self.notifier.is_none()
+            && let Some(id) = self.id.read()
+        {
+            notifier.notify(id);
         }
         self.notifier = Some(notifier);
     }
@@ -194,10 +194,10 @@ impl<T> Deref for ViewValue<T> {
 
 impl<T> DerefMut for ViewValue<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        if let Some(notifier) = self.notifier.as_ref() {
-            if let Some(id) = self.id.read() {
-                notifier.notify(id);
-            }
+        if let Some(notifier) = self.notifier.as_ref()
+            && let Some(id) = self.id.read()
+        {
+            notifier.notify(id);
         }
         &mut self.inner
     }
@@ -234,11 +234,11 @@ impl<T: ViewState> SharedView<T> {
         }
     }
 
-    pub fn read(&self) -> Option<ValueReadAccess<View<T>>> {
+    pub fn read(&'_ self) -> Option<ValueReadAccess<'_, View<T>>> {
         self.inner.read()?.remap(|inner| inner.as_ref()).ok()
     }
 
-    pub fn write(&mut self) -> Option<ValueWriteAccess<View<T>>> {
+    pub fn write(&'_ mut self) -> Option<ValueWriteAccess<'_, View<T>>> {
         self.inner.write()?.remap(|inner| inner.as_mut()).ok()
     }
 }

@@ -104,14 +104,13 @@ pub fn use_nav_tabs_box(context: &mut WidgetContext) {
 
     context.life_cycle.change(|context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_start() {
-                    if let Ok(index) = msg.sender.key().parse::<usize>() {
-                        let _ = context.state.write(TabsState {
-                            active_index: index,
-                        });
-                    }
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_start()
+                && let Ok(index) = msg.sender.key().parse::<usize>()
+            {
+                let _ = context.state.write(TabsState {
+                    active_index: index,
+                });
             }
         }
     })

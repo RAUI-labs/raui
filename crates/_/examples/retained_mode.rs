@@ -197,10 +197,10 @@ impl<T: ViewState> ViewState for Button<T> {
         // widget and call stored callback.
         if let Some(on_click) = self.on_click.take() {
             for message in context.messenger.messages {
-                if let Some(message) = message.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                    if message.trigger_start() {
-                        on_click();
-                    }
+                if let Some(message) = message.as_any().downcast_ref::<ButtonNotifyMessage>()
+                    && message.trigger_start()
+                {
+                    on_click();
                 }
             }
             self.on_click = Some(on_click);

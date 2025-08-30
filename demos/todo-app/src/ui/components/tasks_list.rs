@@ -77,10 +77,10 @@ fn use_task(context: &mut WidgetContext) {
                 }
             } else if let Some(msg) = msg.as_any().downcast_ref::<ConfirmNotifyMessage>() {
                 let _ = context.state.write_with(TaskState { deleting: false });
-                if msg.confirmed {
-                    if let Ok(index) = context.id.key().parse::<usize>() {
-                        app_state.delete_task(index);
-                    }
+                if msg.confirmed
+                    && let Ok(index) = context.id.key().parse::<usize>()
+                {
+                    app_state.delete_task(index);
                 }
             }
         }

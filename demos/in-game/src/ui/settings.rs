@@ -129,20 +129,18 @@ pub fn settings(mut context: WidgetContext) -> WidgetNode {
 fn use_settings(context: &mut WidgetContext) {
     context.life_cycle.change(|mut context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_start() {
-                    if let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("id") {
-                        if id == "fullscreen" {
-                            let mut settings = context
-                                .view_models
-                                .view_model_mut(Settings::VIEW_MODEL)
-                                .unwrap()
-                                .write::<Settings>()
-                                .unwrap();
-                            *settings.fullscreen = !*settings.fullscreen;
-                        }
-                    }
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_start()
+                && let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("id")
+                && id == "fullscreen"
+            {
+                let mut settings = context
+                    .view_models
+                    .view_model_mut(Settings::VIEW_MODEL)
+                    .unwrap()
+                    .write::<Settings>()
+                    .unwrap();
+                *settings.fullscreen = !*settings.fullscreen;
             }
         }
     });

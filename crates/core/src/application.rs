@@ -325,12 +325,12 @@ impl Application {
         L: LayoutEngine<E>,
     {
         self.layout = layout_engine.layout(mapping, &self.rendered_tree)?;
-        if let Some(view_model) = self.view_models.get_mut(MediaQueryViewModel::VIEW_MODEL) {
-            if let Some(mut view_model) = view_model.write::<MediaQueryViewModel>() {
-                view_model
-                    .screen_size
-                    .set_unique_notify(self.layout.ui_space.size());
-            }
+        if let Some(view_model) = self.view_models.get_mut(MediaQueryViewModel::VIEW_MODEL)
+            && let Some(mut view_model) = view_model.write::<MediaQueryViewModel>()
+        {
+            view_model
+                .screen_size
+                .set_unique_notify(self.layout.ui_space.size());
         }
         Ok(())
     }
@@ -657,34 +657,10 @@ impl Application {
         };
         let (mount, change, unmount) = life_cycle.unwrap();
         if mounted {
-            if !mount.is_empty() {
-                if let Some(state) = new_states.get(&id) {
-                    for mut closure in mount {
-                        let state = State::new(state, StateUpdate::new(state_sender.clone()));
-                        let messenger = Messenger::new(message_sender.clone(), &messages_list);
-                        let signals = SignalSender::new(id.clone(), signal_sender.clone());
-                        let animator = Animator::new(
-                            self.animators.get(&id).unwrap_or(&default_animator_state),
-                            AnimationUpdate::new(animation_sender.clone()),
-                        );
-                        let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
-                        let context = WidgetMountOrChangeContext {
-                            id: &id,
-                            props: &props,
-                            shared_props: &shared_props,
-                            state,
-                            messenger,
-                            signals,
-                            animator,
-                            view_models,
-                        };
-                        (closure)(context);
-                    }
-                }
-            }
-        } else if !change.is_empty() {
-            if let Some(state) = states.get(&id) {
-                for mut closure in change {
+            if !mount.is_empty()
+                && let Some(state) = new_states.get(&id)
+            {
+                for mut closure in mount {
                     let state = State::new(state, StateUpdate::new(state_sender.clone()));
                     let messenger = Messenger::new(message_sender.clone(), &messages_list);
                     let signals = SignalSender::new(id.clone(), signal_sender.clone());
@@ -705,6 +681,30 @@ impl Application {
                     };
                     (closure)(context);
                 }
+            }
+        } else if !change.is_empty()
+            && let Some(state) = states.get(&id)
+        {
+            for mut closure in change {
+                let state = State::new(state, StateUpdate::new(state_sender.clone()));
+                let messenger = Messenger::new(message_sender.clone(), &messages_list);
+                let signals = SignalSender::new(id.clone(), signal_sender.clone());
+                let animator = Animator::new(
+                    self.animators.get(&id).unwrap_or(&default_animator_state),
+                    AnimationUpdate::new(animation_sender.clone()),
+                );
+                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
+                let context = WidgetMountOrChangeContext {
+                    id: &id,
+                    props: &props,
+                    shared_props: &shared_props,
+                    state,
+                    messenger,
+                    signals,
+                    animator,
+                    view_models,
+                };
+                (closure)(context);
             }
         }
         if !unmount.is_empty() {

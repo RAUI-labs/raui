@@ -229,10 +229,10 @@ pub fn use_text_input_notified_state(context: &mut WidgetContext) {
 #[pre_hooks(use_nav_text_input)]
 pub fn use_text_input(context: &mut WidgetContext) {
     fn notify(context: &WidgetMountOrChangeContext, data: TextInputNotifyMessage) {
-        if let Ok(notify) = context.props.read::<TextInputNotifyProps>() {
-            if let Some(to) = notify.0.read() {
-                context.messenger.write(to, data);
-            }
+        if let Ok(notify) = context.props.read::<TextInputNotifyProps>()
+            && let Some(to) = notify.0.read()
+        {
+            context.messenger.write(to, data);
         }
     }
 
@@ -274,16 +274,15 @@ pub fn use_text_input(context: &mut WidgetContext) {
                                     if c.is_control() {
                                         if let Ok(notify) =
                                             context.props.read::<TextInputControlNotifyProps>()
+                                            && let Some(to) = notify.0.read()
                                         {
-                                            if let Some(to) = notify.0.read() {
-                                                context.messenger.write(
-                                                    to,
-                                                    TextInputControlNotifyMessage {
-                                                        sender: context.id.to_owned(),
-                                                        character: *c,
-                                                    },
-                                                );
-                                            }
+                                            context.messenger.write(
+                                                to,
+                                                TextInputControlNotifyMessage {
+                                                    sender: context.id.to_owned(),
+                                                    character: *c,
+                                                },
+                                            );
                                         }
                                     } else {
                                         state.cursor_position =
@@ -393,11 +392,9 @@ pub fn use_text_input(context: &mut WidgetContext) {
             );
             let _ = context.state.write_with(state);
         }
-        if dirty_text {
-            if let Some(data) = props.text.as_mut() {
-                data.set(text);
-                context.messenger.write(context.id.to_owned(), ());
-            }
+        if dirty_text && let Some(data) = props.text.as_mut() {
+            data.set(text);
+            context.messenger.write(context.id.to_owned(), ());
         }
         if submitted {
             context.signals.write(NavSignal::FocusTextInput(().into()));

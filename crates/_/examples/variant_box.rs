@@ -85,25 +85,23 @@ fn main() {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..
             } = event
+                && input.state == ElementState::Pressed
+                && let Some(key) = input.virtual_keycode
             {
-                if input.state == ElementState::Pressed {
-                    if let Some(key) = input.virtual_keycode {
-                        match key {
-                            VirtualKeyCode::A => {
-                                // we modify app data with value that represent active variant name.
-                                *data = "A".to_owned();
-                            }
-                            VirtualKeyCode::S => {
-                                *data = "S".to_owned();
-                            }
-                            VirtualKeyCode::D => {
-                                *data = "D".to_owned();
-                            }
-                            _ => {}
-                        }
+                match key {
+                    VirtualKeyCode::A => {
+                        // we modify app data with value that represent active variant name.
+                        *data = "A".to_owned();
                     }
+                    VirtualKeyCode::S => {
+                        *data = "S".to_owned();
+                    }
+                    VirtualKeyCode::D => {
+                        *data = "D".to_owned();
+                    }
+                    _ => {}
                 }
-            }
+            };
             true
         });
 

@@ -54,20 +54,21 @@ pub fn use_float_view_control(context: &mut WidgetContext) {
                 if msg.trigger_stop() {
                     context.signals.write(NavSignal::Unlock);
                 }
-            } else if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
-                if button.selected && button.trigger {
-                    let delta = msg.pointer_delta_ui_space();
-                    context.messenger.write(
-                        notify.clone(),
-                        FloatBoxChangeMessage {
-                            sender: context.id.to_owned(),
-                            change: FloatBoxChange::RelativePosition(Vec2 {
-                                x: delta.x * scale,
-                                y: delta.y * scale,
-                            }),
-                        },
-                    );
-                }
+            } else if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>()
+                && button.selected
+                && button.trigger
+            {
+                let delta = msg.pointer_delta_ui_space();
+                context.messenger.write(
+                    notify.clone(),
+                    FloatBoxChangeMessage {
+                        sender: context.id.to_owned(),
+                        change: FloatBoxChange::RelativePosition(Vec2 {
+                            x: delta.x * scale,
+                            y: delta.y * scale,
+                        }),
+                    },
+                );
             }
         }
     });

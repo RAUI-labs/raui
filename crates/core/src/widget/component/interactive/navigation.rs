@@ -253,10 +253,10 @@ pub fn use_nav_container(context: &mut WidgetContext) {
     context.life_cycle.change(move |context| {
         if let Ok(props) = context.props.read::<NavContainerDesiredSelection>() {
             for msg in context.messenger.messages {
-                if let Some(NavSignal::Select(idref)) = msg.as_any().downcast_ref::<NavSignal>() {
-                    if idref.read().map(|id| &id == context.id).unwrap_or_default() {
-                        context.signals.write(NavSignal::Select(props.0.to_owned()));
-                    }
+                if let Some(NavSignal::Select(idref)) = msg.as_any().downcast_ref::<NavSignal>()
+                    && idref.read().map(|id| &id == context.id).unwrap_or_default()
+                {
+                    context.signals.write(NavSignal::Select(props.0.to_owned()));
                 }
             }
         }
@@ -584,17 +584,17 @@ pub fn use_nav_tracking(context: &mut WidgetContext) {
                 }
             }
             if dirty {
-                if let Ok(NavTrackingNotifyProps(notify)) = context.props.read() {
-                    if let Some(to) = notify.read() {
-                        context.messenger.write(
-                            to,
-                            NavTrackingNotifyMessage {
-                                sender: context.id.to_owned(),
-                                state: data.to_owned(),
-                                prev,
-                            },
-                        );
-                    }
+                if let Ok(NavTrackingNotifyProps(notify)) = context.props.read()
+                    && let Some(to) = notify.read()
+                {
+                    context.messenger.write(
+                        to,
+                        NavTrackingNotifyMessage {
+                            sender: context.id.to_owned(),
+                            state: data.to_owned(),
+                            prev,
+                        },
+                    );
                 }
                 let _ = context.state.write_with(data);
             }

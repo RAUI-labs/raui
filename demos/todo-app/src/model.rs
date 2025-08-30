@@ -118,11 +118,11 @@ impl AppState {
     }
 
     pub fn load(&mut self) {
-        if let Ok(content) = std::fs::read_to_string("./state.json") {
-            if let Ok(state) = serde_json::from_str::<AppStateSave>(&content) {
-                *self.theme = state.theme;
-                *self.tasks = state.tasks;
-            }
+        if let Ok(content) = std::fs::read_to_string("./state.json")
+            && let Ok(state) = serde_json::from_str::<AppStateSave>(&content)
+        {
+            *self.theme = state.theme;
+            *self.tasks = state.tasks;
         }
     }
 

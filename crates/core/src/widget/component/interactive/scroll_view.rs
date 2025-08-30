@@ -78,10 +78,10 @@ pub fn use_scroll_view(context: &mut WidgetContext) {
     where
         T: 'static + MessageData,
     {
-        if let Ok(notify) = context.props.read::<ScrollViewNotifyProps>() {
-            if let Some(to) = notify.0.read() {
-                context.messenger.write(to, data);
-            }
+        if let Ok(notify) = context.props.read::<ScrollViewNotifyProps>()
+            && let Some(to) = notify.0.read()
+        {
+            context.messenger.write(to, data);
         }
     }
 

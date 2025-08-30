@@ -96,15 +96,14 @@ fn main() {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..
             } = event
+                && let Some(key) = input.virtual_keycode
+                && input.state == ElementState::Pressed
+                && key == VirtualKeyCode::Space
             {
-                if let Some(key) = input.virtual_keycode {
-                    if input.state == ElementState::Pressed && key == VirtualKeyCode::Space {
-                        // Here we use that shared reference to `AppData`
-                        // to mutate it and notify UI.
-                        *app_data.write().unwrap().counter += 1;
-                    }
-                }
-            }
+                // Here we use that shared reference to `AppData`
+                // to mutate it and notify UI.
+                *app_data.write().unwrap().counter += 1;
+            };
             true
         });
 

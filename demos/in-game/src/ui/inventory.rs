@@ -197,12 +197,11 @@ fn use_inventory(context: &mut WidgetContext) {
             .unwrap();
 
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("item") {
-                    if msg.trigger_start() {
-                        inventory.remove(id, 1);
-                    }
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && let Some(id) = WidgetIdMetaParams::new(msg.sender.meta()).find_value("item")
+                && msg.trigger_start()
+            {
+                inventory.remove(id, 1);
             }
         }
     });

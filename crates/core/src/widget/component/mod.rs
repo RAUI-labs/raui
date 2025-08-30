@@ -127,12 +127,12 @@ pub enum RelativeLayoutListenerSignal {
 
 pub fn use_relative_layout_listener(context: &mut WidgetContext) {
     context.life_cycle.mount(|context| {
-        if let Ok(props) = context.props.read::<RelativeLayoutProps>() {
-            if let Some(relative_to) = props.relative_to.read() {
-                context
-                    .signals
-                    .write(RelativeLayoutListenerSignal::Register(relative_to));
-            }
+        if let Ok(props) = context.props.read::<RelativeLayoutProps>()
+            && let Some(relative_to) = props.relative_to.read()
+        {
+            context
+                .signals
+                .write(RelativeLayoutListenerSignal::Register(relative_to));
         }
     });
 

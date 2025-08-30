@@ -57,29 +57,29 @@ fn use_confirm_box(context: &mut WidgetContext) {
 
     context.life_cycle.change(move |context| {
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_start() {
-                    match msg.sender.key() {
-                        "yes" => {
-                            context.messenger.write(
-                                notify.to_owned(),
-                                ConfirmNotifyMessage {
-                                    sender: context.id.to_owned(),
-                                    confirmed: true,
-                                },
-                            );
-                        }
-                        "no" => {
-                            context.messenger.write(
-                                notify.to_owned(),
-                                ConfirmNotifyMessage {
-                                    sender: context.id.to_owned(),
-                                    confirmed: false,
-                                },
-                            );
-                        }
-                        _ => {}
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_start()
+            {
+                match msg.sender.key() {
+                    "yes" => {
+                        context.messenger.write(
+                            notify.to_owned(),
+                            ConfirmNotifyMessage {
+                                sender: context.id.to_owned(),
+                                confirmed: true,
+                            },
+                        );
                     }
+                    "no" => {
+                        context.messenger.write(
+                            notify.to_owned(),
+                            ConfirmNotifyMessage {
+                                sender: context.id.to_owned(),
+                                confirmed: false,
+                            },
+                        );
+                    }
+                    _ => {}
                 }
             }
         }

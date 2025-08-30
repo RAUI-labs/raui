@@ -86,23 +86,21 @@ fn main() {
                 event: WindowEvent::KeyboardInput { input, .. },
                 ..
             } = event
+                && input.state == ElementState::Pressed
+                && let Some(key) = input.virtual_keycode
             {
-                if input.state == ElementState::Pressed {
-                    if let Some(key) = input.virtual_keycode {
-                        match key {
-                            VirtualKeyCode::Key1 | VirtualKeyCode::Numpad1 => {
-                                // we modify app data with value that represent active switch index.
-                                *data = 0;
-                            }
-                            VirtualKeyCode::Key2 | VirtualKeyCode::Numpad2 => {
-                                *data = 1;
-                            }
-                            VirtualKeyCode::Key3 | VirtualKeyCode::Numpad3 => {
-                                *data = 2;
-                            }
-                            _ => {}
-                        }
+                match key {
+                    VirtualKeyCode::Key1 | VirtualKeyCode::Numpad1 => {
+                        // we modify app data with value that represent active switch index.
+                        *data = 0;
                     }
+                    VirtualKeyCode::Key2 | VirtualKeyCode::Numpad2 => {
+                        *data = 1;
+                    }
+                    VirtualKeyCode::Key3 | VirtualKeyCode::Numpad3 => {
+                        *data = 2;
+                    }
+                    _ => {}
                 }
             }
             true

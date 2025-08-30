@@ -101,10 +101,10 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 fn use_item(ctx: &mut WidgetContext) {
     ctx.life_cycle.change(|ctx| {
         for msg in ctx.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_start() {
-                    println!("Button clicked: {:?}", msg.sender.key());
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_start()
+            {
+                println!("Button clicked: {:?}", msg.sender.key());
             }
         }
     });

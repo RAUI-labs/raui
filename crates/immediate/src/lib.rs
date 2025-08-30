@@ -414,29 +414,29 @@ mod internal {
             hook(&mut ctx);
         }
 
-        if let Ok(event) = ctx.props.read::<ImmediateOnMount>() {
-            if let Some(callback) = event.callback.as_ref() {
-                let callback = callback.clone();
-                ctx.life_cycle.mount(move |_| {
-                    callback();
-                });
-            }
+        if let Ok(event) = ctx.props.read::<ImmediateOnMount>()
+            && let Some(callback) = event.callback.as_ref()
+        {
+            let callback = callback.clone();
+            ctx.life_cycle.mount(move |_| {
+                callback();
+            });
         }
-        if let Ok(event) = ctx.props.read::<ImmediateOnChange>() {
-            if let Some(callback) = event.callback.as_ref() {
-                let callback = callback.clone();
-                ctx.life_cycle.change(move |_| {
-                    callback();
-                });
-            }
+        if let Ok(event) = ctx.props.read::<ImmediateOnChange>()
+            && let Some(callback) = event.callback.as_ref()
+        {
+            let callback = callback.clone();
+            ctx.life_cycle.change(move |_| {
+                callback();
+            });
         }
-        if let Ok(event) = ctx.props.read::<ImmediateOnUnmount>() {
-            if let Some(callback) = event.callback.as_ref() {
-                let callback = callback.clone();
-                ctx.life_cycle.unmount(move |_| {
-                    callback();
-                });
-            }
+        if let Ok(event) = ctx.props.read::<ImmediateOnUnmount>()
+            && let Some(callback) = event.callback.as_ref()
+        {
+            let callback = callback.clone();
+            ctx.life_cycle.unmount(move |_| {
+                callback();
+            });
         }
 
         unpack_named_slots!(ctx.named_slots => content);

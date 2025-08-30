@@ -89,10 +89,10 @@ pub enum FloatBoxChange {
 
 pub fn use_float_box(context: &mut WidgetContext) {
     fn notify(context: &WidgetMountOrChangeContext, data: FloatBoxNotifyMessage) {
-        if let Ok(FloatBoxNotifyProps(notify)) = context.props.read() {
-            if let Some(to) = notify.read() {
-                context.messenger.write(to, data);
-            }
+        if let Ok(FloatBoxNotifyProps(notify)) = context.props.read()
+            && let Some(to) = notify.read()
+        {
+            context.messenger.write(to, data);
         }
     }
 

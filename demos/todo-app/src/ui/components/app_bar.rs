@@ -47,23 +47,23 @@ fn use_app_bar(context: &mut WidgetContext) {
             .unwrap();
 
         for msg in context.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                if msg.trigger_start() {
-                    match msg.sender.key() {
-                        "theme" => {
-                            app_state.toggle_theme();
-                        }
-                        "save" => {
-                            app_state.save();
-                        }
-                        "create" => {
-                            app_state.create_task();
-                        }
-                        "add" => {
-                            app_state.add_task();
-                        }
-                        _ => {}
+            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>()
+                && msg.trigger_start()
+            {
+                match msg.sender.key() {
+                    "theme" => {
+                        app_state.toggle_theme();
                     }
+                    "save" => {
+                        app_state.save();
+                    }
+                    "create" => {
+                        app_state.create_task();
+                    }
+                    "add" => {
+                        app_state.add_task();
+                    }
+                    _ => {}
                 }
             }
         }

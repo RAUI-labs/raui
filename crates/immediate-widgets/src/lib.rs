@@ -706,14 +706,13 @@ mod internal {
         }
 
         ctx.life_cycle.change(|ctx| {
-            if let Ok(props) = ctx.props.read::<ImmediateButtonProps>() {
-                if let Some(state) = props.state.as_ref() {
-                    if let Some(mut state) = state.write() {
-                        for msg in ctx.messenger.messages {
-                            if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
-                                state.state = msg.state;
-                            }
-                        }
+            if let Ok(props) = ctx.props.read::<ImmediateButtonProps>()
+                && let Some(state) = props.state.as_ref()
+                && let Some(mut state) = state.write()
+            {
+                for msg in ctx.messenger.messages {
+                    if let Some(msg) = msg.as_any().downcast_ref::<ButtonNotifyMessage>() {
+                        state.state = msg.state;
                     }
                 }
             }
@@ -721,12 +720,12 @@ mod internal {
     }
 
     fn use_immediate_text_input(ctx: &mut WidgetContext) {
-        if let Ok(data) = ctx.state.read_cloned::<TextInputState>() {
-            if let Ok(props) = ctx.props.read::<ImmediateTextInputProps>() {
-                let state = props.state.as_ref().unwrap();
-                let mut state = state.write().unwrap();
-                *state = data;
-            }
+        if let Ok(data) = ctx.state.read_cloned::<TextInputState>()
+            && let Ok(props) = ctx.props.read::<ImmediateTextInputProps>()
+        {
+            let state = props.state.as_ref().unwrap();
+            let mut state = state.write().unwrap();
+            *state = data;
         }
     }
 

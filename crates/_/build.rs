@@ -100,31 +100,31 @@ fn visit_dirs(
                     ignore,
                 );
             }
-        } else if let Some(ext) = path.extension() {
-            if ext == "rs" {
-                if path.file_name().unwrap() == "lib.rs" {
-                    if let Some(feature) = feature {
-                        output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
-                    }
-                    output.push_str(&format!("pub use {prefix}::*;\n"));
-                    continue;
-                }
-
-                if path.file_name().unwrap() == "mod.rs"
-                    || path.file_name().unwrap() == "import_all.rs"
-                    || ignore.iter().any(|name| path.file_name().unwrap() == *name)
-                {
-                    continue;
-                }
-
-                let mod_path = path.strip_prefix(dir).unwrap();
-                let mut mod_name = mod_path.to_string_lossy().replace("/", "::");
-                mod_name = mod_name.trim_end_matches(".rs").to_string();
+        } else if let Some(ext) = path.extension()
+            && ext == "rs"
+        {
+            if path.file_name().unwrap() == "lib.rs" {
                 if let Some(feature) = feature {
                     output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
                 }
-                output.push_str(&format!("pub use {prefix}::{mod_name}::*;\n"));
+                output.push_str(&format!("pub use {prefix}::*;\n"));
+                continue;
             }
+
+            if path.file_name().unwrap() == "mod.rs"
+                || path.file_name().unwrap() == "import_all.rs"
+                || ignore.iter().any(|name| path.file_name().unwrap() == *name)
+            {
+                continue;
+            }
+
+            let mod_path = path.strip_prefix(dir).unwrap();
+            let mut mod_name = mod_path.to_string_lossy().replace("/", "::");
+            mod_name = mod_name.trim_end_matches(".rs").to_string();
+            if let Some(feature) = feature {
+                output.push_str(&format!("#[cfg(feature = \"{feature}\")]\n"));
+            }
+            output.push_str(&format!("pub use {prefix}::{mod_name}::*;\n"));
         }
     }
 }

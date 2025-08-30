@@ -56,12 +56,11 @@ pub fn modal_paper(context: WidgetContext) -> WidgetNode {
     } = props.read_cloned_or_default();
 
     let mut color = Color::transparent();
-    if shadow_shown {
-        if let Ok(props) = shared_props.read::<ThemeProps>() {
-            if let Some(c) = props.modal_shadow_variants.get(&shadow_variant) {
-                color = *c;
-            }
-        }
+    if shadow_shown
+        && let Ok(props) = shared_props.read::<ThemeProps>()
+        && let Some(c) = props.modal_shadow_variants.get(&shadow_variant)
+    {
+        color = *c;
     }
 
     let shadow_image_props = ImageBoxProps {

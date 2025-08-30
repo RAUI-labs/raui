@@ -64,10 +64,10 @@ fn use_app(ctx: &mut WidgetContext) {
 
         // And then we react for tick messages from animation.
         for msg in ctx.messenger.messages {
-            if let Some(msg) = msg.as_any().downcast_ref::<AnimationMessage>() {
-                if msg.0 == TICK {
-                    *app_data.counter += 1;
-                }
+            if let Some(msg) = msg.as_any().downcast_ref::<AnimationMessage>()
+                && msg.0 == TICK
+            {
+                *app_data.counter += 1;
             }
         }
     });
