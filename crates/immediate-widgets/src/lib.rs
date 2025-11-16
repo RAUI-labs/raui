@@ -219,15 +219,54 @@ pub mod core {
         use raui_core::{
             make_widget,
             props::Props,
-            widget::component::interactive::{
-                button::ButtonProps,
-                input_field::{TextInputProps, TextInputState},
-                options_view::{OptionsViewProps, OptionsViewProxy},
-                slider_view::{SliderViewProps, SliderViewProxy},
+            widget::{
+                component::interactive::{
+                    button::ButtonProps,
+                    input_field::{TextInputProps, TextInputState},
+                    navigation::NavTrackingProps,
+                    options_view::{OptionsViewProps, OptionsViewProxy},
+                    slider_view::{SliderViewProps, SliderViewProxy},
+                },
+                utils::Vec2,
             },
         };
         use raui_immediate::{begin, end, pop, push, use_state};
         use std::str::FromStr;
+
+        #[derive(Debug, Default, Copy, Clone)]
+        pub struct ImmediateTracking {
+            pub state: NavTrackingProps,
+            pub prev: NavTrackingProps,
+        }
+
+        impl ImmediateTracking {
+            pub fn pointer_delta_factor(&self) -> Vec2 {
+                Vec2 {
+                    x: self.state.factor.x - self.prev.factor.x,
+                    y: self.state.factor.y - self.prev.factor.y,
+                }
+            }
+
+            pub fn pointer_delta_unscaled(&self) -> Vec2 {
+                Vec2 {
+                    x: self.state.unscaled.x - self.prev.unscaled.x,
+                    y: self.state.unscaled.y - self.prev.unscaled.y,
+                }
+            }
+
+            pub fn pointer_delta_ui_space(&self) -> Vec2 {
+                Vec2 {
+                    x: self.state.ui_space.x - self.prev.ui_space.x,
+                    y: self.state.ui_space.y - self.prev.ui_space.y,
+                }
+            }
+
+            pub fn pointer_moved(&self) -> bool {
+                (self.state.factor.x - self.prev.factor.x)
+                    + (self.state.factor.y - self.prev.factor.y)
+                    > 1.0e-6
+            }
+        }
 
         #[derive(Debug, Default, Copy, Clone)]
         pub struct ImmediateButton {
@@ -276,6 +315,44 @@ pub mod core {
         impl_content_components! {
             "content":
             navigation_barrier,
+        }
+
+        pub fn tracking(
+            props: impl Into<Props>,
+            mut f: impl FnMut(ImmediateTracking),
+        ) -> ImmediateTracking {
+            use crate::internal::*;
+            let state = use_state(ImmediateTracking::default);
+            let result = state.read().unwrap().to_owned();
+            begin();
+            f(result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_tracking)
+                    .with_props(ImmediateTrackingProps { state: Some(state) })
+                    .merge_props(props.into())
+                    .named_slot("content", node),
+            );
+            result
+        }
+
+        pub fn self_tracking(
+            props: impl Into<Props>,
+            mut f: impl FnMut(ImmediateTracking),
+        ) -> ImmediateTracking {
+            use crate::internal::*;
+            let state = use_state(ImmediateTracking::default);
+            let result = state.read().unwrap().to_owned();
+            begin();
+            f(result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_self_tracking)
+                    .with_props(ImmediateTrackingProps { state: Some(state) })
+                    .merge_props(props.into())
+                    .named_slot("content", node),
+            );
+            result
         }
 
         pub fn button(
@@ -636,13 +713,17 @@ pub mod material {
 }
 
 mod internal {
-    use super::core::interactive::ImmediateButton;
+    use crate::core::interactive::{ImmediateButton, ImmediateTracking};
     use raui_core::{
         ManagedLazy, Prefab, PropsData, make_widget, pre_hooks,
         widget::{
             component::interactive::{
                 button::{ButtonNotifyMessage, ButtonNotifyProps, button},
                 input_field::{TextInputState, input_field, text_input},
+                navigation::{
+                    NavTrackingNotifyMessage, NavTrackingNotifyProps, self_tracking, tracking,
+                    use_nav_tracking_self,
+                },
                 slider_view::slider_view,
             },
             context::WidgetContext,
@@ -658,6 +739,29 @@ mod internal {
         text_field_paper::text_field_paper_impl,
     };
     use serde::{Deserialize, Serialize};
+
+    #[derive(PropsData, Default, Clone, Serialize, Deserialize)]
+    #[props_data(raui_core::props::PropsData)]
+    #[prefab(raui_core::Prefab)]
+    pub struct ImmediateTrackingProps {
+        #[serde(default, skip)]
+        pub state: Option<ManagedLazy<ImmediateTracking>>,
+    }
+
+    impl std::fmt::Debug for ImmediateTrackingProps {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("ImmediateTrackingProps")
+                .field(
+                    "state",
+                    &self
+                        .state
+                        .as_ref()
+                        .and_then(|state| state.read())
+                        .map(|state| *state),
+                )
+                .finish()
+        }
+    }
 
     #[derive(PropsData, Default, Clone, Serialize, Deserialize)]
     #[props_data(raui_core::props::PropsData)]
@@ -696,6 +800,30 @@ mod internal {
         }
     }
 
+    fn use_immediate_tracking(ctx: &mut WidgetContext) {
+        ctx.props
+            .write(NavTrackingNotifyProps(ctx.id.to_owned().into()));
+
+        if let Ok(props) = ctx.props.read::<ImmediateTrackingProps>() {
+            let state = props.state.as_ref().unwrap();
+            let mut state = state.write().unwrap();
+            state.prev = state.state;
+        }
+
+        ctx.life_cycle.change(|ctx| {
+            if let Ok(props) = ctx.props.read::<ImmediateTrackingProps>()
+                && let Some(state) = props.state.as_ref()
+                && let Some(mut state) = state.write()
+            {
+                for msg in ctx.messenger.messages {
+                    if let Some(msg) = msg.as_any().downcast_ref::<NavTrackingNotifyMessage>() {
+                        state.state = msg.state;
+                    }
+                }
+            }
+        });
+    }
+
     fn use_immediate_button(ctx: &mut WidgetContext) {
         ctx.props.write(ButtonNotifyProps(ctx.id.to_owned().into()));
 
@@ -727,6 +855,16 @@ mod internal {
             let mut state = state.write().unwrap();
             *state = data;
         }
+    }
+
+    #[pre_hooks(use_immediate_tracking)]
+    pub(crate) fn immediate_tracking(mut ctx: WidgetContext) -> WidgetNode {
+        tracking(ctx)
+    }
+
+    #[pre_hooks(use_immediate_tracking, use_nav_tracking_self)]
+    pub(crate) fn immediate_self_tracking(mut ctx: WidgetContext) -> WidgetNode {
+        self_tracking(ctx)
     }
 
     #[pre_hooks(use_immediate_button)]

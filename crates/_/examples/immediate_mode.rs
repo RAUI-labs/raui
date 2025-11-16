@@ -9,7 +9,10 @@ use raui_core::{
     Scalar,
     widget::{
         component::{
-            containers::{horizontal_box::HorizontalBoxProps, wrap_box::WrapBoxProps},
+            containers::{
+                horizontal_box::HorizontalBoxProps, vertical_box::VerticalBoxProps,
+                wrap_box::WrapBoxProps,
+            },
             image_box::ImageBoxProps,
             interactive::{
                 input_field::{TextInputMode, input_text_with_cursor},
@@ -25,7 +28,7 @@ use raui_immediate::{ImProps, apply};
 use raui_immediate_widgets::core::{
     containers::{content_box, horizontal_box, nav_vertical_box, wrap_box},
     image_box,
-    interactive::{ImmediateButton, button, input_field},
+    interactive::{ImmediateButton, button, input_field, self_tracking},
     text_box,
 };
 
@@ -39,11 +42,16 @@ pub fn app(value: &mut usize) {
     };
 
     wrap_box(props, || {
+        let props = VerticalBoxProps {
+            separation: 50.0,
+            ..Default::default()
+        };
+
         // we can use any "immedietified" RAUI widget we want.
         // we can pass Props to parameterize RAUI widget in first param.
         // BTW. we should make sure to use any `nav_*` container widget
         // somewhere in the app root to make app interactive.
-        nav_vertical_box((), || {
+        nav_vertical_box(props, || {
             let layout = FlexBoxItemLayout {
                 basis: Some(48.0),
                 grow: 0.0,
@@ -72,6 +80,15 @@ pub fn app(value: &mut usize) {
                     }
                 });
             });
+
+            self_tracking((), |tracking| {
+                image_box(ImageBoxProps::colored(Color {
+                    r: tracking.state.factor.x,
+                    g: 0.0,
+                    b: tracking.state.factor.y,
+                    a: 1.0,
+                }));
+            });
         });
     });
 }
@@ -95,7 +112,7 @@ fn text_button(text: &str) -> ImmediateButton {
             text_box(TextBoxProps {
                 text: text.to_string(),
                 font: TextBoxFont {
-                    name: crate::FONT.to_owned(),
+                    name: FONT.to_owned(),
                     size: 32.0,
                 },
                 color: Color {
@@ -127,7 +144,7 @@ fn counter(value: &mut usize) {
                 text.to_owned()
             },
             font: TextBoxFont {
-                name: crate::FONT.to_owned(),
+                name: FONT.to_owned(),
                 size: 32.0,
             },
             color: Color {
