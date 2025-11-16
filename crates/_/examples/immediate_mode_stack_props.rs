@@ -7,7 +7,7 @@ use raui_core::widget::{
     },
     utils::Color,
 };
-use raui_immediate::{apply_props, stack_props, use_stack_props};
+use raui_immediate::{ImProps, ImStackProps, apply, use_stack_props};
 use raui_immediate_widgets::core::{containers::nav_vertical_box, text_box};
 
 pub fn app() {
@@ -31,7 +31,7 @@ pub fn app() {
     // children nodes, while stack props are stacked so any
     // widget in hierarchy can access the top of the props
     // stack - we can easily share style down the hierarchy!
-    stack_props(props, || {
+    apply(ImStackProps::new(props), || {
         nav_vertical_box((), || {
             let layout = FlexBoxItemLayout {
                 basis: Some(100.0),
@@ -42,7 +42,7 @@ pub fn app() {
             };
 
             // These props apply only to label widgets.
-            apply_props(layout, || {
+            apply(ImProps(layout), || {
                 label("Hey!");
                 label("Hi!");
 
@@ -63,7 +63,7 @@ pub fn app() {
 
                 // By pushing new props on stack props we override
                 // what's gonna be used in all chidren in hierarchy.
-                stack_props(props, || {
+                apply(ImStackProps::new(props), || {
                     label("Hello!");
                     label("Ohayo?");
                 });

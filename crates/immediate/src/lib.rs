@@ -4,7 +4,8 @@ use raui_core::{
     make_widget,
     props::{Props, PropsData},
     widget::{
-        component::WidgetComponent, context::WidgetContext, node::WidgetNode, unit::WidgetUnitNode,
+        WidgetRef, component::WidgetComponent, context::WidgetContext, node::WidgetNode,
+        unit::WidgetUnitNode,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -274,77 +275,6 @@ pub fn reset() {
     });
 }
 
-pub fn apply_key<R>(key: impl ToString, mut f: impl FnMut() -> R) -> R {
-    let key = key.to_string();
-    begin();
-    let result = f();
-    let mut widgets = end();
-    match widgets.len() {
-        0 => {}
-        1 => {
-            let mut widget = widgets.pop().unwrap();
-            if let WidgetNode::Component(widget) = &mut widget {
-                widget.key = Some(key);
-            }
-            push(widget);
-        }
-        _ => {
-            for (index, widget) in widgets.iter_mut().enumerate() {
-                if let WidgetNode::Component(widget) = widget {
-                    widget.key = Some(format!("{key}-{index}"));
-                }
-            }
-            extend(widgets);
-        }
-    }
-    result
-}
-
-pub fn apply_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
-    let props = props.into();
-    begin();
-    let result = f();
-    let mut widgets = end();
-    for widget in &mut widgets {
-        if let Some(widget) = widget.props_mut() {
-            widget.merge_from(props.clone());
-        }
-    }
-    extend(widgets);
-    result
-}
-
-pub fn apply_shared_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
-    let props = props.into();
-    begin();
-    let result = f();
-    let mut widgets = end();
-    for widget in &mut widgets {
-        if let Some(widget) = widget.shared_props_mut() {
-            widget.merge_from(props.clone());
-        }
-    }
-    extend(widgets);
-    result
-}
-
-pub fn stack_props<R>(props: impl Into<Props>, mut f: impl FnMut() -> R) -> R {
-    PROPS_STACK.with(|props_stack| {
-        if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
-            props_stack.borrow_mut().push(props.into());
-        }
-    });
-    begin();
-    let result = f();
-    extend(end());
-    PROPS_STACK.with(|props_stack| {
-        if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
-            props_stack.borrow_mut().pop();
-        }
-    });
-    result
-}
-
 pub fn list_component<R>(
     widget: impl Into<WidgetComponent>,
     props: impl Into<Props>,
@@ -405,6 +335,227 @@ pub fn make_widgets(context: &ImmediateContext, mut f: impl FnMut()) -> Vec<Widg
     result
 }
 
+pub trait ImmediateApply: Sized {
+    fn before(self) -> Self {
+        self
+    }
+
+    fn after(self) -> Self {
+        self
+    }
+
+    fn process(self, widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+        widgets
+    }
+}
+
+macro_rules! impl_tuple_immediate_apply {
+    ($($id:ident),+ $(,)?) => {
+        #[allow(non_snake_case)]
+        impl<$($id: $crate::ImmediateApply),+> $crate::ImmediateApply for ($($id,)+) {
+            fn before(self) -> Self {
+                let ($($id,)+) = self;
+                (
+                    $(
+                        $id.before(),
+                    )+
+                )
+            }
+
+            fn after(self) -> Self {
+                let ($($id,)+) = self;
+                (
+                    $(
+                        $id.after(),
+                    )+
+                )
+            }
+
+            fn process(self, mut widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+                let ($($id,)+) = self;
+                $(
+                    widgets = $id.process(widgets);
+                )+
+                widgets
+            }
+        }
+    };
+}
+
+impl_tuple_immediate_apply!(A);
+impl_tuple_immediate_apply!(A, B);
+impl_tuple_immediate_apply!(A, B, C);
+impl_tuple_immediate_apply!(A, B, C, D);
+impl_tuple_immediate_apply!(A, B, C, D, E);
+impl_tuple_immediate_apply!(A, B, C, D, E, F);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S);
+impl_tuple_immediate_apply!(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T);
+impl_tuple_immediate_apply!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U
+);
+impl_tuple_immediate_apply!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V
+);
+impl_tuple_immediate_apply!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X
+);
+impl_tuple_immediate_apply!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y
+);
+impl_tuple_immediate_apply!(
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, X, Y, Z
+);
+
+pub struct ImKey<T: ToString>(pub T);
+
+impl<T: ToString> ImmediateApply for ImKey<T> {
+    fn process(self, mut widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+        let key = self.0.to_string();
+        match widgets.len() {
+            0 => {}
+            1 => {
+                if let WidgetNode::Component(widget) = &mut widgets[0] {
+                    widget.key = Some(key);
+                }
+            }
+            _ => {
+                for (index, widget) in widgets.iter_mut().enumerate() {
+                    if let WidgetNode::Component(widget) = widget {
+                        widget.key = Some(format!("{key}-{index}"));
+                    }
+                }
+            }
+        }
+        widgets
+    }
+}
+
+pub struct ImIdRef<T: Into<WidgetRef>>(pub T);
+
+impl<T: Into<WidgetRef>> ImmediateApply for ImIdRef<T> {
+    fn process(self, mut widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+        let idref = self.0.into();
+        for widget in &mut widgets {
+            if let WidgetNode::Component(widget) = widget {
+                widget.idref = Some(idref.clone());
+            }
+        }
+        widgets
+    }
+}
+
+pub struct ImProps<T: Into<Props>>(pub T);
+
+impl<T: Into<Props>> ImmediateApply for ImProps<T> {
+    fn process(self, mut widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+        let props = self.0.into();
+        for widget in &mut widgets {
+            if let Some(widget) = widget.props_mut() {
+                widget.merge_from(props.clone());
+            }
+        }
+        widgets
+    }
+}
+
+pub struct ImSharedProps<T: Into<Props>>(pub T);
+
+impl<T: Into<Props>> ImmediateApply for ImSharedProps<T> {
+    fn process(self, mut widgets: Vec<WidgetNode>) -> Vec<WidgetNode> {
+        let props = self.0.into();
+        for widget in &mut widgets {
+            if let Some(widget) = widget.shared_props_mut() {
+                widget.merge_from(props.clone());
+            }
+        }
+        widgets
+    }
+}
+
+pub enum ImStackProps<T: Into<Props>> {
+    Props(T),
+    Done,
+}
+
+impl<T: Into<Props>> ImStackProps<T> {
+    pub fn new(props: T) -> Self {
+        Self::Props(props)
+    }
+}
+
+impl<T: Into<Props>> ImmediateApply for ImStackProps<T> {
+    fn before(self) -> Self {
+        if let Self::Props(props) = self {
+            let props = props.into();
+            PROPS_STACK.with(|props_stack| {
+                if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+                    props_stack.borrow_mut().push(props.clone());
+                }
+            });
+        }
+        Self::Done
+    }
+
+    fn after(self) -> Self {
+        if let Self::Done = self {
+            PROPS_STACK.with(|props_stack| {
+                if let Some(props_stack) = props_stack.borrow_mut().as_mut() {
+                    props_stack.borrow_mut().pop();
+                }
+            });
+        }
+        self
+    }
+}
+
+pub fn apply<R>(items: impl ImmediateApply, mut f: impl FnMut() -> R) -> R {
+    begin();
+    let items = items.before();
+    let result = f();
+    let items = items.after();
+    let widgets = end();
+    let widgets = items.process(widgets);
+    extend(widgets);
+    result
+}
+
+#[deprecated(note = "Use `apply` with `ImKey` instead")]
+pub fn apply_key<R>(key: impl ToString, f: impl FnMut() -> R) -> R {
+    apply(ImKey(key), f)
+}
+
+#[deprecated(note = "Use `apply` with `ImIdRef` instead")]
+pub fn apply_idref<R>(key: impl Into<WidgetRef>, f: impl FnMut() -> R) -> R {
+    apply(ImIdRef(key), f)
+}
+
+#[deprecated(note = "Use `apply` with `ImProps` instead")]
+pub fn apply_props<R>(props: impl Into<Props>, f: impl FnMut() -> R) -> R {
+    apply(ImProps(props), f)
+}
+
+#[deprecated(note = "Use `apply` with `ImSharedProps` instead")]
+pub fn apply_shared_props<R>(props: impl Into<Props>, f: impl FnMut() -> R) -> R {
+    apply(ImSharedProps(props), f)
+}
+
+#[deprecated(note = "Use `apply` with `ImStackProps` instead")]
+pub fn stack_props<R>(props: impl Into<Props>, f: impl FnMut() -> R) -> R {
+    apply(ImStackProps::new(props), f)
+}
+
 mod internal {
     use super::*;
     use raui_core::{unpack_named_slots, widget::unit::area::AreaBoxNode};
@@ -451,6 +602,8 @@ mod internal {
 
 #[cfg(test)]
 mod tests {
+    use raui_core::widget::component::image_box::{ImageBoxProps, image_box};
+
     use super::*;
 
     fn run(frame: usize) {
@@ -510,6 +663,34 @@ mod tests {
             ImmediateContext::activate(&context);
             run(frame);
             ImmediateContext::deactivate();
+        }
+    }
+
+    #[test]
+    fn test_apply() {
+        let context = ImmediateContext::default();
+        ImmediateContext::activate(&context);
+        begin();
+
+        apply(
+            (
+                ImKey("image"),
+                ImProps(ImageBoxProps::colored(Default::default())),
+            ),
+            || {
+                component(make_widget!(image_box), ());
+            },
+        );
+
+        let widgets = end();
+        ImmediateContext::deactivate();
+
+        assert_eq!(widgets.len(), 1);
+        if let WidgetNode::Component(component) = &widgets[0] {
+            assert_eq!(component.key.as_deref(), Some("image"));
+            assert!(component.props.has::<ImageBoxProps>());
+        } else {
+            panic!("Expected a component node");
         }
     }
 }

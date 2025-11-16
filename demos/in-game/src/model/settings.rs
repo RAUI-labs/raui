@@ -2,12 +2,6 @@ use raui::core::{
     Managed, Scalar,
     view_model::{ViewModel, ViewModelValue},
 };
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-struct SettingsData {
-    fullscreen: bool,
-}
 
 pub struct Settings {
     pub fullscreen: ViewModelValue<bool>,

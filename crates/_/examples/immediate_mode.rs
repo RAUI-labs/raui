@@ -21,7 +21,7 @@ use raui_core::{
         utils::Color,
     },
 };
-use raui_immediate::apply_props;
+use raui_immediate::{ImProps, apply};
 use raui_immediate_widgets::core::{
     containers::{content_box, horizontal_box, nav_vertical_box, wrap_box},
     image_box,
@@ -52,7 +52,7 @@ pub fn app(value: &mut usize) {
             };
 
             // we can also apply props on all produced widgets in the scope.
-            apply_props(layout, || {
+            apply(ImProps(layout), || {
                 counter(value);
 
                 let props = HorizontalBoxProps {
