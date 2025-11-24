@@ -440,6 +440,7 @@ pub mod core {
 pub mod material {
     impl_components! {
         icon_paper,
+        scroll_paper_side_scrollbars,
         switch_paper,
         text_paper,
     }
@@ -447,7 +448,6 @@ pub mod material {
     pub mod containers {
         impl_slot_components! {
             context_paper,
-            scroll_paper_side_scrollbars,
         }
 
         impl_content_components! {

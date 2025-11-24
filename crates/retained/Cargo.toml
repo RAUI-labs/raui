@@ -1,6 +1,6 @@
 [package]
 name = "raui-retained"
-version = "0.70.11"
+version = "0.70.12"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "RAUI retained mode UI layer"
