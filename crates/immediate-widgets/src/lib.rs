@@ -1,5 +1,56 @@
 use raui_immediate::*;
 
+macro_rules! impl_imports {
+    () => {
+        #[allow(unused_imports)]
+        use raui_core::widget::component::{
+            containers::{
+                anchor_box::*, area_box::*, content_box::*, context_box::*, flex_box::*,
+                float_box::*, grid_box::*, hidden_box::*, horizontal_box::*, portal_box::*,
+                responsive_box::*, scroll_box::*, size_box::*, switch_box::*, tabs_box::*,
+                tooltip_box::*, variant_box::*, vertical_box::*, wrap_box::*,
+            },
+            interactive::{
+                button::*, float_view::*, input_field::*, navigation::*, options_view::*,
+                scroll_view::*, slider_view::*,
+            },
+        };
+        #[allow(unused_imports)]
+        use raui_core::widget::{
+            component::{image_box::*, space_box::*, text_box::*},
+            none_widget,
+        };
+        #[allow(unused_imports)]
+        use raui_material::component::{
+            containers::{
+                context_paper::*, flex_paper::*, grid_paper::*, horizontal_paper::*,
+                modal_paper::*, paper::*, scroll_paper::*, text_tooltip_paper::*, tooltip_paper::*,
+                vertical_paper::*, window_paper::*, wrap_paper::*,
+            },
+            interactive::{
+                button_paper::*, icon_button_paper::*, slider_paper::*, switch_button_paper::*,
+                text_button_paper::*, text_field_paper::*,
+            },
+        };
+        #[allow(unused_imports)]
+        use raui_material::component::{icon_paper::*, switch_paper::*, text_paper::*};
+    };
+}
+
+macro_rules! impl_slot_components {
+    ($($name:ident),+ $(,)?) => {
+        $(
+            pub fn $name<R>(
+                props: impl Into<raui_core::props::Props>,
+                f: impl FnMut() -> R,
+            ) -> R {
+                impl_imports!();
+                crate::slot_component(raui_core::make_widget!($name), props, f)
+            }
+        )+
+    };
+}
+
 macro_rules! impl_list_components {
     ($($name:ident),+ $(,)?) => {
         $(
@@ -7,64 +58,7 @@ macro_rules! impl_list_components {
                 props: impl Into<raui_core::props::Props>,
                 f: impl FnMut() -> R,
             ) -> R {
-                #[allow(unused_imports)]
-                use raui_core::widget::component::{
-                    containers::{
-                        anchor_box::*,
-                        area_box::*,
-                        content_box::*,
-                        context_box::*,
-                        flex_box::*,
-                        float_box::*,
-                        grid_box::*,
-                        hidden_box::*,
-                        horizontal_box::*,
-                        portal_box::*,
-                        responsive_box::*,
-                        scroll_box::*,
-                        size_box::*,
-                        switch_box::*,
-                        tabs_box::*,
-                        tooltip_box::*,
-                        variant_box::*,
-                        vertical_box::*,
-                        wrap_box::*,
-                    },
-                    interactive::{
-                        button::*,
-                        float_view::*,
-                        input_field::*,
-                        navigation::*,
-                        options_view::*,
-                        scroll_view::*,
-                        slider_view::*,
-                    },
-                };
-                #[allow(unused_imports)]
-                use raui_material::component::{
-                    containers::{
-                        context_paper::*,
-                        flex_paper::*,
-                        grid_paper::*,
-                        horizontal_paper::*,
-                        modal_paper::*,
-                        paper::*,
-                        scroll_paper::*,
-                        text_tooltip_paper::*,
-                        tooltip_paper::*,
-                        vertical_paper::*,
-                        window_paper::*,
-                        wrap_paper::*,
-                    },
-                    interactive::{
-                        button_paper::*,
-                        icon_button_paper::*,
-                        slider_paper::*,
-                        switch_button_paper::*,
-                        text_button_paper::*,
-                        text_field_paper::*,
-                    },
-                };
+                impl_imports!();
                 crate::list_component(raui_core::make_widget!($name), props, f)
             }
         )+
@@ -78,64 +72,7 @@ macro_rules! impl_content_components {
                 props: impl Into<raui_core::props::Props>,
                 f: impl FnMut() -> R,
             ) -> R {
-                #[allow(unused_imports)]
-                use raui_core::widget::component::{
-                    containers::{
-                        anchor_box::*,
-                        area_box::*,
-                        content_box::*,
-                        context_box::*,
-                        flex_box::*,
-                        float_box::*,
-                        grid_box::*,
-                        hidden_box::*,
-                        horizontal_box::*,
-                        portal_box::*,
-                        responsive_box::*,
-                        scroll_box::*,
-                        size_box::*,
-                        switch_box::*,
-                        tabs_box::*,
-                        tooltip_box::*,
-                        variant_box::*,
-                        vertical_box::*,
-                        wrap_box::*,
-                    },
-                    interactive::{
-                        button::*,
-                        float_view::*,
-                        input_field::*,
-                        navigation::*,
-                        options_view::*,
-                        scroll_view::*,
-                        slider_view::*,
-                    },
-                };
-                #[allow(unused_imports)]
-                use raui_material::component::{
-                    containers::{
-                        context_paper::*,
-                        flex_paper::*,
-                        grid_paper::*,
-                        horizontal_paper::*,
-                        modal_paper::*,
-                        paper::*,
-                        scroll_paper::*,
-                        text_tooltip_paper::*,
-                        tooltip_paper::*,
-                        vertical_paper::*,
-                        window_paper::*,
-                        wrap_paper::*,
-                    },
-                    interactive::{
-                        button_paper::*,
-                        icon_button_paper::*,
-                        slider_paper::*,
-                        switch_button_paper::*,
-                        text_button_paper::*,
-                        text_field_paper::*,
-                    },
-                };
+                impl_imports!();
                 crate::content_component(raui_core::make_widget!($name), $content, props, f)
             }
         )+
@@ -148,21 +85,7 @@ macro_rules! impl_components {
             pub fn $name(
                 props: impl Into<raui_core::props::Props>,
             ) {
-                #[allow(unused_imports)]
-                use raui_core::widget::{
-                    none_widget,
-                    component::{
-                        image_box::*,
-                        space_box::*,
-                        text_box::*,
-                    },
-                };
-                #[allow(unused_imports)]
-                use raui_material::component::{
-                    icon_paper::*,
-                    switch_paper::*,
-                    text_paper::*,
-                };
+                impl_imports!();
                 crate::component(raui_core::make_widget!($name), props)
             }
         )+
@@ -171,46 +94,49 @@ macro_rules! impl_components {
 
 pub mod core {
     impl_components! {
-        none_widget,
         image_box,
-        text_box,
+        nav_scroll_box_side_scrollbars,
+        none_widget,
         space_box,
+        text_box,
     }
 
     pub mod containers {
         impl_content_components! {
             "content":
             anchor_box,
-            pivot_box,
-            context_box,
-            portals_context_box,
             hidden_box,
+            nav_scroll_box_content,
+            pivot_box,
             portal_box,
-            responsive_box,
             responsive_props_box,
             size_box,
-            tooltip_box,
-            portals_tooltip_box,
             wrap_box,
+        }
+
+        impl_slot_components! {
+            context_box,
+            nav_scroll_box,
+            portals_context_box,
+            portals_tooltip_box,
+            tooltip_box,
+            variant_box,
         }
 
         impl_list_components! {
             content_box,
-            nav_content_box,
             flex_box,
-            nav_flex_box,
             grid_box,
-            nav_grid_box,
             horizontal_box,
+            nav_content_box,
+            nav_flex_box,
+            nav_grid_box,
             nav_horizontal_box,
-            nav_scroll_box,
-            nav_scroll_box_content,
-            nav_scroll_box_side_scrollbars,
-            switch_box,
             nav_switch_box,
             nav_tabs_box,
-            variant_box,
             nav_vertical_box,
+            responsive_box,
+            switch_box,
             vertical_box,
         }
     }
@@ -519,23 +445,30 @@ pub mod material {
     }
 
     pub mod containers {
-        impl_list_components! {
+        impl_slot_components! {
             context_paper,
-            flex_paper,
-            nav_flex_paper,
-            grid_paper,
-            nav_grid_paper,
-            horizontal_paper,
-            nav_horizontal_paper,
-            modal_paper,
-            paper,
-            scroll_paper,
             scroll_paper_side_scrollbars,
+        }
+
+        impl_content_components! {
+            "content":
+            modal_paper,
+            scroll_paper,
             text_tooltip_paper,
             tooltip_paper,
-            vertical_paper,
-            nav_vertical_paper,
             wrap_paper,
+        }
+
+        impl_list_components! {
+            flex_paper,
+            grid_paper,
+            horizontal_paper,
+            nav_flex_paper,
+            nav_grid_paper,
+            nav_horizontal_paper,
+            nav_vertical_paper,
+            paper,
+            vertical_paper,
         }
     }
 

@@ -292,6 +292,26 @@ pub fn list_component<R>(
     result
 }
 
+pub fn slot_component<R>(
+    widget: impl Into<WidgetComponent>,
+    props: impl Into<Props>,
+    mut f: impl FnMut() -> R,
+) -> R {
+    begin();
+    let result = f();
+    let widgets = end();
+    push(
+        widget
+            .into()
+            .merge_props(props.into())
+            .named_slots(widgets.into_iter().filter_map(|widget| {
+                let name = widget.as_component()?.key.as_deref()?.to_owned();
+                Some((name, widget))
+            })),
+    );
+    result
+}
+
 pub fn content_component<R>(
     widget: impl Into<WidgetComponent>,
     content_name: &str,
