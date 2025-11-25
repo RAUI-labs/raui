@@ -448,14 +448,14 @@ pub mod material {
     pub mod containers {
         impl_slot_components! {
             context_paper,
+            scroll_paper,
+            tooltip_paper,
         }
 
         impl_content_components! {
             "content":
             modal_paper,
-            scroll_paper,
             text_tooltip_paper,
-            tooltip_paper,
             wrap_paper,
         }
 
