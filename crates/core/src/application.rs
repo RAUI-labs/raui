@@ -114,6 +114,8 @@ pub struct Application {
     state_changes: HashMap<WidgetId, Vec<StateChange>>,
     animators: HashMap<WidgetId, AnimatorStates>,
     messages: HashMap<WidgetId, Messages>,
+    pending_stack: Vec<WidgetStackItem>,
+    done_stack: Vec<WidgetNode>,
     signals: Vec<Signal>,
     pub view_models: ViewModelCollection,
     changes: ChangeNotifier,
@@ -143,6 +145,8 @@ impl Default for Application {
             state_changes: Default::default(),
             animators: Default::default(),
             messages: Default::default(),
+            pending_stack: Default::default(),
+            done_stack: Default::default(),
             signals: Default::default(),
             view_models,
             changes: ChangeNotifier(Default::default()),
@@ -457,15 +461,12 @@ impl Application {
         let tree = self.tree.clone();
         let mut used_ids = HashSet::new();
         let mut new_states = HashMap::new();
-        let rendered_tree = self.process_node(
+        let rendered_tree = self.process_nodes_stack(
             tree,
             &states,
-            vec![],
             &mut messages,
             &mut new_states,
             &mut used_ids,
-            "<*>".to_string(),
-            None,
             &message_sender,
             &signal_sender,
         );
@@ -524,399 +525,389 @@ impl Application {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn process_node(
+    fn process_nodes_stack(
         &mut self,
-        node: WidgetNode,
+        root_node: WidgetNode,
         states: &HashMap<WidgetId, Props>,
-        path: Vec<Cow<'static, str>>,
         messages: &mut HashMap<WidgetId, Messages>,
         new_states: &mut HashMap<WidgetId, Props>,
         used_ids: &mut HashSet<WidgetId>,
-        possible_key: String,
-        master_shared_props: Option<Props>,
         message_sender: &MessageSender,
         signal_sender: &Sender<Signal>,
     ) -> WidgetNode {
-        match node {
-            WidgetNode::None | WidgetNode::Tuple(_) => node,
-            WidgetNode::Component(component) => self.process_node_component(
-                component,
-                states,
-                path,
-                messages,
-                new_states,
-                used_ids,
-                possible_key,
-                master_shared_props,
-                message_sender,
-                signal_sender,
-            ),
-            WidgetNode::Unit(unit) => self.process_node_unit(
-                unit,
-                states,
-                path,
-                messages,
-                new_states,
-                used_ids,
-                master_shared_props,
-                message_sender,
-                signal_sender,
-            ),
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn process_node_component(
-        &mut self,
-        component: WidgetComponent,
-        states: &HashMap<WidgetId, Props>,
-        mut path: Vec<Cow<'static, str>>,
-        messages: &mut HashMap<WidgetId, Messages>,
-        new_states: &mut HashMap<WidgetId, Props>,
-        used_ids: &mut HashSet<WidgetId>,
-        possible_key: String,
-        master_shared_props: Option<Props>,
-        message_sender: &MessageSender,
-        signal_sender: &Sender<Signal>,
-    ) -> WidgetNode {
-        let WidgetComponent {
-            processor,
-            type_name,
-            key,
-            mut idref,
-            mut props,
-            shared_props,
-            listed_slots,
-            named_slots,
-        } = component;
-        let mut shared_props = match (master_shared_props, shared_props) {
-            (Some(master_shared_props), Some(shared_props)) => {
-                master_shared_props.merge(shared_props)
-            }
-            (None, Some(shared_props)) => shared_props,
-            (Some(master_shared_props), None) => master_shared_props,
-            _ => Default::default(),
-        };
-        let key = match &key {
-            Some(key) => key.to_owned(),
-            None => possible_key.to_owned(),
-        };
-        path.push(key.clone().into());
-        let id = WidgetId::new(&type_name, &path);
-        used_ids.insert(id.clone());
-        if let Some(idref) = &mut idref {
-            idref.write(id.to_owned());
-        }
-        let (state_sender, state_receiver) = channel();
-        let (animation_sender, animation_receiver) = channel();
-        let messages_list = messages.remove(&id).unwrap_or_default();
-        let mut life_cycle = WidgetLifeCycle::default();
-        let default_animator_state = AnimatorStates::default();
-        let (new_node, mounted) = match states.get(&id) {
-            Some(state) => {
-                let state = State::new(state, StateUpdate::new(state_sender.clone()));
-                let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
-                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
-                let context = WidgetContext {
-                    id: &id,
-                    idref: idref.as_ref(),
-                    key: &key,
-                    props: &mut props,
-                    shared_props: &mut shared_props,
-                    state,
-                    animator,
-                    life_cycle: &mut life_cycle,
-                    named_slots,
-                    listed_slots,
-                    view_models,
-                };
-                (processor.call(context), false)
-            }
-            None => {
-                let state_data = Props::default();
-                let state = State::new(&state_data, StateUpdate::new(state_sender.clone()));
-                let animator = self.animators.get(&id).unwrap_or(&default_animator_state);
-                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
-                let context = WidgetContext {
-                    id: &id,
-                    idref: idref.as_ref(),
-                    key: &key,
-                    props: &mut props,
-                    shared_props: &mut shared_props,
-                    state,
-                    animator,
-                    life_cycle: &mut life_cycle,
-                    named_slots,
-                    listed_slots,
-                    view_models,
-                };
-                let node = processor.call(context);
-                new_states.insert(id.clone(), state_data);
-                (node, true)
-            }
-        };
-        let (mount, change, unmount) = life_cycle.unwrap();
-        if mounted {
-            if !mount.is_empty()
-                && let Some(state) = new_states.get(&id)
-            {
-                for mut closure in mount {
-                    let state = State::new(state, StateUpdate::new(state_sender.clone()));
-                    let messenger = Messenger::new(message_sender.clone(), &messages_list);
-                    let signals = SignalSender::new(id.clone(), signal_sender.clone());
-                    let animator = Animator::new(
-                        self.animators.get(&id).unwrap_or(&default_animator_state),
-                        AnimationUpdate::new(animation_sender.clone()),
-                    );
-                    let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
-                    let context = WidgetMountOrChangeContext {
-                        id: &id,
-                        props: &props,
-                        shared_props: &shared_props,
-                        state,
-                        messenger,
-                        signals,
-                        animator,
-                        view_models,
-                    };
-                    (closure)(context);
+        self.pending_stack.clear();
+        self.pending_stack.push(WidgetStackItem::Node {
+            node: root_node,
+            path: vec![],
+            possible_key: "<*>".to_string(),
+            master_shared_props: None,
+        });
+        self.done_stack.clear();
+        while let Some(item) = self.pending_stack.pop() {
+            match item {
+                WidgetStackItem::Node {
+                    node,
+                    mut path,
+                    possible_key,
+                    master_shared_props,
+                } => match node {
+                    WidgetNode::None | WidgetNode::Tuple(_) => {
+                        self.done_stack.push(node);
+                    }
+                    WidgetNode::Component(component) => {
+                        let WidgetComponent {
+                            processor,
+                            type_name,
+                            key,
+                            mut idref,
+                            mut props,
+                            shared_props,
+                            listed_slots,
+                            named_slots,
+                        } = component;
+                        let mut shared_props = match (master_shared_props, shared_props) {
+                            (Some(master_shared_props), Some(shared_props)) => {
+                                master_shared_props.merge(shared_props)
+                            }
+                            (None, Some(shared_props)) => shared_props,
+                            (Some(master_shared_props), None) => master_shared_props,
+                            _ => Default::default(),
+                        };
+                        let key = match &key {
+                            Some(key) => key.to_owned(),
+                            None => possible_key.to_owned(),
+                        };
+                        path.push(key.clone().into());
+                        let id = WidgetId::new(&type_name, &path);
+                        used_ids.insert(id.clone());
+                        if let Some(idref) = &mut idref {
+                            idref.write(id.to_owned());
+                        }
+                        let (state_sender, state_receiver) = channel();
+                        let (animation_sender, animation_receiver) = channel();
+                        let messages_list = messages.remove(&id).unwrap_or_default();
+                        let mut life_cycle = WidgetLifeCycle::default();
+                        let default_animator_state = AnimatorStates::default();
+                        let (new_node, mounted) = match states.get(&id) {
+                            Some(state) => {
+                                let state =
+                                    State::new(state, StateUpdate::new(state_sender.clone()));
+                                let animator =
+                                    self.animators.get(&id).unwrap_or(&default_animator_state);
+                                let view_models =
+                                    ViewModelCollectionView::new(&id, &mut self.view_models);
+                                let context = WidgetContext {
+                                    id: &id,
+                                    idref: idref.as_ref(),
+                                    key: &key,
+                                    props: &mut props,
+                                    shared_props: &mut shared_props,
+                                    state,
+                                    animator,
+                                    life_cycle: &mut life_cycle,
+                                    named_slots,
+                                    listed_slots,
+                                    view_models,
+                                };
+                                (processor.call(context), false)
+                            }
+                            None => {
+                                let state_data = Props::default();
+                                let state =
+                                    State::new(&state_data, StateUpdate::new(state_sender.clone()));
+                                let animator =
+                                    self.animators.get(&id).unwrap_or(&default_animator_state);
+                                let view_models =
+                                    ViewModelCollectionView::new(&id, &mut self.view_models);
+                                let context = WidgetContext {
+                                    id: &id,
+                                    idref: idref.as_ref(),
+                                    key: &key,
+                                    props: &mut props,
+                                    shared_props: &mut shared_props,
+                                    state,
+                                    animator,
+                                    life_cycle: &mut life_cycle,
+                                    named_slots,
+                                    listed_slots,
+                                    view_models,
+                                };
+                                let node = processor.call(context);
+                                new_states.insert(id.clone(), state_data);
+                                (node, true)
+                            }
+                        };
+                        let (mount, change, unmount) = life_cycle.unwrap();
+                        if mounted {
+                            if !mount.is_empty()
+                                && let Some(state) = new_states.get(&id)
+                            {
+                                for mut closure in mount {
+                                    let state =
+                                        State::new(state, StateUpdate::new(state_sender.clone()));
+                                    let messenger =
+                                        Messenger::new(message_sender.clone(), &messages_list);
+                                    let signals =
+                                        SignalSender::new(id.clone(), signal_sender.clone());
+                                    let animator = Animator::new(
+                                        self.animators.get(&id).unwrap_or(&default_animator_state),
+                                        AnimationUpdate::new(animation_sender.clone()),
+                                    );
+                                    let view_models =
+                                        ViewModelCollectionView::new(&id, &mut self.view_models);
+                                    let context = WidgetMountOrChangeContext {
+                                        id: &id,
+                                        props: &props,
+                                        shared_props: &shared_props,
+                                        state,
+                                        messenger,
+                                        signals,
+                                        animator,
+                                        view_models,
+                                    };
+                                    (closure)(context);
+                                }
+                            }
+                        } else if !change.is_empty()
+                            && let Some(state) = states.get(&id)
+                        {
+                            for mut closure in change {
+                                let state =
+                                    State::new(state, StateUpdate::new(state_sender.clone()));
+                                let messenger =
+                                    Messenger::new(message_sender.clone(), &messages_list);
+                                let signals = SignalSender::new(id.clone(), signal_sender.clone());
+                                let animator = Animator::new(
+                                    self.animators.get(&id).unwrap_or(&default_animator_state),
+                                    AnimationUpdate::new(animation_sender.clone()),
+                                );
+                                let view_models =
+                                    ViewModelCollectionView::new(&id, &mut self.view_models);
+                                let context = WidgetMountOrChangeContext {
+                                    id: &id,
+                                    props: &props,
+                                    shared_props: &shared_props,
+                                    state,
+                                    messenger,
+                                    signals,
+                                    animator,
+                                    view_models,
+                                };
+                                (closure)(context);
+                            }
+                        }
+                        if !unmount.is_empty() {
+                            self.unmount_closures.insert(id.clone(), unmount);
+                        }
+                        while let Ok((name, data)) = animation_receiver.try_recv() {
+                            if let Some(states) = self.animators.get_mut(&id) {
+                                states.change(name, data);
+                            } else if let Some(data) = data {
+                                self.animators
+                                    .insert(id.to_owned(), AnimatorStates::new(name, data));
+                            }
+                        }
+                        while let Ok(data) = state_receiver.try_recv() {
+                            self.state_changes
+                                .entry(id.to_owned())
+                                .or_default()
+                                .push(data);
+                        }
+                        self.pending_stack.push(WidgetStackItem::Node {
+                            node: new_node,
+                            path,
+                            possible_key,
+                            master_shared_props: Some(shared_props),
+                        });
+                    }
+                    WidgetNode::Unit(unit) => match unit {
+                        WidgetUnitNode::None
+                        | WidgetUnitNode::ImageBox(_)
+                        | WidgetUnitNode::TextBox(_) => {
+                            self.done_stack.push(WidgetNode::Unit(unit));
+                        }
+                        WidgetUnitNode::AreaBox(mut unit) => {
+                            let slot = *std::mem::take(&mut unit.slot);
+                            self.pending_stack
+                                .push(WidgetStackItem::AreaBox { node: unit });
+                            self.pending_stack.push(WidgetStackItem::Node {
+                                node: slot,
+                                path,
+                                possible_key: ".".to_owned(),
+                                master_shared_props,
+                            });
+                        }
+                        WidgetUnitNode::PortalBox(mut unit) => match &mut *unit.slot {
+                            PortalBoxSlotNode::Slot(data) => {
+                                let slot = std::mem::take(data);
+                                self.pending_stack
+                                    .push(WidgetStackItem::PortalBox { node: unit });
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node: slot,
+                                    path,
+                                    possible_key: ".".to_owned(),
+                                    master_shared_props,
+                                });
+                            }
+                            PortalBoxSlotNode::ContentItem(item) => {
+                                let slot = std::mem::take(&mut item.slot);
+                                self.pending_stack
+                                    .push(WidgetStackItem::PortalBox { node: unit });
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node: slot,
+                                    path,
+                                    possible_key: ".".to_owned(),
+                                    master_shared_props,
+                                });
+                            }
+                            PortalBoxSlotNode::FlexItem(item) => {
+                                let slot = std::mem::take(&mut item.slot);
+                                self.pending_stack
+                                    .push(WidgetStackItem::PortalBox { node: unit });
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node: slot,
+                                    path,
+                                    possible_key: ".".to_owned(),
+                                    master_shared_props,
+                                });
+                            }
+                            PortalBoxSlotNode::GridItem(item) => {
+                                let slot = std::mem::take(&mut item.slot);
+                                self.pending_stack
+                                    .push(WidgetStackItem::PortalBox { node: unit });
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node: slot,
+                                    path,
+                                    possible_key: ".".to_owned(),
+                                    master_shared_props,
+                                });
+                            }
+                        },
+                        WidgetUnitNode::ContentBox(mut unit) => {
+                            let items = unit
+                                .items
+                                .iter_mut()
+                                .map(|node| std::mem::take(&mut node.slot))
+                                .collect::<Vec<_>>();
+                            self.pending_stack
+                                .push(WidgetStackItem::ContentBox { node: unit });
+                            for (index, node) in items.into_iter().enumerate() {
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node,
+                                    path: path.clone(),
+                                    possible_key: format!("<{index}>"),
+                                    master_shared_props: master_shared_props.clone(),
+                                });
+                            }
+                        }
+                        WidgetUnitNode::FlexBox(mut unit) => {
+                            let items = unit
+                                .items
+                                .iter_mut()
+                                .map(|node| std::mem::take(&mut node.slot))
+                                .collect::<Vec<_>>();
+                            self.pending_stack
+                                .push(WidgetStackItem::FlexBox { node: unit });
+                            for (index, node) in items.into_iter().enumerate() {
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node,
+                                    path: path.clone(),
+                                    possible_key: format!("<{index}>"),
+                                    master_shared_props: master_shared_props.clone(),
+                                });
+                            }
+                        }
+                        WidgetUnitNode::GridBox(mut unit) => {
+                            let items = unit
+                                .items
+                                .iter_mut()
+                                .map(|node| std::mem::take(&mut node.slot))
+                                .collect::<Vec<_>>();
+                            self.pending_stack
+                                .push(WidgetStackItem::GridBox { node: unit });
+                            for (index, node) in items.into_iter().enumerate() {
+                                self.pending_stack.push(WidgetStackItem::Node {
+                                    node,
+                                    path: path.clone(),
+                                    possible_key: format!("<{index}>"),
+                                    master_shared_props: master_shared_props.clone(),
+                                });
+                            }
+                        }
+                        WidgetUnitNode::SizeBox(mut unit) => {
+                            let slot = *std::mem::take(&mut unit.slot);
+                            self.pending_stack
+                                .push(WidgetStackItem::SizeBox { node: unit });
+                            self.pending_stack.push(WidgetStackItem::Node {
+                                node: slot,
+                                path,
+                                possible_key: ".".to_owned(),
+                                master_shared_props,
+                            });
+                        }
+                    },
+                },
+                WidgetStackItem::AreaBox { mut node } => {
+                    node.slot = Box::new(self.done_stack.pop().unwrap_or_default());
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::AreaBox(node)));
+                }
+                WidgetStackItem::PortalBox { mut node } => {
+                    match &mut *node.slot {
+                        PortalBoxSlotNode::Slot(node) => {
+                            *node = self.done_stack.pop().unwrap_or_default();
+                        }
+                        PortalBoxSlotNode::ContentItem(node) => {
+                            node.slot = self.done_stack.pop().unwrap_or_default();
+                        }
+                        PortalBoxSlotNode::FlexItem(node) => {
+                            node.slot = self.done_stack.pop().unwrap_or_default();
+                        }
+                        PortalBoxSlotNode::GridItem(node) => {
+                            node.slot = self.done_stack.pop().unwrap_or_default();
+                        }
+                    }
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::PortalBox(node)));
+                }
+                WidgetStackItem::ContentBox { mut node } => {
+                    for item in node.items.iter_mut() {
+                        item.slot = self.done_stack.pop().unwrap_or_default();
+                    }
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::ContentBox(node)));
+                }
+                WidgetStackItem::FlexBox { mut node } => {
+                    for item in node.items.iter_mut() {
+                        item.slot = self.done_stack.pop().unwrap_or_default();
+                    }
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::FlexBox(node)));
+                }
+                WidgetStackItem::GridBox { mut node } => {
+                    for item in node.items.iter_mut() {
+                        item.slot = self.done_stack.pop().unwrap_or_default();
+                    }
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::GridBox(node)));
+                }
+                WidgetStackItem::SizeBox { mut node } => {
+                    node.slot = Box::new(self.done_stack.pop().unwrap_or_default());
+                    self.done_stack
+                        .push(WidgetNode::Unit(WidgetUnitNode::SizeBox(node)));
                 }
             }
-        } else if !change.is_empty()
-            && let Some(state) = states.get(&id)
-        {
-            for mut closure in change {
-                let state = State::new(state, StateUpdate::new(state_sender.clone()));
-                let messenger = Messenger::new(message_sender.clone(), &messages_list);
-                let signals = SignalSender::new(id.clone(), signal_sender.clone());
-                let animator = Animator::new(
-                    self.animators.get(&id).unwrap_or(&default_animator_state),
-                    AnimationUpdate::new(animation_sender.clone()),
-                );
-                let view_models = ViewModelCollectionView::new(&id, &mut self.view_models);
-                let context = WidgetMountOrChangeContext {
-                    id: &id,
-                    props: &props,
-                    shared_props: &shared_props,
-                    state,
-                    messenger,
-                    signals,
-                    animator,
-                    view_models,
-                };
-                (closure)(context);
-            }
         }
-        if !unmount.is_empty() {
-            self.unmount_closures.insert(id.clone(), unmount);
-        }
-        while let Ok((name, data)) = animation_receiver.try_recv() {
-            if let Some(states) = self.animators.get_mut(&id) {
-                states.change(name, data);
-            } else if let Some(data) = data {
-                self.animators
-                    .insert(id.to_owned(), AnimatorStates::new(name, data));
-            }
-        }
-        let new_node = self.process_node(
-            new_node,
-            states,
-            path,
-            messages,
-            new_states,
-            used_ids,
-            possible_key,
-            Some(shared_props),
-            message_sender,
-            signal_sender,
+        assert!(
+            self.pending_stack.is_empty(),
+            "Pending stack should be empty after processing"
         );
-        while let Ok(data) = state_receiver.try_recv() {
-            self.state_changes
-                .entry(id.to_owned())
-                .or_default()
-                .push(data);
-        }
-        new_node
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn process_node_unit(
-        &mut self,
-        mut unit: WidgetUnitNode,
-        states: &HashMap<WidgetId, Props>,
-        path: Vec<Cow<'static, str>>,
-        messages: &mut HashMap<WidgetId, Messages>,
-        new_states: &mut HashMap<WidgetId, Props>,
-        used_ids: &mut HashSet<WidgetId>,
-        master_shared_props: Option<Props>,
-        message_sender: &MessageSender,
-        signal_sender: &Sender<Signal>,
-    ) -> WidgetNode {
-        match &mut unit {
-            WidgetUnitNode::None | WidgetUnitNode::ImageBox(_) | WidgetUnitNode::TextBox(_) => {}
-            WidgetUnitNode::AreaBox(unit) => {
-                let slot = *std::mem::take(&mut unit.slot);
-                unit.slot = Box::new(self.process_node(
-                    slot,
-                    states,
-                    path,
-                    messages,
-                    new_states,
-                    used_ids,
-                    ".".to_owned(),
-                    master_shared_props,
-                    message_sender,
-                    signal_sender,
-                ));
-            }
-            WidgetUnitNode::PortalBox(unit) => match &mut *unit.slot {
-                PortalBoxSlotNode::Slot(data) => {
-                    let slot = std::mem::take(data);
-                    *data = self.process_node(
-                        slot,
-                        states,
-                        path,
-                        messages,
-                        new_states,
-                        used_ids,
-                        ".".to_owned(),
-                        master_shared_props,
-                        message_sender,
-                        signal_sender,
-                    )
-                }
-                PortalBoxSlotNode::ContentItem(item) => {
-                    let slot = std::mem::take(&mut item.slot);
-                    item.slot = self.process_node(
-                        slot,
-                        states,
-                        path,
-                        messages,
-                        new_states,
-                        used_ids,
-                        ".".to_owned(),
-                        master_shared_props,
-                        message_sender,
-                        signal_sender,
-                    )
-                }
-                PortalBoxSlotNode::FlexItem(item) => {
-                    let slot = std::mem::take(&mut item.slot);
-                    item.slot = self.process_node(
-                        slot,
-                        states,
-                        path,
-                        messages,
-                        new_states,
-                        used_ids,
-                        ".".to_owned(),
-                        master_shared_props,
-                        message_sender,
-                        signal_sender,
-                    )
-                }
-                PortalBoxSlotNode::GridItem(item) => {
-                    let slot = std::mem::take(&mut item.slot);
-                    item.slot = self.process_node(
-                        slot,
-                        states,
-                        path,
-                        messages,
-                        new_states,
-                        used_ids,
-                        ".".to_owned(),
-                        master_shared_props,
-                        message_sender,
-                        signal_sender,
-                    )
-                }
-            },
-            WidgetUnitNode::ContentBox(unit) => {
-                let items = std::mem::take(&mut unit.items);
-                unit.items = items
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, mut node)| {
-                        let slot = std::mem::take(&mut node.slot);
-                        node.slot = self.process_node(
-                            slot,
-                            states,
-                            path.clone(),
-                            messages,
-                            new_states,
-                            used_ids,
-                            format!("<{i}>"),
-                            master_shared_props.clone(),
-                            message_sender,
-                            signal_sender,
-                        );
-                        node
-                    })
-                    .collect::<Vec<_>>();
-            }
-            WidgetUnitNode::FlexBox(unit) => {
-                let items = std::mem::take(&mut unit.items);
-                unit.items = items
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, mut node)| {
-                        let slot = std::mem::take(&mut node.slot);
-                        node.slot = self.process_node(
-                            slot,
-                            states,
-                            path.clone(),
-                            messages,
-                            new_states,
-                            used_ids,
-                            format!("<{i}>"),
-                            master_shared_props.clone(),
-                            message_sender,
-                            signal_sender,
-                        );
-                        node
-                    })
-                    .collect::<Vec<_>>();
-            }
-            WidgetUnitNode::GridBox(unit) => {
-                let items = std::mem::take(&mut unit.items);
-                unit.items = items
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, mut node)| {
-                        let slot = std::mem::take(&mut node.slot);
-                        node.slot = self.process_node(
-                            slot,
-                            states,
-                            path.clone(),
-                            messages,
-                            new_states,
-                            used_ids,
-                            format!("<{i}>"),
-                            master_shared_props.clone(),
-                            message_sender,
-                            signal_sender,
-                        );
-                        node
-                    })
-                    .collect::<Vec<_>>();
-            }
-            WidgetUnitNode::SizeBox(unit) => {
-                let slot = *std::mem::take(&mut unit.slot);
-                unit.slot = Box::new(self.process_node(
-                    slot,
-                    states,
-                    path,
-                    messages,
-                    new_states,
-                    used_ids,
-                    ".".to_owned(),
-                    master_shared_props,
-                    message_sender,
-                    signal_sender,
-                ));
-            }
-        }
-        unit.into()
+        assert_eq!(
+            self.done_stack.len(),
+            1,
+            "Done stack should have exactly one item after processing"
+        );
+        self.done_stack.pop().unwrap_or_default()
     }
 
     fn teleport_portals(mut root: WidgetUnit) -> WidgetUnit {
@@ -1605,4 +1596,32 @@ impl Application {
             transform: data.transform,
         })
     }
+}
+
+#[allow(clippy::large_enum_variant)]
+enum WidgetStackItem {
+    Node {
+        node: WidgetNode,
+        path: Vec<Cow<'static, str>>,
+        possible_key: String,
+        master_shared_props: Option<Props>,
+    },
+    AreaBox {
+        node: AreaBoxNode,
+    },
+    PortalBox {
+        node: PortalBoxNode,
+    },
+    ContentBox {
+        node: ContentBoxNode,
+    },
+    FlexBox {
+        node: FlexBoxNode,
+    },
+    GridBox {
+        node: GridBoxNode,
+    },
+    SizeBox {
+        node: SizeBoxNode,
+    },
 }
