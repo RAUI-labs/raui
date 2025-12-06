@@ -86,10 +86,9 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
                             keep_in_bounds: true.into(),
                             ..Default::default()
                         })
-                        .listed_slot(
-                            make_widget!(image_box)
-                                .with_props(ImageBoxProps::image("./examples/resources/map.png")),
-                        ),
+                        .listed_slot(make_widget!(image_box).with_props(ImageBoxProps::image(
+                            "./crates/_/examples/resources/map.png",
+                        ))),
                 )
                 .listed_slot(
                     make_widget!(option)

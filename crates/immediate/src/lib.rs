@@ -122,12 +122,19 @@ impl ImmediateAccessPoints {
 #[props_data(raui_core::props::PropsData)]
 pub struct ImmediateHooks {
     #[serde(default, skip)]
-    hooks: Vec<fn(&mut WidgetContext)>,
+    pre_hooks: Vec<fn(&mut WidgetContext)>,
+    #[serde(default, skip)]
+    post_hooks: Vec<fn(&mut WidgetContext)>,
 }
 
 impl ImmediateHooks {
     pub fn with(mut self, pointer: fn(&mut WidgetContext)) -> Self {
-        self.hooks.push(pointer);
+        self.pre_hooks.push(pointer);
+        self
+    }
+
+    pub fn with_post(mut self, pointer: fn(&mut WidgetContext)) -> Self {
+        self.post_hooks.push(pointer);
         self
     }
 }
@@ -300,14 +307,23 @@ pub fn slot_component<R>(
     begin();
     let result = f();
     let widgets = end();
+    let mut list_widgets = Vec::new();
+    let mut slot_widgets = Vec::new();
+    for widget in widgets {
+        if let Some(w) = widget.as_component() {
+            if let Some(name) = w.key.as_deref() {
+                slot_widgets.push((name.to_owned(), widget));
+            } else {
+                list_widgets.push(widget);
+            }
+        }
+    }
     push(
         widget
             .into()
             .merge_props(props.into())
-            .named_slots(widgets.into_iter().filter_map(|widget| {
-                let name = widget.as_component()?.key.as_deref()?.to_owned();
-                Some((name, widget))
-            })),
+            .listed_slots(list_widgets)
+            .named_slots(slot_widgets),
     );
     result
 }
@@ -578,10 +594,11 @@ pub fn stack_props<R>(props: impl Into<Props>, f: impl FnMut() -> R) -> R {
 
 mod internal {
     use super::*;
-    use raui_core::{unpack_named_slots, widget::unit::area::AreaBoxNode};
+    use raui_core::widget::unit::area::AreaBoxNode;
 
     pub(crate) fn immediate_effects_box(mut ctx: WidgetContext) -> WidgetNode {
-        for hook in ctx.props.read_cloned_or_default::<ImmediateHooks>().hooks {
+        let hooks = ctx.props.read_cloned_or_default::<ImmediateHooks>();
+        for hook in &hooks.pre_hooks {
             hook(&mut ctx);
         }
 
@@ -610,13 +627,16 @@ mod internal {
             });
         }
 
-        unpack_named_slots!(ctx.named_slots => content);
+        let content = ctx.named_slots.remove("content").unwrap_or_default();
 
-        AreaBoxNode {
+        let result = AreaBoxNode {
             id: ctx.id.to_owned(),
             slot: Box::new(content),
+        };
+        for hook in &hooks.post_hooks {
+            hook(&mut ctx);
         }
-        .into()
+        result.into()
     }
 }
 

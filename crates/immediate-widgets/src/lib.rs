@@ -105,11 +105,11 @@ pub mod core {
         impl_content_components! {
             "content":
             anchor_box,
+            area_box,
             hidden_box,
             nav_scroll_box_content,
             pivot_box,
             portal_box,
-            responsive_props_box,
             size_box,
             wrap_box,
         }
@@ -119,6 +119,7 @@ pub mod core {
             nav_scroll_box,
             portals_context_box,
             portals_tooltip_box,
+            responsive_props_box,
             tooltip_box,
             variant_box,
         }
@@ -126,10 +127,12 @@ pub mod core {
         impl_list_components! {
             content_box,
             flex_box,
+            float_box,
             grid_box,
             horizontal_box,
             nav_content_box,
             nav_flex_box,
+            nav_float_box,
             nav_grid_box,
             nav_horizontal_box,
             nav_switch_box,
@@ -240,6 +243,7 @@ pub mod core {
 
         impl_content_components! {
             "content":
+            float_view_control,
             navigation_barrier,
         }
 
@@ -293,6 +297,44 @@ pub mod core {
             let node = end().pop().unwrap_or_default();
             push(
                 make_widget!(immediate_button)
+                    .with_props(ImmediateButtonProps { state: Some(state) })
+                    .merge_props(props.into())
+                    .named_slot("content", node),
+            );
+            result
+        }
+
+        pub fn tracked_button(
+            props: impl Into<Props>,
+            mut f: impl FnMut(ImmediateButton),
+        ) -> ImmediateButton {
+            use crate::internal::*;
+            let state = use_state(ImmediateButton::default);
+            let result = state.read().unwrap().to_owned();
+            begin();
+            f(result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_tracked_button)
+                    .with_props(ImmediateButtonProps { state: Some(state) })
+                    .merge_props(props.into())
+                    .named_slot("content", node),
+            );
+            result
+        }
+
+        pub fn self_tracked_button(
+            props: impl Into<Props>,
+            mut f: impl FnMut(ImmediateButton),
+        ) -> ImmediateButton {
+            use crate::internal::*;
+            let state = use_state(ImmediateButton::default);
+            let result = state.read().unwrap().to_owned();
+            begin();
+            f(result);
+            let node = end().pop().unwrap_or_default();
+            push(
+                make_widget!(immediate_self_tracked_button)
                     .with_props(ImmediateButtonProps { state: Some(state) })
                     .merge_props(props.into())
                     .named_slot("content", node),
@@ -450,6 +492,8 @@ pub mod material {
             context_paper,
             scroll_paper,
             tooltip_paper,
+            window_paper,
+            window_title_controls_paper,
         }
 
         impl_content_components! {
@@ -651,7 +695,10 @@ mod internal {
         ManagedLazy, Prefab, PropsData, make_widget, pre_hooks,
         widget::{
             component::interactive::{
-                button::{ButtonNotifyMessage, ButtonNotifyProps, button},
+                button::{
+                    ButtonNotifyMessage, ButtonNotifyProps, button, self_tracked_button,
+                    tracked_button,
+                },
                 input_field::{TextInputState, input_field, text_input},
                 navigation::{
                     NavTrackingNotifyMessage, NavTrackingNotifyProps, self_tracking, tracking,
@@ -803,6 +850,16 @@ mod internal {
     #[pre_hooks(use_immediate_button)]
     pub(crate) fn immediate_button(mut ctx: WidgetContext) -> WidgetNode {
         button(ctx)
+    }
+
+    #[pre_hooks(use_immediate_button)]
+    pub(crate) fn immediate_tracked_button(mut ctx: WidgetContext) -> WidgetNode {
+        tracked_button(ctx)
+    }
+
+    #[pre_hooks(use_immediate_button)]
+    pub(crate) fn immediate_self_tracked_button(mut ctx: WidgetContext) -> WidgetNode {
+        self_tracked_button(ctx)
     }
 
     #[pre_hooks(use_immediate_text_input)]

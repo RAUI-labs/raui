@@ -51,6 +51,14 @@ impl FlexBoxItemLayout {
             ..Default::default()
         }
     }
+
+    pub fn no_growing_and_shrinking() -> Self {
+        Self {
+            grow: 0.0,
+            shrink: 1.0,
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for FlexBoxItemLayout {
