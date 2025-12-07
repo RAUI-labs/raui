@@ -9,7 +9,7 @@ use raui_core::{
         },
         unit::{
             flex::FlexBoxItemLayout,
-            text::{TextBoxFont, TextBoxHorizontalAlign},
+            text::{TextBoxFont, TextBoxHorizontalAlign, TextBoxSizeValue},
         },
         utils::Color,
     },
@@ -29,12 +29,7 @@ fn main() {
         )
         .listed_slot(
             make_widget!(text_box)
-                .with_props(FlexBoxItemLayout {
-                    basis: Some(80.0),
-                    grow: 0.0,
-                    shrink: 0.0,
-                    ..Default::default()
-                })
+                .with_props(FlexBoxItemLayout::no_growing_and_shrinking())
                 .with_props(TextBoxProps {
                     text: "RAUI application example".to_owned(),
                     font: TextBoxFont {
@@ -48,6 +43,7 @@ fn main() {
                         a: 1.0,
                     },
                     horizontal_align: TextBoxHorizontalAlign::Center,
+                    height: TextBoxSizeValue::Content,
                     ..Default::default()
                 }),
         );

@@ -23,7 +23,7 @@ pub type Scalar = f32;
 pub type Integer = i32;
 pub type UnsignedInteger = u32;
 
-pub use intuicio_data::{lifetime::*, managed::*, type_hash::*};
+pub use intuicio_data::{lifetime::*, managed::*, managed_box::*, type_hash::*};
 pub use raui_derive::*;
 use serde::{Serialize, de::DeserializeOwned};
 #[doc(inline)]

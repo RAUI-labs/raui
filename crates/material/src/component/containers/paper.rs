@@ -4,7 +4,8 @@ use raui_core::{
     props::Props,
     widget::{
         component::{
-            containers::content_box::content_box,
+            WidgetComponent,
+            containers::content_box::{content_box, nav_content_box},
             image_box::{ImageBoxProps, image_box},
         },
         context::WidgetContext,
@@ -33,7 +34,15 @@ pub struct PaperProps {
 #[prefab(raui_core::Prefab)]
 pub struct PaperContentLayoutProps(pub ContentBoxItemLayout);
 
+pub fn nav_paper(context: WidgetContext) -> WidgetNode {
+    paper_impl(make_widget!(nav_content_box), context)
+}
+
 pub fn paper(context: WidgetContext) -> WidgetNode {
+    paper_impl(make_widget!(content_box), context)
+}
+
+pub fn paper_impl(component: WidgetComponent, context: WidgetContext) -> WidgetNode {
     let WidgetContext {
         idref,
         key,
@@ -167,7 +176,7 @@ pub fn paper(context: WidgetContext) -> WidgetNode {
         }
     };
 
-    make_widget!(content_box)
+    component
         .key(key)
         .maybe_idref(idref.cloned())
         .merge_props(props.clone())

@@ -510,6 +510,7 @@ pub mod material {
             nav_flex_paper,
             nav_grid_paper,
             nav_horizontal_paper,
+            nav_paper,
             nav_vertical_paper,
             paper,
             vertical_paper,

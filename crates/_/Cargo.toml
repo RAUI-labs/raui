@@ -1,6 +1,6 @@
 [package]
 name = "raui"
-version = "0.70.15"
+version = "0.70.16"
 authors = ["Patryk 'PsichiX' Budzynski <psichix@gmail.com>"]
 edition = "2024"
 description = "Renderer Agnostic User Interface"
@@ -69,6 +69,7 @@ optional = true
 
 [dev-dependencies]
 raui-core = { path = "../core" }
+raui-material = { path = "../material" }
 raui-immediate = { path = "../immediate" }
 raui-immediate-widgets = { path = "../immediate-widgets" }
 raui-retained = { path = "../retained" }
