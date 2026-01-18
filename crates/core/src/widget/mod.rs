@@ -318,7 +318,6 @@ impl WidgetId {
     pub fn parts(&self) -> impl Iterator<Item = &str> + '_ {
         self.parts
             .iter()
-            .cloned()
             .map(move |(key, meta)| &self.id[key.start..meta.end])
     }
 
@@ -335,7 +334,6 @@ impl WidgetId {
         self.parts
             .iter()
             .rev()
-            .cloned()
             .map(move |(key, meta)| &self.id[key.start..meta.end])
     }
 

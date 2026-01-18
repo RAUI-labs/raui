@@ -1,6 +1,6 @@
 use raui_app::app::declarative::DeclarativeApp;
 use raui_core::{
-    ManagedBox, make_widget, pre_hooks,
+    ManagedGc, make_widget, pre_hooks,
     view_model::ViewModel,
     widget::{
         component::{
@@ -46,7 +46,7 @@ fn new_theme() -> ThemeProps {
 fn use_app(ctx: &mut WidgetContext) {
     ctx.life_cycle.mount(|mut ctx| {
         // Initialize the view model for the text input field.
-        let mut view_model = ViewModel::produce(|_| ManagedBox::new("Hello!".to_owned()));
+        let mut view_model = ViewModel::produce(|_| ManagedGc::new("Hello!".to_owned()));
         view_model
             .properties
             .bindings(TEXT_INPUT)
@@ -66,8 +66,8 @@ fn app(mut ctx: WidgetContext) -> WidgetNode {
 
     // Turn the view model into a lazy TextInput for the text field props.
     let text = view_models.widget_view_model_mut(TEXT_INPUT).and_then(|v| {
-        v.write::<ManagedBox<String>>()
-            .map(|mut v| TextInput::new(v.lazy()))
+        v.read::<ManagedGc<String>>()
+            .map(|v| TextInput::new(v.lazy()))
     });
 
     make_widget!(paper)

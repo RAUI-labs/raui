@@ -1007,10 +1007,10 @@ impl Application {
                     | WidgetUnit::TextBox(_) => {}
                     WidgetUnit::AreaBox(b) => {
                         match slot {
-                            PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
-                            PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
-                            PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
-                            PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::Slot(slot) => *b.slot = slot,
+                            PortalBoxSlot::ContentItem(item) => *b.slot = item.slot,
+                            PortalBoxSlot::FlexItem(item) => *b.slot = item.slot,
+                            PortalBoxSlot::GridItem(item) => *b.slot = item.slot,
                         }
                         if !Self::inject_portals(&mut b.slot, portals) {
                             return false;
@@ -1084,10 +1084,10 @@ impl Application {
                     }
                     WidgetUnit::SizeBox(b) => {
                         match slot {
-                            PortalBoxSlot::Slot(slot) => b.slot = Box::new(slot),
-                            PortalBoxSlot::ContentItem(item) => b.slot = Box::new(item.slot),
-                            PortalBoxSlot::FlexItem(item) => b.slot = Box::new(item.slot),
-                            PortalBoxSlot::GridItem(item) => b.slot = Box::new(item.slot),
+                            PortalBoxSlot::Slot(slot) => *b.slot = slot,
+                            PortalBoxSlot::ContentItem(item) => *b.slot = item.slot,
+                            PortalBoxSlot::FlexItem(item) => *b.slot = item.slot,
+                            PortalBoxSlot::GridItem(item) => *b.slot = item.slot,
                         }
                         if !Self::inject_portals(&mut b.slot, portals) {
                             return false;
