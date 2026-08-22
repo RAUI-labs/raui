@@ -267,115 +267,111 @@ pub fn use_text_input(context: &mut WidgetContext) {
                         state.focused = idref.is_some();
                         dirty_state = true;
                     }
-                    NavSignal::TextChange(change) => {
-                        if state.focused {
-                            match change {
-                                NavTextChange::InsertCharacter(c) => {
-                                    if c.is_control() {
-                                        if let Ok(notify) =
-                                            context.props.read::<TextInputControlNotifyProps>()
-                                            && let Some(to) = notify.0.read()
-                                        {
-                                            context.messenger.write(
-                                                to,
-                                                TextInputControlNotifyMessage {
-                                                    sender: context.id.to_owned(),
-                                                    character: *c,
-                                                },
-                                            );
-                                        }
-                                    } else {
-                                        state.cursor_position =
-                                            state.cursor_position.min(text.chars().count());
-                                        let mut iter = text.chars();
-                                        let mut new_text = iter
-                                            .by_ref()
-                                            .take(state.cursor_position)
-                                            .collect::<String>();
-                                        new_text.push(*c);
-                                        new_text.extend(iter);
-                                        if mode.is_valid(&new_text) {
-                                            state.cursor_position += 1;
-                                            text = new_text;
-                                            dirty_text = true;
-                                            dirty_state = true;
-                                        }
-                                    }
+                    NavSignal::TextChange(change) if state.focused => match change {
+                        NavTextChange::InsertCharacter(c) => {
+                            if c.is_control() {
+                                if let Ok(notify) =
+                                    context.props.read::<TextInputControlNotifyProps>()
+                                    && let Some(to) = notify.0.read()
+                                {
+                                    context.messenger.write(
+                                        to,
+                                        TextInputControlNotifyMessage {
+                                            sender: context.id.to_owned(),
+                                            character: *c,
+                                        },
+                                    );
                                 }
-                                NavTextChange::MoveCursorLeft => {
-                                    if state.cursor_position > 0 {
-                                        state.cursor_position -= 1;
-                                        dirty_state = true;
-                                    }
-                                }
-                                NavTextChange::MoveCursorRight => {
-                                    if state.cursor_position < text.chars().count() {
-                                        state.cursor_position += 1;
-                                        dirty_state = true;
-                                    }
-                                }
-                                NavTextChange::MoveCursorStart => {
-                                    state.cursor_position = 0;
+                            } else {
+                                state.cursor_position =
+                                    state.cursor_position.min(text.chars().count());
+                                let mut iter = text.chars();
+                                let mut new_text = iter
+                                    .by_ref()
+                                    .take(state.cursor_position)
+                                    .collect::<String>();
+                                new_text.push(*c);
+                                new_text.extend(iter);
+                                if mode.is_valid(&new_text) {
+                                    state.cursor_position += 1;
+                                    text = new_text;
+                                    dirty_text = true;
                                     dirty_state = true;
-                                }
-                                NavTextChange::MoveCursorEnd => {
-                                    state.cursor_position = text.chars().count();
-                                    dirty_state = true;
-                                }
-                                NavTextChange::DeleteLeft => {
-                                    if state.cursor_position > 0 {
-                                        let mut iter = text.chars();
-                                        let mut new_text = iter
-                                            .by_ref()
-                                            .take(state.cursor_position - 1)
-                                            .collect::<String>();
-                                        iter.by_ref().next();
-                                        new_text.extend(iter);
-                                        if mode.is_valid(&new_text) {
-                                            state.cursor_position -= 1;
-                                            text = new_text;
-                                            dirty_text = true;
-                                            dirty_state = true;
-                                        }
-                                    }
-                                }
-                                NavTextChange::DeleteRight => {
-                                    let mut iter = text.chars();
-                                    let mut new_text = iter
-                                        .by_ref()
-                                        .take(state.cursor_position)
-                                        .collect::<String>();
-                                    iter.by_ref().next();
-                                    new_text.extend(iter);
-                                    if mode.is_valid(&new_text) {
-                                        text = new_text;
-                                        dirty_text = true;
-                                        dirty_state = true;
-                                    }
-                                }
-                                NavTextChange::NewLine => {
-                                    if props.allow_new_line {
-                                        let mut iter = text.chars();
-                                        let mut new_text = iter
-                                            .by_ref()
-                                            .take(state.cursor_position)
-                                            .collect::<String>();
-                                        new_text.push('\n');
-                                        new_text.extend(iter);
-                                        if mode.is_valid(&new_text) {
-                                            state.cursor_position += 1;
-                                            text = new_text;
-                                            dirty_text = true;
-                                            dirty_state = true;
-                                        }
-                                    } else {
-                                        submitted = true;
-                                        dirty_state = true;
-                                    }
                                 }
                             }
                         }
-                    }
+                        NavTextChange::MoveCursorLeft => {
+                            if state.cursor_position > 0 {
+                                state.cursor_position -= 1;
+                                dirty_state = true;
+                            }
+                        }
+                        NavTextChange::MoveCursorRight => {
+                            if state.cursor_position < text.chars().count() {
+                                state.cursor_position += 1;
+                                dirty_state = true;
+                            }
+                        }
+                        NavTextChange::MoveCursorStart => {
+                            state.cursor_position = 0;
+                            dirty_state = true;
+                        }
+                        NavTextChange::MoveCursorEnd => {
+                            state.cursor_position = text.chars().count();
+                            dirty_state = true;
+                        }
+                        NavTextChange::DeleteLeft => {
+                            if state.cursor_position > 0 {
+                                let mut iter = text.chars();
+                                let mut new_text = iter
+                                    .by_ref()
+                                    .take(state.cursor_position - 1)
+                                    .collect::<String>();
+                                iter.by_ref().next();
+                                new_text.extend(iter);
+                                if mode.is_valid(&new_text) {
+                                    state.cursor_position -= 1;
+                                    text = new_text;
+                                    dirty_text = true;
+                                    dirty_state = true;
+                                }
+                            }
+                        }
+                        NavTextChange::DeleteRight => {
+                            let mut iter = text.chars();
+                            let mut new_text = iter
+                                .by_ref()
+                                .take(state.cursor_position)
+                                .collect::<String>();
+                            iter.by_ref().next();
+                            new_text.extend(iter);
+                            if mode.is_valid(&new_text) {
+                                text = new_text;
+                                dirty_text = true;
+                                dirty_state = true;
+                            }
+                        }
+                        NavTextChange::NewLine => {
+                            if props.allow_new_line {
+                                let mut iter = text.chars();
+                                let mut new_text = iter
+                                    .by_ref()
+                                    .take(state.cursor_position)
+                                    .collect::<String>();
+                                new_text.push('\n');
+                                new_text.extend(iter);
+                                if mode.is_valid(&new_text) {
+                                    state.cursor_position += 1;
+                                    text = new_text;
+                                    dirty_text = true;
+                                    dirty_state = true;
+                                }
+                            } else {
+                                submitted = true;
+                                dirty_state = true;
+                            }
+                        }
+                    },
                     _ => {}
                 }
             }
@@ -418,10 +414,8 @@ pub fn use_input_field(context: &mut WidgetContext) {
                                 .write(NavSignal::FocusTextInput(context.id.to_owned().into()));
                         }
                     }
-                    NavSignal::Cancel(true) => {
-                        if focused {
-                            context.signals.write(NavSignal::FocusTextInput(().into()));
-                        }
+                    NavSignal::Cancel(true) if focused => {
+                        context.signals.write(NavSignal::FocusTextInput(().into()));
                     }
                     _ => {}
                 }

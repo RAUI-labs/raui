@@ -314,12 +314,10 @@ pub fn use_nav_jump_map(context: &mut WidgetContext) {
                                 .write(NavSignal::Select(jump.prev.to_owned()));
                         }
                     }
-                    NavSignal::Next => {
-                        if jump.next.is_some() {
-                            context
-                                .signals
-                                .write(NavSignal::Select(jump.next.to_owned()));
-                        }
+                    NavSignal::Next if jump.next.is_some() => {
+                        context
+                            .signals
+                            .write(NavSignal::Select(jump.next.to_owned()));
                     }
                     _ => {}
                 }

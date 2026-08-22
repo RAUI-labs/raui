@@ -885,10 +885,8 @@ impl DefaultInteractionsEngine {
                     }
                 }
             }
-            WidgetUnit::SizeBox(unit) => {
-                if Self::does_hover_widget_inner(app, x, y, &unit.slot) {
-                    return true;
-                }
+            WidgetUnit::SizeBox(unit) if Self::does_hover_widget_inner(app, x, y, &unit.slot) => {
+                return true;
             }
             _ => {}
         }
