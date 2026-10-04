@@ -1098,7 +1098,45 @@ impl Application {
                 break;
             }
         }
-        true
+        Self::inject_portals_deeper(unit, portals)
+    }
+
+    fn inject_portals_deeper(
+        unit: &mut WidgetUnit,
+        portals: &mut Vec<(WidgetId, PortalBoxSlot)>,
+    ) -> bool {
+        if portals.is_empty() {
+            return false;
+        }
+        match unit {
+            WidgetUnit::AreaBox(b) => Self::inject_portals(&mut b.slot, portals),
+            WidgetUnit::SizeBox(b) => Self::inject_portals(&mut b.slot, portals),
+            WidgetUnit::ContentBox(b) => {
+                for item in &mut b.items {
+                    if !Self::inject_portals(&mut item.slot, portals) {
+                        return false;
+                    }
+                }
+                true
+            }
+            WidgetUnit::FlexBox(b) => {
+                for item in &mut b.items {
+                    if !Self::inject_portals(&mut item.slot, portals) {
+                        return false;
+                    }
+                }
+                true
+            }
+            WidgetUnit::GridBox(b) => {
+                for item in &mut b.items {
+                    if !Self::inject_portals(&mut item.slot, portals) {
+                        return false;
+                    }
+                }
+                true
+            }
+            _ => true,
+        }
     }
 
     fn node_to_prefab(&self, data: &WidgetNode) -> Result<WidgetNodePrefab, ApplicationError> {

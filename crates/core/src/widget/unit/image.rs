@@ -22,6 +22,21 @@ pub struct ImageBoxFrame {
     pub frame_only: bool,
     #[serde(default)]
     pub frame_keep_aspect_ratio: bool,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repeat_horizontal: Option<Scalar>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repeat_vertical: Option<Scalar>,
+    #[serde(default)]
+    pub center: ImageBoxFrameCenter,
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImageBoxFrameCenter {
+    #[default]
+    Stretch,
+    Repeat,
 }
 
 impl From<Scalar> for ImageBoxFrame {
@@ -31,6 +46,7 @@ impl From<Scalar> for ImageBoxFrame {
             destination: v.into(),
             frame_only: false,
             frame_keep_aspect_ratio: false,
+            ..Default::default()
         }
     }
 }
@@ -42,6 +58,7 @@ impl From<(Scalar, bool)> for ImageBoxFrame {
             destination: v.into(),
             frame_only: fo,
             frame_keep_aspect_ratio: false,
+            ..Default::default()
         }
     }
 }

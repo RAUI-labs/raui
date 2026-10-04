@@ -15,8 +15,8 @@ use raui_core::{
         unit::{
             WidgetUnit,
             image::{
-                ImageBoxColor, ImageBoxImage, ImageBoxImageScaling, ImageBoxMaterial,
-                ImageBoxProceduralMesh,
+                ImageBoxColor, ImageBoxFrameCenter, ImageBoxImage, ImageBoxImageScaling,
+                ImageBoxMaterial, ImageBoxProceduralMesh,
             },
             text::{TextBoxHorizontalAlign, TextBoxVerticalAlign},
         },
@@ -75,6 +75,41 @@ pub trait TesselateBatchConverter<B> {
 impl TesselateBatchConverter<TesselateBatch> for () {
     fn convert(&mut self, batch: TesselateBatch) -> Option<TesselateBatch> {
         Some(batch)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct FrameSegment {
+    from: Scalar,
+    to: Scalar,
+    uv_from: Scalar,
+    uv_to: Scalar,
+}
+
+impl FrameSegment {
+    fn new(from: Scalar, to: Scalar, uv_from: Scalar, uv_to: Scalar) -> Self {
+        Self {
+            from,
+            to,
+            uv_from,
+            uv_to,
+        }
+    }
+
+    fn repeated(self, repeat: Option<Scalar>) -> Vec<Self> {
+        let length = self.to - self.from;
+        let count = match repeat {
+            Some(repeat) if repeat > 0.0 => (length / repeat).round().max(1.0) as usize,
+            _ => 1,
+        };
+        let step = length / count as Scalar;
+        (0..count)
+            .map(|index| Self {
+                from: self.from + step * index as Scalar,
+                to: self.from + step * (index + 1) as Scalar,
+                ..self
+            })
+            .collect()
     }
 }
 
@@ -354,6 +389,109 @@ where
                     let m = d.top + d.bottom;
                     d.top = rect.height() * d.top / m;
                     d.bottom = rect.height() * d.bottom / m;
+                }
+                if frame.repeat_horizontal.is_some() || frame.repeat_vertical.is_some() {
+                    let uv_left = uvs.left + frame.source.left * inv_size.x;
+                    let uv_right = uvs.right - frame.source.right * inv_size.x;
+                    let uv_top = uvs.top + frame.source.top * inv_size.y;
+                    let uv_bottom = uvs.bottom - frame.source.bottom * inv_size.y;
+                    let columns = [
+                        FrameSegment::new(rect.left, rect.left + d.left, uvs.left, uv_left)
+                            .repeated(None),
+                        FrameSegment::new(
+                            rect.left + d.left,
+                            rect.right - d.right,
+                            uv_left,
+                            uv_right,
+                        )
+                        .repeated(frame.repeat_horizontal.map(|repeat| repeat * scale.x)),
+                        FrameSegment::new(rect.right - d.right, rect.right, uv_right, uvs.right)
+                            .repeated(None),
+                    ];
+                    let rows = [
+                        FrameSegment::new(rect.top, rect.top + d.top, uvs.top, uv_top)
+                            .repeated(None),
+                        FrameSegment::new(
+                            rect.top + d.top,
+                            rect.bottom - d.bottom,
+                            uv_top,
+                            uv_bottom,
+                        )
+                        .repeated(frame.repeat_vertical.map(|repeat| repeat * scale.y)),
+                        FrameSegment::new(
+                            rect.bottom - d.bottom,
+                            rect.bottom,
+                            uv_bottom,
+                            uvs.bottom,
+                        )
+                        .repeated(None),
+                    ];
+                    let stretched_column = FrameSegment::new(
+                        rect.left + d.left,
+                        rect.right - d.right,
+                        uv_left,
+                        uv_right,
+                    )
+                    .repeated(None);
+                    let stretched_row = FrameSegment::new(
+                        rect.top + d.top,
+                        rect.bottom - d.bottom,
+                        uv_top,
+                        uv_bottom,
+                    )
+                    .repeated(None);
+                    if let Some(batch) = self.converter.convert(TesselateBatch::Image { id }) {
+                        self.stream.batch_optimized(batch);
+                        for (row_index, row) in rows.iter().enumerate() {
+                            for (column_index, column) in columns.iter().enumerate() {
+                                let center = row_index == 1 && column_index == 1;
+                                if center && frame.frame_only {
+                                    continue;
+                                }
+                                let (row, column) =
+                                    if center && frame.center == ImageBoxFrameCenter::Stretch {
+                                        (&stretched_row, &stretched_column)
+                                    } else {
+                                        (row, column)
+                                    };
+                                for y in row {
+                                    for x in column {
+                                        let point = |px, py| {
+                                            vec2_to_raui(matrix.mul_point(vek::Vec2::new(px, py)))
+                                        };
+                                        let uv = |ux, uy| Vec2 { x: ux, y: uy };
+                                        self.stream.quad([
+                                            Self::make_vertex(
+                                                point(x.from, y.from),
+                                                uv(x.uv_from, y.uv_from),
+                                                0.0,
+                                                c,
+                                            ),
+                                            Self::make_vertex(
+                                                point(x.to, y.from),
+                                                uv(x.uv_to, y.uv_from),
+                                                0.0,
+                                                c,
+                                            ),
+                                            Self::make_vertex(
+                                                point(x.to, y.to),
+                                                uv(x.uv_to, y.uv_to),
+                                                0.0,
+                                                c,
+                                            ),
+                                            Self::make_vertex(
+                                                point(x.from, y.to),
+                                                uv(x.uv_from, y.uv_to),
+                                                0.0,
+                                                c,
+                                            ),
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return;
                 }
                 let til =
                     vec2_to_raui(matrix.mul_point(vek::Vec2::new(rect.left + d.left, rect.top)));
@@ -928,4 +1066,158 @@ fn raui_to_vec2(v: Vec2) -> vek::Vec2<Scalar> {
 
 fn vec2_to_raui(v: vek::Vec2<Scalar>) -> Vec2 {
     Vec2 { x: v.x, y: v.y }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use raui_core::widget::unit::image::ImageBoxFrame;
+
+    #[test]
+    fn test_frame_segment_repeat() {
+        let segment = FrameSegment::new(10.0, 110.0, 0.25, 0.75);
+        assert_eq!(segment.repeated(None), vec![segment]);
+        assert_eq!(segment.repeated(Some(0.0)), vec![segment]);
+        assert_eq!(segment.repeated(Some(500.0)), vec![segment]);
+        let copies = segment.repeated(Some(30.0));
+        assert_eq!(copies.len(), 3);
+        assert_eq!(copies[0].from, 10.0);
+        assert_eq!(copies[2].to, 110.0);
+        assert!(
+            copies
+                .iter()
+                .all(|copy| copy.uv_from == 0.25 && copy.uv_to == 0.75)
+        );
+        assert!(copies.windows(2).all(|pair| pair[0].to == pair[1].from));
+    }
+
+    #[repr(C)]
+    #[derive(Debug, Default, Clone, Copy, Pod, bytemuck::Zeroable)]
+    struct TestVertex {
+        position: [f32; 2],
+        uv: [f32; 3],
+        color: [f32; 4],
+    }
+
+    impl TesselateVertex for TestVertex {
+        fn apply(&mut self, position: [f32; 2], tex_coord: [f32; 3], color: [f32; 4]) {
+            self.position = position;
+            self.uv = tex_coord;
+            self.color = color;
+        }
+
+        fn transform(&mut self, _: vek::Mat4<f32>) {}
+    }
+
+    impl TextVertex<Color> for TestVertex {
+        fn apply(&mut self, position: [f32; 2], tex_coord: [f32; 3], _: Color) {
+            self.position = position;
+            self.uv = tex_coord;
+        }
+    }
+
+    struct TestProvider;
+
+    impl TesselateResourceProvider for TestProvider {
+        fn image_id_and_uv_and_size_by_atlas_id(&self, _: &str) -> Option<(String, Rect, Vec2)> {
+            None
+        }
+
+        fn fonts(&self) -> &[Font] {
+            &[]
+        }
+
+        fn font_index_by_id(&self, _: &str) -> Option<usize> {
+            None
+        }
+    }
+
+    fn tesselate_frame(frame: ImageBoxFrame) -> VertexStream<TestVertex, TesselateBatch> {
+        let mut stream = VertexStream::default();
+        let mut text_renderer = TextRenderer::default();
+        let mut converter = ();
+        let mut renderer = TesselateRenderer::new(
+            &TestProvider,
+            &mut converter,
+            &mut stream,
+            &mut text_renderer,
+            None,
+        );
+        let image = ImageBoxImage {
+            id: "frame".to_owned(),
+            scaling: ImageBoxImageScaling::Frame(frame),
+            ..Default::default()
+        };
+        renderer.produce_image_triangles(
+            "frame".to_owned(),
+            Rect {
+                left: 0.0,
+                right: 1.0,
+                top: 0.0,
+                bottom: 1.0,
+            },
+            Vec2 { x: 30.0, y: 30.0 },
+            Rect {
+                left: 0.0,
+                right: 200.0,
+                top: 0.0,
+                bottom: 100.0,
+            },
+            Vec2 { x: 1.0, y: 1.0 },
+            &image,
+        );
+        stream
+    }
+
+    fn base_frame() -> ImageBoxFrame {
+        ImageBoxFrame {
+            source: 10.0.into(),
+            destination: 10.0.into(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_frame_stretch_keeps_sixteen_vertices() {
+        let stream = tesselate_frame(ImageBoxFrame {
+            center: ImageBoxFrameCenter::Repeat,
+            ..base_frame()
+        });
+        assert_eq!(stream.vertices().len(), 16);
+        assert_eq!(stream.triangles().len(), 18);
+    }
+
+    #[test]
+    fn test_frame_repeat_edges() {
+        let stream = tesselate_frame(ImageBoxFrame {
+            repeat_horizontal: Some(60.0),
+            ..base_frame()
+        });
+        assert_eq!(stream.vertices().len(), 13 * 4);
+        assert_eq!(stream.triangles().len(), 13 * 2);
+        let first_top_copy = &stream.vertices()[4..8];
+        assert_eq!(first_top_copy[0].position, [10.0, 0.0]);
+        assert_eq!(first_top_copy[2].position, [70.0, 10.0]);
+        assert!((first_top_copy[0].uv[0] - 1.0 / 3.0).abs() < 1.0e-6);
+        assert!((first_top_copy[2].uv[0] - 2.0 / 3.0).abs() < 1.0e-6);
+    }
+
+    #[test]
+    fn test_frame_repeat_center() {
+        let stream = tesselate_frame(ImageBoxFrame {
+            repeat_horizontal: Some(60.0),
+            repeat_vertical: Some(40.0),
+            center: ImageBoxFrameCenter::Repeat,
+            ..base_frame()
+        });
+        assert_eq!(stream.vertices().len(), 20 * 4);
+        let only_frame = tesselate_frame(ImageBoxFrame {
+            repeat_horizontal: Some(60.0),
+            repeat_vertical: Some(40.0),
+            center: ImageBoxFrameCenter::Repeat,
+            frame_only: true,
+            ..base_frame()
+        });
+        assert_eq!(only_frame.vertices().len(), 14 * 4);
+    }
 }

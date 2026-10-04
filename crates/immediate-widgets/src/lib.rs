@@ -159,7 +159,7 @@ pub mod core {
                 utils::Vec2,
             },
         };
-        use raui_immediate::{begin, end, pop, push, use_state};
+        use raui_immediate::{begin, end, push, use_state};
         use std::str::FromStr;
 
         #[derive(Debug, Default, Copy, Clone)]
@@ -464,7 +464,7 @@ pub mod core {
             let nodes = end();
             begin();
             f_content();
-            let node = pop();
+            let node = end().pop().unwrap_or_default();
             push(
                 make_widget!(raui_core::widget::component::interactive::options_view::options_view)
                     .merge_props(props)
